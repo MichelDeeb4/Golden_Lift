@@ -1,0 +1,90 @@
+{
+  "checkedAt": "2026-10-04T08:37:24.350Z",
+  "scope": "Prisma adoption and durable engineering rule",
+  "node": "v24.21.0",
+  "postgres": "18.6",
+  "orm": {
+    "name": "Prisma",
+    "version": "7.10.0",
+    "adapter": "@prisma/adapter-pg 7.10.0",
+    "serviceSchemas": 4,
+    "physicalModels": 59,
+    "clientAccessibleModels": 58,
+    "ignoredPrivateGate": true,
+    "columns": 577,
+    "databaseLocalForeignKeys": 64,
+    "queryLogging": false
+  },
+  "architecture": {
+    "sourceFiles": 70,
+    "enforcementProbes": 11,
+    "businessLayersIndependentOfOrm": true,
+    "transactionOwner": "Prisma interactive transactions",
+    "catalogIsolation": "Serializable",
+    "identityIsolation": "ReadCommitted",
+    "repositoryAndOutboxUseSameTransactionClient": true
+  },
+  "checks": {
+    "build": "passed",
+    "strictTypes": "passed",
+    "format": "passed",
+    "architecture": "passed",
+    "schemaValidation": "passed",
+    "schemaCatalogParity": "passed",
+    "unit": {
+      "tests": 20,
+      "files": 5,
+      "result": "passed"
+    },
+    "integration": {
+      "tests": 34,
+      "files": 4,
+      "result": "passed",
+      "realPostgreSQL": true
+    },
+    "processSmoke": {
+      "suites": 2,
+      "servicesPerSuite": 5,
+      "result": "passed"
+    },
+    "sql": {
+      "suites": 7,
+      "freshDatabases": 4,
+      "upgradeFromV1": true,
+      "concurrencyScenarios": 4,
+      "crossDatabaseDenials": 12,
+      "result": "passed"
+    },
+    "readOnlyIntrospectionPreservesBindings": "passed",
+    "documentationLinks": {
+      "checked": 128,
+      "result": "passed"
+    },
+    "privateCredentials": {
+      "repositoryTextFilesScanned": 181,
+      "result": "passed"
+    }
+  },
+  "fixtureAudit": {
+    "scratchDatabases": 0,
+    "realIdentityAccounts": 0
+  },
+  "limitations": [
+    "Hosted CI and Docker execution not run in this local environment",
+    "Production deployment, providers and load verification remain deployment work",
+    "Media/Inquiries business workflows remain separate milestones"
+  ],
+  "sourceSha256": {
+    "AGENTS.md": "d7abc2ef97bc28396d0b2620d1cd42f1cbf7c578433a12fb522948335ff0bc3a",
+    "package-lock.json": "e72929b383862be3b6471309ebd7da71748ac0bf67e9aa6b0520511ef9e6e7fc",
+    "packages/platform/src/transactions.ts": "4d2757e97738338643a6be44995c3a0517c05169ab5410c6c77d05b10d5a82b0",
+    "scripts/verify-orm.mjs": "1c5c5eaac8318949ccedf3cf51a0153c0bf2aedbd861131594a4d524c4f252c5",
+    "scripts/check-boundaries.mjs": "9902bc75a14d6af3bd21e0f46683f146c1f127e227cb6ca3cda14c2102795672",
+    "services/identity/prisma/schema.prisma": "b2218b9af7c4a82729181206f90098481bb26884a7fd0184ef4b0e691230b147",
+    "services/catalog/prisma/schema.prisma": "34bc3ac9c23919c9f89dbb8434b39c8b08272b341ca267209419cd1815fdb451",
+    "services/media/prisma/schema.prisma": "3fe0ea2f4842358ca51985b12defeb657987a29cf2333d32e5157f9e5abf7faa",
+    "services/inquiries/prisma/schema.prisma": "8dfe8bebb8267a56f5994785298d12a557c4dce310166e3be6a1e7622c96e56b",
+    "services/identity/src/infrastructure/prisma/unit-of-work.ts": "78ebbd57bb2cdfa9623d0251eeafd1fc5d5f62e5e242b2334d5e3b86872171d6",
+    "services/catalog/src/infrastructure/prisma/unit-of-work.ts": "c56e5a0ad3a9636f7c15caef95383307893231d3244787f0b9d867eba29ce410"
+  }
+}

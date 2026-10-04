@@ -1,0 +1,1 @@
+Staff email/password/name rules and the Super Admin / ADMIN-target policy live here. Application use cases own transactions and security/mail ports. Domain code imports neither NestJS nor PostgreSQL/Node infrastructure; only shared contracts.

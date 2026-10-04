@@ -1,0 +1,143 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  importFileExtension = "js"
+  moduleFormat        = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["media", "ops"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model AssetVariants {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id       String    @db.Uuid
+  variant_key    String
+  mime_type      String
+  storage_bucket String
+  storage_key    String
+  byte_size      BigInt
+  width_px       Int?
+  height_px      Int?
+  duration_ms    BigInt?
+  created_at     DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at     DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+  version        BigInt    @default(1)
+  assets         Assets    @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([asset_id, variant_key], map: "asset_variant_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@unique([storage_bucket, storage_key])
+  @@map("asset_variants")
+  @@schema("media")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Assets {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  media_kind          String
+  status              String           @default("UPLOADING")
+  original_name       String
+  storage_bucket      String
+  storage_key         String
+  detected_mime_type  String?
+  byte_size           BigInt?
+  sha256              Bytes?
+  width_px            Int?
+  height_px           Int?
+  duration_ms         BigInt?
+  metadata            Json             @default("{}")
+  retirement_event_id String?          @unique @db.Uuid
+  created_at          DateTime         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at          DateTime         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at          DateTime?        @db.Timestamptz(6)
+  version             BigInt           @default(1)
+  asset_variants      AssetVariants[]
+  processing_jobs     ProcessingJobs[]
+  upload_sessions     UploadSessions[]
+
+  @@unique([storage_bucket, storage_key])
+  @@map("assets")
+  // SQL-managed partial index: @@index([media_kind, created_at(sort: Desc), id], map: "media_assets_library_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([status, created_at, id], map: "media_assets_state_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@schema("media")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProcessingJobs {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id        String    @db.Uuid
+  job_type        String
+  status          String    @default("QUEUED")
+  attempts        Int       @default(0)
+  next_attempt_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  locked_until    DateTime? @db.Timestamptz(6)
+  lease_token     String?   @db.Uuid
+  last_error      String?
+  created_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+  version         BigInt    @default(1)
+  assets          Assets    @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+
+  @@map("processing_jobs")
+  // SQL-managed partial index: @@unique([asset_id, job_type], map: "processing_active_job_uq", where: raw("((deleted_at IS NULL) AND (status = ANY (ARRAY['QUEUED'::text, 'RUNNING'::text])))"))
+  // SQL-managed partial index: @@index([next_attempt_at, created_at, id], map: "processing_ready_queue_idx", where: raw("((deleted_at IS NULL) AND (status = 'QUEUED'::text))"))
+  // SQL-managed partial index: @@index([locked_until, id], map: "processing_stale_lease_idx", where: raw("((deleted_at IS NULL) AND (status = 'RUNNING'::text))"))
+  @@schema("media")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model UploadSessions {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  asset_id           String    @db.Uuid
+  uploader_staff_id  String    @db.Uuid
+  provider_upload_id String?
+  expected_byte_size BigInt?
+  status             String    @default("OPEN")
+  expires_at         DateTime  @db.Timestamptz(6)
+  completed_at       DateTime? @db.Timestamptz(6)
+  created_at         DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at         DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at         DateTime? @db.Timestamptz(6)
+  version            BigInt    @default(1)
+  assets             Assets    @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+
+  @@map("upload_sessions")
+  // SQL-managed partial index: @@index([expires_at, id], map: "upload_expiry_idx", where: raw("((deleted_at IS NULL) AND (status = 'OPEN'::text))"))
+  @@schema("media")
+}
+
+model InboxMessages {
+  consumer_name String
+  message_id    String   @db.Uuid
+  processed_at  DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@id([consumer_name, message_id])
+  @@map("inbox_messages")
+  @@schema("ops")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model OutboxEvents {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aggregate_type    String
+  aggregate_id      String?   @db.Uuid
+  aggregate_version BigInt?
+  event_type        String
+  payload           Json
+  created_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  available_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  published_at      DateTime? @db.Timestamptz(6)
+  attempts          Int       @default(0)
+  locked_until      DateTime? @db.Timestamptz(6)
+  lease_token       String?   @db.Uuid
+  last_error        String?
+  deleted_at        DateTime? @db.Timestamptz(6)
+
+  @@map("outbox_events")
+  // SQL-managed partial index: @@index([available_at, created_at, id], map: "outbox_pending_idx", where: raw("((deleted_at IS NULL) AND (published_at IS NULL))"))
+  @@schema("ops")
+}

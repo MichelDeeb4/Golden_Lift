@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:golden-lift:catalog-configuration-event:v1",
+  "allOf": [
+    {
+      "$ref": "urn:golden-lift:event-envelope:v1"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "catalog.configuration.changed.v1",
+            "catalog.product.created.v1",
+            "catalog.product.updated.v1",
+            "catalog.product.type.changed.v1",
+            "catalog.product.placement.changed.v1"
+          ]
+        },
+        "producer": {
+          "const": "catalog"
+        },
+        "aggregate": {
+          "properties": {
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "type": {
+              "type": "string"
+            }
+          }
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["resourceId"],
+          "properties": {
+            "resourceId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "Bounded invalidation/delivery envelope, not a business audit history. Unit keys are canonical codes; other resource keys are UUIDs. No private values or translations in payload."
+}

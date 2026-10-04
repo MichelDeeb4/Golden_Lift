@@ -1,0 +1,105 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  importFileExtension = "js"
+  moduleFormat        = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["identity", "ops"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model StaffAccounts {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String
+  email_key      String?         @unique @default(dbgenerated("lower(btrim(email))"))
+  display_name   String
+  role           String
+  status         String          @default("INVITED")
+  password_hash  String?
+  auth_version   BigInt          @default(1)
+  created_at     DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at     DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at     DateTime?       @db.Timestamptz(6)
+  version        BigInt          @default(1)
+  staff_sessions StaffSessions[]
+  staff_tokens   StaffTokens[]
+
+  @@map("staff_accounts")
+  // SQL-managed partial index: @@index([role, created_at(sort: Desc), id], map: "staff_active_directory_idx", where: raw("(deleted_at IS NULL)"))
+  @@schema("identity")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model StaffSessions {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staff_id       String        @db.Uuid
+  token_hash     Bytes         @unique
+  auth_version   BigInt
+  expires_at     DateTime      @db.Timestamptz(6)
+  revoked_at     DateTime?     @db.Timestamptz(6)
+  created_at     DateTime      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at     DateTime      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at     DateTime?     @db.Timestamptz(6)
+  version        BigInt        @default(1)
+  staff_accounts StaffAccounts @relation(fields: [staff_id], references: [id], onUpdate: NoAction)
+
+  @@map("staff_sessions")
+  // SQL-managed partial index: @@index([staff_id, expires_at, id], map: "sessions_account_active_idx", where: raw("((deleted_at IS NULL) AND (revoked_at IS NULL))"))
+  // SQL-managed partial index: @@index([expires_at, id], map: "sessions_expiry_idx", where: raw("((deleted_at IS NULL) AND (revoked_at IS NULL))"))
+  @@schema("identity")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model StaffTokens {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staff_id       String        @db.Uuid
+  purpose        String
+  token_hash     Bytes         @unique
+  expires_at     DateTime      @db.Timestamptz(6)
+  consumed_at    DateTime?     @db.Timestamptz(6)
+  revoked_at     DateTime?     @db.Timestamptz(6)
+  created_at     DateTime      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at     DateTime      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at     DateTime?     @db.Timestamptz(6)
+  version        BigInt        @default(1)
+  staff_accounts StaffAccounts @relation(fields: [staff_id], references: [id], onUpdate: NoAction)
+
+  @@map("staff_tokens")
+  // SQL-managed partial index: @@index([staff_id, purpose, expires_at], map: "staff_tokens_open_idx", where: raw("((deleted_at IS NULL) AND (consumed_at IS NULL) AND (revoked_at IS NULL))"))
+  @@schema("identity")
+}
+
+model InboxMessages {
+  consumer_name String
+  message_id    String   @db.Uuid
+  processed_at  DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@id([consumer_name, message_id])
+  @@map("inbox_messages")
+  @@schema("ops")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model OutboxEvents {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aggregate_type    String
+  aggregate_id      String?   @db.Uuid
+  aggregate_version BigInt?
+  event_type        String
+  payload           Json
+  created_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  available_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  published_at      DateTime? @db.Timestamptz(6)
+  attempts          Int       @default(0)
+  locked_until      DateTime? @db.Timestamptz(6)
+  lease_token       String?   @db.Uuid
+  last_error        String?
+  deleted_at        DateTime? @db.Timestamptz(6)
+
+  @@map("outbox_events")
+  // SQL-managed partial index: @@index([available_at, created_at, id], map: "outbox_pending_idx", where: raw("((deleted_at IS NULL) AND (published_at IS NULL))"))
+  @@schema("ops")
+}

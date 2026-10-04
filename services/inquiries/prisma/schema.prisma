@@ -1,0 +1,112 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  importFileExtension = "js"
+  moduleFormat        = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["inquiries", "ops"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Inquiries {
+  id                          String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind                        String
+  locale                      String
+  full_name                   String
+  email                       String?
+  phone                       String?
+  message                     String
+  product_id                  String?                  @db.Uuid
+  product_name_snapshot       String?
+  product_model_code_snapshot String?
+  status                      String                   @default("NEW")
+  idempotency_key             String                   @unique @db.Uuid
+  request_hash                Bytes
+  created_at                  DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                  DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                  DateTime?                @db.Timestamptz(6)
+  version                     BigInt                   @default(1)
+  notification_deliveries     NotificationDeliveries[]
+
+  @@map("inquiries")
+  // SQL-managed partial index: @@index([status, created_at(sort: Desc), id], map: "inquiries_inbox_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([product_id, created_at(sort: Desc), id], map: "inquiries_product_live_idx", where: raw("((deleted_at IS NULL) AND (product_id IS NOT NULL))"))
+  // SQL-managed partial index: @@index([created_at(sort: Desc), id], map: "inquiries_recent_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@schema("inquiries")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model NotificationDeliveries {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inquiry_id          String    @db.Uuid
+  notification_kind   String    @default("NEW_INQUIRY")
+  recipient_email     String?
+  status              String    @default("PENDING")
+  attempts            Int       @default(0)
+  next_attempt_at     DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  locked_until        DateTime? @db.Timestamptz(6)
+  lease_token         String?   @db.Uuid
+  provider_message_id String?
+  sent_at             DateTime? @db.Timestamptz(6)
+  last_error          String?
+  created_at          DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at          DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at          DateTime? @db.Timestamptz(6)
+  version             BigInt    @default(1)
+  inquiries           Inquiries @relation(fields: [inquiry_id], references: [id], onUpdate: NoAction)
+
+  @@unique([inquiry_id, notification_kind])
+  @@map("notification_deliveries")
+  // SQL-managed partial index: @@index([next_attempt_at, id], map: "notifications_pending_idx", where: raw("((deleted_at IS NULL) AND (status = 'PENDING'::text))"))
+  // SQL-managed partial index: @@index([locked_until, id], map: "notifications_stale_lease_idx", where: raw("((deleted_at IS NULL) AND (status = 'SENDING'::text))"))
+  @@schema("inquiries")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model NotificationSettings {
+  id             Int       @id @db.SmallInt
+  sales_email    String?
+  source_version BigInt
+  created_at     DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at     DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at     DateTime? @db.Timestamptz(6)
+  version        BigInt    @default(1)
+
+  @@map("notification_settings")
+  @@schema("inquiries")
+}
+
+model InboxMessages {
+  consumer_name String
+  message_id    String   @db.Uuid
+  processed_at  DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@id([consumer_name, message_id])
+  @@map("inbox_messages")
+  @@schema("ops")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model OutboxEvents {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aggregate_type    String
+  aggregate_id      String?   @db.Uuid
+  aggregate_version BigInt?
+  event_type        String
+  payload           Json
+  created_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  available_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  published_at      DateTime? @db.Timestamptz(6)
+  attempts          Int       @default(0)
+  locked_until      DateTime? @db.Timestamptz(6)
+  lease_token       String?   @db.Uuid
+  last_error        String?
+  deleted_at        DateTime? @db.Timestamptz(6)
+
+  @@map("outbox_events")
+  // SQL-managed partial index: @@index([available_at, created_at, id], map: "outbox_pending_idx", where: raw("((deleted_at IS NULL) AND (published_at IS NULL))"))
+  @@schema("ops")
+}

@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-10-04T07:52:18.550Z",
+  "scope": "Standing engineering rule and Clean Architecture/transaction refactor",
+  "userRule": "Apply engineering best practices and appropriate design patterns to every future project change.",
+  "rulesFile": "AGENTS.md",
+  "architectureGuide": "documentation/architecture.md",
+  "platform": "win32",
+  "node": "v24.21.0",
+  "persistence": "pg 8.23.1; parameterized SQL repository adapters",
+  "changes": [
+    "Persistent repository engineering rules",
+    "Architecture guide and five service READMEs",
+    "Shared PgTransactions lifecycle with service-owned Unit of Work adapters/isolation/error mapping",
+    "Narrow Identity/Catalog read ports",
+    "Database-pool cleanup on failed Media/Inquiries HTTP initialization",
+    "TypeScript-resolved architecture enforcement including inline import types and public package exports"
+  ],
+  "checks": {
+    "build": "passed",
+    "typecheck": "passed",
+    "format": "passed",
+    "architecture": {
+      "result": "passed",
+      "sourceFiles": 66,
+      "enforcementProbes": 9
+    },
+    "unit": {
+      "result": "passed",
+      "tests": 20,
+      "files": 5,
+      "newTransactionLifecycleTests": 7
+    },
+    "integration": {
+      "result": "passed",
+      "tests": 28,
+      "files": 3,
+      "realPostgreSQL": true,
+      "realSerializationRetry": true,
+      "authAndRoleRegression": true
+    },
+    "processSmoke": {
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "result": "passed",
+      "publicCategoryRead": true,
+      "identityOutagePublicRead": true,
+      "internalRoutesBlocked": true
+    },
+    "identityProcessSmoke": {
+      "result": "passed",
+      "checkedAt": "2026-10-04T07:51:13.454Z",
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "operatorBootstrap": true,
+      "invitationLocalDelivery": true,
+      "adminCategoryWrite": true,
+      "liveRevocation": true,
+      "roleBoundaries": true,
+      "csrf": true,
+      "identityOutagePublicRead": true,
+      "operationalSecretRedaction": true,
+      "fixtureCleanup": true
+    },
+    "credentialScan": {
+      "result": "passed",
+      "repositoryFiles": 168
+    },
+    "documentationLinks": {
+      "result": "passed",
+      "checked": 110
+    }
+  },
+  "database": {
+    "schemaChanges": false,
+    "publicApiChanges": false,
+    "tables": {
+      "identity": 5,
+      "catalog": 43,
+      "media": 6,
+      "inquiries": 5
+    },
+    "totalTables": 59,
+    "scratchDatabasesRemaining": 0,
+    "installedStaffAccounts": 0
+  },
+  "artifacts": {
+    "rulesSha256": "ab91d373a119fd9a310b0612617559299dfa0261ac2240cca0a764ebc3c9bfae",
+    "transactionRunnerSha256": "d6408b2169f45da8224a6303ec6f9e6d572003b498f6bed4482799e6bbad2aee",
+    "architectureCheckerSha256": "0126fae6f715112de30f91c28d1697ce9d10b0ec70e7f872ea98e679bcd53d62",
+    "lockfileSha256": "d3f5fc889d7af9f9d87084be63ce4fd24e64e54bbbb3db6fcb3bdf198227540c",
+    "openApiSha256": "c54e3015ccbea70d2e561c1f246a2fc5bb0fbe8d1e5db33b3daf42d874baf3c4"
+  },
+  "notExecuted": {
+    "hostedCI": "Existing workflow includes these checks; no hosted run triggered",
+    "docker": "Unavailable locally",
+    "productionProvidersTLSAndLoad": "Requires deployment configuration and real providers/infrastructure"
+  },
+  "nextPackage": "B4 Catalog core",
+  "result": "passed"
+}

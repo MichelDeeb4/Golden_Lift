@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "@golden-lift/contracts": ["./packages/contracts/src/index.ts"],
+      "@golden-lift/platform": ["./packages/platform/src/index.ts"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "services/*/src/**/*.ts",
+    "services/*/tests/**/*.ts"
+  ]
+}

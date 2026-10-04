@@ -1,0 +1,1049 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/infrastructure/prisma/generated"
+  importFileExtension = "js"
+  moduleFormat        = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["catalog", "ops"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Categories {
+  id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id                 String?                   @db.Uuid
+  cover_asset_id            String?                   @db.Uuid
+  sort_order                BigInt                    @default(1024)
+  created_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                 @db.Timestamptz(6)
+  version                   BigInt                    @default(1)
+  media_asset_refs          MediaAssetRefs?           @relation(fields: [cover_asset_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  categories                Categories?               @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  other_categories          Categories[]              @relation("categoriesTocategories")
+  category_specifications   CategorySpecifications[]
+  category_technical_sheets CategoryTechnicalSheets[]
+  category_translations     CategoryTranslations[]
+  products                  Products[]
+
+  // SQL-managed partial index: @@index([parent_id, sort_order, id], map: "categories_children_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([cover_asset_id], map: "categories_cover_live_idx", where: raw("((deleted_at IS NULL) AND (cover_asset_id IS NOT NULL))"))
+  @@map("categories")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model CategorySpecifications {
+  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id               String                   @db.Uuid
+  definition_id             String                   @db.Uuid
+  sort_order                BigInt                   @default(1024)
+  created_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                @db.Timestamptz(6)
+  version                   BigInt                   @default(1)
+  categories                Categories               @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  specification_definitions SpecificationDefinitions @relation(fields: [definition_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([category_id, definition_id], map: "category_specification_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([definition_id, category_id], map: "category_specification_definition_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("category_specifications")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model CategoryTechnicalSheets {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id      String          @db.Uuid
+  sheet_id         String          @db.Uuid
+  sort_order       BigInt          @default(1024)
+  created_at       DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at       DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at       DateTime?       @db.Timestamptz(6)
+  version          BigInt          @default(1)
+  categories       Categories      @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  technical_sheets TechnicalSheets @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([category_id, sheet_id], map: "category_technical_sheets_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([category_id, sort_order, id], map: "category_technical_sheets_order_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([sheet_id, category_id], map: "category_technical_sheets_reverse_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("category_technical_sheets")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model CategoryTranslations {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id String     @db.Uuid
+  locale      String
+  name        String
+  description String?
+  slug        String?
+  search_text String?    @default(dbgenerated("lower(((name || ' '::text) || COALESCE(description, ''::text)))"))
+  created_at  DateTime   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at  DateTime   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at  DateTime?  @db.Timestamptz(6)
+  version     BigInt     @default(1)
+  categories  Categories @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([category_id, locale], map: "category_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([search_text(ops: raw("gin_trgm_ops"))], map: "category_translation_search_idx", type: Gin, where: raw("(deleted_at IS NULL)"))
+  @@map("category_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model FaqItems {
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sort_order       BigInt            @default(1024)
+  created_at       DateTime          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at       DateTime          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at       DateTime?         @db.Timestamptz(6)
+  version          BigInt            @default(1)
+  faq_translations FaqTranslations[]
+
+  // SQL-managed partial index: @@index([sort_order, id], map: "faq_order_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("faq_items")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model FaqTranslations {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  faq_id     String    @db.Uuid
+  locale     String
+  question   String
+  answer     String
+  created_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  version    BigInt    @default(1)
+  faq_items  FaqItems  @relation(fields: [faq_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([faq_id, locale], map: "faq_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("faq_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model MediaAssetRefs {
+  id                      String                  @id @db.Uuid
+  media_kind              String
+  source_version          BigInt
+  ready_at                DateTime?               @db.Timestamptz(6)
+  retirement_event_id     String?                 @unique @db.Uuid
+  created_at              DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at              DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at              DateTime?               @db.Timestamptz(6)
+  version                 BigInt                  @default(1)
+  categories              Categories[]
+  pages                   Pages[]
+  product_media           ProductMedia[]
+  site_settings           SiteSettings[]
+  technical_sheet_sources TechnicalSheetSources[]
+
+  @@map("media_asset_refs")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model PageTranslations {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  page_id    String    @db.Uuid
+  locale     String
+  title      String
+  body       Json      @default("{}")
+  created_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  version    BigInt    @default(1)
+  pages      Pages     @relation(fields: [page_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([page_id, locale], map: "page_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("page_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Pages {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  page_key          String             @unique
+  cover_asset_id    String?            @db.Uuid
+  created_at        DateTime           @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at        DateTime           @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at        DateTime?          @db.Timestamptz(6)
+  version           BigInt             @default(1)
+  page_translations PageTranslations[]
+  media_asset_refs  MediaAssetRefs?    @relation(fields: [cover_asset_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  // SQL-managed partial index: @@index([cover_asset_id], map: "page_cover_live_idx", where: raw("((deleted_at IS NULL) AND (cover_asset_id IS NOT NULL))"))
+  @@map("pages")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductCodeReservations {
+  id                                                                    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id                                                            String     @db.Uuid
+  code                                                                  String
+  code_key                                                              String?    @unique @default(dbgenerated("upper(btrim(code))"))
+  created_at                                                            DateTime   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                                                            DateTime   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                                                            DateTime?  @db.Timestamptz(6)
+  version                                                               BigInt     @default(1)
+  products_product_code_reservations_product_idToproducts               Products   @relation("product_code_reservations_product_idToproducts", fields: [product_id], references: [id], onUpdate: NoAction)
+  products_products_id_current_model_code_idToproduct_code_reservations Products[] @relation("products_id_current_model_code_idToproduct_code_reservations")
+
+  @@unique([product_id, id])
+  @@index([product_id], map: "product_code_owner_idx")
+  @@map("product_code_reservations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductMedia {
+  id                                                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id                                         String                     @db.Uuid
+  asset_id                                           String                     @db.Uuid
+  content_locale                                     String?
+  sort_order                                         BigInt                     @default(1024)
+  created_at                                         DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                                         DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                                         DateTime?                  @db.Timestamptz(6)
+  version                                            BigInt                     @default(1)
+  media_asset_refs                                   MediaAssetRefs             @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+  products_product_media_product_idToproducts        Products                   @relation("product_media_product_idToproducts", fields: [product_id], references: [id], onUpdate: NoAction)
+  product_media_translations                         ProductMediaTranslations[]
+  products_products_id_cover_media_idToproduct_media Products[]                 @relation("products_id_cover_media_idToproduct_media")
+
+  @@unique([product_id, id])
+  // SQL-managed partial index: @@unique([product_id, asset_id], map: "product_media_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([asset_id, product_id], map: "product_media_asset_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([product_id, sort_order, id], map: "product_media_order_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_media")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductMediaTranslations {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_media_id String       @db.Uuid
+  locale           String
+  title            String?
+  caption          String?
+  alt_text         String?
+  created_at       DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at       DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at       DateTime?    @db.Timestamptz(6)
+  version          BigInt       @default(1)
+  product_media    ProductMedia @relation(fields: [product_media_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([product_media_id, locale], map: "product_media_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("product_media_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductSpecificationChoices {
+  id                           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  value_id                     String                     @db.Uuid
+  definition_id                String                     @db.Uuid
+  option_id                    String                     @db.Uuid
+  created_at                   DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                   DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                   DateTime?                  @db.Timestamptz(6)
+  version                      BigInt                     @default(1)
+  specification_options        SpecificationOptions       @relation(fields: [option_id, definition_id], references: [id, definition_id], onUpdate: NoAction)
+  product_specification_values ProductSpecificationValues @relation(fields: [value_id, definition_id], references: [id, definition_id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([value_id, option_id], map: "specification_choice_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([option_id, value_id], map: "specification_choice_filter_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_specification_choices")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductSpecificationTexts {
+  id                           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  value_id                     String                     @db.Uuid
+  locale                       String
+  text_value                   String
+  created_at                   DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                   DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                   DateTime?                  @db.Timestamptz(6)
+  version                      BigInt                     @default(1)
+  product_specification_values ProductSpecificationValues @relation(fields: [value_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([value_id, locale], map: "specification_text_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("product_specification_texts")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductSpecificationValues {
+  id                            String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id                    String                        @db.Uuid
+  definition_id                 String                        @db.Uuid
+  value_type                    String
+  number_value                  Decimal?                      @db.Decimal(20, 6)
+  boolean_value                 Boolean?
+  created_at                    DateTime                      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                    DateTime                      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                    DateTime?                     @db.Timestamptz(6)
+  version                       BigInt                        @default(1)
+  product_specification_choices ProductSpecificationChoices[]
+  product_specification_texts   ProductSpecificationTexts[]
+  specification_definitions     SpecificationDefinitions      @relation(fields: [definition_id, value_type], references: [id, value_type], onUpdate: NoAction)
+  products                      Products                      @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+
+  @@unique([id, definition_id])
+  // SQL-managed partial index: @@unique([product_id, definition_id], map: "product_specification_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([definition_id, boolean_value, product_id], map: "specification_boolean_filter_idx", where: raw("((deleted_at IS NULL) AND (value_type = 'BOOLEAN'::text))"))
+  // SQL-managed partial index: @@index([definition_id, number_value, product_id], map: "specification_number_filter_idx", where: raw("((deleted_at IS NULL) AND (value_type = 'NUMBER'::text))"))
+  @@map("product_specification_values")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTechnicalConfigurations {
+  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                 String                  @db.Uuid
+  product_sheet_id         String                  @db.Uuid
+  configuration_id         String                  @db.Uuid
+  created_at               DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at               DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at               DateTime?               @db.Timestamptz(6)
+  version                  BigInt                  @default(1)
+  technical_configurations TechnicalConfigurations @relation(fields: [sheet_id, configuration_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_sheets         TechnicalSheets         @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  product_technical_sheets ProductTechnicalSheets  @relation(fields: [sheet_id, product_sheet_id], references: [sheet_id, id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([product_sheet_id, configuration_id], map: "product_technical_configurations_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([configuration_id, product_sheet_id], map: "product_technical_configurations_reverse_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_technical_configurations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTechnicalSheets {
+  id                               String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id                       String                           @db.Uuid
+  sheet_id                         String                           @db.Uuid
+  relation_kind                    String                           @default("REFERENCE")
+  sort_order                       BigInt                           @default(1024)
+  created_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                        @db.Timestamptz(6)
+  version                          BigInt                           @default(1)
+  product_technical_configurations ProductTechnicalConfigurations[]
+  products                         Products                         @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+  technical_sheets                 TechnicalSheets                  @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@unique([product_id, sheet_id], map: "product_technical_sheets_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([product_id, sort_order, id], map: "product_technical_sheets_order_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([sheet_id, product_id], map: "product_technical_sheets_reverse_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_technical_sheets")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTranslations {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id        String    @db.Uuid
+  locale            String
+  name              String
+  short_description String?
+  description       String?
+  slug              String?
+  search_text       String?   @default(dbgenerated("lower(((((name || ' '::text) || COALESCE(short_description, ''::text)) || ' '::text) || COALESCE(description, ''::text)))"))
+  created_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  version           BigInt    @default(1)
+  products          Products  @relation(fields: [product_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([product_id, locale], map: "product_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([search_text(ops: raw("gin_trgm_ops"))], map: "product_translation_search_idx", type: Gin, where: raw("(deleted_at IS NULL)"))
+  @@map("product_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
+model Products {
+  id                                                                                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id                                                                            String                       @db.Uuid
+  cover_media_id                                                                         String                       @db.Uuid
+  current_model_code_id                                                                  String?                      @db.Uuid
+  sort_order                                                                             BigInt                       @default(1024)
+  is_featured                                                                            Boolean                      @default(false)
+  featured_order                                                                         BigInt                       @default(1024)
+  created_at                                                                             DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                                                                             DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                                                                             DateTime?                    @db.Timestamptz(6)
+  version                                                                                BigInt                       @default(1)
+  product_type_id                                                                        String?                      @db.Uuid
+  product_code_reservations_product_code_reservations_product_idToproducts               ProductCodeReservations[]    @relation("product_code_reservations_product_idToproducts")
+  product_media_product_media_product_idToproducts                                       ProductMedia[]               @relation("product_media_product_idToproducts")
+  product_specification_values                                                           ProductSpecificationValues[]
+  product_technical_sheets                                                               ProductTechnicalSheets[]
+  product_translations                                                                   ProductTranslations[]
+  categories                                                                             Categories                   @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  product_code_reservations_products_id_current_model_code_idToproduct_code_reservations ProductCodeReservations?     @relation("products_id_current_model_code_idToproduct_code_reservations", fields: [id, current_model_code_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_code_fk")
+  product_media_products_id_cover_media_idToproduct_media                                ProductMedia                 @relation("products_id_cover_media_idToproduct_media", fields: [id, cover_media_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_cover_fk")
+  product_types                                                                          ProductTypes?                @relation(fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  // SQL-managed partial index: @@index([category_id, sort_order, id], map: "products_category_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([featured_order, id], map: "products_featured_live_idx", where: raw("((deleted_at IS NULL) AND is_featured)"))
+  // SQL-managed partial index: @@index([product_type_id, id], map: "products_type_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("products")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SiteSettingTranslations {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  settings_id   Int          @db.SmallInt
+  locale        String
+  company_name  String
+  tagline       String?
+  address       String?
+  created_at    DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at    DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at    DateTime?    @db.Timestamptz(6)
+  version       BigInt       @default(1)
+  site_settings SiteSettings @relation(fields: [settings_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([settings_id, locale], map: "site_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("site_setting_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SiteSettings {
+  id                        Int                       @id @db.SmallInt
+  logo_asset_id             String?                   @db.Uuid
+  public_email              String?
+  sales_notification_email  String?
+  phone                     String?
+  whatsapp                  String?
+  map_url                   String?
+  created_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                 @db.Timestamptz(6)
+  version                   BigInt                    @default(1)
+  site_setting_translations SiteSettingTranslations[]
+  media_asset_refs          MediaAssetRefs?           @relation(fields: [logo_asset_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@map("site_settings")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SocialLinks {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  platform   String
+  url        String
+  sort_order BigInt    @default(1024)
+  created_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  version    BigInt    @default(1)
+
+  // SQL-managed partial index: @@index([sort_order, id], map: "social_links_order_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("social_links")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationDefinitions {
+  id                           String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                         String                       @unique
+  value_type                   String
+  unit_code                    String?
+  minimum_value                Decimal?                     @db.Decimal(20, 6)
+  maximum_value                Decimal?                     @db.Decimal(20, 6)
+  allow_multiple               Boolean                      @default(false)
+  is_filterable                Boolean                      @default(false)
+  created_at                   DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                   DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                   DateTime?                    @db.Timestamptz(6)
+  version                      BigInt                       @default(1)
+  is_public                    Boolean                      @default(false)
+  deprecated_at                DateTime?                    @db.Timestamptz(6)
+  text_multiline               Boolean                      @default(false)
+  text_max_length              Int                          @default(4000)
+  category_specifications      CategorySpecifications[]
+  product_specification_values ProductSpecificationValues[]
+  product_type_specifications  ProductTypeSpecifications[]
+  units                        Units?                       @relation(fields: [unit_code], references: [code], onDelete: Restrict, onUpdate: NoAction)
+  specification_options        SpecificationOptions[]
+  specification_translations   SpecificationTranslations[]
+  technical_measurements       TechnicalMeasurements[]
+
+  @@unique([id, value_type])
+  @@map("specification_definitions")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationOptionTranslations {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  option_id             String               @db.Uuid
+  locale                String
+  label                 String
+  created_at            DateTime             @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at            DateTime             @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at            DateTime?            @db.Timestamptz(6)
+  version               BigInt               @default(1)
+  specification_options SpecificationOptions @relation(fields: [option_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([option_id, locale], map: "specification_option_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("specification_option_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationOptions {
+  id                                String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  definition_id                     String                            @db.Uuid
+  code                              String
+  sort_order                        BigInt                            @default(1024)
+  created_at                        DateTime                          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                        DateTime                          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                        DateTime?                         @db.Timestamptz(6)
+  version                           BigInt                            @default(1)
+  deprecated_at                     DateTime?                         @db.Timestamptz(6)
+  product_specification_choices     ProductSpecificationChoices[]
+  specification_option_translations SpecificationOptionTranslations[]
+  specification_definitions         SpecificationDefinitions          @relation(fields: [definition_id], references: [id], onUpdate: NoAction)
+
+  @@unique([definition_id, code])
+  @@unique([id, definition_id])
+  // SQL-managed partial index: @@index([definition_id, sort_order, id], map: "specification_options_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("specification_options")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationTranslations {
+  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  definition_id             String                   @db.Uuid
+  locale                    String
+  label                     String
+  created_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                @db.Timestamptz(6)
+  version                   BigInt                   @default(1)
+  help_text                 String?
+  specification_definitions SpecificationDefinitions @relation(fields: [definition_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([definition_id, locale], map: "specification_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("specification_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalConditionTranslations {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  condition_id         String              @db.Uuid
+  locale               String
+  label                String
+  detail               String?
+  created_at           DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at           DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at           DateTime?           @db.Timestamptz(6)
+  version              BigInt              @default(1)
+  technical_conditions TechnicalConditions @relation(fields: [condition_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([condition_id, locale], map: "technical_condition_translations_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_condition_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalConditions {
+  id                               String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                         String                           @db.Uuid
+  condition_key                    String
+  condition_kind                   String
+  speed_mps                        Decimal?                         @db.Decimal(20, 6)
+  sort_order                       BigInt                           @default(1024)
+  created_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                        @db.Timestamptz(6)
+  version                          BigInt                           @default(1)
+  technical_condition_translations TechnicalConditionTranslations[]
+  technical_sheets                 TechnicalSheets                  @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_measurements           TechnicalMeasurements[]
+  technical_notes                  TechnicalNotes[]
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@unique([sheet_id, condition_key], map: "technical_conditions_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([sheet_id, sort_order, id], map: "technical_conditions_order_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([speed_mps, sheet_id, id], map: "technical_speed_lookup_idx", where: raw("((deleted_at IS NULL) AND (condition_kind = 'EXACT_SPEED'::text))"))
+  @@map("technical_conditions")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalConfigurationTranslations {
+  id                       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  configuration_id         String                  @db.Uuid
+  locale                   String
+  label                    String
+  applicability_note       String?
+  created_at               DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at               DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at               DateTime?               @db.Timestamptz(6)
+  version                  BigInt                  @default(1)
+  technical_configurations TechnicalConfigurations @relation(fields: [configuration_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([configuration_id, locale], map: "technical_configuration_translations_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_configuration_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalConfigurations {
+  id                                   String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                             String                               @db.Uuid
+  configuration_key                    String
+  capacity_kg                          Decimal?                             @db.Decimal(20, 6)
+  passenger_count                      Int?
+  sort_order                           BigInt                               @default(1024)
+  created_at                           DateTime                             @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                           DateTime                             @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                           DateTime?                            @db.Timestamptz(6)
+  version                              BigInt                               @default(1)
+  product_technical_configurations     ProductTechnicalConfigurations[]
+  technical_configuration_translations TechnicalConfigurationTranslations[]
+  technical_sheets                     TechnicalSheets                      @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_measurements               TechnicalMeasurements[]
+  technical_notes                      TechnicalNotes[]
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@unique([sheet_id, configuration_key], map: "technical_configurations_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([capacity_kg, sheet_id, id], map: "technical_capacity_lookup_idx", where: raw("((deleted_at IS NULL) AND (capacity_kg IS NOT NULL))"))
+  // SQL-managed partial index: @@index([sheet_id, sort_order, id], map: "technical_configurations_order_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_configurations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalMeasurements {
+  id                            String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                      String                       @db.Uuid
+  configuration_id              String                       @db.Uuid
+  condition_id                  String                       @db.Uuid
+  section_id                    String                       @db.Uuid
+  definition_id                 String                       @db.Uuid
+  value_type                    String                       @default("NUMBER")
+  qualifier                     String                       @default("EXACT")
+  value_state                   String                       @default("KNOWN")
+  number_value                  Decimal?                     @db.Decimal(20, 6)
+  source_observation_id         String?                      @db.Uuid
+  entry_basis                   String?
+  sort_order                    BigInt                       @default(1024)
+  created_at                    DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                    DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                    DateTime?                    @db.Timestamptz(6)
+  version                       BigInt                       @default(1)
+  specification_definitions     SpecificationDefinitions     @relation(fields: [definition_id, value_type], references: [id, value_type], onUpdate: NoAction)
+  technical_conditions          TechnicalConditions          @relation(fields: [sheet_id, condition_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_configurations      TechnicalConfigurations      @relation(fields: [sheet_id, configuration_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_sheets              TechnicalSheets              @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_sections            TechnicalSections            @relation(fields: [sheet_id, section_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_source_observations TechnicalSourceObservations? @relation(fields: [sheet_id, source_observation_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_notes               TechnicalNotes[]
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@unique([configuration_id, condition_id, definition_id, qualifier], map: "technical_measurements_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([condition_id, configuration_id], map: "technical_measurements_condition_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([definition_id, qualifier, number_value, configuration_id], map: "technical_measurements_numeric_idx", where: raw("((deleted_at IS NULL) AND (value_state = 'KNOWN'::text))"))
+  // SQL-managed partial index: @@index([sheet_id, configuration_id, section_id, sort_order, id], map: "technical_measurements_render_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([source_observation_id], map: "technical_measurements_source_idx", where: raw("((deleted_at IS NULL) AND (source_observation_id IS NOT NULL))"))
+  @@map("technical_measurements")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalNoteTranslations {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  note_id         String         @db.Uuid
+  locale          String
+  body            String
+  created_at      DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at      DateTime       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at      DateTime?      @db.Timestamptz(6)
+  version         BigInt         @default(1)
+  technical_notes TechnicalNotes @relation(fields: [note_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([note_id, locale], map: "technical_note_translations_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_note_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalNotes {
+  id                            String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                      String                       @db.Uuid
+  section_id                    String?                      @db.Uuid
+  configuration_id              String?                      @db.Uuid
+  condition_id                  String?                      @db.Uuid
+  measurement_id                String?                      @db.Uuid
+  source_observation_id         String?                      @db.Uuid
+  sort_order                    BigInt                       @default(1024)
+  created_at                    DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                    DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                    DateTime?                    @db.Timestamptz(6)
+  version                       BigInt                       @default(1)
+  technical_note_translations   TechnicalNoteTranslations[]
+  technical_conditions          TechnicalConditions?         @relation(fields: [sheet_id, condition_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_configurations      TechnicalConfigurations?     @relation(fields: [sheet_id, configuration_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_sheets              TechnicalSheets              @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_measurements        TechnicalMeasurements?       @relation(fields: [sheet_id, measurement_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_sections            TechnicalSections?           @relation(fields: [sheet_id, section_id], references: [sheet_id, id], onUpdate: NoAction)
+  technical_source_observations TechnicalSourceObservations? @relation(fields: [sheet_id, source_observation_id], references: [sheet_id, id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@index([measurement_id], map: "technical_notes_measurement_idx", where: raw("((deleted_at IS NULL) AND (measurement_id IS NOT NULL))"))
+  // SQL-managed partial index: @@index([sheet_id, sort_order, id], map: "technical_notes_order_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_notes")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSectionTranslations {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  section_id         String            @db.Uuid
+  locale             String
+  title              String
+  created_at         DateTime          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at         DateTime          @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at         DateTime?         @db.Timestamptz(6)
+  version            BigInt            @default(1)
+  technical_sections TechnicalSections @relation(fields: [section_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([section_id, locale], map: "technical_section_translations_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_section_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSections {
+  id                             String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                       String                         @db.Uuid
+  section_key                    String
+  sort_order                     BigInt                         @default(1024)
+  created_at                     DateTime                       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                     DateTime                       @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                     DateTime?                      @db.Timestamptz(6)
+  version                        BigInt                         @default(1)
+  technical_measurements         TechnicalMeasurements[]
+  technical_notes                TechnicalNotes[]
+  technical_section_translations TechnicalSectionTranslations[]
+  technical_sheets               TechnicalSheets                @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@unique([sheet_id, section_key], map: "technical_sections_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([sheet_id, sort_order, id], map: "technical_sections_order_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_sections")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSheetSources {
+  id                            String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                      String                        @db.Uuid
+  asset_id                      String                        @db.Uuid
+  source_label                  String
+  page_from                     Int
+  page_to                       Int
+  download_enabled              Boolean                       @default(false)
+  created_at                    DateTime                      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                    DateTime                      @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                    DateTime?                     @db.Timestamptz(6)
+  version                       BigInt                        @default(1)
+  media_asset_refs              MediaAssetRefs                @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
+  technical_sheets              TechnicalSheets               @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_source_observations TechnicalSourceObservations[]
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@index([asset_id, sheet_id], map: "technical_sources_asset_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([sheet_id, id], map: "technical_sources_sheet_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_sheet_sources")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSheetTranslations {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id           String          @db.Uuid
+  locale             String
+  title              String
+  summary            String?
+  applicability_note String?
+  created_at         DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at         DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at         DateTime?       @db.Timestamptz(6)
+  version            BigInt          @default(1)
+  technical_sheets   TechnicalSheets @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([sheet_id, locale], map: "technical_sheet_translations_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_sheet_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSheets {
+  id                               String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_key                        String                           @unique
+  created_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                        @db.Timestamptz(6)
+  version                          BigInt                           @default(1)
+  category_technical_sheets        CategoryTechnicalSheets[]
+  product_technical_configurations ProductTechnicalConfigurations[]
+  product_technical_sheets         ProductTechnicalSheets[]
+  technical_conditions             TechnicalConditions[]
+  technical_configurations         TechnicalConfigurations[]
+  technical_measurements           TechnicalMeasurements[]
+  technical_notes                  TechnicalNotes[]
+  technical_sections               TechnicalSections[]
+  technical_sheet_sources          TechnicalSheetSources[]
+  technical_sheet_translations     TechnicalSheetTranslations[]
+  technical_source_observations    TechnicalSourceObservations[]
+
+  @@map("technical_sheets")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model TechnicalSourceObservations {
+  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sheet_id                String                  @db.Uuid
+  source_id               String                  @db.Uuid
+  page_number             Int
+  table_label             String
+  row_label               String
+  column_label            String
+  source_symbol           String?
+  source_unit_text        String?
+  raw_value_text          String
+  raw_condition_text      String?
+  raw_note_text           String?
+  requires_clarification  Boolean                 @default(false)
+  resolution_note         String?
+  created_at              DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at              DateTime                @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at              DateTime?               @db.Timestamptz(6)
+  version                 BigInt                  @default(1)
+  technical_measurements  TechnicalMeasurements[]
+  technical_notes         TechnicalNotes[]
+  technical_sheets        TechnicalSheets         @relation(fields: [sheet_id], references: [id], onUpdate: NoAction)
+  technical_sheet_sources TechnicalSheetSources   @relation(fields: [sheet_id, source_id], references: [sheet_id, id], onUpdate: NoAction)
+
+  @@unique([sheet_id, id])
+  // SQL-managed partial index: @@index([sheet_id, id], map: "technical_observations_sheet_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([source_id, page_number, id], map: "technical_observations_source_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("technical_source_observations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Units {
+  code                      String                     @id
+  symbol                    String
+  dimension                 String
+  created_at                DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                   @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                  @db.Timestamptz(6)
+  version                   BigInt                     @default(1)
+  specification_definitions SpecificationDefinitions[]
+  unit_translations         UnitTranslations[]
+
+  @@map("units")
+  @@schema("catalog")
+}
+
+model InboxMessages {
+  consumer_name String
+  message_id    String   @db.Uuid
+  processed_at  DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@id([consumer_name, message_id])
+  @@map("inbox_messages")
+  @@schema("ops")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model OutboxEvents {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aggregate_type    String
+  aggregate_id      String?   @db.Uuid
+  aggregate_version BigInt?
+  event_type        String
+  payload           Json
+  created_at        DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  available_at      DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  published_at      DateTime? @db.Timestamptz(6)
+  attempts          Int       @default(0)
+  locked_until      DateTime? @db.Timestamptz(6)
+  lease_token       String?   @db.Uuid
+  last_error        String?
+  deleted_at        DateTime? @db.Timestamptz(6)
+
+  // SQL-managed partial index: @@index([available_at, created_at, id], map: "outbox_pending_idx", where: raw("((deleted_at IS NULL) AND (published_at IS NULL))"))
+  @@map("outbox_events")
+  @@schema("ops")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTypeGroups {
+  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id             String                      @db.Uuid
+  group_id                    String                      @db.Uuid
+  sort_order                  BigInt                      @default(1024)
+  created_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                  DateTime?                   @db.Timestamptz(6)
+  version                     BigInt                      @default(1)
+  specification_groups        SpecificationGroups         @relation(fields: [group_id], references: [id], onUpdate: NoAction)
+  product_types               ProductTypes                @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
+  product_type_specifications ProductTypeSpecifications[]
+
+  // SQL-managed partial index: @@unique([product_type_id, group_id], map: "product_type_group_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@unique([product_type_id, id])
+  // SQL-managed partial index: @@index([product_type_id, sort_order, id], map: "product_type_group_order_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([group_id, product_type_id], map: "product_type_group_usage_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_type_groups")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTypeSpecifications {
+  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id           String                   @db.Uuid
+  definition_id             String                   @db.Uuid
+  type_group_id             String?                  @db.Uuid
+  sort_order                BigInt                   @default(1024)
+  is_required               Boolean                  @default(false)
+  is_public                 Boolean                  @default(false)
+  is_searchable             Boolean                  @default(false)
+  is_filterable             Boolean                  @default(false)
+  is_comparable             Boolean                  @default(false)
+  created_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                DateTime?                @db.Timestamptz(6)
+  version                   BigInt                   @default(1)
+  specification_definitions SpecificationDefinitions @relation(fields: [definition_id], references: [id], onUpdate: NoAction)
+  product_types             ProductTypes             @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
+  product_type_groups       ProductTypeGroups?       @relation(fields: [product_type_id, type_group_id], references: [product_type_id, id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([product_type_id, definition_id], map: "product_type_specification_live_uq", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([product_type_id, type_group_id, sort_order, id], map: "product_type_specification_order_live_idx", where: raw("(deleted_at IS NULL)"))
+  // SQL-managed partial index: @@index([definition_id, product_type_id], map: "product_type_specification_usage_live_idx", where: raw("(deleted_at IS NULL)"))
+  @@map("product_type_specifications")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTypeTranslations {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id String       @db.Uuid
+  locale          String
+  name            String
+  description     String?
+  created_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at      DateTime?    @db.Timestamptz(6)
+  version         BigInt       @default(1)
+  product_types   ProductTypes @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([product_type_id, locale], map: "product_type_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("product_type_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ProductTypes {
+  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                        String                      @unique
+  schema_revision             BigInt                      @default(1)
+  deprecated_at               DateTime?                   @db.Timestamptz(6)
+  created_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                  DateTime?                   @db.Timestamptz(6)
+  version                     BigInt                      @default(1)
+  product_type_groups         ProductTypeGroups[]
+  product_type_specifications ProductTypeSpecifications[]
+  product_type_translations   ProductTypeTranslations[]
+  products                    Products[]
+
+  @@map("product_types")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationGroupTranslations {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id             String              @db.Uuid
+  locale               String
+  name                 String
+  description          String?
+  created_at           DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at           DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at           DateTime?           @db.Timestamptz(6)
+  version              BigInt              @default(1)
+  specification_groups SpecificationGroups @relation(fields: [group_id], references: [id], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([group_id, locale], map: "specification_group_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("specification_group_translations")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model SpecificationGroups {
+  id                               String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                             String                           @unique
+  created_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                        @db.Timestamptz(6)
+  version                          BigInt                           @default(1)
+  product_type_groups              ProductTypeGroups[]
+  specification_group_translations SpecificationGroupTranslations[]
+
+  @@map("specification_groups")
+  @@schema("catalog")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model UnitTranslations {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_code  String
+  locale     String
+  label      String
+  created_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at DateTime? @db.Timestamptz(6)
+  version    BigInt    @default(1)
+  units      Units     @relation(fields: [unit_code], references: [code], onUpdate: NoAction)
+
+  // SQL-managed partial index: @@unique([unit_code, locale], map: "unit_translation_live_uq", where: raw("(deleted_at IS NULL)"))
+  @@map("unit_translations")
+  @@schema("catalog")
+}
+
+/// Private SQL-owned gate: runtime has no access and Prisma has no API.
+model WriteGate {
+  id                 Int    @id @db.SmallInt
+  revision           BigInt @default(0)
+  validated_revision BigInt @default(0)
+
+  @@map("write_gate")
+  @@ignore
+  @@schema("catalog")
+}

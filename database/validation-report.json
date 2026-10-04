@@ -1,0 +1,11 @@
+{
+  "postgres": "18.6",
+  "schemaVersion": "1.1",
+  "suites": 7,
+  "freshDatabases": 4,
+  "installedSchemaParity": true,
+  "upgradeFromV1": true,
+  "concurrencyScenarios": 4,
+  "crossDatabaseDenials": 12,
+  "result": "passed"
+}

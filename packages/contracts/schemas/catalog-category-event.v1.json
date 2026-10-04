@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:golden-lift:catalog-category-event:v1",
+  "allOf": [
+    {
+      "$ref": "urn:golden-lift:event-envelope:v1"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "catalog.category.created.v1",
+            "catalog.category.updated.v1",
+            "catalog.category.moved.v1",
+            "catalog.categories.reordered.v1",
+            "catalog.category.branch.deleted.v1"
+          ]
+        },
+        "producer": {
+          "const": "catalog"
+        },
+        "aggregate": {
+          "properties": {
+            "type": {
+              "const": "Category"
+            },
+            "key": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["categoryId"],
+          "properties": {
+            "categoryId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            },
+            "parentId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "previousParentId": {
+              "type": ["string", "null"],
+              "format": "uuid"
+            },
+            "beforeId": {
+              "type": ["string", "null"],
+              "format": "uuid"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
+            },
+            "listRevision": {
+              "type": "string",
+              "pattern": "^l1-[a-f0-9]{64}$",
+              "description": "Opaque scope-bound state precondition. Re-read after 409; never an authorization credential."
+            },
+            "categoryCount": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            "productCount": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)$"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

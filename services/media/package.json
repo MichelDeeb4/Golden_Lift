@@ -1,0 +1,22 @@
+{
+  "name": "@golden-lift/media",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/composition/main.js"
+  },
+  "dependencies": {
+    "@golden-lift/contracts": "0.1.0",
+    "@golden-lift/platform": "0.1.0",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-express": "12.1.2",
+    "pg": "8.23.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "@prisma/client": "7.10.0",
+    "@prisma/adapter-pg": "7.10.0"
+  }
+}

@@ -1,0 +1,15 @@
+.local/
+database/source-package/
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+
+dist/
+coverage/
+*.tsbuildinfo
+
+
+# Reproducible service-owned Prisma clients
+services/*/src/infrastructure/prisma/generated/

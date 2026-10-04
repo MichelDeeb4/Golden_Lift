@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:golden-lift:event-envelope:v1",
+  "title": "Golden Lift event envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "type",
+    "schemaVersion",
+    "producer",
+    "occurredAt",
+    "correlationId",
+    "aggregate",
+    "data"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.]*\\.v[1-9][0-9]*$"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "producer": {
+      "enum": ["identity", "catalog", "media", "inquiries"]
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "key", "version"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "UUID or singleton business key; persisted aggregate_id is null for non-UUID keys."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "description": "Runtime validation also enforces the signed bigint maximum."
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "description": "Stream-specific JSON data; no credentials, raw tokens or inquiry contact/message data."
+    }
+  }
+}

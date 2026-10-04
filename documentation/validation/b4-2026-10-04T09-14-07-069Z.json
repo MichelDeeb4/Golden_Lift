@@ -1,0 +1,300 @@
+{
+  "checkedAt": "2026-10-04T09:52:40.732Z",
+  "scope": "B4 complete category administration on the existing four service-owned databases",
+  "implementation": "complete",
+  "localVerification": "passed",
+  "versions": {
+    "node": "v24.21.0",
+    "postgres": "18.6",
+    "prisma": "7.10.0",
+    "openapi": "0.3.0"
+  },
+  "capabilities": {
+    "adminDetailAndStoredTranslations": true,
+    "paginatedChildrenAndBreadcrumbs": true,
+    "advisoryMoveDestinations": true,
+    "rootAndBranchMoves": true,
+    "atomicRootAndNestedReorder": true,
+    "consistentReadOnlyDeletionPreview": true,
+    "fullOwnedStateStalePreviewProtection": true,
+    "confirmedAtomicSoftDeletion": true,
+    "verifiedOptionalCovers": true,
+    "liveAdminAuthorizationAndGatewayRoutes": true
+  },
+  "adminOperations": [
+    "POST /api/v1/admin/categories",
+    "GET /api/v1/admin/categories",
+    "PATCH /api/v1/admin/categories/{id}",
+    "GET /api/v1/admin/categories/{id}",
+    "DELETE /api/v1/admin/categories/{id}",
+    "GET /api/v1/admin/categories/{id}/breadcrumbs",
+    "GET /api/v1/admin/categories/{id}/move-destinations",
+    "POST /api/v1/admin/categories/{id}/move",
+    "POST /api/v1/admin/categories/reorder",
+    "GET /api/v1/admin/categories/{id}/deletion-preview"
+  ],
+  "persistence": {
+    "databases": 4,
+    "physicalTables": 59,
+    "columns": 577,
+    "foreignKeys": 64,
+    "migrationRequired": false,
+    "prismaBindingsAndPinnedLockfileUnchanged": true,
+    "privateWriteGateNotExposed": true,
+    "isolation": "Serializable",
+    "wholeTransactionRetryAttempts": 3,
+    "businessOutboxAtomicity": true,
+    "exactVersionsAndOrder": "decimal strings",
+    "deletionFunction": "catalog.soft_delete_branch(uuid,bigint)",
+    "deletionEvent": "catalog.category.branch.deleted.v1",
+    "singleDeletionOutboxRecordRetained": true
+  },
+  "preconditions": {
+    "lists": "scope-bound SHA-256 over parent and active sibling/translation/direct-product IDs and versions; applies to roots",
+    "breadcrumbs": "selected ID, locale and complete path revision; paginated root-to-selected depth keys",
+    "deletion": "root row version plus scope-bound SHA-256 over all active branch-owned record IDs/versions and referenced media/sheet versions; rechecked in the deleting transaction"
+  },
+  "operationalBounds": {
+    "pageSize": 100,
+    "completeSiblingReorder": 500,
+    "orderingGapRecoveryAffectedSet": 500,
+    "fixedBusinessDepth": null,
+    "fixedBusinessRootCount": null,
+    "oversizedRecovery": "explicit 422, no partial update or event",
+    "samePositionMoveAndSameOrderReorder": "checked no-op, no event"
+  },
+  "commands": [
+    {
+      "command": "npm.cmd run build",
+      "result": "passed",
+      "evidence": ".local/b4-build.log",
+      "completedAt": "2026-10-04T09:15:38.041Z"
+    },
+    {
+      "command": "npm.cmd run check",
+      "result": "passed",
+      "evidence": ".local/b4-check.log",
+      "completedAt": "2026-10-04T09:44:23.089Z"
+    },
+    {
+      "command": "npm.cmd run test:integration",
+      "result": "passed",
+      "evidence": ".local/b4-integration.log",
+      "completedAt": "2026-10-04T09:44:59.628Z"
+    },
+    {
+      "command": "npm.cmd run smoke",
+      "result": "passed",
+      "evidence": ".local/b4-smoke.log",
+      "completedAt": "2026-10-04T09:20:04.311Z"
+    },
+    {
+      "command": "npm.cmd run smoke:identity",
+      "result": "passed",
+      "evidence": ".local/b4-identity-smoke.log",
+      "completedAt": "2026-10-04T09:21:23.232Z"
+    },
+    {
+      "command": "npm.cmd run orm:check",
+      "result": "passed",
+      "evidence": ".local/b4-orm-check.log",
+      "completedAt": "2026-10-04T09:22:05.456Z"
+    },
+    {
+      "command": "npm.cmd run orm:verify",
+      "result": "passed",
+      "evidence": ".local/b4-orm-verify.log",
+      "completedAt": "2026-10-04T09:22:25.234Z"
+    },
+    {
+      "command": "node .local/run-b4-database-verification.mjs",
+      "result": "passed",
+      "evidence": ".local/b4-database.log",
+      "completedAt": "2026-10-04T09:13:37.906Z"
+    },
+    {
+      "command": "node scripts/smoke.mjs",
+      "result": "passed",
+      "evidence": ".local/b4-smoke-final.log",
+      "completedAt": "2026-10-04T09:46:38.642Z"
+    },
+    {
+      "command": "node scripts/identity-smoke.mjs",
+      "result": "passed",
+      "evidence": ".local/b4-identity-smoke-final.log",
+      "completedAt": "2026-10-04T09:46:44.983Z"
+    },
+    {
+      "command": "node scripts/verify-orm.mjs",
+      "result": "passed",
+      "evidence": ".local/b4-orm-verify-final.log",
+      "completedAt": "2026-10-04T09:46:46.509Z"
+    }
+  ],
+  "checks": {
+    "unit": {
+      "mode": "unit",
+      "files": 6,
+      "result": "passed",
+      "checkedAt": "2026-10-04T09:44:23.102Z",
+      "tests": 24,
+      "failed": 0
+    },
+    "integration": {
+      "mode": "integration",
+      "files": 5,
+      "result": "passed",
+      "checkedAt": "2026-10-04T09:44:59.635Z",
+      "tests": 58,
+      "failed": 0
+    },
+    "b4IntegrationTests": 24,
+    "architecture": {
+      "authoredFiles": 84,
+      "enforcementProbes": 11,
+      "result": "passed"
+    },
+    "processSmoke": {
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "result": "passed",
+      "publicCategoryRead": true,
+      "identityOutagePublicRead": true,
+      "internalRoutesBlocked": true
+    },
+    "identityAndB4ProcessSmoke": {
+      "result": "passed",
+      "checkedAt": "2026-10-04T09:46:44.986Z",
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "operatorBootstrap": true,
+      "invitationLocalDelivery": true,
+      "adminCategoryWrite": true,
+      "b4CategoryNavigation": true,
+      "b4BranchMove": true,
+      "b4SiblingReorder": true,
+      "b4StalePreviewProtection": true,
+      "b4ConfirmedBranchDeletion": true,
+      "liveRevocation": true,
+      "roleBoundaries": true,
+      "csrf": true,
+      "identityOutagePublicRead": true
+    },
+    "database": {
+      "postgres": "18.6",
+      "schemaVersion": "1.1",
+      "suites": 7,
+      "freshDatabases": 4,
+      "installedSchemaParity": true,
+      "upgradeFromV1": true,
+      "concurrencyScenarios": 4,
+      "crossDatabaseDenials": 12,
+      "result": "passed",
+      "checkedAt": "2026-10-04T09:13:37.976Z"
+    },
+    "prismaRuntimeParity": "59 models/577 columns/64 FKs and all installed constraints/indexes/triggers passed"
+  },
+  "coverage": {
+    "deepPathLevels": 107,
+    "largeSiblingSet": 501,
+    "concurrency": [
+      "competing moves that would form a cycle",
+      "move versus destination product insertion",
+      "reorder versus sibling creation",
+      "reorder versus incoming branch move",
+      "deletion versus new descendant",
+      "deletion versus new product/media attachment",
+      "unrelated writer forces whole move retry with one committed event",
+      "existing stale expected-version edits and SQL lock-contention suites"
+    ],
+    "retention": [
+      "descendant/product identity and specification/media/technical links retained across moves",
+      "deleted owned translations/specifications/media/code reservations/technical links/selections remain stored",
+      "shared sheets and source evidence remain active",
+      "Media registrations remain active; no file APIs/storage effects",
+      "model-code uniqueness remains reserved",
+      "repeated deletion is 404",
+      "post-event deletion/reorder failure rolls back all changes and events"
+    ],
+    "authorization": "Every B4 route covered for anonymous/forged principals, Super Admin, revoked/expired/disabled/deleted sessions, unsafe Origin and mutation CSRF, and Identity outage; anonymous category reads continue"
+  },
+  "fixtureAudit": {
+    "scratchDatabases": "0",
+    "realIdentityStaffAccounts": "0",
+    "installedStaffCreatedByTests": false,
+    "configurationAndPrivateMailboxesModifiedByTestCleanup": false
+  },
+  "preservedEvidence": [
+    "documentation/backend-validation.json",
+    "documentation/identity-validation.json",
+    "documentation/architecture-validation.json",
+    "documentation/orm-validation.json",
+    "database/validation-report.json"
+  ],
+  "limitations": [
+    "Hosted CI and Docker execution not performed",
+    "No production deployment/provider/TLS/load/backup-restore evidence",
+    "No frontend/dashboard, product APIs, Media upload/processing/delivery, Inquiry workflows or broker workers",
+    "Catalog deletion does not revoke Media signed URLs or downloaded files",
+    "Complete-set reorder and exhausted-gap recovery enforce documented transaction bounds"
+  ],
+  "remainingB4Gaps": [],
+  "exercise": "npm.cmd run smoke:identity (five actual entrypoints and disposable Identity/Catalog databases/mailbox); npm.cmd run test:integration for the real PostgreSQL category fixtures",
+  "sourceSha256": {
+    "AGENTS.md": "d7abc2ef97bc28396d0b2620d1cd42f1cbf7c578433a12fb522948335ff0bc3a",
+    "database/schema-manifest.json": "bda1b91ee34dfbcf62f4276a8f8d861352917e66d565f8ddc5ec26fc72fb4aeb",
+    "database/scripts/verify.mjs": "f52f6b01f28bec5847830e2bec4a5a11eeff70873fcb8658f0674569f4f8e8b6",
+    "documentation/api/openapi.json": "e488dba2e2de8f3d03d3560cbd942accbbab3c224db9ec9954d274cbe30f5fbf",
+    "package-lock.json": "e72929b383862be3b6471309ebd7da71748ac0bf67e9aa6b0520511ef9e6e7fc",
+    "packages/contracts/src/catalog-admin.ts": "0e6bce8d95cbc983fb5da8ca075fa6c7493da16987144f5fa5a36923ae2b688d",
+    "packages/contracts/src/core.ts": "a76b594c155fac6037f4e04aff8510dfdeae47eb9f1c6c273e681008bea65779",
+    "packages/contracts/src/index.ts": "81bded623227c99a39d4de5515035256883958c8d25a8019032bdb04115bf020",
+    "scripts/identity-smoke.mjs": "3c1610c49ec9679f9c699e42def1fe2913369c5461d771e2cb6f3966f4286a05",
+    "services/catalog/prisma/schema.prisma": "34bc3ac9c23919c9f89dbb8434b39c8b08272b341ca267209419cd1815fdb451",
+    "services/catalog/src/application/ports/catalog.ts": "78ebeea9294d239765a8af96714ea37c1c53c4cea98963cf3e680473566aad5c",
+    "services/catalog/src/application/ports/category-query.ts": "97a69f89ec699583941b1013dbd6191a45e5c389b910c0ac4e61da5e944ddf74",
+    "services/catalog/src/application/ports/category-tree.ts": "8fdae87bcd6d12f636613a57d4d739377eaf19de970a49c976c33dff62260e2f",
+    "services/catalog/src/application/use-cases/authenticate-category-administrator.ts": "9cbd80eacf5901812edd68c13604bc0c1c9e0016f38b600032e92583e51c8705",
+    "services/catalog/src/application/use-cases/create-category.ts": "fad7d26cf28897d4da3fad3843f6d29651b62cd0f8a27b92faddc58fa96825b0",
+    "services/catalog/src/application/use-cases/delete-category-branch.ts": "db8533612230debdbabc8d84f1c888e6c060abec27b2cc26b131f9b4acd55fe0",
+    "services/catalog/src/application/use-cases/edit-category.ts": "221321a0fd78e0db05b5e6ac1bb5f277264a8761d94867982e9757f17c6e0068",
+    "services/catalog/src/application/use-cases/move-category.ts": "98e0b1d8100102826084a2df04cfb954ce01527a9457ad2eaca2d3213abd7a81",
+    "services/catalog/src/application/use-cases/read-categories.ts": "d87301199d51816afaddc64e7489bc3aa37e9402df4d8eb659bc1ab92b7ba251",
+    "services/catalog/src/application/use-cases/read-category-navigation.ts": "f8ae9e8142b0fa31608fa72b894b7c6bca9cf3f955a65805971f3492685b7966",
+    "services/catalog/src/application/use-cases/reorder-categories.ts": "8b0855afab4f3f9bc11d3f7b7e12cd79792847c17f84551ed48c9d8273f29b12",
+    "services/catalog/src/composition/application.ts": "d692507f24aa816c1d1cc15fb66c25bb603ca6cc47d70bef4f33b7316fc9d022",
+    "services/catalog/src/composition/main.ts": "a6d73ee2299bbbebd0a128addd229bd6a236bb209e9c5d10a61614f6985d4ad8",
+    "services/catalog/src/domain/category-order.ts": "05b081cf3e4ecdc827a8628cf236046462d8a28de4529c006dc2d44beb71f8df",
+    "services/catalog/src/domain/category.ts": "2161fd7b95ce52f11641e258da752383a5591a7fef07e20712125a3cbaa47d7d",
+    "services/catalog/src/infrastructure/prisma/category-navigation.ts": "2c9931a55e1c567134642dc6f321f98a02cb655dac7735d25d4560fe4d384452",
+    "services/catalog/src/infrastructure/prisma/category-repository.ts": "3625002f49e3697c39c74f2aabb050a1c508577ac632f790d1488268545e123f",
+    "services/catalog/src/infrastructure/prisma/category-tree-writer.ts": "f5e0960befd22bdb9e8df12a23446742fa90615fac960c13c6ae345c10fc7cab",
+    "services/catalog/src/infrastructure/prisma/client.ts": "1b2c502d26bec14f794a07da59974f2c1979edb635a7043626684a7315d98d18",
+    "services/catalog/src/infrastructure/prisma/outbox.ts": "c1e7924e2db93d48d71c6adccf3e3b8de9123e5a7ae00e4abfad2f3c09a9b747",
+    "services/catalog/src/infrastructure/prisma/unit-of-work.ts": "234424be1537dcd2238a799ba927a660d5ed66f539d1707b2b84602c8cd666fc",
+    "services/catalog/src/presentation/http/admin-categories-controller.ts": "da3149970d0a94615c3e6154ac33681950ae4d15ed102ea011b230067de555fc",
+    "services/catalog/src/presentation/http/categories-controller.ts": "bd240b5aa2d18af2124148d1ccbebf655f1bdf8f883e9286c4f355563938c223",
+    "services/catalog/src/presentation/http/category-query.ts": "ea61b518f041569f081d5d1efd2c2feb838f9a446b12583d26a7b4416837b85f",
+    "services/catalog/src/presentation/http/category-tree-controller.ts": "ce2b8972b7eeab4e1a02b7a7bda36dacd3524144cdffb3afad032271ae46c136",
+    "services/catalog/tests/catalog.integration.test.ts": "4074037f0debe92be1b788e0dea159c71d5fe5ea4ba4dc3f53d78f887281f65a",
+    "services/catalog/tests/category-tree.integration.test.ts": "a1a431ec050f955f4c06d52262efd8d6afc264f2676777e6803a73d5b68632ea",
+    "services/catalog/tests/category-tree.unit.test.ts": "a425e255be0b0865fa3467803c6b02757cd662702e5cb247b2bc1dc3a751125b",
+    "services/catalog/tests/category.unit.test.ts": "0087a73e13c95f0e97f28cbb3538603b2b6b57131b1254a72e13917e54383448",
+    "services/gateway/src/infrastructure/http/staff-proxy.ts": "461fb2a06c306c00e4e448883b1fb99b4c5a77552bdc6609a80f96863a0887e0",
+    "services/gateway/src/presentation/http/openapi-controller.ts": "386cb9686970360fe609f0b0e5da3e138a8d2617d7fc3074fc4e50e3ca363a01",
+    "services/identity/prisma/schema.prisma": "b2218b9af7c4a82729181206f90098481bb26884a7fd0184ef4b0e691230b147",
+    "services/identity/tests/identity.integration.test.ts": "84ccb250574e2c153c72aea33378eda5d146386da6404e22872deaa7d4abd2f4",
+    "services/inquiries/prisma/schema.prisma": "8dfe8bebb8267a56f5994785298d12a557c4dce310166e3be6a1e7622c96e56b",
+    "services/media/prisma/schema.prisma": "3fe0ea2f4842358ca51985b12defeb657987a29cf2333d32e5157f9e5abf7faa"
+  }
+}

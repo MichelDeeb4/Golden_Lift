@@ -1,0 +1,268 @@
+# Golden Lift: Completed Work and Project Status
+
+Updated: 2026-10-04.
+
+This document summarizes the implemented project in this repository. B4 adds current locally executed category administration evidence in the [timestamped B4 report](validation/b4-2026-10-04T09-14-07-069Z.json). Earlier Prisma validation at 08:37 UTC and other milestone reports remain preserved as historical evidence.
+
+## 1. Current status
+
+The v1.1 database design, backend foundation, staff Identity workflows and Prisma integration are implemented locally. Public browsing and complete Admin category workflows, including navigation/moves/reordering/deletion preview and confirmed soft deletion, are available. Dynamic Catalog Core additionally implements configurable types/attributes and narrow headless products; full content workflows and application interfaces remain separate planned milestones.
+
+| Area                                            | Current state                                                                                                                                |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL databases                            | Installed v1.1: 59 physical tables; prepared/verified v1.2: 66 tables, 646 columns, 73 foreign keys                                                                                |
+| Backend foundation, B1/B2                       | Five independent services, shared contracts, health checks and HTTP infrastructure implemented                                               |
+| Identity, B3                                    | Staff authentication, invitations, password recovery and Admin lifecycle implemented                                                         |
+| Catalog                                         | B4 implemented locally: editor navigation, moves, root/nested ordering and preview/confirmed branch deletion                                 |
+| Media                                           | Database, Prisma models, readiness and authenticated staff access checks implemented; upload/processing/delivery workflows remain planned    |
+| Inquiries                                       | Database, Prisma models, readiness and authenticated staff access checks implemented; submission/inbox/notification workflows remain planned |
+| Prisma adoption                                 | Separate schemas and clients for the four database-owning services implemented                                                               |
+| Public website, mobile apps and staff dashboard | Planned                                                                                                                                      |
+| Production deployment                           | Planned; local validation does not establish production readiness                                                                            |
+
+The database includes support for more business operations than the currently exposed APIs. For example, technical sheets, Media processing jobs and Inquiry notifications have database structures/rules while their full service workflows remain planned. B4 now exposes category branch deletion through the protected Catalog API.
+
+## 2. Technology and service ownership
+
+| Component         | Implemented technology                                           |
+| ----------------- | ---------------------------------------------------------------- |
+| Runtime           | Node.js 24.21.0, with the project restricted to the Node 24 line |
+| Language          | TypeScript 6.0.3 with strict type checking                       |
+| Backend framework | NestJS 12.1.2                                                    |
+| Database          | PostgreSQL 18.6 in the recorded local validation                 |
+| ORM               | Prisma 7.10.0 and the PostgreSQL driver adapter                  |
+| PostgreSQL driver | pg 8.23.1                                                        |
+| Password hashing  | Argon2id through Node crypto                                     |
+| Mail              | SMTP adapter and a private development mailbox                   |
+| Workspace         | npm workspaces for services and shared packages                  |
+
+There are **four business databases and five backend processes**. Gateway routes requests and has no business database. Each business service connects only to its own database using its own runtime credentials.
+
+| Process                   | Responsibility                                                         | Default local port |
+| ------------------------- | ---------------------------------------------------------------------- | -----------------: |
+| Gateway                   | Public HTTP entrypoint and service routing                             |               3000 |
+| Identity                  | Staff accounts, credentials, sessions and authorization                |               3001 |
+| Catalog                   | Categories, products, translations, specifications and company content |               3002 |
+| Media                     | Media assets, uploads, variants and processing ownership               |               3003 |
+| Inquiries                 | Inquiries and notification ownership                                   |               3004 |
+| Project PostgreSQL server | Hosts the four separate service databases                              |              55432 |
+
+These are configured development addresses, not a claim that the processes are currently running.
+
+## 3. Architecture and saved engineering rules
+
+The standing requirement to use maintainable solutions, established best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). Prisma is the explicitly selected ORM. These instructions apply to future changes in this repository.
+
+The services follow Clean Architecture:
+
+| Layer          | Implemented responsibility                                            |
+| -------------- | --------------------------------------------------------------------- |
+| Domain         | Business policies, staff role rules and category validation           |
+| Application    | Use cases, focused ports, authorization and transaction orchestration |
+| Infrastructure | Prisma persistence, HTTP clients, cryptography and mail adapters      |
+| Presentation   | Controllers, transport validation and response mapping                |
+| Composition    | Dependency construction, configuration, startup and shutdown          |
+
+Domain and application code remain independent of NestJS, Prisma, PostgreSQL drivers, SMTP and environment/filesystem access. Cross-service dependencies use contracts and APIs rather than another service's implementation or database.
+
+```text
+Golden_Lift/
+  AGENTS.md
+  services/
+    identity/
+    catalog/
+    media/
+    inquiries/
+    gateway/
+  packages/
+    contracts/
+    platform/
+  database/
+    sql/
+    tests/
+    scripts/
+    schema-manifest.json
+  documentation/
+    decisions/
+    operations/
+    api/openapi.json
+  infrastructure/containers/
+  scripts/
+```
+
+A database-owning service has its own `prisma/schema.prisma` and `prisma.config.ts`. Its authored code lives under `src/domain`, `src/application`, `src/infrastructure`, `src/presentation` and `src/composition`. Prisma clients are generated into the owning service's infrastructure. Gateway uses application/infrastructure/presentation/composition without an artificial business domain or database.
+
+Implemented patterns include:
+
+- **Repository:** application ports isolate use cases from persistence models and queries.
+- **Unit of Work:** Identity and Catalog mutations use Prisma interactive transactions.
+- **Constructor injection:** composition supplies dependencies through focused interfaces.
+- **Adapters:** HTTP, persistence, cryptography and email implementations stay in infrastructure.
+- **Transactional outbox:** applicable Identity and Catalog event records commit with business changes.
+- **Interface segregation:** read workflows receive narrow reader ports.
+- **Bounded retry:** serialization/deadlock failures retry complete local transactions; external mail/HTTP/file effects remain outside retries.
+
+Architecture checks reject reversed layers, cross-service implementation imports, ORM/framework imports in business layers, circular imports and shared-package boundary violations. See the [architecture guide](architecture.md).
+
+## 4. Database work completed
+
+| Database              | Tables, including local ops tables |
+| --------------------- | ---------------------------------: |
+| golden_lift_identity  |                                  5 |
+| golden_lift_catalog   |                                 43 |
+| golden_lift_media     |                                  6 |
+| golden_lift_inquiries |                                  5 |
+| **Total**             |                             **59** |
+
+The total comprises 50 business/support tables, eight messaging tables and one private Catalog write gate. The recorded schema contains **577 columns and 64 database-local foreign keys**.
+
+The implemented database supports:
+
+- Staff accounts, hashed session/action tokens and credential revocation.
+- Category trees, localized text, products, retained product codes and media associations.
+- Typed specifications, choices, units, filtering rules and company content/settings.
+- Technical sheets, sections, configurations, conditions, measurements, notes and private source observations.
+- Media assets, upload sessions, variants and processing jobs.
+- Inquiries, idempotency, notification settings/deliveries and cancellation rules.
+- Per-service inbox deduplication and outbox event storage.
+
+Implemented protections include owner/runtime separation, denied cross-database access, expected-version checks, generated values, retained soft-deleted records, physical deletion/truncation restrictions, lifecycle triggers and deferred Catalog integrity checks. Six agreed root categories have a seed script with Arabic and English names.
+
+Database management tools support local initialization/start/stop/status, installation, seeding, tests, schema export and custom-format backups. Fresh installations were compared with the installed schemas, and the additive v1.0-to-v1.1 Catalog upgrade was verified. Backup restoration and disaster recovery remain deployment validation work.
+
+See [database documentation](../database/README.md), the [schema dictionary](../database/schema-manifest.json) and [database validation](../database/validation-report.json).
+
+## 5. Prisma integration completed
+
+Each database-owning service has a separate schema and generated client:
+
+- [Identity schema](../services/identity/prisma/schema.prisma).
+- [Catalog schema](../services/catalog/prisma/schema.prisma).
+- [Media schema](../services/media/prisma/schema.prisma).
+- [Inquiries schema](../services/inquiries/prisma/schema.prisma).
+
+All 59 physical tables are represented. The private Catalog write gate is ignored by Prisma, leaving **58 client-accessible models** and preserving runtime access restrictions.
+
+Identity/Catalog repositories and outbox writes use generated Prisma model operations. Composition creates the clients using each service's checked PostgreSQL pool. Repository and outbox operations inside a unit of work receive the same transaction client. Catalog uses Serializable isolation; Identity uses ReadCommitted with explicit locking. Shared retry/error handling recognizes Prisma and nested PostgreSQL failures. Shutdown disconnects Prisma and closes the pool.
+
+BigInt/Decimal values remain exact in infrastructure and become strings at business/API boundaries. Binary hashes use bytes. Identity uses narrow parameterized Prisma SQL for exact timestamp cursors, locks and server-timed atomic token rules.
+
+Reviewed SQL remains the authority for migrations, grants, triggers, deferred constraints, generated expressions and partial indexes. ORM integration preserves these mechanisms. Schema checks compare the Prisma bindings and installed database catalogs with the reviewed dictionary. Introspection writes review files into ignored local storage instead of overwriting approved schemas automatically.
+
+See the [Prisma decision](decisions/004-prisma-persistence.md) and [implementation plan](orm-implementation-plan.md).
+
+## 6. Staff and Identity workflows completed
+
+Identity implements:
+
+- Operator-only initial Super Admin bootstrap, protected against repeat/concurrent creation.
+- Staff login, current-session retrieval and logout.
+- Argon2id passwords and random opaque session tokens stored as hashes.
+- Single-use Admin invitations and password setup.
+- Password-reset requests, token consumption and authenticated password changes.
+- Super Admin listing/detail/invitation/edit/enable/disable/soft deletion of Admin accounts.
+- Expected-version checks and invitation resending that invalidates earlier links.
+- Live session verification for Catalog, Media and Inquiries with separate caller credentials.
+- Origin/CSRF checks, HttpOnly session cookies, rate limits and safe errors/logs.
+- Account-change triggers that revoke affected credentials, plus minimal transactional events.
+- SMTP delivery and an ignored private development mailbox.
+
+Role permissions are separate: **Super Admin manages Admin accounts; Admin manages content and inquiries.** Both roles can manage their own password/session. Ordinary API routes cannot create additional Super Admin accounts or change an Admin into Super Admin.
+
+Email delivery runs after the database transaction. The current delivery coordinator is bounded in memory; durable broker-backed delivery remains later work. Action links and credentials are excluded from ordinary logs and API responses.
+
+See the [Identity operating guide](operations/identity.md) for bootstrap, invitations, recovery and configuration.
+
+## 7. Catalog, Gateway and HTTP APIs completed
+
+Catalog provides public reads plus Admin editor detail with actual saved translations/counts, bounded deep child/breadcrumb/destination navigation, complete branch moves, atomic root/nested sibling ordering, and read-only deletion preview with explicit confirmed soft deletion. Scope-bound list/path/branch preconditions protect concurrency without exposing the private gate. All writes/outbox share a Serializable Prisma transaction. Verified asset covers are optional; shared sheets, registrations/files, source evidence and code reservations remain retained. See the [Catalog operating guide](operations/catalog.md).
+
+Gateway routes the implemented public/staff APIs, propagates approved request context, limits input, rejects untrusted role headers and exposes the OpenAPI document. Internal Identity introspection is not routed through Gateway. Health/readiness checks report service/dependency availability. Anonymous Catalog reads continue to work during an Identity outage; protected actions fail safely.
+
+| Capability                   | Implemented routes                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Health                       | GET /health/live; GET /health/ready                                                                                     |
+| Public categories            | GET /api/v1/categories; GET /api/v1/categories/{id}                                                                     |
+| Staff sessions               | POST /api/v1/auth/login; GET /api/v1/auth/session; POST /api/v1/auth/logout                                             |
+| Invitation acceptance        | POST /api/v1/auth/invitations/accept                                                                                    |
+| Password recovery/change     | POST /api/v1/auth/password/reset-request; POST /api/v1/auth/password/reset; POST /api/v1/auth/password/change           |
+| Admin directory/invitations  | GET and POST /api/v1/staff/admins                                                                                       |
+| Admin detail/edit/delete     | GET, PATCH and DELETE /api/v1/staff/admins/{id}                                                                         |
+| Admin lifecycle/resend       | POST /api/v1/staff/admins/{id}/enable, /disable and /invitation                                                         |
+| Protected category changes   | POST /api/v1/admin/categories; PATCH /api/v1/admin/categories/{id}; POST /{id}/move; POST /reorder; DELETE /{id}        |
+| Admin category navigation    | GET /api/v1/admin/categories; GET /{id}; GET /{id}/breadcrumbs; GET /{id}/move-destinations; GET /{id}/deletion-preview |
+| Media staff-access check     | GET /api/v1/admin/media/session                                                                                         |
+| Inquiries staff-access check | GET /api/v1/admin/inquiries/session                                                                                     |
+
+The complete current contract, version 0.3.0, is stored in [OpenAPI](api/openapi.json) and served at GET /api/v1/openapi.json. The Media/Inquiries session routes verify access; they do not implement their remaining business workflows.
+
+## 8. Development and delivery tooling completed
+
+The repository includes locked workspace dependencies, per-service builds, strict type checking, formatting, architecture enforcement and unit/integration/process runners. Build generates all four Prisma clients before compiling their owning services.
+
+Local tools manage authentication secrets, service configuration, five-process development startup, Super Admin bootstrap and database maintenance. Real credentials and local mail stay in ignored `.local` storage.
+
+A GitHub Actions workflow is configured for backend/database checks, and a Docker build recipe creates service-specific runtime artifacts. Hosted CI and Docker execution have not been verified in the local environment.
+
+Useful commands, run from the repository root:
+
+```powershell
+npm.cmd run build
+npm.cmd run check
+npm.cmd run test:integration
+npm.cmd run smoke
+npm.cmd run smoke:identity
+npm.cmd run orm:check
+npm.cmd run orm:verify
+npm.cmd run dev
+```
+
+`orm:generate` generates clients, `orm:format` formats schemas and `orm:pull` saves introspection for review. See the [local setup guide](operations/backend-local.md) for installation, environment configuration and process startup.
+
+## 9. Recorded verification
+
+Historical B4 verification passed: **24 unit tests across 6 files; 58 PostgreSQL/API integration tests across 5 files (24 B4 tests); 84 source files and 11 architecture probes; both five-process smoke suites; four Prisma schemas and complete runtime parity; seven SQL suites, four concurrency scenarios and 12 denied cross-database connections**. Disposable database cleanup found zero remaining test databases. See the [timestamped B4 report](validation/b4-2026-10-04T09-14-07-069Z.json) for exact commands, source hashes and limitations.
+
+The preserved [Prisma validation report](orm-validation.json), dated 2026-10-04 at 08:37 UTC, records the earlier ORM adoption results:
+
+| Check                                   | Recorded result                                                                                       |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Build, strict types and formatting      | Passed                                                                                                |
+| Architecture                            | Passed for 70 authored source files and 11 enforcement probes                                         |
+| Prisma schema validation/catalog parity | Passed across four services, 59 models, 577 columns and 64 foreign keys                               |
+| Unit tests                              | 20 passed across five files                                                                           |
+| PostgreSQL/API integration tests        | 34 passed across four files                                                                           |
+| Process checks                          | Two passed suites, each exercising five independent services                                          |
+| SQL verification                        | Seven suites, four fresh databases and the v1.0 upgrade passed                                        |
+| Database concurrency                    | Four scenarios passed                                                                                 |
+| Cross-service database isolation        | All 12 connection attempts denied                                                                     |
+| Read-only introspection                 | Approved Prisma bindings remained unchanged                                                           |
+| Fixture cleanup                         | Zero disposable databases and zero staff accounts in the real Identity database at the recorded audit |
+
+Coverage includes transaction/outbox atomicity, rollback, deferred validation, optimistic conflicts, real serialization retries, authorization/revocation, token-consumption races, mail adapters, exact numeric/binary mappings, microsecond cursors, retained partial uniqueness and runtime permissions.
+
+Earlier [foundation](backend-validation.json), [Identity](identity-validation.json) and [engineering](architecture-validation.json) reports retain their historical results. Their smaller test counts describe earlier milestones. The counts above describe the earlier Prisma milestone. The [new B4 report](validation/b4-2026-10-04T09-14-07-069Z.json) records current commands, results and source hashes, including the larger category suite and expanded five-process workflow.
+
+## Dynamic Catalog Core
+
+Implemented separately after B4, before full product management. Product types control ordinary attributes; categories control leaf placement. Types/groups/definitions/options/units, actual translations, restrictive privacy, effective revisions, impact previews/confirmed changes, deprecation/soft deletion, explicit copy, headless product create/edit/read/type change/placement and anonymous projection are implemented. B3/B4 behavior and retained technical evidence remain.
+
+Reviewed SQL 13/14/15, explicit inventory/mapping/backfill/validation/switch tooling, final manifest and owning Prisma bindings are verified on disposable databases. Installed project data remains v1.1 and was inventoried read-only. [Decision 006](decisions/006-dynamic-catalog-core.md), [operating guide](operations/dynamic-catalog.md), [dictionary](../database/docs/model-dictionary-v1.2.md) and [OpenAPI 0.4.0](api/openapi.json) explain capabilities and limits. [Timestamped Dynamic Catalog evidence](validation/dynamic-catalog-2026-10-04T11-27-52-880Z.json) records 29 unit tests, 82 integration tests, 108 authored source files/11 architecture probes, both five-process smokes, final 66-table/646-column/73-FK Prisma parity, and explicit v1.1/v1.2 SQL verification. Prior evidence remains historical.
+
+## 10. Remaining implementation
+
+**B4 category administration is implemented and locally verified.** Its operating limits are explicit: pages contain up to 100 children/path rows; complete sibling reorder and exhausted-gap recovery support at most 500 affected siblings. There is no fixed hierarchy depth or maximum root count. Media URL/delivery revocation is not implemented by Catalog soft deletion.
+
+The next planned milestone is **B5: Media core**.
+
+Subsequent work includes:
+
+- Media upload APIs, private storage integration, validation, processing/variants, delivery and retirement workflows.
+- Full product management UX/media association workflows and technical-sheet APIs beyond the implemented headless dynamic core.
+- Company-content/settings administration beyond the existing database support.
+- Anonymous Inquiry submission, trusted product snapshots, staff inbox/status management and notification workflows.
+- Outbox publishers, event consumers, broker integration and durable background workers.
+- Public web/Android/iOS applications and the separate staff web dashboard.
+- Production hosting, HTTPS/reverse-proxy configuration, real mail/storage providers, load/abuse controls and backup restoration exercises.
+
+The [backend implementation plan](backend-implementation-plan.md) records the wider milestone sequence. This status report describes what is implemented today and identifies the remaining work separately.

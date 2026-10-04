@@ -1,0 +1,463 @@
+{
+  "checkedAt": "2026-10-04T11:27:52.880Z",
+  "scope": "Dynamic Catalog Core, separately named after B4; B5 remains Media core",
+  "implementation": "complete",
+  "localVerification": "passed",
+  "versions": {
+    "node": "v24.21.0",
+    "postgres": "18.6",
+    "prisma": "7.10.0",
+    "typescript": "6.0.3",
+    "nestjs": "12.1.2",
+    "openapi": "0.4.0"
+  },
+  "schema": {
+    "installed": "v1.1 unchanged; 59 physical tables, 577 columns, 64 foreign keys",
+    "preparedFinal": "v1.2",
+    "physicalTables": 66,
+    "columns": 646,
+    "foreignKeys": 73,
+    "indexes": 188,
+    "triggers": 273,
+    "catalogTables": 50,
+    "newCatalogTables": 7,
+    "authority": "Reviewed SQL expansion/cutover; separate owning Prisma schema/client; no automatic schema synchronization"
+  },
+  "capabilities": {
+    "typesAndTranslations": true,
+    "reusableTypedDefinitionsOptionsCanonicalUnits": true,
+    "reusableGroupsIndependentPlacementOrdering": true,
+    "actualTranslationsMissingLocalesFallback": true,
+    "globalAndAssignmentPrivacy": true,
+    "effectiveRevisionPropagation": true,
+    "requirednessAndBoundsImpactValidation": true,
+    "deprecationGrandfatherAndGuardedSoftDeletion": true,
+    "previewConfirmedCommitScopedTokens": true,
+    "copySnapshotMergeIndependentMemberships": true,
+    "headlessProductCreateEditReadTypeChangePlacement": true,
+    "anonymousLocalizedPublicProjection": true,
+    "technicalReferencePrivacyCompatibility": true,
+    "liveAdminOnlyGatewayAuthorization": true,
+    "b4PreviewSchemaStaleness": true,
+    "transactionalOutboxAndWholeTransactionRetries": true,
+    "reviewedResumableMigration": true
+  },
+  "api": {
+    "prefix": "/api/v1",
+    "configurationResources": [
+      "admin/product-types",
+      "admin/attributes",
+      "admin/attribute-options",
+      "admin/attribute-groups",
+      "admin/units"
+    ],
+    "guards": "POST {resource}/{id}/changes/preview then changes; current row/effective schema, scope token and explicit true confirmation",
+    "products": [
+      "POST admin/products",
+      "GET/PATCH admin/products/{id}",
+      "GET admin/products/{id}/edit-schema",
+      "POST admin/products/{id}/placement",
+      "POST admin/products/{id}/type-change/preview",
+      "POST admin/products/{id}/type-change",
+      "GET products/{id} anonymous"
+    ],
+    "contractAudit": {
+      "checkedAt": "2026-10-04T11:27:53.405Z",
+      "result": "passed",
+      "openapi": {
+        "version": "0.4.0",
+        "paths": 53,
+        "schemas": 83,
+        "resolvedReferences": 673,
+        "uniqueOperationIds": 64
+      },
+      "localDocFiles": 11,
+      "protectedBaselineSources": [
+        "AGENTS.md",
+        "package-lock.json",
+        "services/identity/prisma/schema.prisma",
+        "services/media/prisma/schema.prisma",
+        "services/inquiries/prisma/schema.prisma"
+      ]
+    }
+  },
+  "commands": [
+    {
+      "command": "npm.cmd run build",
+      "startedAt": "2026-10-04T11:24:40.917Z",
+      "completedAt": "2026-10-04T11:24:54.026Z",
+      "durationMs": 13107.5616,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-build.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run check",
+      "startedAt": "2026-10-04T11:24:54.028Z",
+      "completedAt": "2026-10-04T11:25:26.582Z",
+      "durationMs": 32554.157,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-check.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run test:integration",
+      "startedAt": "2026-10-04T11:25:26.583Z",
+      "completedAt": "2026-10-04T11:26:22.439Z",
+      "durationMs": 55868.95680000001,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-test-integration.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run smoke",
+      "startedAt": "2026-10-04T11:26:22.439Z",
+      "completedAt": "2026-10-04T11:26:38.942Z",
+      "durationMs": 16502.180600000007,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-smoke.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run smoke:identity",
+      "startedAt": "2026-10-04T11:26:38.942Z",
+      "completedAt": "2026-10-04T11:27:00.990Z",
+      "durationMs": 22047.850900000005,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-smoke-identity.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run orm:check",
+      "startedAt": "2026-10-04T11:27:00.991Z",
+      "completedAt": "2026-10-04T11:27:04.341Z",
+      "durationMs": 3350.7862000000023,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-orm-check.log",
+      "environment": "Existing scripts, disposable mutation fixtures; generic smoke uses read-only installed health/category reads"
+    },
+    {
+      "command": "npm.cmd run orm:verify",
+      "startedAt": "2026-10-04T11:27:04.342Z",
+      "completedAt": "2026-10-04T11:27:17.927Z",
+      "durationMs": 13585.603000000003,
+      "exitCode": 0,
+      "result": "passed",
+      "log": ".local/dynamic-final-orm-verify.log",
+      "environment": "Explicit disposable final Catalog; other service schemas read-only"
+    }
+  ],
+  "tests": {
+    "unit": {
+      "passed": 29,
+      "files": 7
+    },
+    "integration": {
+      "passed": 82,
+      "files": 7,
+      "b4": 24,
+      "dynamicCatalog": 21,
+      "migration": 3
+    },
+    "architecture": {
+      "authoredSourceFiles": 108,
+      "probes": 11
+    },
+    "dynamicSql": {
+      "postgres": "18.6",
+      "schemaVersion": "1.2",
+      "suites": 7,
+      "freshDatabases": 4,
+      "installedSchemaParity": "disposable final Catalog versus fresh/upgrade; other installed schemas read-only",
+      "upgradeFromV1": true,
+      "concurrencyScenarios": 4,
+      "crossDatabaseDenials": 12,
+      "result": "passed",
+      "checkedAt": "2026-10-04T11:12:45.356Z"
+    },
+    "legacySql": {
+      "postgres": "18.6",
+      "schemaVersion": "1.1",
+      "suites": 7,
+      "freshDatabases": 4,
+      "installedSchemaParity": true,
+      "upgradeFromV1": true,
+      "concurrencyScenarios": 4,
+      "crossDatabaseDenials": 12,
+      "result": "passed",
+      "checkedAt": "2026-10-04T11:25:30.419Z"
+    },
+    "process": {
+      "foundation": {
+        "services": [
+          "identity",
+          "catalog",
+          "media",
+          "inquiries",
+          "gateway"
+        ],
+        "result": "passed",
+        "publicCategoryRead": true,
+        "identityOutagePublicRead": true,
+        "internalRoutesBlocked": true
+      },
+      "identityAndDynamic": {
+        "result": "passed",
+        "checkedAt": "2026-10-04T11:26:59.260Z",
+        "services": [
+          "identity",
+          "catalog",
+          "media",
+          "inquiries",
+          "gateway"
+        ],
+        "operatorBootstrap": true,
+        "invitationLocalDelivery": true,
+        "adminCategoryWrite": true,
+        "b4CategoryNavigation": true,
+        "b4BranchMove": true,
+        "b4SiblingReorder": true,
+        "b4StalePreviewProtection": true,
+        "b4ConfirmedBranchDeletion": true,
+        "dynamicFormSchema": true,
+        "dynamicProductWorkflow": true,
+        "dynamicPublicPrivacy": true,
+        "dynamicSchemaConflict": true,
+        "dynamicCategoryCompatibility": true,
+        "liveRevocation": true,
+        "roleBoundaries": true,
+        "csrf": true,
+        "identityOutagePublicRead": true
+      }
+    },
+    "concurrency": [
+      "Shared-schema change versus product save",
+      "Requiredness preview versus newly created missing product",
+      "Assignment removal versus new value",
+      "Option deprecation versus new selection",
+      "Type deletion versus product creation",
+      "Unrelated writer forces whole product retry with one event",
+      "Copy retry keeps independent memberships and one event",
+      "Existing B4 moves/reorders/deletions and SQL workers/retirement races"
+    ],
+    "migration": [
+      "Empty reviewed mapping creates no types",
+      "Nonempty mapping review/coverage/disclosure validation",
+      "Exact decimals/IDs/codes/media retained",
+      "Stable assignment IDs; repeated backfill and interrupted batch recovery",
+      "Technical measurements/notes/observations/configurations/conditions/sources/applicability unchanged",
+      "Historical deleted product remains NULL type and otherwise unchanged",
+      "Legacy assignment writes closed after switch",
+      "Fresh/v1.0->v1.1->v1.2 parity and grants"
+    ]
+  },
+  "performance": {
+    "schemaAndProduct": {
+      "measuredAt": "2026-10-04T11:26:07.696Z",
+      "fixture": {
+        "types": 3,
+        "definitions": 40,
+        "assignments": 120,
+        "products": 60,
+        "values": 60
+      },
+      "timings": {
+        "resolveThreeSchemasMs": 14.618800000000192,
+        "sixtyProductWorkflowsMs": 2425.7707999999993,
+        "sharedDefinitionValidationPreviewMs": 32.37670000000071,
+        "sharedDefinitionFanoutCommitMs": 40.829499999999825,
+        "singleProductEditMs": 20.26969999999983
+      },
+      "scope": "Disposable local PostgreSQL, includes application/transaction overhead; not production throughput. Membership fixture batching uses Prisma; measured product workflows include synthetic category/image provisioning."
+    },
+    "backfill": {
+      "measuredAt": "2026-10-04T11:26:14.375Z",
+      "fixture": {
+        "activeProducts": 1,
+        "deletedProducts": 1,
+        "batchSize": 1
+      },
+      "elapsedMs": 138.80339999999978,
+      "batchTimingsMs": [
+        5.1197000000001935
+      ],
+      "scope": "Real-shape synthetic disposable v1.1 upgrade; not a scale/production claim."
+    },
+    "qualification": "Disposable local fixtures and application overhead only; not production throughput or maximum-capacity proof"
+  },
+  "limits": {
+    "configurationPage": 100,
+    "groupsAssignmentsCompleteOrder": 500,
+    "optionsPerDefinition": 500,
+    "requestValueMutationsAndChoices": 100,
+    "affectedTypesPerInteractiveImpact": 100,
+    "activeProductsPerInteractiveImpact": 1000,
+    "transactionAttempts": 3,
+    "transactionTimeoutMs": 10000,
+    "statementTimeoutMs": 5000,
+    "lockTimeoutMs": 3000,
+    "inventory": "Operator inventory materializes retained records; size/memory must be assessed on staging before a large real migration"
+  },
+  "cleanup": {
+    "remainingDisposableDatabases": [],
+    "installedCatalog": {
+      "stage": "v1.1",
+      "categories": "6",
+      "definitions": "0",
+      "measurements": "0",
+      "activeProducts": "0",
+      "deletedProducts": "0",
+      "legacyAssignments": "0"
+    },
+    "installedIdentityStaffAccounts": "0",
+    "configuration": "No installed credentials/configuration/mailbox changed; new task-private files only"
+  },
+  "migrationFiles": [
+    "database/sql/13_dynamic_catalog_expand.sql",
+    "database/sql/14_dynamic_catalog_cutover.sql",
+    "database/sql/15_catalog_dynamic.sql",
+    "database/scripts/dynamic-catalog.mjs",
+    "database/scripts/verify-dynamic.mjs"
+  ],
+  "deployment": {
+    "realBusinessDataMigration": "not executed; not authorized",
+    "defaultInstallerAndReadiness": "v1.1 path preserved; dynamic APIs use feature-specific cutover precondition",
+    "operatorSteps": "Backup/restore rehearsal, explicit staging configuration, read-only inventory and reviewed mapping, pause/drain writers, expand, dry-run/resumable backfill, validate exact stored mappings, atomic final switch plus grants, deploy compatible binary, smoke/schema/privacy/parity checks, resume writes",
+    "rollback": "Retain additive/retained data; after final switch use forward fixes or a demonstrated compatible code rollback. Never restore category validators over type-based products."
+  },
+  "approvalReview": {
+    "rejectedActions": [
+      "Making legacy readiness require final cutover",
+      "Switching default legacy database installation/verification and modifying legacy note scope"
+    ],
+    "resolution": "Kept legacy paths/fixtures unchanged, explicit final verifier/entry and feature-specific gating; added a separate measurement-scoped final note fixture",
+    "outstandingBlockedActions": []
+  },
+  "limitations": [
+    "No hosted CI/Docker/production deployment or load verification",
+    "No real providers/storage/mail/media delivery or URL revocation",
+    "Hidden fields do not redact or revoke downloadable PDFs; impact counts are advisory for operator review",
+    "Existing pinned Prisma/pg combination emits a driver warning about concurrently queued queries in some tests; all checks pass; no dependency upgrade made",
+    "A local credential configuration was inadvertently included in tool output; values are excluded from published reports and were not changed"
+  ],
+  "deferred": [
+    "B5 Media upload/storage/processing/delivery",
+    "Full product-management and technical-sheet editing UX",
+    "Commercial variants/SKUs/pricing/inventory/commerce",
+    "Full search/filter UI/export engine",
+    "Inquiry workflows, broker consumers/publishers and workers",
+    "Public web/Android/iOS and staff dashboard",
+    "Production infrastructure/providers/load/backup restoration"
+  ],
+  "sourceSha256": {
+    "AGENTS.md": "d7abc2ef97bc28396d0b2620d1cd42f1cbf7c578433a12fb522948335ff0bc3a",
+    "database/docs/model-dictionary-v1.2.md": "e4b7317b87042b054331271951f30b0c48a0a3e9faacc5f5bad01d80f8529826",
+    "database/schema-manifest.json": "4bcc700d4accb3d14ce75ac19a32a03384a9e263889af0fe573aefed121112e7",
+    "database/scripts/db.mjs": "86bcb8a1768732379361c1224ba5b320b960a5b7e41829e3a5669824eaaace43",
+    "database/scripts/dynamic-catalog.mjs": "d96c7dabba791b71e265ae914634e2e91714ee7b6f730781ca643388d8e722ef",
+    "database/scripts/verify-dynamic.mjs": "7d62c216f43d574a4a36a9910521107c2c61e4c4f29d54dfd1229cf28dfabcce",
+    "database/scripts/verify.mjs": "147c91a901de72ed379fed10d9aa410bca5332ec706c5d9f1869551b4ff1ee8b",
+    "database/sql/11_technical_queries.sql": "329036a33fefe25d6830f4d1ce4c6e348ba0d3a39e58b2af4b1f108b873f69a1",
+    "database/sql/13_dynamic_catalog_expand.sql": "81ed5282910b39542249cb65ed1b10226168cd20680f8c72cf9a02210e5007ee",
+    "database/sql/14_dynamic_catalog_cutover.sql": "60c08c402048cfc9b430bbc632db87aa0b8e6ef29efdfafea4c3792907772a6e",
+    "database/sql/15_catalog_dynamic.sql": "2f00772346b327c1ee642ddc656642b5cf28bc2bd9770830c23bf7f87b9d7e5d",
+    "database/tests/dynamic-smoke.sql": "65534b4402ecb27f0912574e9387fd0157fad4e1964e225e5184cbf435480882",
+    "database/tests/dynamic-technical.sql": "6ae81f96dbffb8a50792c86001587c8743d7f5bbff053be94f86ada5b35b1bac",
+    "database/tests/dynamic-tree-specifications.sql": "6659140b7b8eab79153de108ea1bb2492f1a99a21bfb067cb9029781bc2c0c8b",
+    "documentation/api/openapi.json": "77c955a22cd9c3e3054ccc4d9400199d5a5a8cae69db39bc98eda2ae9d07624b",
+    "documentation/backend-implementation-plan.md": "373d647ab200ad057f6ee95cb1d80f35d9182e7752f3fa24cafa755b3f011dea",
+    "documentation/decisions/006-dynamic-catalog-core.md": "be510c2b1958087176cf6acce64cfa5a80973a0314ae9714409ee9917de442d4",
+    "documentation/dynamic-catalog-core-implementation-plan.md": "9baa1ab8fa87e1ca8164609d953064cabb3e8dbcf1744fbfe68b8200d81ac229",
+    "documentation/operations/dynamic-catalog.md": "5a7474289c108975d92f1338342ed761582cde23c1a2e58686c52e4a69424a3e",
+    "documentation/project-progress.md": "629f9f8487f704fa03592b9e69728a59833fffbf2613511114d3f87f686a4315",
+    "package-lock.json": "e72929b383862be3b6471309ebd7da71748ac0bf67e9aa6b0520511ef9e6e7fc",
+    "package.json": "feca06a1906e1f3e432c504af0d9c777739533e0d0d0e8f0be8bc29467492c7e",
+    "packages/contracts/schemas/catalog-category-event.v1.json": "73bdaba0bc80a7d9d5db153adf4d289545c5cc417dcdfee4a17407b51f5134c0",
+    "packages/contracts/schemas/catalog-configuration-event.v1.json": "36c42e81b717728f74c5c6436b576923cf4d459081f9ffe22906967fd34ebb41",
+    "packages/contracts/schemas/event-envelope.v1.json": "ff754c71671296ee4b254d1b7fc5529b8dcdd91767011a00826dd46d0fec8b39",
+    "packages/contracts/src/catalog-admin.ts": "0e6bce8d95cbc983fb5da8ca075fa6c7493da16987144f5fa5a36923ae2b688d",
+    "packages/contracts/src/core.ts": "a76b594c155fac6037f4e04aff8510dfdeae47eb9f1c6c273e681008bea65779",
+    "packages/contracts/src/dynamic-catalog.ts": "103127f238716e982eb6d204b707a2c4edb5803677cdb4808827580e08433ed6",
+    "packages/contracts/src/index.ts": "f7de630a84f968ad0ccd037178e0371df7acc4f405e1755d5e58f450c7c50b87",
+    "packages/platform/tests/support/database-fixture.ts": "25b59e24ee9778c0569c29f9f14cfbeacdc5b4632ff41a5874281262b2fd8d7a",
+    "scripts/dynamic-catalog-smoke.mjs": "58c133f937962d8da2b5ca212a0dd902e733a5251477173df4b468e0f5d8930a",
+    "scripts/identity-smoke.mjs": "65f01ac673248da08af1beb5944b97c1258aae4fa9dfc02d977a7bb2f9dfb189",
+    "services/catalog/prisma/schema.prisma": "9ab66b47739efdc8415af7502991d64b65caf7891f46b08a5a6398d1259176ed",
+    "services/catalog/src/application/models/configuration-event.ts": "c80e5a5cfefe20c82215339e8b0f6cdd041449e7dc0e721b263c872eca4d4a9d",
+    "services/catalog/src/application/models/schema-evolution.ts": "66ce350ec169b53486cc945c76c2be1eb9b4b4955a5798a8b79bd85f18a8f256",
+    "services/catalog/src/application/ports/catalog.ts": "e72614efb3bc0d1c8369670ee2fde6e26c46c9cb4c4e26db3b49192fffcc9884",
+    "services/catalog/src/application/ports/category-query.ts": "97a69f89ec699583941b1013dbd6191a45e5c389b910c0ac4e61da5e944ddf74",
+    "services/catalog/src/application/ports/category-tree.ts": "8fdae87bcd6d12f636613a57d4d739377eaf19de970a49c976c33dff62260e2f",
+    "services/catalog/src/application/ports/product-schema.ts": "5e3fa6302140518bf6e9fef29067e7e2b03dc5c4fa635f3a858e2197840aa041",
+    "services/catalog/src/application/ports/products.ts": "1448498ce8a94d2ca130fa2505d6c5d745b6f09254553804fb85a391b4dd1bea",
+    "services/catalog/src/application/use-cases/authenticate-category-administrator.ts": "9cbd80eacf5901812edd68c13604bc0c1c9e0016f38b600032e92583e51c8705",
+    "services/catalog/src/application/use-cases/change-catalog-schema.ts": "d60011e57d6d7babeb41fae1a8d9eea5a2e8993ac9b8720d5945d1c793506915",
+    "services/catalog/src/application/use-cases/change-product-type.ts": "b625d9fb0d0e540d9b05fbf84bf66e71c585433c5953d9a5d60fc1f5bed68922",
+    "services/catalog/src/application/use-cases/create-catalog-configuration.ts": "88c1c0da0c61fd8224892ba4266d6e60b19d4c56f47c82609c9bf61406e71901",
+    "services/catalog/src/application/use-cases/create-category.ts": "fad7d26cf28897d4da3fad3843f6d29651b62cd0f8a27b92faddc58fa96825b0",
+    "services/catalog/src/application/use-cases/delete-category-branch.ts": "db8533612230debdbabc8d84f1c888e6c060abec27b2cc26b131f9b4acd55fe0",
+    "services/catalog/src/application/use-cases/edit-category.ts": "221321a0fd78e0db05b5e6ac1bb5f277264a8761d94867982e9757f17c6e0068",
+    "services/catalog/src/application/use-cases/move-category.ts": "98e0b1d8100102826084a2df04cfb954ce01527a9457ad2eaca2d3213abd7a81",
+    "services/catalog/src/application/use-cases/move-product.ts": "80c0175f908b0be309caacb3f0d4f9edd9a2dd0bc065fcd3500f7bf79bdf10bb",
+    "services/catalog/src/application/use-cases/read-catalog-configuration.ts": "cbbb19e312489dcba44932516c6bfc42841de3f95837749988ccace49668f2bf",
+    "services/catalog/src/application/use-cases/read-categories.ts": "d87301199d51816afaddc64e7489bc3aa37e9402df4d8eb659bc1ab92b7ba251",
+    "services/catalog/src/application/use-cases/read-category-navigation.ts": "f8ae9e8142b0fa31608fa72b894b7c6bca9cf3f955a65805971f3492685b7966",
+    "services/catalog/src/application/use-cases/read-products.ts": "fadf552f93b3134de0f4275d9d725f52f291cfbd397a84eff3ff6d4dfa60030f",
+    "services/catalog/src/application/use-cases/reorder-categories.ts": "8b0855afab4f3f9bc11d3f7b7e12cd79792847c17f84551ed48c9d8273f29b12",
+    "services/catalog/src/application/use-cases/save-product.ts": "e91de94645a927b01561c26f49a9b1dc0eec447fd82239d6e99b07b42e8bee0d",
+    "services/catalog/src/composition/application.ts": "60de0ea6137b0a5eb2f620cb4e233d44472d87e610d761c4adcb4ac5c3f7da4e",
+    "services/catalog/src/composition/main.ts": "a6d73ee2299bbbebd0a128addd229bd6a236bb209e9c5d10a61614f6985d4ad8",
+    "services/catalog/src/domain/attribute-values.ts": "2abdf4f71341fa46bd0d9e30110640f4d79cc9bab643711bb718130d0a5a9ecf",
+    "services/catalog/src/domain/category-order.ts": "05b081cf3e4ecdc827a8628cf236046462d8a28de4529c006dc2d44beb71f8df",
+    "services/catalog/src/domain/category.ts": "2161fd7b95ce52f11641e258da752383a5591a7fef07e20712125a3cbaa47d7d",
+    "services/catalog/src/domain/effective-schema.ts": "7863654c5f0f534dc3cb5c1232fb7be2a02110a2e0add6cc5c3f8a18a652496b",
+    "services/catalog/src/infrastructure/prisma/attribute-definition-repository.ts": "53947f8ff352cd9314ad36ac1c52e6b20bcd2c12b10d5904840c5e010998030c",
+    "services/catalog/src/infrastructure/prisma/attribute-group-repository.ts": "d0efb45343ab845f0acaecebe6d26eec5898929e254df3c15d77eadbeef52c64",
+    "services/catalog/src/infrastructure/prisma/category-navigation.ts": "6ee2f6265746b2b69b560d1e28e1774f8676c96b4e4c4376d55d98ea7ab74fdb",
+    "services/catalog/src/infrastructure/prisma/category-repository.ts": "3625002f49e3697c39c74f2aabb050a1c508577ac632f790d1488268545e123f",
+    "services/catalog/src/infrastructure/prisma/category-tree-writer.ts": "f5e0960befd22bdb9e8df12a23446742fa90615fac960c13c6ae345c10fc7cab",
+    "services/catalog/src/infrastructure/prisma/client.ts": "1b2c502d26bec14f794a07da59974f2c1979edb635a7043626684a7315d98d18",
+    "services/catalog/src/infrastructure/prisma/configuration-mapping.ts": "adf2562914dc1050bf77f39c476a3b2a746d98d5e738af59e6f98da7fbd4cf0d",
+    "services/catalog/src/infrastructure/prisma/outbox.ts": "c1e7924e2db93d48d71c6adccf3e3b8de9123e5a7ae00e4abfad2f3c09a9b747",
+    "services/catalog/src/infrastructure/prisma/product-repository.ts": "f4106596503cf97b2834da2627d3781f88610218a7844a729564a09378207603",
+    "services/catalog/src/infrastructure/prisma/product-type-repository.ts": "14c1b46880cf94fd7c794e547f8eee9affd2559bf468d330c8bb3e49802f3b54",
+    "services/catalog/src/infrastructure/prisma/schema-change-reader.ts": "6d212a6a46a41d6cb4046eed4c8c0ec7a8e90a8af2f62db668364ff3613e1064",
+    "services/catalog/src/infrastructure/prisma/unit-of-work.ts": "6b11dd8589a90d0ade398c42c3d9d3e9f9df6e30c9d0747b7c59aeb8af7efdfd",
+    "services/catalog/src/infrastructure/prisma/unit-repository.ts": "70f515f53d1b2affcc085f70a49c62709b9e53990b7739abedd7b3df9bae8883",
+    "services/catalog/src/presentation/http/admin-categories-controller.ts": "da3149970d0a94615c3e6154ac33681950ae4d15ed102ea011b230067de555fc",
+    "services/catalog/src/presentation/http/categories-controller.ts": "bd240b5aa2d18af2124148d1ccbebf655f1bdf8f883e9286c4f355563938c223",
+    "services/catalog/src/presentation/http/category-query.ts": "ea61b518f041569f081d5d1efd2c2feb838f9a446b12583d26a7b4416837b85f",
+    "services/catalog/src/presentation/http/category-tree-controller.ts": "ce2b8972b7eeab4e1a02b7a7bda36dacd3524144cdffb3afad032271ae46c136",
+    "services/catalog/src/presentation/http/dynamic-configuration-controller.ts": "856d7fe31120cb77786eca847f94277a75ea9335237c07656aabf380140bc19e",
+    "services/catalog/src/presentation/http/dynamic-input.ts": "75118a89324557e21b7423b55faa18312156c5c6e66410b6b900adc12654e587",
+    "services/catalog/src/presentation/http/products-controller.ts": "fe8a0111653228ae1226c31b468adc9414767fac8fdabfb205e2edc5602beb51",
+    "services/catalog/tests/attribute-values.unit.test.ts": "b70bd0f9bdb3fa6f58df896d26c808851b4704c279d6f48399d21749a17ad2c9",
+    "services/catalog/tests/catalog.integration.test.ts": "4074037f0debe92be1b788e0dea159c71d5fe5ea4ba4dc3f53d78f887281f65a",
+    "services/catalog/tests/category-tree.integration.test.ts": "4b38701db1b8d154fb4f3c7b59e74bf2dcad7de53ef16e940db239f5030078bf",
+    "services/catalog/tests/category-tree.unit.test.ts": "a425e255be0b0865fa3467803c6b02757cd662702e5cb247b2bc1dc3a751125b",
+    "services/catalog/tests/category.unit.test.ts": "0087a73e13c95f0e97f28cbb3538603b2b6b57131b1254a72e13917e54383448",
+    "services/catalog/tests/dynamic-catalog.integration.test.ts": "f71d0602bbbdddf5b63b426311e3e4e593e3f17770a4fa6a47eb4726ecccece8",
+    "services/catalog/tests/dynamic-migration.integration.test.ts": "0adbe1202936192f69c8a5ee847c61b4717a7c9600328f57f5c6e939b0bd52c6",
+    "services/gateway/src/application/ports/catalog-reader.ts": "58d488bab0543621648c30aa7b673208f4f5881043b056a788856589468e221b",
+    "services/gateway/src/application/ports/staff-proxy.ts": "422ae00a1806e230e1f182ce889326611c66f9f39461f9793d1b1eee9ff6ca2c",
+    "services/gateway/src/composition/application.ts": "a43d78416bdb8c986b5178a89470befff26eb8a6ef155f8d1f49c88246e8fb21",
+    "services/gateway/src/composition/main.ts": "4967dff9f936c01b7e437ec3c865785463acfc328e143431a5da04707c442799",
+    "services/gateway/src/infrastructure/http/catalog-reader.ts": "c72f92d667bd4541d684cdf7a183538e55822ccd807289c14fb1e514b4968ae4",
+    "services/gateway/src/infrastructure/http/staff-proxy.ts": "1b64b1a373918b814665217f994b645e7fc59a989ddeed3eb1a08bc00582036a",
+    "services/gateway/src/presentation/http/catalog-controller.ts": "a56e67775ee94622ccff5859aab8f1501f6162749316abf29f8cac7355929a5a",
+    "services/gateway/src/presentation/http/openapi-controller.ts": "54e0513ac7973a5763f3555ecff8c0b11b4ecb3974b803ad69cda15387bd97e1",
+    "services/gateway/src/presentation/http/staff-controller.ts": "9c78d08b92e9a21286f6b1d9838e6a450a557eff59570308dd09c1c4ee488a3f",
+    "services/identity/prisma/schema.prisma": "b2218b9af7c4a82729181206f90098481bb26884a7fd0184ef4b0e691230b147",
+    "services/identity/tests/identity.integration.test.ts": "76eb84f0416612a7999b5800c9e2e73ecc9ac0cd35259682a4823254ff139cca",
+    "services/identity/tests/mail.integration.test.ts": "6cb983425831a4fe140d54730206b6afd4f57d64f7937b3a256a4ed3889ad428",
+    "services/identity/tests/security.unit.test.ts": "465a4d7ed8cbe7ce6f496821664ee0ab7d94ddf350ce0c730fe6346e0fbe5727",
+    "services/inquiries/prisma/schema.prisma": "8dfe8bebb8267a56f5994785298d12a557c4dce310166e3be6a1e7622c96e56b",
+    "services/media/prisma/schema.prisma": "3fe0ea2f4842358ca51985b12defeb657987a29cf2333d32e5157f9e5abf7faa"
+  }
+}

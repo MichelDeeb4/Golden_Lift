@@ -1,0 +1,1 @@
+Business policies for this service belong here. Domain code stays independent of HTTP, NestJS, PostgreSQL and other service implementations. Account, media and inquiry workflows follow their planned milestones.

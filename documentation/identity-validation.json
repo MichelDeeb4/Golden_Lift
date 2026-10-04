@@ -1,0 +1,116 @@
+{
+  "checkedAt": "2026-10-03T16:22:56.861Z",
+  "scope": [
+    "B3 Identity",
+    "Authenticated category create/edit",
+    "Live authorization in Catalog/Media/Inquiries"
+  ],
+  "platform": "win32",
+  "node": "v24.21.0",
+  "postgres": "18.6",
+  "dependencyVersions": {
+    "nodemailer": "10.0.14",
+    "typescript": "6.0.3",
+    "nest": "12.1.2"
+  },
+  "database": {
+    "tablesByService": {
+      "identity": 5,
+      "catalog": 43,
+      "media": 6,
+      "inquiries": 5
+    },
+    "totalTables": 59,
+    "schemaChanges": false,
+    "installedStaffAccounts": 0,
+    "scratchDatabasesRemaining": 0
+  },
+  "checks": {
+    "build": "passed",
+    "typecheck": "passed",
+    "format": "passed",
+    "architecture": {
+      "result": "passed",
+      "sourceFiles": 65,
+      "enforcementProbes": 3
+    },
+    "unit": {
+      "result": "passed",
+      "tests": 13,
+      "files": 4
+    },
+    "integration": {
+      "result": "passed",
+      "tests": 28,
+      "files": 3,
+      "identityTests": 16,
+      "smtpAndLocalMailboxTests": 3,
+      "catalogRegressionTests": 9
+    },
+    "processSmoke": {
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "result": "passed",
+      "publicCategoryRead": true,
+      "identityOutagePublicRead": true,
+      "internalRoutesBlocked": true
+    },
+    "identityProcessSmoke": {
+      "result": "passed",
+      "checkedAt": "2026-10-03T16:21:22.941Z",
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries",
+        "gateway"
+      ],
+      "operatorBootstrap": true,
+      "invitationLocalDelivery": true,
+      "adminCategoryWrite": true,
+      "liveRevocation": true,
+      "roleBoundaries": true,
+      "csrf": true,
+      "identityOutagePublicRead": true,
+      "operationalSecretRedaction": true,
+      "serviceWorkingDirectories": true,
+      "disposableDatabasesRemoved": true,
+      "privateMailboxRemoved": true
+    },
+    "credentialScan": {
+      "result": "passed",
+      "repositoryFiles": 157
+    },
+    "dependencyPins": {
+      "result": "passed",
+      "checked": 41
+    },
+    "documentationLinks": {
+      "result": "passed",
+      "linksChecked": 40
+    }
+  },
+  "configuration": {
+    "localSecretsGenerated": true,
+    "actualOperatorBootstrap": "not run; command tested on disposable databases",
+    "realRecipientEmailsSent": false
+  },
+  "artifacts": {
+    "openApiSha256": "c54e3015ccbea70d2e561c1f246a2fc5bb0fbe8d1e5db33b3daf42d874baf3c4",
+    "lockfileSha256": "d3f5fc889d7af9f9d87084be63ce4fd24e64e54bbbb3db6fcb3bdf198227540c"
+  },
+  "notExecuted": {
+    "hostedCI": "Workflow updated; hosted execution not triggered",
+    "docker": "Docker unavailable locally",
+    "productionSMTP": "Local SMTP acceptance/rejection/TLS-required behavior tested; real provider not used",
+    "productionTLSAndLoad": "Requires deployed proxy/HTTPS, distributed abuse limits and capacity checks",
+    "staffApplication": "Backend API implemented; staff UI belongs to B10"
+  },
+  "nextPackage": "B4 Catalog core",
+  "result": "passed"
+}

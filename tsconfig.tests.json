@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.check.json",
+  "compilerOptions": {
+    "outDir": ".local/test-build",
+    "declaration": false
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "services/*/src/**/*.ts",
+    "services/*/tests/**/*.ts"
+  ]
+}
