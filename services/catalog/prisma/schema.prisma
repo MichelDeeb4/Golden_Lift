@@ -129,6 +129,7 @@ model FaqTranslations {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model MediaAssetRefs {
+  security_blocked Boolean @default(false)
   id                      String                  @id @db.Uuid
   media_kind              String
   source_version          BigInt

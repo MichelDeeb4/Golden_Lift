@@ -1,34 +1,18 @@
-import { orm } from '../infrastructure/prisma/client.js';
-import {
-  databasePool,
-  closePersistence,
-  httpApplication,
-  serviceConfig,
-  startupFailed,
-  IdentitySessionClient,
-  identityClientConfig,
-} from '@golden-lift/platform';
-import { CheckReadiness } from '../application/use-cases/check-readiness.js';
-import { CheckStaffAccess } from '../application/use-cases/check-staff-access.js';
-import { PrismaReadiness } from '../infrastructure/prisma/readiness.js';
-import { StaffController, STAFF_ACCESS } from '../presentation/http/staff-controller.js';
+import { databasePool, serviceConfig, startupFailed } from '@golden-lift/platform';
+import { mediaConfig } from '../infrastructure/config.js';
+import { mediaApplication } from './application.js';
+import { privateStorage } from './dependencies.js';
 const service = 'media' as const;
 try {
   const config = serviceConfig(service),
-    authentication = new IdentitySessionClient(identityClientConfig(service)),
+    settings = mediaConfig(),
+    storage = await privateStorage(settings),
     pool = await databasePool(config.database);
-  const database = orm(pool),
-    readiness = new CheckReadiness(new PrismaReadiness(database));
   let app;
   try {
-    app = await httpApplication(config, {
-      ready: () => readiness.execute(),
-      shutdown: () => closePersistence(database, pool),
-      controllers: [StaffController],
-      providers: [{ provide: STAFF_ACCESS, useValue: new CheckStaffAccess(authentication) }],
-    });
+    app = await mediaApplication(config, pool, storage, settings);
   } catch (error) {
-    await closePersistence(database, pool);
+    await pool.end();
     throw error;
   }
 

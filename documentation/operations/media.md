@@ -1,0 +1,67 @@
+# Media core operations
+
+Updated 2026-10-05. See [decision 007](../decisions/007-media-core.md), [OpenAPI](../api/openapi.json) and the dated B5 validation report. B5 code is present; a successful image/video/PDF → scanner → broker → Catalog acceptance run is still required before production.
+
+## Database preparation
+
+Use the owning migration role. Back up each database and its retained object namespace together. SQL 16 upgrades Media; SQL 17 upgrades Catalog after its existing integrity/technical migrations. These add columns/guards, not new business databases or tables. Legacy READY rows default to UNVERIFIED and cannot be delivered through B5 without an approved validation/import procedure. Do not manufacture scanner evidence for them.
+
+`npm.cmd run db:media` reports status. `npm.cmd run db:media -- apply --reviewed` applies reviewed additive migrations to the explicitly configured profile; running this against real business data needs separate authorization. Fresh Media uses `18_media_core_fresh.sql`; Dynamic Catalog uses `19_catalog_media_core_fresh.sql`; existing legacy Catalog uses `20_catalog_media_legacy_fresh.sql`. Regenerate clients with `npm.cmd run orm:generate`. The manifest is schema 1.3: 66 physical tables and service-owned Prisma models; the separately implemented Dynamic Catalog milestone is retained.
+
+## Profiles and secrets
+
+Use [the configuration template](../../infrastructure/media.env.example). Development defaults to a private `.local/media/private` filesystem root and a separate `.local/media/scratch` directory. Neither directory is exposed by static middleware. API/worker processes use only the owning Media runtime database; the Catalog relay uses only Catalog runtime credentials. Workers do not need Identity credentials. Create distinct random, environment-supplied credentials for Media–Catalog calls and the two event producers; the implementation never reads these from committed files or changes existing local/live secrets.
+
+`MEDIA_STORAGE=filesystem|s3` and `MEDIA_DELIVERY=stream|s3` select concrete adapters. S3 uses the AWS SDK credential chain and a private bucket. It requires exclusive conditional PUT support for staging, originals and outputs. Disable public bucket/CDN origin access, physical deletion and writes that omit `If-None-Match: *`; test the exact provider, permissions, signing, replay and range semantics before setting `MEDIA_S3_IMMUTABLE_POLICY_VERIFIED=true`. Object versioning does not by itself prevent reading a subsequently overwritten latest key. No provider-native multipart upload or CDN deployment is claimed. Browser uploads use bounded Media parts in both profiles.
+
+Production refuses filesystem storage and missing coordination credentials. Production native processing additionally requires Linux, `MEDIA_PROCESS_SANDBOX=bwrap`, an installed `/usr/bin/bwrap`, and `MEDIA_WORKER_ISOLATED=true` after the resource profile is verified. Bubblewrap exposes only system libraries, Media processor code, node_modules and that job's scratch directory, with no network namespace access. Apply cgroup CPU/memory/PID limits and bounded scratch storage externally. Do not set isolation/provider assertions merely to bypass startup requirements.
+
+## Process launch
+
+After build and migrations, run the five normal API processes using `npm.cmd run dev`. Start asynchronous roles separately:
+
+```powershell
+npm.cmd run worker --workspace @golden-lift/media
+npm.cmd run events --workspace @golden-lift/media
+npm.cmd run events:media --workspace @golden-lift/catalog
+```
+
+Supply owning runtime URLs, distinct event keys, private RabbitMQ URLs and scanner endpoints through the process environment. RabbitMQ needs durable direct/dead-letter exchanges and quorum queues; use separate private vhost credentials and deny unapproved publishers/consumers. Confirmed broker publication is distinct from acknowledged Catalog registration. The relays retry connections, use manual acknowledgements, and leave unrelated outboxes alone. A failed event after 20 publish attempts remains retained with an exhausted status; investigate and replay the same event ID through approved operations. Inspect the dead-letter queue before replay; retain signatures and IDs. Never mark undelivered events successful.
+
+ClamAV is mandatory. Configure updated signature databases, `StreamMaxLength` above the allowed 250 MiB input and appropriate `MaxScanSize`/`MaxFileSize`, resource bounds and private access to clamd. Upload initiation returns 503 when its PING prerequisite is unavailable. VERSION and INSTREAM results are bound to the sealed SHA-256; failed/unavailable scanning cannot yield READY. Clamd is an isolated security service, not an additional business microservice/database.
+
+Install supported FFmpeg/FFprobe and Poppler pdfinfo/pdftoppm binaries through pinned, reviewed operating-system packages. Capture their exact versions/build configuration and security-update policy in the deployment tool manifest. This host did not have them installed; no version is invented here. [The worker image template](../../infrastructure/containers/MediaWorker.Dockerfile) requires explicit package versions and a base digest. Test its codecs, sandbox and page rendering before deployment. Native versions are also recorded in processing evidence when executed.
+
+Defaults are operator-reducible, validated at startup: images 20 MiB/40 MP; video 250 MiB/600 seconds and bounded streams/frame counts; PDF 30 MiB/200 pages; 3 active sessions per Admin; 100 globally; 1 lane per kind; 1,000 pending jobs; 10 GiB initial storage reservations; 5 attempts; 60-minute upload expiry; authorization at most 300 seconds. Configured limits cannot exceed the implemented ceilings. Images keep their aspect ratio, normalize orientation/color, preserve transparency and strip derivative metadata. Video accepts the declared MP4/MOV H.264/HEVC with optional AAC/PCM profile, rejects audio-only/extra streams, normalizes rotation through FFmpeg and produces progressive H.264/AAC MP4 plus poster. This video/PDF profile still needs actual acceptance testing; it is not a claim of universal format compatibility. No adaptive streaming or arbitrary crop/filter commands are exposed.
+
+## API workflow
+
+Every `/api/v1/admin/media/...` route requires a live ADMIN; mutations require approved Origin and session CSRF. Idempotency is supplied in the initiation body. Use:
+
+1. `GET capabilities`; `POST uploads` with kind/name/decimal-string bytes/purpose/optional SHA-256/idempotencyKey.
+2. Transfer exact numbered parts using the returned URL, method and headers, with the staff cookie/CSRF. `GET uploads/:id` discovers persisted parts; `POST .../authorize` refreshes instructions without extending the original policy expiry. Gateway forwards JSON control operations; binary parts go directly to the configured Media origin.
+3. `POST uploads/:id/complete` with expectedVersion. Missing parts do not freeze the session. SEALING is retryable after uncertain storage responses. Completion is idempotent and cannot create another job. Cancellation/expiry stop completion; files and reservations remain retained.
+4. `GET assets`/`assets/:id` tracks failure/verification and distinct Catalog registration state. The library and session serializers exclude internal keys/buckets. `POST .../retry` accepts exhausted infrastructure failures; `POST .../reprocess` selects a complete new generation only after success.
+5. Attach the registered image through the existing category cover or headless product API. Catalog owns captions, alternative text and order; Media does not create another association authority. Full technical-sheet/page editors remain deferred.
+6. Use `.../variants/:profile/authorization` for on-demand access. Public callers supply an exact ownerType/ownerId and action. Staff can preview verified derivatives; an explicitly requested original PDF DOWNLOAD is separate. Public PDF raster preview remains denied. Stream URLs enforce fresh authorization for each GET/HEAD/range; S3 URLs are bounded capabilities. No authorization response is cacheable.
+7. `GET assets/:id/usage` is the live retirement impact query. `POST .../retire` requires expectedVersion and confirmed=true, and refuses all active references including private sources. Remove/replace associations through Catalog first. A durable Catalog result completes Media retirement even if the initiating response fails. `POST .../block` immediately stops fresh Media authorization while retaining Catalog references and cover invariants. Block release is unsupported.
+
+Allowed profiles are thumbnail/card/detail/large, playback/poster and preview; `original` is restricted PDF DOWNLOAD. Download headers use a generated safe filename and anti-sniffing. Streaming supports HEAD, one byte range, ETag/If-None-Match and If-Range; authorization precedes conditional/range handling. Downloaded copies and already authorized transfers cannot be revoked. S3 signatures expire within the original fresh decision window; they cannot refresh themselves.
+
+## Monitoring and retained bytes
+
+`GET admin/media/statistics` returns known original/output bytes, retained reservations, pending/oldest jobs, pending/exhausted B5 events and unselected attempts. Counts are strings. It does not pretend to be a provider inventory. Worker logs include job/asset IDs, attempts, outcome, reconciliation availability and bounded statistics; HTTP logs omit filenames, cookies, signed queries and source contents.
+
+Alert on scanner unavailability, queue age/event lag, exhausted jobs/events, rising retained/orphan inventory and approaching storage capacity. Poll statistics and capabilities from an authorized monitor; stop intake before exceeding the configured budget. Per-kind lanes and pending-job/session quotas provide backpressure. Reservations include initial staging/original/output budgets and are not released just because a session closes. New generations and crashed attempts need additional provider inventory accounting. The code does not claim a provider-wide mathematical hard storage bound or request-rate/WAF configuration.
+
+Reconciliation expires bounded session batches, settles exhausted leases, and workers reclaim eligible stale jobs. Sealing recovery uses the same immutable original key. Bounded database pages check selected READY object existence/size and security-block missing files; an outage is retried rather than interpreted as a missing file. Attempt history identifies possible private output orphans; no bucket-wide scan happens during requests. Detailed provider inventory, acknowledgement replay and retention recovery need operating acceptance. Do not regenerate missing originals, silently serve an original as a derivative, release security blocks or resurrect retired assets.
+
+Accepted originals, every output generation, quarantine originals and soft-deleted rows are retained. No normal-path object deletion or physical SQL deletion exists. Worker scratch copies and never-published incomplete local write inodes are disposable and cannot be the sole accepted retained original. Native scratch cleanup is constrained to its owned job directory. Remote multipart abort/staging purge is disabled and unimplemented until an explicitly approved policy exists.
+
+Use coordinated database/object snapshots, encryption and tested restore manifests containing object identities, hashes and generations. Database-only backup cannot recover bytes. `node scripts/b5-recovery.mjs` exercises a PostgreSQL custom-format dump/restore with a local object snapshot in owned disposable namespaces. It checks the original, all four selected profiles and a retained previous generation against exact SHA-256/byte identities. This local exercise does not establish S3 versioned snapshot consistency, cross-service recovery, encryption/key recovery or production recovery-time objectives; those remain deployment acceptance gates.
+
+## Verification
+
+`scripts/b5-environment.mjs start` creates an isolated temporary PostgreSQL cluster on a free port; `b5-run.mjs` supplies ephemeral test credentials without changing `.local/database.json` or `.local/service-secrets.json`. Windows may require an unrestricted terminal for pg_ctl token creation. `b5-schema.mjs` compares fresh/upgraded schemas, exports the reviewed dictionary and checks Prisma against disposable databases. `b5-environment.mjs stop` removes only its owned cluster. Standard checks remain `npm.cmd run build`, `check`, `test:integration`, `smoke`, `smoke:identity`, `orm:check`, `orm:verify` and `db:verify:dynamic` using a disposable configured profile.
+
+`npm.cmd run smoke:media -- image.png video.mp4 source.pdf` uses live APIs, returned upload instructions, actual workers/scanning/events and verified previews; provide `MEDIA_SMOKE_COOKIE`, `MEDIA_SMOKE_CSRF`, `MEDIA_SMOKE_ORIGIN`, and an authorized disposable gateway. The client cannot manufacture READY. Retire its retained fixtures explicitly through APIs. It does not replace separate cover/shared-use, restart, retention-recovery, provider signing, browser/native playback and abuse acceptance checks. Test-scoped verifier/authenticator replacements exercise SQL/transport only and are never evidence of live ClamAV or cloud acceptance.

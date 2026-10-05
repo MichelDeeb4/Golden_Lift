@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/composition/main.js"
+    "start": "node dist/composition/main.js",
+    "events:media": "node dist/composition/media-events.js"
   },
   "dependencies": {
     "@golden-lift/contracts": "0.1.0",

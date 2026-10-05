@@ -9,7 +9,7 @@ const local = path.join(root, '.local');
 const configFile = process.env.GL_DATABASE_CONFIG_FILE ? path.resolve(process.env.GL_DATABASE_CONFIG_FILE) : path.join(local, 'database.json');
 const pgBin = process.env.PG_BIN || 'C:/Program Files/PostgreSQL/18/bin';
 const exe = name => path.join(pgBin, `${name}${process.platform === 'win32' ? '.exe' : ''}`);
-const services = { identity: ['01_identity.sql', 5], catalog: ['02_catalog.sql', 43], media: ['03_media.sql', 6], inquiries: ['04_inquiries.sql', 5] };
+const services = { identity: ['01_identity.sql', 5], catalog: ['20_catalog_media_legacy_fresh.sql', 43], media: ['18_media_core_fresh.sql', 6], inquiries: ['04_inquiries.sql', 5] };
 const secret = () => crypto.randomBytes(32).toString('base64url');
 function run(name, args, options = {}) {
   const result = spawnSync(exe(name), args, { encoding: 'utf8', windowsHide: true, ...options });
@@ -147,7 +147,7 @@ function manifest() {
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND n.nspname IN ('${name}','ops')
     `));
   }
-  const schemaVersion=databases.golden_lift_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
+  const schemaVersion=databases.golden_lift_media.some(t=>t.columns.some(c=>c.name==='pipeline_version'))?'1.3':databases.golden_lift_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
   fs.writeFileSync(path.join(root,'database/schema-manifest.json'),JSON.stringify({schemaVersion,physicalTables:Object.values(databases).reduce((sum,t)=>sum+t.length,0),databases},null,2)+'\n');
   console.log('Exported the installed column, constraint, index and trigger dictionary.');
 }

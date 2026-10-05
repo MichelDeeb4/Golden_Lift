@@ -5,8 +5,10 @@
     "declaration": false
   },
   "include": [
-    "packages/*/src/**/*.ts",
-    "packages/*/tests/**/*.ts",
+    "packages/contracts/src/**/*.ts",
+    "packages/contracts/tests/**/*.ts",
+    "packages/platform/src/**/*.ts",
+    "packages/platform/tests/**/*.ts",
     "services/*/src/**/*.ts",
     "services/*/tests/**/*.ts"
   ]

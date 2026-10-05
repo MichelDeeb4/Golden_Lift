@@ -14,3 +14,7 @@ export {
 export type { IdentityCaller, IdentitySecurityConfig, IdentityClientConfig } from './staff-auth.js';
 
 export { retryTransaction, sqlState, closePersistence } from './transactions.js';
+export { requireInternalToken } from './internal-auth.js';
+export { RabbitMediaTransport } from './rabbitmq.js';
+export { runOutboxRelay } from './outbox-relay.js';
+export type { OutboxRelayStore, RelayEvent } from './outbox-relay.js';

@@ -381,7 +381,7 @@ B1/B2 were implemented and verified as this foundation package:
 8. Add build/type/lint/import-boundary checks and appropriate integration checks to CI.
 9. Publish the initial OpenAPI contract and architecture decisions, then begin B3 Identity using those boundaries.
 
-The foundation gate passed: all five processes start independently, database runtime connections stay isolated, import boundaries pass and real Catalog transaction checks pass. B3 Identity is also complete locally; its plan and evidence are linked above. B4 and Dynamic Catalog Core are implemented locally. B5 Media core is next, followed by broader Product workflows.
+The foundation gate passed: all five processes start independently, database runtime connections stay isolated, import boundaries pass and real Catalog transaction checks pass. B3 Identity is also complete locally; its plan and evidence are linked above. B4 and Dynamic Catalog Core are implemented locally. B5 Media code is implemented with local Sharp/PostgreSQL/HTTP evidence; its real scanner/video/PDF/broker/provider, restart, recovery and playback acceptance gate remains open. See [Media operations](operations/media.md). Broader Product workflows remain subsequent work.
 
 ## Source traceability
 

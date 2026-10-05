@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:golden-lift:media-event:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "producer",
+    "type",
+    "assetId",
+    "kind",
+    "sourceVersion",
+    "blocked"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "format": "uuid" },
+    "assetId": { "type": "string", "format": "uuid" },
+    "producer": { "enum": ["media", "catalog"] },
+    "type": {
+      "enum": ["media.asset.ready.v1", "media.asset.security.v1", "catalog.asset.retired.v1"]
+    },
+    "kind": { "enum": ["IMAGE", "VIDEO", "PDF"] },
+    "sourceVersion": { "type": "string", "pattern": "^[1-9][0-9]{0,18}$" },
+    "blocked": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "producer": { "const": "catalog" } } },
+      "then": { "properties": { "type": { "const": "catalog.asset.retired.v1" } } },
+      "else": {
+        "properties": { "type": { "enum": ["media.asset.ready.v1", "media.asset.security.v1"] } }
+      }
+    }
+  ]
+}

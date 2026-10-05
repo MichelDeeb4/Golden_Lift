@@ -7,15 +7,18 @@ Updated 2026-10-04. The user's standing instruction to follow best practices and
 ```text
 Golden_Lift/
   AGENTS.md                 Standing project rules
+  apps/storefront/          Expo Router public web shell and replaceable data composition
   services/
     identity/               Staff accounts, sessions and action tokens
     catalog/                Category/product/content ownership
-    media/                  Media ownership; processing workflows pending
+    media/                  Private storage, uploads, processing, delivery and retirement
     inquiries/              Inquiry ownership; business workflows pending
     gateway/                Stateless HTTP entrypoint; no database
   packages/
     contracts/              Dependency-free types, errors, API/event contracts
     platform/               Technical HTTP/configuration/database adapters
+    tokens/ui/icons/        Shared frontend tokens, Tamagui primitives and Lucide exports
+    i18n/api/catalog-ui/    Locale provider, public HTTP/data ports and catalog presentation
   database/
     sql/                    Reviewed schemas, upgrade SQL and integrity rules
     tests/                  Database integrity/concurrency checks
@@ -125,5 +128,9 @@ The current persistence package adds Prisma schemas/clients, native interactive 
 ## Dynamic Catalog Core
 
 [Decision 006](decisions/006-dynamic-catalog-core.md) records the separately named milestone after B4. Catalog now contains plain typed-value strategies and effective-schema/public projections in domain; focused configuration/product ports and safe preview/commit/copy/type-change/placement use cases in application; transaction-scoped native Prisma repositories, mappings, dependency readers and precondition hashing in infrastructure; strict allowlisted Admin/public controllers in presentation; and explicit providers in composition. Gateway forwards only approved routes.
+
+## B5 Media implementation
+
+Media adds pure policies in domain; storage/repository/processing/Catalog ports and uploads/library/delivery/processing/reconciliation use cases in application; private filesystem/S3, ClamAV, isolated native processors and transaction-scoped Prisma adapters in infrastructure; staff/control/binary/delivery controllers in presentation; API, per-kind worker and event-relay entrypoints in composition. Catalog adds an authenticated coordination controller, application policies, a Prisma registration/usage adapter and its own relay. Platform shares only technical broker/signature/relay mechanics. [Decision 007](decisions/007-media-core.md) documents sealing, readiness, reference and revocation boundaries. [Media operations](operations/media.md) records the available profiles and external acceptance gates.
 
 The application uses Repository/Unit of Work, validator strategies, a shared effective-schema resolver, explicit projections, bounded whole-transaction retries and an atomic transactional outbox. Reviewed SQL final-state guards enforce type eligibility and privacy; migration tools stay outside business application layers. Public product reads are independent of Identity; every Admin read/write uses live ADMIN verification. API 0.4.0 describes the actual headless scope. Full media/product/technical UX, commerce, Inquiry workflows, broker publication and application interfaces remain later milestones.

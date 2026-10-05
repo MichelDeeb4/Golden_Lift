@@ -1,0 +1,26 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "types": ["react", "node"],
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "app/**/*.tsx",
+    "features/**/*.ts",
+    "features/**/*.tsx",
+    "providers/**/*.tsx",
+    "../../packages/tokens/src/**/*.ts",
+    "../../packages/ui/src/**/*.ts",
+    "../../packages/ui/src/**/*.tsx",
+    "../../packages/icons/src/**/*.ts",
+    "../../packages/i18n/src/**/*.tsx",
+    "../../packages/api/src/**/*.ts",
+    "../../packages/catalog-ui/src/**/*.tsx",
+    "expo-env.d.ts",
+    "types/**/*.d.ts",
+    ".expo/types/**/*.ts"
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.2",
+  "schemaVersion": "1.3",
   "physicalTables": 66,
   "databases": {
     "golden_lift_identity": [
@@ -567,6 +567,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('cover_asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.categories FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE TRIGGER technical_owner_deletion AFTER UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_owner_technical_links()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
@@ -1102,6 +1103,13 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "security_blocked",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -1117,13 +1125,14 @@
         ],
         "constraints": [
           "CHECK (((deleted_at IS NULL) OR (retirement_event_id IS NOT NULL)))",
-          "CHECK (((deleted_at IS NOT NULL) OR (ready_at IS NOT NULL)))",
           "NOT NULL created_at",
           "NOT NULL id",
           "CHECK ((media_kind = ANY (ARRAY['IMAGE'::text, 'VIDEO'::text, 'PDF'::text])))",
           "NOT NULL media_kind",
           "PRIMARY KEY (id)",
+          "CHECK (((deleted_at IS NOT NULL) OR (ready_at IS NOT NULL) OR security_blocked))",
           "UNIQUE (retirement_event_id)",
+          "NOT NULL security_blocked",
           "CHECK ((source_version > 0))",
           "NOT NULL source_version",
           "NOT NULL updated_at",
@@ -1289,6 +1298,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.pages FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.pages FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('cover_asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.pages FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.pages DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.pages FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -1474,6 +1484,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_media FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_media DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2909,6 +2920,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.site_settings FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.site_settings FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('logo_asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.site_settings FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.site_settings DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.site_settings FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -4674,6 +4686,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.technical_sheet_sources FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE TRIGGER semantics_immutable BEFORE UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('sheet_id', 'asset_id', 'page_from', 'page_to')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.technical_sheet_sources DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
@@ -5512,16 +5525,39 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "sha256",
+            "type": "bytea",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "generation",
+            "type": "uuid",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "object_version",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
           }
         ],
         "indexes": [
           "CREATE UNIQUE INDEX asset_variant_live_uq ON media.asset_variants USING btree (asset_id, variant_key) WHERE (deleted_at IS NULL)",
           "CREATE UNIQUE INDEX asset_variants_pkey ON media.asset_variants USING btree (id)",
-          "CREATE UNIQUE INDEX asset_variants_storage_bucket_storage_key_key ON media.asset_variants USING btree (storage_bucket, storage_key)"
+          "CREATE INDEX asset_variants_storage_identity_idx ON media.asset_variants USING btree (storage_bucket, storage_key)"
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.asset_variants FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.asset_variants FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.asset_variants FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE CONSTRAINT TRIGGER required_outputs AFTER INSERT OR UPDATE ON media.asset_variants DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media.validate_outputs()",
+          "CREATE TRIGGER variant_identity BEFORE UPDATE ON media.asset_variants FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('asset_id', 'variant_key', 'mime_type', 'storage_bucket', 'storage_key', 'byte_size', 'sha256', 'generation', 'object_version', 'width_px', 'height_px', 'duration_ms')"
         ],
         "constraints": [
           "FOREIGN KEY (asset_id) REFERENCES media.assets(id) ON DELETE RESTRICT",
@@ -5534,15 +5570,17 @@
           "NOT NULL id",
           "NOT NULL mime_type",
           "PRIMARY KEY (id)",
+          "CHECK (((sha256 IS NULL) OR (octet_length(sha256) = 32)))",
           "NOT NULL storage_bucket",
-          "UNIQUE (storage_bucket, storage_key)",
           "NOT NULL storage_key",
           "NOT NULL updated_at",
           "CHECK ((length(btrim(variant_key)) > 0))",
           "NOT NULL variant_key",
           "CHECK ((version > 0))",
           "NOT NULL version",
-          "CHECK (((width_px IS NULL) OR (width_px > 0)))"
+          "CHECK (((width_px IS NULL) OR (width_px > 0)))",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
+          "CHECK (((generation IS NULL) OR (storage_key ~~ (((('outputs/'::text || (asset_id)::text) || '/'::text) || (generation)::text) || '/%'::text))))"
         ]
       },
       {
@@ -5674,6 +5712,41 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "security_state",
+            "type": "text",
+            "default": "'UNVERIFIED'::text",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "input_version",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "pipeline_version",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "verification",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "failure_code",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -5686,7 +5759,9 @@
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
           "CREATE TRIGGER asset_semantics BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION media.protect_asset_semantics()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.assets FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.assets FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE CONSTRAINT TRIGGER required_outputs AFTER INSERT OR UPDATE ON media.assets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media.validate_outputs()",
+          "CREATE TRIGGER verified_input BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION media.protect_verified_input()"
         ],
         "constraints": [
           "CHECK (((byte_size IS NULL) OR (byte_size > 0)))",
@@ -5703,6 +5778,8 @@
           "NOT NULL original_name",
           "PRIMARY KEY (id)",
           "UNIQUE (retirement_event_id)",
+          "CHECK ((security_state = ANY (ARRAY['UNVERIFIED'::text, 'VERIFIED'::text, 'BLOCKED'::text, 'REJECTED'::text])))",
+          "NOT NULL security_state",
           "CHECK (((sha256 IS NULL) OR (octet_length(sha256) = 32)))",
           "CHECK ((status = ANY (ARRAY['UPLOADING'::text, 'PROCESSING'::text, 'READY'::text, 'FAILED'::text])))",
           "NOT NULL status",
@@ -5710,9 +5787,12 @@
           "UNIQUE (storage_bucket, storage_key)",
           "NOT NULL storage_key",
           "NOT NULL updated_at",
+          "CHECK ((jsonb_typeof(verification) = 'object'::text))",
+          "NOT NULL verification",
           "CHECK ((version > 0))",
           "NOT NULL version",
-          "CHECK (((width_px IS NULL) OR (width_px > 0)))"
+          "CHECK (((width_px IS NULL) OR (width_px > 0)))",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED"
         ]
       },
       {
@@ -5809,6 +5889,13 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "attempt_history",
+            "type": "jsonb",
+            "default": "'[]'::jsonb",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -5824,6 +5911,8 @@
         "constraints": [
           "FOREIGN KEY (asset_id) REFERENCES media.assets(id) ON DELETE RESTRICT",
           "NOT NULL asset_id",
+          "CHECK ((jsonb_typeof(attempt_history) = 'array'::text))",
+          "NOT NULL attempt_history",
           "CHECK ((attempts >= 0))",
           "NOT NULL attempts",
           "NOT NULL created_at",
@@ -5926,27 +6015,85 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "idempotency_key",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "request_hash",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "declared_sha256",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "purpose",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "parts",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "sealing_token",
+            "type": "uuid",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "reserved_byte_size",
+            "type": "bigint",
+            "default": "0",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
           "CREATE INDEX upload_expiry_idx ON media.upload_sessions USING btree (expires_at, id) WHERE ((deleted_at IS NULL) AND (status = 'OPEN'::text))",
+          "CREATE UNIQUE INDEX upload_idempotency_uq ON media.upload_sessions USING btree (uploader_staff_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)",
           "CREATE UNIQUE INDEX upload_open_asset_uq ON media.upload_sessions USING btree (asset_id) WHERE ((deleted_at IS NULL) AND (status = 'OPEN'::text))",
           "CREATE UNIQUE INDEX upload_sessions_pkey ON media.upload_sessions USING btree (id)"
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.upload_sessions FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.upload_sessions FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.upload_sessions FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER upload_identity BEFORE UPDATE ON media.upload_sessions FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('asset_id', 'uploader_staff_id', 'expected_byte_size', 'idempotency_key', 'request_hash', 'declared_sha256', 'purpose')"
         ],
         "constraints": [
           "FOREIGN KEY (asset_id) REFERENCES media.assets(id) ON DELETE RESTRICT",
           "NOT NULL asset_id",
           "CHECK ((expires_at > created_at))",
           "NOT NULL created_at",
+          "CHECK (((declared_sha256 IS NULL) OR (declared_sha256 ~ '^[a-f0-9]{64}$'::text)))",
           "CHECK (((expected_byte_size IS NULL) OR (expected_byte_size > 0)))",
           "NOT NULL expires_at",
           "NOT NULL id",
+          "CHECK ((jsonb_typeof(parts) = 'object'::text))",
+          "NOT NULL parts",
           "PRIMARY KEY (id)",
-          "CHECK ((status = ANY (ARRAY['OPEN'::text, 'COMPLETED'::text, 'EXPIRED'::text, 'FAILED'::text])))",
+          "CHECK ((purpose = ANY (ARRAY['CATALOG'::text, 'TECHNICAL_SOURCE'::text])))",
+          "CHECK (((request_hash IS NULL) OR (request_hash ~ '^[a-f0-9]{64}$'::text)))",
+          "CHECK ((reserved_byte_size >= 0))",
+          "NOT NULL reserved_byte_size",
+          "CHECK ((status = ANY (ARRAY['OPEN'::text, 'SEALING'::text, 'COMPLETED'::text, 'EXPIRED'::text, 'FAILED'::text, 'CANCELLED'::text])))",
           "NOT NULL status",
           "NOT NULL updated_at",
           "NOT NULL uploader_staff_id",

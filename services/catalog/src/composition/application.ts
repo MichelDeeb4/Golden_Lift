@@ -12,6 +12,13 @@ import {
   identityClientConfig,
 } from '@golden-lift/platform';
 import { PrismaCategoryRepository } from '../infrastructure/prisma/category-repository.js';
+import { PrismaMediaRegistry } from '../infrastructure/prisma/media-registry.js';
+import { MediaCoordination } from '../application/use-cases/media-coordination.js';
+import {
+  CatalogMediaController,
+  MEDIA_REGISTRY,
+  MEDIA_INTERNAL_TOKEN,
+} from '../presentation/http/media-controller.js';
 import { PrismaCatalogUnitOfWork } from '../infrastructure/prisma/unit-of-work.js';
 import { ReadCategories } from '../application/use-cases/read-categories.js';
 import { CreateCategory } from '../application/use-cases/create-category.js';
@@ -94,8 +101,14 @@ export function catalogApplication(
       PublicProductsController,
       AdminProductsController,
       DynamicConfigurationController,
+      CatalogMediaController,
     ],
     providers: [
+      {
+        provide: MEDIA_REGISTRY,
+        useValue: new MediaCoordination(new PrismaMediaRegistry(database, 300)),
+      },
+      { provide: MEDIA_INTERNAL_TOKEN, useValue: process.env['MEDIA_CATALOG_TOKEN'] },
       {
         provide: CONFIGURATION_READER,
         useValue: new ReadCatalogConfiguration(dynamicTransactions),

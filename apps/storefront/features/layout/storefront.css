@@ -1,0 +1,299 @@
+.gl-bootstrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+.gl-demo-banner {
+  text-align: center;
+  padding: var(--space2) var(--space4);
+  background: var(--background-subtle);
+  color: var(--text-gold);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.gl-hero {
+  position: relative;
+  min-height: 720px;
+  background: var(--background-dark);
+  color: var(--text-inverse);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.gl-hero-illustration {
+  position: absolute;
+  inset: 0;
+  background: url('/demo/hero.svg') no-repeat right center;
+  background-size: auto 110%;
+  opacity: 0.9;
+}
+.gl-hero:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(8, 10, 11, 0.96) 0%,
+    rgba(8, 10, 11, 0.83) 38%,
+    rgba(8, 10, 11, 0.2) 76%,
+    rgba(8, 10, 11, 0.08)
+  );
+}
+html[dir='rtl'] .gl-hero-illustration {
+  background-position: left center;
+}
+html[dir='rtl'] .gl-hero:after {
+  background: linear-gradient(
+    270deg,
+    rgba(8, 10, 11, 0.96) 0%,
+    rgba(8, 10, 11, 0.83) 38%,
+    rgba(8, 10, 11, 0.2) 76%,
+    rgba(8, 10, 11, 0.08)
+  );
+}
+.gl-hero .gl-container {
+  position: relative;
+  z-index: var(--z-raised);
+}
+.gl-hero-content {
+  max-width: 680px;
+  padding-block: var(--space20);
+}
+.gl-hero .gl-overline {
+  color: var(--brand-gold);
+  margin-bottom: var(--space6);
+}
+.gl-hero .gl-heading {
+  margin-bottom: var(--space6);
+  letter-spacing: -0.04em;
+}
+.gl-hero p {
+  max-width: 520px;
+  color: var(--dark-muted);
+  font-size: 18px;
+  margin-bottom: var(--space10);
+}
+html[dir='rtl'] .gl-hero .gl-heading {
+  letter-spacing: 0;
+  font-size: 64px;
+  line-height: 1.4;
+}
+.gl-hero .gl-button-ghost {
+  border-color: var(--dark-border);
+}
+.gl-hero-number {
+  position: absolute;
+  inset-inline-end: var(--space10);
+  bottom: var(--space6);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--dark-muted);
+  direction: ltr;
+}
+.gl-featured {
+  background: var(--background-subtle);
+}
+.gl-dark {
+  background: var(--background-dark);
+  color: var(--text-inverse);
+}
+.gl-values-header {
+  max-width: 620px;
+  margin-bottom: var(--space12);
+}
+.gl-values-header .gl-overline {
+  margin-bottom: var(--space6);
+}
+.gl-values-header p {
+  color: var(--dark-muted);
+  margin-top: var(--space6);
+}
+.gl-value {
+  border-top: 1px solid var(--dark-border);
+  padding-top: var(--space8);
+  display: grid;
+  gap: var(--space4);
+}
+.gl-value svg {
+  color: var(--brand-gold);
+}
+.gl-value p {
+  color: var(--dark-muted);
+  font-size: 14px;
+}
+.gl-list-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  align-items: end;
+  gap: var(--space4);
+  padding: var(--space6);
+  background: var(--background-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radiusMD);
+  margin-bottom: var(--space6);
+}
+.gl-result-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: var(--space6);
+}
+.gl-product-columns {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: var(--space16);
+}
+.gl-product-detail {
+  padding-top: var(--space4);
+}
+.gl-product-info {
+  display: grid;
+  align-content: start;
+  gap: var(--space6);
+}
+.gl-product-info .gl-heading {
+  font-size: 40px;
+  line-height: 1.3;
+}
+.gl-product-info p {
+  color: var(--text-secondary);
+}
+.gl-about-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space16);
+  align-items: center;
+}
+.gl-about-layout p {
+  margin-block: var(--space6);
+  color: var(--text-secondary);
+}
+.gl-about-layout img {
+  border-radius: var(--radiusLG);
+  width: 100%;
+  height: 520px;
+  object-fit: cover;
+}
+.gl-error-number {
+  text-align: center;
+  font-size: 120px;
+  color: var(--text-gold);
+  font-weight: 600;
+}
+.gl-lab-section {
+  margin-bottom: var(--space16);
+}
+.gl-lab-section > .gl-heading {
+  margin-bottom: var(--space6);
+}
+.gl-lab-palette {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space4);
+}
+.gl-swatch {
+  padding: var(--space2);
+  border: 1px solid var(--border-default);
+  background: var(--background-surface);
+  border-radius: var(--radiusSM);
+  font-size: 12px;
+}
+.gl-swatch-color {
+  height: 64px;
+  border-radius: var(--radiusXS);
+  margin-bottom: var(--space2);
+}
+.gl-swatch code {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.gl-lab-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space6);
+}
+.gl-lab-row {
+  display: flex;
+  gap: var(--space4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space4);
+}
+.gl-lab-surface {
+  padding: var(--space6);
+  background: var(--background-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radiusMD);
+}
+@media (max-width: 1099px) {
+  .gl-hero {
+    min-height: 680px;
+  }
+  .gl-product-columns {
+    gap: var(--space8);
+  }
+  .gl-list-toolbar {
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space4);
+  }
+  .gl-about-layout {
+    gap: var(--space8);
+  }
+}
+@media (max-width: 767px) {
+  .gl-hero {
+    min-height: 600px;
+  }
+  .gl-hero-illustration {
+    background-size: auto 100%;
+    opacity: 0.55;
+  }
+  .gl-hero-content {
+    padding-block: var(--space16);
+  }
+  .gl-hero .gl-heading,
+  html[dir='rtl'] .gl-hero .gl-heading {
+    font-size: 40px;
+    line-height: 1.35;
+  }
+  .gl-hero p {
+    font-size: 16px;
+    max-width: 400px;
+  }
+  .gl-hero .gl-row {
+    align-items: start;
+    flex-direction: column;
+  }
+  .gl-hero-number {
+    display: none;
+  }
+  .gl-product-columns,
+  .gl-about-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space8);
+  }
+  .gl-product-info .gl-heading {
+    font-size: 32px;
+  }
+  .gl-list-toolbar {
+    grid-template-columns: 1fr;
+    padding: var(--space4);
+  }
+  .gl-about-layout img {
+    height: 360px;
+  }
+  .gl-lab-palette {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gl-lab-fields {
+    grid-template-columns: 1fr;
+  }
+  .gl-values-header .gl-heading {
+    font-size: 28px;
+  }
+  .gl-values .gl-grid {
+    grid-template-columns: 1fr;
+  }
+  .gl-error-number {
+    font-size: 80px;
+  }
+}

@@ -1,6 +1,6 @@
 # Golden Lift: Completed Work and Project Status
 
-Updated: 2026-10-04.
+Updated: 2026-10-05. Earlier dated milestone evidence below remains historical.
 
 This document summarizes the implemented project in this repository. B4 adds current locally executed category administration evidence in the [timestamped B4 report](validation/b4-2026-10-04T09-14-07-069Z.json). Earlier Prisma validation at 08:37 UTC and other milestone reports remain preserved as historical evidence.
 
@@ -10,17 +10,18 @@ The v1.1 database design, backend foundation, staff Identity workflows and Prism
 
 | Area                                            | Current state                                                                                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| PostgreSQL databases                            | Installed v1.1: 59 physical tables; prepared/verified v1.2: 66 tables, 646 columns, 73 foreign keys                                                                                |
+| PostgreSQL databases                            | Reviewed B5 fresh/upgrade schemas: 66 tables, 663 columns, 73 foreign keys verified on disposable PostgreSQL; no live B5 cutover |
 | Backend foundation, B1/B2                       | Five independent services, shared contracts, health checks and HTTP infrastructure implemented                                               |
 | Identity, B3                                    | Staff authentication, invitations, password recovery and Admin lifecycle implemented                                                         |
 | Catalog                                         | B4 implemented locally: editor navigation, moves, root/nested ordering and preview/confirmed branch deletion                                 |
-| Media                                           | Database, Prisma models, readiness and authenticated staff access checks implemented; upload/processing/delivery workflows remain planned    |
+| Media                                           | B5 code implemented; local Sharp/PostgreSQL/API evidence; native/scanner/broker/provider acceptance remains open |
 | Inquiries                                       | Database, Prisma models, readiness and authenticated staff access checks implemented; submission/inbox/notification workflows remain planned |
 | Prisma adoption                                 | Separate schemas and clients for the four database-owning services implemented                                                               |
-| Public website, mobile apps and staff dashboard | Planned                                                                                                                                      |
+| Public website                                  | S1 shared design system and multilingual responsive catalog shell implemented; demo/API boundary and component lab added |
+| Mobile apps and staff dashboard                 | Planned; S1 does not create these applications |
 | Production deployment                           | Planned; local validation does not establish production readiness                                                                            |
 
-The database includes support for more business operations than the currently exposed APIs. For example, technical sheets, Media processing jobs and Inquiry notifications have database structures/rules while their full service workflows remain planned. B4 now exposes category branch deletion through the protected Catalog API.
+The database includes support for more business operations than the currently exposed APIs. Technical-sheet editors and Inquiry notification business workflows remain planned. B4 exposes category branch deletion, and B5 adds Media processing orchestration with external acceptance gates.
 
 ## 2. Technology and service ownership
 
@@ -251,18 +252,20 @@ Reviewed SQL 13/14/15, explicit inventory/mapping/backfill/validation/switch too
 
 ## 10. Remaining implementation
 
+**S1 shared design system and public storefront shell are implemented (2026-10-05).** Six shared frontend packages support the Expo Router/React Native Web/Tamagui application, Arabic/English/Sorani, responsive catalog pages and component lab. The default preview uses visibly labeled isolated fixtures; adapters exist for current category/product-detail/media authorization contracts. Local verification passed 36 backend unit tests, five frontend unit tests, five Edge browser tests including four visual comparisons, 174 source-file ownership checks, 14 architecture probes, strict types and web export. No live backend/database/process integration or production readiness is claimed for S1. See [completed work](s1-completed-work.md), [validation evidence](validation/s1-2026-10-05T15-26-43-536Z.json), [design system](design-system.md) and [frontend operations](operations/frontend-local.md). S2 product backend, S3 full Admin and S4 remaining live product integration are deferred.
+
 **B4 category administration is implemented and locally verified.** Its operating limits are explicit: pages contain up to 100 children/path rows; complete sibling reorder and exhausted-gap recovery support at most 500 affected siblings. There is no fixed hierarchy depth or maximum root count. Media URL/delivery revocation is not implemented by Catalog soft deletion.
 
-The next planned milestone is **B5: Media core**.
+**B5 Media core code is now present (2026-10-05); operational acceptance is incomplete.** Upload/library APIs, bounded resumable transfers, immutable sealing, private filesystem/S3 adapters, fenced PostgreSQL jobs, native processing/scanner adapters, B5-only RabbitMQ relays, Catalog coordination, controlled delivery, blocking and retained retirement are implemented. Local evidence includes real Sharp processing and disposable PostgreSQL/API regressions. Actual image/video/PDF scanning/event acceptance, broker/worker restarts, S3/CDN capability tests, browser/native playback and coordinated recovery remain unverified where dependencies are unavailable. This is not a production-readiness claim. See [Media operations](operations/media.md) and [decision 007](decisions/007-media-core.md).
 
 Subsequent work includes:
 
-- Media upload APIs, private storage integration, validation, processing/variants, delivery and retirement workflows.
+- B5 real ClamAV/FFmpeg/Poppler/RabbitMQ/S3 acceptance, deployment isolation, retention recovery and load/abuse verification.
 - Full product management UX/media association workflows and technical-sheet APIs beyond the implemented headless dynamic core.
 - Company-content/settings administration beyond the existing database support.
 - Anonymous Inquiry submission, trusted product snapshots, staff inbox/status management and notification workflows.
-- Outbox publishers, event consumers, broker integration and durable background workers.
-- Public web/Android/iOS applications and the separate staff web dashboard.
+- Broader supported event consumers outside the implemented B5-only Media/Catalog paths.
+- Public storefront live-data integration and production hosting, Android/iOS applications and the separate staff web dashboard.
 - Production hosting, HTTPS/reverse-proxy configuration, real mail/storage providers, load/abuse controls and backup restoration exercises.
 
 The [backend implementation plan](backend-implementation-plan.md) records the wider milestone sequence. This status report describes what is implemented today and identifies the remaining work separately.

@@ -24,7 +24,7 @@ function walk(dir) {
           )
           ? []
           : walk(path.join(dir, item.name))
-        : item.name.endsWith('.ts')
+        : /\.tsx?$/.test(item.name)
           ? [path.join(dir, item.name)]
           : [],
     );
@@ -38,9 +38,9 @@ const cache = ts.createModuleResolutionCache(
   (file) => (process.platform === 'win32' ? file.toLowerCase() : file),
   parsed.options,
 );
-const files = [...walk('services'), ...walk('packages')].filter((file) =>
-  file.split(path.sep).join('/').includes('/src/'),
-);
+const files = [...walk('services'), ...walk('packages')]
+  .filter((file) => file.split(path.sep).join('/').includes('/src/'))
+  .concat(fs.existsSync('apps') ? walk('apps').filter((file) => !file.endsWith('.d.ts')) : []);
 if (!files.length) throw new Error('No source files found for architecture lint.');
 const failures = [],
   graph = new Map();
@@ -54,6 +54,10 @@ const layers = {
 const publicPackages = new Map([
   ['@golden-lift/contracts', path.resolve('packages/contracts/src')],
   ['@golden-lift/platform', path.resolve('packages/platform/src')],
+  ...['tokens', 'ui', 'icons', 'i18n', 'api', 'catalog-ui'].map((name) => [
+    '@golden-lift/' + name,
+    path.resolve('packages', name, 'src'),
+  ]),
 ]);
 for (const file of files) {
   const absolute = path.resolve(file),
@@ -81,7 +85,11 @@ for (const file of files) {
       (inside(serviceRoot, target) || inside(packageRoot, target))
     )
       targets.push(target);
-    if (spec.startsWith('@golden-lift/') && !publicPackages.has(spec))
+    if (
+      spec.startsWith('@golden-lift/') &&
+      !publicPackages.has(spec) &&
+      spec !== '@golden-lift/ui/styles.css'
+    )
       failures.push(
         file +
           ': shared packages must use declared public exports; service implementation import ' +
@@ -91,6 +99,11 @@ for (const file of files) {
       const [, service, layer] = match,
         own = path.resolve('services', service, 'src'),
         allowed = layers[layer];
+      if (
+        spec.startsWith('@golden-lift/') &&
+        !['@golden-lift/contracts', '@golden-lift/platform'].includes(spec)
+      )
+        failures.push(file + ': backend cannot import frontend packages');
       if (target && (spec.startsWith('.') || inside(serviceRoot, target)) && !inside(own, target))
         failures.push(
           file + ': relative import escapes service or resolved import crosses service ownership',
@@ -116,6 +129,16 @@ for (const file of files) {
       failures.push(file + ': contracts must stay dependency-free and inside their package');
     if (inside(packageRoot, absolute) && target && inside(serviceRoot, target))
       failures.push(file + ': shared package cannot import a service');
+    const storefront = path.resolve('apps/storefront');
+    const frontendPackage = ['tokens', 'ui', 'icons', 'i18n', 'api', 'catalog-ui'].some((name) =>
+      inside(path.resolve('packages', name, 'src'), absolute),
+    );
+    if (inside(storefront, absolute) && target && inside(serviceRoot, target))
+      failures.push(file + ': frontend cannot import a service implementation');
+    if ((inside(storefront, absolute) || frontendPackage) && spec === '@golden-lift/platform')
+      failures.push(file + ': frontend cannot import backend platform adapters');
+    if (frontendPackage && target && inside(storefront, target))
+      failures.push(file + ': shared frontend package cannot import the storefront');
     if (target && inside(packageRoot, target)) {
       for (const [name, directory] of publicPackages)
         if (inside(directory, target) && !inside(directory, absolute) && spec !== name)

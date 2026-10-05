@@ -87,6 +87,24 @@ probe(
   'domain cannot import infrastructure',
 );
 probe({ '-contract-type': "export type Allowed=import('@golden-lift/contracts').Uuid;" }, null);
+probe(
+  { '-frontend-backend': "export { ConfigurationError } from '@golden-lift/platform';" },
+  'frontend cannot import backend platform adapters',
+  'apps/storefront/features',
+);
+probe(
+  {
+    '-frontend-service':
+      "export { mediaConfig } from '../../../services/media/src/infrastructure/config.js';",
+  },
+  'frontend cannot import a service implementation',
+  'apps/storefront/features',
+);
+probe(
+  { '-backend-ui': "export { GLButton } from '@golden-lift/ui';" },
+  'backend cannot import frontend packages',
+  'services/catalog/src/presentation',
+);
 console.log(
   'Architecture enforcement probes passed: ' +
     count +

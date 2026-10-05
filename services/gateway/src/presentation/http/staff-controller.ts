@@ -22,7 +22,8 @@ export class StaffController {
     'admin/units/*route',
     'admin/products',
     'admin/products/*route',
-    'admin/media/session',
+    'admin/media/*route',
+    'media/*route',
     'admin/inquiries/session',
   ])
   async forward(

@@ -215,7 +215,7 @@ before(async () => {
     tools.file(
       scratch,
       service,
-      'sql/' + (service === 'identity' ? '01_identity.sql' : '15_catalog_dynamic.sql'),
+      'sql/' + (service === 'identity' ? '01_identity.sql' : '19_catalog_media_core_fresh.sql'),
       { owner: true, atomic: true },
     );
     tools.grantRuntime(scratch, service);

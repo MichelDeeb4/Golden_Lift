@@ -106,6 +106,37 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
     service: 'catalog',
   },
   { method: 'GET', path: /^\/api\/v1\/admin\/media\/session$/, service: 'media' },
+  {
+    method: 'GET',
+    path: new RegExp(
+      '^/api/v1/admin/media/(?:capabilities|statistics|assets|uploads/' +
+        id +
+        '|assets/' +
+        id +
+        '(?:/usage|/variants/(?:thumbnail|card|detail|large|playback|poster|preview|original)/authorization)?)$',
+    ),
+    service: 'media',
+  },
+  {
+    method: 'POST',
+    path: new RegExp(
+      '^/api/v1/admin/media/(?:uploads|uploads/' +
+        id +
+        '/(?:authorize|complete|cancel)|assets/' +
+        id +
+        '/(?:block|retry|reprocess|retire))$',
+    ),
+    service: 'media',
+  },
+  {
+    method: 'GET',
+    path: new RegExp(
+      '^/api/v1/media/assets/' +
+        id +
+        '/variants/(?:thumbnail|card|detail|large|playback|poster|preview|original)/authorization$',
+    ),
+    service: 'media',
+  },
   { method: 'GET', path: /^\/api\/v1\/admin\/inquiries\/session$/, service: 'inquiries' },
 ];
 export class HttpStaffProxy implements StaffProxy {

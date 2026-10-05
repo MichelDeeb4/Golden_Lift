@@ -1,0 +1,15 @@
+{
+  "name": "@golden-lift/icons",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": "19.2.3"
+  },
+  "dependencies": {
+    "lucide-react": "1.52.0"
+  }
+}

@@ -12,6 +12,9 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model AssetVariants {
+  object_version String?
+  sha256         Bytes?
+  generation     String?   @db.Uuid
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   asset_id       String    @db.Uuid
   variant_key    String
@@ -29,13 +32,18 @@ model AssetVariants {
   assets         Assets    @relation(fields: [asset_id], references: [id], onUpdate: NoAction)
 
   // SQL-managed partial index: @@unique([asset_id, variant_key], map: "asset_variant_live_uq", where: raw("(deleted_at IS NULL)"))
-  @@unique([storage_bucket, storage_key])
+  @@index([storage_bucket, storage_key], map: "asset_variants_storage_identity_idx")
   @@map("asset_variants")
   @@schema("media")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Assets {
+  security_state     String @default("UNVERIFIED")
+  input_version      String?
+  pipeline_version   String?
+  verification       Json @default("{}")
+  failure_code       String?
   id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   media_kind          String
   status              String           @default("UPLOADING")
@@ -67,6 +75,7 @@ model Assets {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model ProcessingJobs {
+  attempt_history Json @default("[]")
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   asset_id        String    @db.Uuid
   job_type        String
@@ -91,6 +100,13 @@ model ProcessingJobs {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model UploadSessions {
+  reserved_byte_size BigInt @default(0)
+  idempotency_key    String?
+  request_hash       String?
+  declared_sha256    String?
+  purpose            String?
+  parts              Json @default("{}")
+  sealing_token      String? @db.Uuid
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   asset_id           String    @db.Uuid
   uploader_staff_id  String    @db.Uuid

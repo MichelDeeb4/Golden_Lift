@@ -77,7 +77,10 @@ before(async () => {
       " TEMPLATE template0 ENCODING 'UTF8'",
   );
   created = true;
-  tools.file(scratch, 'catalog', 'sql/02_catalog.sql', { owner: true, atomic: true });
+  tools.file(scratch, 'catalog', 'sql/20_catalog_media_legacy_fresh.sql', {
+    owner: true,
+    atomic: true,
+  });
   tools.grantRuntime(scratch, 'catalog');
   pool = await databasePool({ service: 'catalog', connectionString, max: 5 });
   databaseClient = orm(pool);

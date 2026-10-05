@@ -7,12 +7,13 @@
     "node": ">=24.21.0 <25"
   },
   "workspaces": [
+    "apps/*",
     "packages/*",
     "services/*"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
-    "typecheck": "tsc -p tsconfig.check.json --noEmit",
+    "typecheck": "tsc -p tsconfig.check.json --noEmit && npm run typecheck --workspace @golden-lift/storefront",
     "lint": "npm run format:check && node scripts/check-boundaries.mjs && node scripts/test-boundaries.mjs && npm run orm:check",
     "test": "npm run build && node scripts/test.mjs unit",
     "test:integration": "npm run build && node scripts/test.mjs integration",
@@ -20,8 +21,8 @@
     "dev": "node scripts/dev.mjs",
     "db:status": "node database/scripts/db.mjs status",
     "smoke": "npm run build && node scripts/smoke.mjs",
-    "format": "prettier --write \"services/**/*.{ts,json}\" \"packages/**/*.{ts,json}\" \"scripts/*.mjs\" \"*.json\" \".github/workflows/*.yml\" \"documentation/api/*.json\" \"!services/*/src/infrastructure/prisma/generated/**\"",
-    "format:check": "prettier --check \"services/**/*.{ts,json}\" \"packages/**/*.{ts,json}\" \"scripts/*.mjs\" \"*.json\" \".github/workflows/*.yml\" \"documentation/api/*.json\" \"!services/*/src/infrastructure/prisma/generated/**\"",
+    "format": "prettier --write \"services/**/*.{ts,json}\" \"packages/**/*.{ts,tsx,json,css}\" \"apps/**/*.{ts,tsx,json,cjs,css}\" \"tests/frontend*.*\" \"scripts/*.mjs\" \"*.json\" \".github/workflows/*.yml\" \"documentation/api/*.json\" \"!services/*/src/infrastructure/prisma/generated/**\"",
+    "format:check": "prettier --check \"services/**/*.{ts,json}\" \"packages/**/*.{ts,tsx,json,css}\" \"apps/**/*.{ts,tsx,json,cjs,css}\" \"tests/frontend*.*\" \"scripts/*.mjs\" \"*.json\" \".github/workflows/*.yml\" \"documentation/api/*.json\" \"!services/*/src/infrastructure/prisma/generated/**\"",
     "auth:setup": "node scripts/setup-auth.mjs",
     "api:sync": "node scripts/sync-openapi.mjs",
     "smoke:identity": "npm run build && node scripts/identity-smoke.mjs",
@@ -31,14 +32,31 @@
     "orm:pull": "node scripts/prisma.mjs pull",
     "orm:format": "node scripts/prisma.mjs format",
     "db:dynamic": "node database/scripts/dynamic-catalog.mjs",
-    "db:verify:dynamic": "node database/scripts/verify-dynamic.mjs"
+    "db:verify:dynamic": "node database/scripts/verify-dynamic.mjs",
+    "db:media": "node database/scripts/media-core.mjs",
+    "smoke:media": "npm run build && node scripts/media-smoke.mjs",
+    "storefront:dev": "npm run dev --workspace @golden-lift/storefront",
+    "storefront:build": "npm run build --workspace @golden-lift/storefront",
+    "storefront:preview": "node scripts/storefront-preview.mjs",
+    "test:frontend": "tsx --test tests/frontend.unit.test.ts",
+    "test:storefront": "playwright test --config tests/frontend.playwright.config.ts"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/amqplib": "0.10.8",
+    "@types/fontkit": "2.0.9",
     "@types/node": "24.19.1",
     "@types/nodemailer": "8.0.2",
     "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "fontkit": "2.0.4",
     "prettier": "3.9.9",
-    "typescript": "6.0.3",
-    "prisma": "7.10.0"
+    "prisma": "7.10.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
   }
 }

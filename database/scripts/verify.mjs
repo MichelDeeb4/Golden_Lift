@@ -109,7 +109,9 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
     return r.stdout.replace(/^\\(?:un)?restrict .*$/gm,'').replace(/\r/g,'');
   };
   try {
-    for(const [name,entry] of Object.entries({identity:'01_identity.sql',catalog:catalogProfile==='v1.2'?'15_catalog_dynamic.sql':'02_catalog.sql',media:'03_media.sql',inquiries:'04_inquiries.sql'})) {
+    const catalogMedia=sql(cfg,'catalog',"SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='catalog' AND column_name='security_blocked')")==='t';
+    const mediaCore=sql(cfg,'media',"SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='media' AND column_name='pipeline_version')")==='t';
+    for(const [name,entry] of Object.entries({identity:'01_identity.sql',catalog:catalogProfile==='v1.2'?(catalogMedia?'19_catalog_media_core_fresh.sql':'15_catalog_dynamic.sql'):(catalogMedia?'20_catalog_media_legacy_fresh.sql':'02_catalog.sql'),media:mediaCore?'18_media_core_fresh.sql':'03_media.sql',inquiries:'04_inquiries.sql'})) {
       const s=scratch.services[name];
       s.database=`golden_lift_test_${suffix}_${name}`;
       sql(cfg,null,`CREATE DATABASE ${s.database} OWNER ${s.owner} TEMPLATE template0 ENCODING 'UTF8'`);
@@ -143,6 +145,7 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
       file(upgrade,'catalog','sql/13_dynamic_catalog_expand.sql',{owner:true,atomic:true});
       file(upgrade,'catalog','sql/14_dynamic_catalog_cutover.sql',{owner:true,atomic:true});
     }
+    if(catalogMedia)file(upgrade,'catalog','sql/17_catalog_media_core.sql',{owner:true,atomic:true});
     assert(fingerprint(upgrade,'catalog')===fingerprint(scratch,'catalog'),'v1.0 upgrade matches fresh '+catalogProfile+' Catalog');
     file(upgrade,'catalog',catalogProfile==='v1.2'?'tests/dynamic-technical.sql':'tests/technical.sql');
     console.log(`PASS v1.0 to ${catalogProfile} additive Catalog migration, schema parity and technical tests.`);

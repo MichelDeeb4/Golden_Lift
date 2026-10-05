@@ -23,7 +23,8 @@ sql(
   `CREATE DATABASE ${name} OWNER ${reference.services.catalog.owner} TEMPLATE template0 ENCODING 'UTF8'`,
 );
 try {
-  file(reference, 'catalog', 'sql/15_catalog_dynamic.sql', { owner: true, atomic: true });
+  const mediaCore=sql(original,'catalog',"SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='catalog' AND column_name='security_blocked')")==='t';
+  file(reference, 'catalog', 'sql/'+(mediaCore?'19_catalog_media_core_fresh.sql':'15_catalog_dynamic.sql'), { owner: true, atomic: true });
   grantRuntime(reference, 'catalog');
   await verifyFresh(reference, { reportPath, catalogProfile: 'v1.2' });
   const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));

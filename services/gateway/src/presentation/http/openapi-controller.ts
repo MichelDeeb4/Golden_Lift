@@ -4,9 +4,9 @@ const document = {
   openapi: '3.1.0',
   info: {
     title: 'Golden Lift API',
-    version: '0.4.0',
+    version: '0.5.0',
     description:
-      'Implemented B1-B4 and Dynamic Catalog Core: anonymous browsing/product projection, live staff Identity, complete category administration, dynamic product types/attributes/groups/units and guarded schema/product workflows. Dynamic operations require reviewed Catalog v1.2 cutover. Media delivery, full product/technical editing UX and Inquiry workflows remain later milestones.',
+      'B1–B4 and Dynamic Catalog Core plus B5 Media uploads, private library, fenced processing, durable Media–Catalog integration, controlled delivery, security blocking and reference-protected retirement. Real native/scanner/broker/cloud acceptance is tracked separately in B5 validation; full product/technical UX and Inquiry workflows remain deferred.',
   },
   servers: [
     {
@@ -7178,6 +7178,2931 @@ const document = {
         },
       },
     },
+    '/api/v1/admin/media/capabilities': {
+      get: {
+        operationId: 'mediaCapabilities',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads': {
+      post: {
+        operationId: 'mediaUploadInitiate',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaUploadInput',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads/{id}': {
+      get: {
+        operationId: 'mediaUploadStatus',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads/{id}/authorize': {
+      post: {
+        operationId: 'mediaUploadauthorize',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads/{id}/complete': {
+      post: {
+        operationId: 'mediaUploadcomplete',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaExpected',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads/{id}/cancel': {
+      post: {
+        operationId: 'mediaUploadcancel',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaExpected',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/uploads/{id}/parts/{number}': {
+      post: {
+        operationId: 'mediaUploadPart',
+        description:
+          'Direct Media origin. Returned upload/delivery instructions supply the configured origin; binary bytes bypass Gateway JSON handlers.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'number',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+            },
+          },
+        ],
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUploadSession',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        servers: [
+          {
+            url: 'http://127.0.0.1:3003',
+            description: 'Override with configured MEDIA_PUBLIC_ORIGIN',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/octet-stream': {
+              schema: {
+                type: 'string',
+                format: 'binary',
+                description: 'Exact bounded part size from returned instructions.',
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets': {
+      get: {
+        operationId: 'mediaLibrary',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'after',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    items: {
+                      type: 'array',
+                      items: {
+                        $ref: '#/components/schemas/MediaAsset',
+                      },
+                    },
+                    next: {
+                      anyOf: [
+                        {
+                          type: 'string',
+                          format: 'uuid',
+                        },
+                        {
+                          type: 'null',
+                        },
+                      ],
+                    },
+                  },
+                  required: ['items', 'next'],
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}': {
+      get: {
+        operationId: 'mediaAssetDetail',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    asset: {
+                      $ref: '#/components/schemas/MediaAsset',
+                    },
+                    registration: {
+                      $ref: '#/components/schemas/MediaRegistration',
+                    },
+                  },
+                  required: ['asset', 'registration'],
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/usage': {
+      get: {
+        operationId: 'mediaAssetUsage',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'after',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 100000,
+            },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaUsage',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/block': {
+      post: {
+        operationId: 'mediaAssetblock',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaExpected',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaAsset',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/retry': {
+      post: {
+        operationId: 'mediaAssetretry',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaExpected',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaAsset',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/reprocess': {
+      post: {
+        operationId: 'mediaAssetreprocess',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaExpected',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaAsset',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/retire': {
+      post: {
+        operationId: 'mediaAssetretire',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+            description: 'Must exactly match an approved staff origin.',
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/ActionToken',
+            },
+            description:
+              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
+          },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/MediaRetire',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    status: {
+                      const: 'RETIRED',
+                    },
+                  },
+                  required: ['status'],
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/variants/{profile}/authorization': {
+      get: {
+        operationId: 'mediaAuthorizeadminmedia',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaAuthorization',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/variants/{profile}/content': {
+      get: {
+        operationId: 'mediaContentadminmedia',
+        description:
+          'Direct Media origin. Returned upload/delivery instructions supply the configured origin; binary bytes bypass Gateway JSON handlers.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+          {
+            name: 'Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-None-Match',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Authorized bounded stream',
+          },
+          '206': {
+            description: 'Authorized single byte range',
+          },
+          '304': {
+            description: 'Authorized conditional response',
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '416': {
+            description: 'Unsatisfiable/unsupported range',
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        servers: [
+          {
+            url: 'http://127.0.0.1:3003',
+            description: 'Override with configured MEDIA_PUBLIC_ORIGIN',
+          },
+        ],
+      },
+      head: {
+        operationId: 'mediaContentadminmediaHead',
+        description:
+          'Direct Media origin. Returned upload/delivery instructions supply the configured origin; binary bytes bypass Gateway JSON handlers.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+          {
+            name: 'Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-None-Match',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Authorized bounded stream',
+          },
+          '206': {
+            description: 'Authorized single byte range',
+          },
+          '304': {
+            description: 'Authorized conditional response',
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '416': {
+            description: 'Unsatisfiable/unsupported range',
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        servers: [
+          {
+            url: 'http://127.0.0.1:3003',
+            description: 'Override with configured MEDIA_PUBLIC_ORIGIN',
+          },
+        ],
+      },
+    },
+    '/api/v1/media/assets/{id}/variants/{profile}/authorization': {
+      get: {
+        operationId: 'mediaAuthorizemedia',
+        description: 'Fresh Catalog context eligibility and Media verification required.',
+        security: [],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+          {
+            name: 'ownerType',
+            in: 'query',
+            required: true,
+            schema: {
+              enum: ['CATEGORY', 'PRODUCT', 'PAGE', 'SITE_LOGO', 'TECHNICAL_SOURCE'],
+            },
+          },
+          {
+            name: 'ownerId',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MediaAuthorization',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/media/assets/{id}/variants/{profile}/content': {
+      get: {
+        operationId: 'mediaContentmedia',
+        description:
+          'Direct Media origin. Returned upload/delivery instructions supply the configured origin; binary bytes bypass Gateway JSON handlers.',
+        security: [],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+          {
+            name: 'ownerType',
+            in: 'query',
+            required: true,
+            schema: {
+              enum: ['CATEGORY', 'PRODUCT', 'PAGE', 'SITE_LOGO', 'TECHNICAL_SOURCE'],
+            },
+          },
+          {
+            name: 'ownerId',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-None-Match',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Authorized bounded stream',
+          },
+          '206': {
+            description: 'Authorized single byte range',
+          },
+          '304': {
+            description: 'Authorized conditional response',
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '416': {
+            description: 'Unsatisfiable/unsupported range',
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        servers: [
+          {
+            url: 'http://127.0.0.1:3003',
+            description: 'Override with configured MEDIA_PUBLIC_ORIGIN',
+          },
+        ],
+      },
+      head: {
+        operationId: 'mediaContentmediaHead',
+        description:
+          'Direct Media origin. Returned upload/delivery instructions supply the configured origin; binary bytes bypass Gateway JSON handlers.',
+        security: [],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'profile',
+            in: 'path',
+            required: true,
+            schema: {
+              enum: [
+                'thumbnail',
+                'card',
+                'detail',
+                'large',
+                'playback',
+                'poster',
+                'preview',
+                'original',
+              ],
+            },
+          },
+          {
+            name: 'action',
+            in: 'query',
+            required: false,
+            schema: {
+              enum: ['PREVIEW', 'DOWNLOAD'],
+              default: 'PREVIEW',
+            },
+          },
+          {
+            name: 'ownerType',
+            in: 'query',
+            required: true,
+            schema: {
+              enum: ['CATEGORY', 'PRODUCT', 'PAGE', 'SITE_LOGO', 'TECHNICAL_SOURCE'],
+            },
+          },
+          {
+            name: 'ownerId',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-Range',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'If-None-Match',
+            in: 'header',
+            required: false,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Authorized bounded stream',
+          },
+          '206': {
+            description: 'Authorized single byte range',
+          },
+          '304': {
+            description: 'Authorized conditional response',
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '416': {
+            description: 'Unsatisfiable/unsupported range',
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        servers: [
+          {
+            url: 'http://127.0.0.1:3003',
+            description: 'Override with configured MEDIA_PUBLIC_ORIGIN',
+          },
+        ],
+      },
+    },
+    '/api/v1/admin/media/statistics': {
+      get: {
+        operationId: 'mediaStatistics',
+        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [],
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    retainedReservationBytes: {
+                      type: 'string',
+                    },
+                    knownOriginalBytes: {
+                      type: 'string',
+                    },
+                    knownOutputBytes: {
+                      type: 'string',
+                    },
+                    pendingJobs: {
+                      type: 'string',
+                    },
+                    oldestJobAt: {
+                      anyOf: [
+                        {
+                          type: 'string',
+                        },
+                        {
+                          type: 'null',
+                        },
+                      ],
+                    },
+                    pendingEvents: {
+                      type: 'string',
+                    },
+                    exhaustedEvents: {
+                      type: 'string',
+                    },
+                    unselectedAttempts: {
+                      type: 'string',
+                    },
+                  },
+                  required: [
+                    'retainedReservationBytes',
+                    'knownOriginalBytes',
+                    'knownOutputBytes',
+                    'pendingJobs',
+                    'oldestJobAt',
+                    'pendingEvents',
+                    'exhaustedEvents',
+                    'unselectedAttempts',
+                  ],
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '429': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Safe error response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -10112,6 +13037,356 @@ const document = {
               },
             ],
           },
+        },
+      },
+      MediaUploadInput: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          kind: {
+            enum: ['IMAGE', 'VIDEO', 'PDF'],
+          },
+          name: {
+            type: 'string',
+            maxLength: 160,
+          },
+          bytes: {
+            type: 'string',
+            pattern: '^[1-9][0-9]{0,9}$',
+          },
+          purpose: {
+            enum: ['CATALOG', 'TECHNICAL_SOURCE'],
+          },
+          sha256: {
+            anyOf: [
+              {
+                type: 'string',
+                pattern: '^[a-f0-9]{64}$',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          idempotencyKey: {
+            type: 'string',
+            pattern: '^[a-zA-Z0-9_-]{16,128}$',
+          },
+        },
+        required: ['kind', 'name', 'bytes', 'purpose', 'idempotencyKey'],
+      },
+      MediaExpected: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+        },
+        required: ['expectedVersion'],
+      },
+      MediaRetire: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          confirmed: {
+            const: true,
+          },
+        },
+        required: ['expectedVersion', 'confirmed'],
+      },
+      MediaVariant: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          profile: {
+            type: 'string',
+          },
+          mime: {
+            type: 'string',
+          },
+          bytes: {
+            type: 'string',
+          },
+          width: {
+            anyOf: [
+              {
+                type: 'integer',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          height: {
+            anyOf: [
+              {
+                type: 'integer',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          duration: {
+            anyOf: [
+              {
+                type: 'string',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+        },
+        required: ['profile', 'mime', 'bytes', 'width', 'height', 'duration'],
+      },
+      MediaAsset: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          jobs: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                status: {
+                  type: 'string',
+                },
+                attempts: {
+                  type: 'integer',
+                },
+                nextAttemptAt: {
+                  type: 'string',
+                  format: 'date-time',
+                },
+                failureCode: {
+                  anyOf: [
+                    {
+                      type: 'string',
+                    },
+                    {
+                      type: 'null',
+                    },
+                  ],
+                },
+              },
+              required: ['id', 'status', 'attempts', 'nextAttemptAt', 'failureCode'],
+            },
+          },
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          kind: {
+            enum: ['IMAGE', 'VIDEO', 'PDF'],
+          },
+          status: {
+            enum: ['UPLOADING', 'PROCESSING', 'READY', 'FAILED'],
+          },
+          security: {
+            enum: ['UNVERIFIED', 'VERIFIED', 'BLOCKED', 'REJECTED'],
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          deleted: {
+            type: 'boolean',
+          },
+          byteSize: {
+            anyOf: [
+              {
+                type: 'string',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          failureCode: {
+            anyOf: [
+              {
+                type: 'string',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          variants: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/MediaVariant',
+            },
+          },
+        },
+        required: [
+          'jobs',
+          'id',
+          'kind',
+          'status',
+          'security',
+          'version',
+          'deleted',
+          'byteSize',
+          'failureCode',
+          'variants',
+        ],
+      },
+      MediaRegistration: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          registered: {
+            type: 'boolean',
+          },
+          retired: {
+            type: 'boolean',
+          },
+          blocked: {
+            type: 'boolean',
+          },
+        },
+        required: ['registered', 'retired', 'blocked'],
+      },
+      MediaUploadSession: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          assetId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          status: {
+            enum: ['OPEN', 'SEALING', 'COMPLETED', 'CANCELLED', 'EXPIRED', 'FAILED'],
+          },
+          expiresAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          bytes: {
+            type: 'string',
+          },
+          parts: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                number: {
+                  type: 'integer',
+                },
+                bytes: {
+                  type: 'string',
+                },
+                sha256: {
+                  type: 'string',
+                },
+              },
+              required: ['number', 'bytes', 'sha256'],
+            },
+          },
+          upload: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              method: {
+                const: 'POST',
+              },
+              url: {
+                type: 'string',
+              },
+              headers: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  'content-type': {
+                    const: 'application/octet-stream',
+                  },
+                },
+                required: ['content-type'],
+              },
+              credentials: {
+                const: 'include',
+              },
+              csrfHeader: {
+                const: 'x-csrf-token',
+              },
+              partBytes: {
+                type: 'integer',
+              },
+              partCount: {
+                type: 'integer',
+              },
+            },
+            required: [
+              'method',
+              'url',
+              'headers',
+              'credentials',
+              'csrfHeader',
+              'partBytes',
+              'partCount',
+            ],
+          },
+        },
+        required: ['id', 'assetId', 'status', 'expiresAt', 'version', 'bytes', 'parts', 'upload'],
+      },
+      MediaAuthorization: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          url: {
+            type: 'string',
+            format: 'uri',
+          },
+          expiresAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          method: {
+            const: 'GET',
+          },
+        },
+        required: ['url', 'expiresAt', 'method'],
+      },
+      MediaUsage: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            ownerType: {
+              type: 'string',
+            },
+            ownerId: {
+              anyOf: [
+                {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+          },
+          required: ['ownerType', 'ownerId'],
         },
       },
     },

@@ -70,4 +70,6 @@ See the [architecture guide](../architecture.md) and [standing project rules](..
 
 ## Prisma workflow
 
+B5 Media additionally needs private storage, ClamAV, native workers and authenticated Media/Catalog event processes. Follow [Media operations](media.md) for the reviewed additive migrations, process configuration and acceptance gates. Normal API startup alone does not process uploaded files.
+
 Prisma 7.10.0 is pinned. npm ci --ignore-scripts installs dependencies; npm run build generates each client before TypeScript compilation. Use npm run orm:check to validate bindings, npm run orm:format to format schemas and npm run orm:verify for read-only model/catalog parity. npm run orm:pull saves introspection into ignored .local/prisma-introspection for review. Keep SQL as the migration authority and update the owning schema/dictionary after reviewed changes. Never use runtime credentials for schema deployment or Prisma db push. See [decision 004](../decisions/004-prisma-persistence.md).

@@ -1,0 +1,263 @@
+{
+  "phase": "S1",
+  "timestamp": "2026-10-05T15:26:43.536Z",
+  "status": "PASS",
+  "acceptanceScope": "Local shared design system and multilingual client-visible catalog shell; no production-readiness claim.",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "win32",
+    "browser": "Installed Microsoft Edge, Playwright Chromium channel msedge",
+    "versions": {
+      "expo": "57.0.26",
+      "expo-router": "57.0.24",
+      "react": "19.2.3",
+      "react-native": "0.86.3",
+      "react-native-web": "0.21.2",
+      "tamagui": "2.7.7",
+      "@tanstack/react-query": "5.104.1",
+      "react-hook-form": "7.89.0",
+      "zod": "3.25.76",
+      "i18next": "26.4.2",
+      "@playwright/test": "1.63.0"
+    }
+  },
+  "verification": {
+    "backendUnitTests": 36,
+    "frontendUnitTests": 5,
+    "browserTests": 5,
+    "browserStats": {
+      "startTime": "2026-10-05T15:26:03.615Z",
+      "duration": 21656.148999999998,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "architectureSourceFiles": 174,
+    "architectureProbes": 14,
+    "prismaSchemasValidated": 4,
+    "checks": [
+      {
+        "command": "npm.cmd run check",
+        "result": "PASS",
+        "log": ".local/s1-check.log",
+        "sha256": "4a7922b8c9751dda9e86ae750745beaeca633c26b25d59f943b1d4a486804977"
+      },
+      {
+        "command": "npm.cmd run test:frontend",
+        "result": "PASS",
+        "log": ".local/s1-unit.log",
+        "sha256": "6418779eb7905d0e8d54409fc51b4744e30de26b857d46e895f7652aa4e9bd2a"
+      },
+      {
+        "command": "npm.cmd run format:check",
+        "result": "PASS",
+        "log": ".local/s1-format.log",
+        "sha256": "df4e7e3eab283b8eb1fcad487ab41672b281f62c7ac954b1c27dde050752b888"
+      },
+      {
+        "command": "npm.cmd run storefront:build",
+        "result": "PASS",
+        "log": ".local/s1-web-build.log",
+        "sha256": "c8c5787ae61b61dc3f33a25835f85543043d5b4f61f56d8c41992f67f9701a5c"
+      },
+      {
+        "command": "npm.cmd run test:storefront",
+        "result": "PASS",
+        "log": ".local/s1-browser.log",
+        "sha256": "1f9db4ad6abc3283dfccfd317aa791941d1c8af1acbadd322cbbc9d82c326a3b"
+      },
+      {
+        "command": "node scripts/s1-dev-smoke.mjs",
+        "result": "PASS",
+        "log": ".local/s1-dev-smoke.log",
+        "sha256": "ddb47870af27ac227cc57d20ed9eb53469e110d97feb68fa282e351b94f9272a"
+      }
+    ],
+    "screenshotComparison": {
+      "result": "PASS",
+      "baselineCount": 4,
+      "updateSnapshots": false,
+      "note": "Capture explicitly waits for off-screen lazy images; reviewed document title block layout. Baselines remain versioned Windows/Edge artifacts."
+    },
+    "responsiveWidths": [
+      390,
+      768,
+      1440,
+      1920
+    ],
+    "locales": [
+      "en",
+      "ar",
+      "ckb"
+    ],
+    "soraniGlyphCoverage": "Actual regular and semibold IBM Plex Sans Arabic and Noto Sans Arabic inspected with fontkit.",
+    "liveBackendProcessesTested": false,
+    "databaseMigrationsExecuted": false
+  },
+  "visualQA": {
+    "reviewed": [
+      "English desktop homepage",
+      "Arabic mobile homepage",
+      "Arabic desktop category",
+      "Arabic desktop product detail",
+      "Sorani desktop homepage",
+      "Sorani tablet product detail"
+    ],
+    "automatedInteractions": [
+      "language persistence and direction",
+      "mobile RTL drawer",
+      "modal keyboard containment/Escape/focus restoration",
+      "custom select keyboard control",
+      "gallery/fullscreen/tabs",
+      "pagination",
+      "search URL/history/clear filters",
+      "responsive overflow"
+    ],
+    "screenshots": [
+      {
+        "path": ".local/s1-screenshots/category-ar-desktop.png",
+        "bytes": 115787,
+        "sha256": "58c819666970269971b491ca05904f049772d4c9734bcc2a61544fc339eb9b2c"
+      },
+      {
+        "path": ".local/s1-screenshots/home-ar-mobile.png",
+        "bytes": 297893,
+        "sha256": "4fd0c8c7b2e0fe9363f75c54ac5e91e2c779072de731f41cd6a92a5f0f05b3e4"
+      },
+      {
+        "path": ".local/s1-screenshots/home-ckb-development.png",
+        "bytes": 724709,
+        "sha256": "5e19837fe16b49b60f2b7317abf773db40bd2bc93136d5b2ed1687e7f34cd73c"
+      },
+      {
+        "path": ".local/s1-screenshots/home-en-desktop.png",
+        "bytes": 992954,
+        "sha256": "e9dae419fe159389b0911d9845aa3aa3034074ff5c1bfbaa549512b20f955a03"
+      },
+      {
+        "path": ".local/s1-screenshots/product-ar-development.png",
+        "bytes": 279728,
+        "sha256": "4b96cf7423924c18ab3a54c65bd630eb88ac9c1692be9b2cba14b9ceb8d16ca3"
+      },
+      {
+        "path": ".local/s1-screenshots/product-ckb-tablet.png",
+        "bytes": 229839,
+        "sha256": "ee423ff9a94f932b939de3a0ee4bd456cb120ce8a0b971a3d827114566d2b751"
+      }
+    ]
+  },
+  "dataBoundary": {
+    "default": "Explicitly labeled isolated demo source.",
+    "existingApiAdapters": [
+      "Gateway category list/detail with locale and opaque cursors",
+      "Gateway public product detail",
+      "Media public authorization with exact asset/profile/action/owner context"
+    ],
+    "actualHttpVerification": "Owned temporary localhost HTTP fixture; live owning-service integration was not executed in S1.",
+    "missingApis": [
+      "Public product list/search/filter",
+      "Public category cover asset identity"
+    ],
+    "fixtures": [
+      "Localized categories and five illustrative products",
+      "Generic specifications",
+      "Original architectural SVG illustrations",
+      "Clearly labeled demo technical PDF"
+    ]
+  },
+  "exportMeasurements": {
+    "bundles": [
+      {
+        "path": "apps/storefront/dist/_expo/static/css/global-5f0326fd5b05673b45997f26cf3ebab6.css",
+        "bytes": 17830,
+        "gzipBytes": 4068
+      },
+      {
+        "path": "apps/storefront/dist/_expo/static/css/storefront-27ed900af77b269d2d18e9fd8a4db318.css",
+        "bytes": 4814,
+        "gzipBytes": 1294
+      },
+      {
+        "path": "apps/storefront/dist/_expo/static/js/web/entry-553fc9aed94015399c576246e96a0175.js",
+        "bytes": 4683215,
+        "gzipBytes": 833447
+      }
+    ],
+    "interpretation": "Raw and gzip sizes, not measured network transfer or Lighthouse results. SPA bundle optimization remains deployment work."
+  },
+  "limitations": [
+    "SPA rendering; SSR/SEO, route fallback, hosting/security/caching and performance budgets need deployment review.",
+    "Production storage/video/scanning/broker gates remain B5 follow-up.",
+    "Approved logo, photographs, company facts and contact details are pending.",
+    "No native apps or full Admin application; shared DOM controls currently target web.",
+    "No Firefox/Safari, assistive-technology certification, Lighthouse, hosted CI or production provider validation claimed.",
+    "No S1 database or backend HTTP/process regressions beyond preserved backend unit/build/schema checks. Historical B5 database evidence is not rerun evidence."
+  ],
+  "deferred": {
+    "S2": "Product-management backend work",
+    "S3": "Full Admin dashboard",
+    "S4": "Replace remaining fixtures with real product APIs"
+  },
+  "sourceHashes": {
+    "apps/storefront/.env.example": "a1d2356bd045225c982d069649903a87811eed354e93bd0ffe004e776e766bfc",
+    "apps/storefront/.gitignore": "89cb1589918dcb0a07ec523196caf7386bf02eaef8e68858f8a5235d11f5fec3",
+    "apps/storefront/app/+not-found.tsx": "22f086d019d607b179480d0ca6a8c221b0ef20066fb23b93f34093703a1d0f66",
+    "apps/storefront/app/about.tsx": "b5011b731f39a2d00c37d31c91dc4ba38897f403eeda4d7b7afc377e541dfca9",
+    "apps/storefront/app/categories/index.tsx": "ad3a2388e6458aaf46bec03364de93f0262d7c17a0d0a5a9cd0907482ade12c7",
+    "apps/storefront/app/categories/[id].tsx": "b9b44e8af590d70b8f98dc2f09952d2ed11ee14f104730598904a8bc88147224",
+    "apps/storefront/app/component-lab.tsx": "139c992f06eecbfff40b50f8ea63fc770d3b1249e7e13124f45667292d4ee8f4",
+    "apps/storefront/app/contact.tsx": "a3199341bd2614188e48acf82dafb3d87e7c85783b4a905d4508703019b41d31",
+    "apps/storefront/app/index.tsx": "1508167aaa0509c57e8b9c5f3c0856dd85830f1655b5e94adc6ead66386ae51b",
+    "apps/storefront/app/products/index.tsx": "36eaccbfe074ffab278d6c8ddf86c7d03893f2f1092a2b6e2eeac13450cf951d",
+    "apps/storefront/app/products/[id].tsx": "9a40a12148c87a59e642507c576c1f8c2786aaff814dd132cb78b83d32e4926d",
+    "apps/storefront/app/search.tsx": "796b5f0f92386b6fc7fd892890b5cc8f460150844c027adfe3bd58edb1c1cb5b",
+    "apps/storefront/app/_layout.tsx": "9eb4caa8849251189979693ccbf388149aeb972a94b81d56a1c68f3d8c3b28de",
+    "apps/storefront/app.json": "0abf8d64e75f2126ad54704661c894c62f6130490fdd9e57e1242b68146c9980",
+    "apps/storefront/features/catalog/demo.ts": "850d720f067c62201aac5e66f803be41dbe94c8c018197c34a4597f8ffb738b2",
+    "apps/storefront/features/catalog/pages.tsx": "332f2194110b446267f79bdaaa9663cc59841eaf5a95f425080cd8234ffe6eaf",
+    "apps/storefront/features/catalog/queries.ts": "78821095f0e32be4540a48cd49565a24e7878d28ab74901ac6072e3ed161144a",
+    "apps/storefront/features/lab/showcase.tsx": "775681d19190e2277c4b7e01f48c16db9106f5d41a8524e7da819266e254418f",
+    "apps/storefront/features/layout/error-boundary.tsx": "f7acaba0552d0432e1070deea7e654bdbb38407ed2203ea654f241decb9ec70f",
+    "apps/storefront/features/layout/shell.tsx": "950eec7b4489eed84234b57f0bd2928616a22f6720a5d6b9ecbd315f7dc06768",
+    "apps/storefront/features/layout/storefront.css": "4a88f3d9efdd3a00f9fc4a3810f7d1a4c0a2f3af3ca5cb2bbbf289fc870ed237",
+    "apps/storefront/metro.config.cjs": "1b801de05c908cc3d91b95d8e4f271e0bcb43c63cf40339f9813f3fbf73cc72c",
+    "apps/storefront/package.json": "61477b4f0da6bb9cd28f3018c4593032f67d732282d4bc96cafc873ca31ac138",
+    "apps/storefront/providers/storefront.tsx": "5c62a343a5c932ada57fbf25f4146011da0afc258a4d3219b16f5c11cbb4a7ec",
+    "apps/storefront/public/demo/cabin.svg": "3e22591b1c724462ee9f79e3f53b4b5530a431c803fa2b4b0d1745ddf780583c",
+    "apps/storefront/public/demo/controller.svg": "b06557e4091c242c5df01018bf97c28cab6f12bd08076ce955360a824506283f",
+    "apps/storefront/public/demo/door.svg": "b35ccdbe7b3a1f6f06958cb77b3401bf293b1bb41ab21f7eb01c37ac4e15f906",
+    "apps/storefront/public/demo/hero.svg": "3e22591b1c724462ee9f79e3f53b4b5530a431c803fa2b4b0d1745ddf780583c",
+    "apps/storefront/public/demo/machine.svg": "f8f2d3a13a7ef0385bf33301e750685150999542f7d4b1c299e65caeff40b261",
+    "apps/storefront/public/demo/silver.svg": "181cecc285b8c529caaa67526c0e720ab7561f15173f93d40ebb7ad74da9a934",
+    "apps/storefront/public/demo/specification.pdf": "eca715ecb4c30150f7548a1245c6588bde7d16032f31eef44494395b4de6320d",
+    "apps/storefront/tsconfig.json": "b19402cbbdd941ec859011a0545f33cc25c03405e1563566416e6b7ca12c98a8",
+    "apps/storefront/types/assets.d.ts": "b5d4fe332b830cb9d443e4b582bbc2fc0cadefd647986add242d7bc9207dd94d",
+    "packages/tokens/package.json": "5ae6c50b248dec31ca974b03abd6c99038b6e5e6b726f4b37addef45b90188b7",
+    "packages/tokens/src/index.ts": "14771dfd3c61e5588d384cf0a3b586283d537a1b1f8848b98c7a525abcdb0674",
+    "packages/ui/package.json": "1a83ade0e411e6b63d0723345916a98f7d97060faefc4ddcb56fe068ad85135d",
+    "packages/ui/src/config.ts": "7709985974bac6b40a1afbb29720bdd00c0b78d8cf74409244c8d9c5ab487007",
+    "packages/ui/src/fields.tsx": "9f63669678a96c9fdaca6925336813497143fbb941832fc013b6b3b23e405612",
+    "packages/ui/src/global.css": "cc48029251a1298e9192337950c2d1d55d671aef41599adaf6ac7f4707c92239",
+    "packages/ui/src/index.ts": "f68a40207018c3840daa7337c1896a2b3d3fd8ec4dd38c0f1755989cbf69ff5d",
+    "packages/ui/src/navigation.tsx": "a83dfd5e1b318f565d8fa8849e802180bba1364a4ab0e27e21c62ae5890a2edd",
+    "packages/ui/src/overlays.tsx": "06f79e6bea1d58b6dee65056da022aa31bf6febb9790d1d01649477cbbc8c447",
+    "packages/ui/src/primitives.tsx": "445685abdc62c072f23608548294425f873a67f613a02dbd5f5f2acb6c87eaed",
+    "packages/ui/src/styles.tsx": "c665782206350deb612f95d896df471cc5943eb2e78e681c139c4ae5152a0878",
+    "packages/icons/package.json": "8ae9613546c989d03596cacab1c0c8f7c400bb946c8f45da5d31b4c03ce05ad6",
+    "packages/icons/src/index.ts": "6078d59f5c96daeae2e1990275fb7061ce40f5470dd2f15aab5308a1307e697a",
+    "packages/i18n/package.json": "105d034c24efb004aab61878ae45cdd12e643f5b3babb79e9ee0ca514c834940",
+    "packages/i18n/src/index.tsx": "1bcf29fefb0a8a48762dbb51f1ab135fc3fa5eadd957888fb51865a8a06f52c1",
+    "packages/api/package.json": "8294ae231b051d1625f94534cf6f720f7201b786d1e01c0b3b605cb822726ea1",
+    "packages/api/src/index.ts": "62ce10ae51551e16c3dcc3a6f412d509d036ebde12670b9218e64413b1a95837",
+    "packages/catalog-ui/package.json": "6b250bd173a22d8d62cb0773aed9acadff255d1c1310a84df6af697bdcf7a466",
+    "packages/catalog-ui/src/index.tsx": "141f568cb0b6b34b0d3c5b93b73981f44df9699af4a26555251d2ff78fff6a46",
+    "tests/frontend.browser.test.ts": "71bc347da02303135dfb61940385c145d2992035a90ec5883bf5dfa6abf4be92",
+    "tests/frontend.browser.test.ts-snapshots/category-ar-desktop-win32.png": "58c819666970269971b491ca05904f049772d4c9734bcc2a61544fc339eb9b2c",
+    "tests/frontend.browser.test.ts-snapshots/home-ar-mobile-win32.png": "4fd0c8c7b2e0fe9363f75c54ac5e91e2c779072de731f41cd6a92a5f0f05b3e4",
+    "tests/frontend.browser.test.ts-snapshots/home-en-desktop-win32.png": "e9dae419fe159389b0911d9845aa3aa3034074ff5c1bfbaa549512b20f955a03",
+    "tests/frontend.browser.test.ts-snapshots/product-ckb-tablet-win32.png": "ee423ff9a94f932b939de3a0ee4bd456cb120ce8a0b971a3d827114566d2b751",
+    "tests/frontend.playwright.config.ts": "959074352aa2ec46fb558febbf07e506636e4ab2c6d65307ea9fa3616ec782e2",
+    "tests/frontend.unit.test.ts": "367f20f2121b22d9aef5b65462e650c43d6202e57ca49e1f18b92d17ebd3e673"
+  }
+}

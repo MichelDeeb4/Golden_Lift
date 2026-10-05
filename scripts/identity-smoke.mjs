@@ -157,7 +157,7 @@ try {
       file(
         scratch,
         name,
-        'sql/' + (name === 'identity' ? '01_identity.sql' : '15_catalog_dynamic.sql'),
+        'sql/' + (name === 'identity' ? '01_identity.sql' : '19_catalog_media_core_fresh.sql'),
         {
           owner: true,
           atomic: true,
