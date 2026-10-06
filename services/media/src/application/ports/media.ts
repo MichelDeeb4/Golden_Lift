@@ -19,6 +19,11 @@ export interface MediaAsset {
     failureCode: string | null;
   }[];
   readonly originalName: string;
+  readonly purpose: 'CATALOG' | 'TECHNICAL_SOURCE' | null;
+  readonly updatedAt: string;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly duration: string | null;
   readonly inputVersion: string | null;
   readonly id: Uuid;
   readonly kind: MediaKind;
@@ -83,7 +88,11 @@ export interface MediaRepository {
   complete(id: Uuid, token: Uuid, object: StoredObject): Promise<UploadSession>;
   cancel(id: Uuid, actor: Uuid, expected: Version): Promise<UploadSession>;
   asset(id: Uuid): Promise<MediaAsset>;
-  list(after: Uuid | null, limit: number): Promise<readonly MediaAsset[]>;
+  list(
+    after: Uuid | null,
+    limit: number,
+    filters?: { readonly kind?: MediaKind; readonly status?: MediaAsset['status'] },
+  ): Promise<readonly MediaAsset[]>;
   claim(kind: MediaKind, token: Uuid, maxAttempts: number): Promise<ProcessingClaim | null>;
   renew(job: Uuid, token: Uuid): Promise<boolean>;
   ready(claim: ProcessingClaim, result: ProcessingResult): Promise<boolean>;

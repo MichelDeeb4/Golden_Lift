@@ -83,6 +83,7 @@ export interface AttributeValueMutation {
   readonly value: AttributeValue | null;
 }
 export interface ProductDto {
+  readonly active: boolean;
   readonly id: Uuid;
   readonly categoryId: Uuid;
   readonly productTypeId: Uuid;

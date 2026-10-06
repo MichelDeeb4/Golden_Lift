@@ -12,6 +12,8 @@ Implemented from [the supplied v1.1 design](docs/design-v1.1.md). The local Post
 
 See the [backend implementation plan](../documentation/backend-implementation-plan.md) for the development sequence. The [backend setup guide](../documentation/operations/backend-local.md) describes the implemented foundation and [Identity operating guide](../documentation/operations/identity.md) covers staff authentication and bootstrap.
 
+The v1.1 counts above describe the original installation. Current reviewed Catalog 1.4 adds Dynamic Catalog, B5 registration and Admin product activation: the manifest has 66 tables and 664 columns across four databases. `21_catalog_product_management.sql` is the additive Admin upgrade after Dynamic/B5; `22_catalog_admin_fresh.sql` composes current fresh Catalog fixtures. Inspect with `npm.cmd run db:admin`; applying requires explicit `apply --reviewed`. Runtime roles cannot migrate. See [Admin operations](../documentation/operations/admin-local.md); installed project databases were not automatically upgraded.
+
 ## Local setup
 
 Requirements: PostgreSQL 18 binaries and Node.js. The tools use the existing installations at `C:/Program Files/PostgreSQL/18/bin` and `C:/Program Files/nodejs/node.exe`. Set `PG_BIN` to another PostgreSQL binary directory when needed. There are no npm dependencies.

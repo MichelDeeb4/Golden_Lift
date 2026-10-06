@@ -53,7 +53,7 @@ const invite = await fetch('/api/v1/staff/admins', {
 });
 ~~~
 
-For a separately served staff application, prefix these paths with the configured gateway origin and permit that staff Origin in CORS. Production staff/gateway hosts must share the same site for SameSite=Strict cookies. The staff UI is a later milestone; current action links identify the token by fragment and the API can consume it directly. Tokens never belong in API query strings, operational logs or tracked files.
+For a separately served staff application, prefix these paths with the configured gateway origin and permit that staff Origin in CORS. Production staff/gateway hosts must share the same site for SameSite=Strict cookies. Staff UI routes now use `/admin` and `/super-admin`; set `STAFF_APP_URL` with an `/admin/` suffix. Action links identify the token by fragment, and the UI or API can consume it. Tokens never belong in API query strings, operational logs or tracked files.
 
 ## Admin management and recovery
 

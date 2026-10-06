@@ -12,7 +12,7 @@ import { PrismaAttributeGroupRepository } from './attribute-group-repository.js'
 import { PrismaUnitRepository } from './unit-repository.js';
 import { PrismaProductRepository } from './product-repository.js';
 import { PrismaSchemaChangeReader } from './schema-change-reader.js';
-function mapFailure(error: unknown): Error {
+export function mapFailure(error: unknown): Error {
   if (error instanceof ApplicationError) return error;
   switch (sqlState(error)) {
     case '23503':

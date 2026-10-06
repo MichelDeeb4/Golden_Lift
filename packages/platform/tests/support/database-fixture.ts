@@ -26,7 +26,7 @@ const tools = (await import(
 )) as DatabaseTools;
 const entrypoints: Record<FixtureService, string> = {
   identity: '01_identity.sql',
-  catalog: '19_catalog_media_core_fresh.sql',
+  catalog: '22_catalog_admin_fresh.sql',
   media: '18_media_core_fresh.sql',
   inquiries: '04_inquiries.sql',
 };
@@ -55,6 +55,11 @@ export async function databaseFixture(
         ? '20_catalog_media_legacy_fresh.sql'
         : entrypoints[service];
     tools.file(scratch, service, 'sql/' + entrypoint, { owner: true, atomic: true });
+    if (service === 'catalog' && options.catalogProfile === 'v1.1')
+      tools.file(scratch, service, 'sql/21_catalog_product_management.sql', {
+        owner: true,
+        atomic: true,
+      });
     tools.grantRuntime(scratch, service);
     const pool = await databasePool({
       service,

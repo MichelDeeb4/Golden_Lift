@@ -1,0 +1,25 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  testDir: '.',
+  testMatch: 'frontend.admin.test.ts',
+  workers: 1,
+  fullyParallel: false,
+  timeout: 60000,
+  reporter: [['list'], ['json', { outputFile: '../.local/admin-browser-results.json' }]],
+  use: {
+    baseURL: 'http://localhost:8082',
+    browserName: 'chromium',
+    channel: 'msedge',
+    headless: true,
+    viewport: { width: 1440, height: 1000 },
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  webServer: {
+    cwd: process.cwd(),
+    command: 'node scripts/storefront-preview.mjs',
+    url: 'http://localhost:8082',
+    reuseExistingServer: !process.env.CI,
+    timeout: 15000,
+  },
+});

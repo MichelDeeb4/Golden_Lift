@@ -167,6 +167,11 @@ const b4Routes: readonly (readonly [string, string, unknown?])[] = [
   ['POST', '/api/v1/admin/attribute-options/' + b4CategoryId + '/changes/preview', {}],
   ['POST', '/api/v1/admin/attribute-options/' + b4CategoryId + '/changes', {}],
   ['POST', '/api/v1/admin/products', {}],
+  ['GET', '/api/v1/admin/products?locale=ar'],
+  ['GET', '/api/v1/admin/products/' + b4CategoryId + '/management'],
+  ['POST', '/api/v1/admin/products/' + b4CategoryId + '/publication', {}],
+  ['POST', '/api/v1/admin/products/' + b4CategoryId + '/media', {}],
+  ['DELETE', '/api/v1/admin/products/' + b4CategoryId, {}],
   ['GET', '/api/v1/admin/products/' + b4CategoryId],
   ['GET', '/api/v1/admin/products/' + b4CategoryId + '/edit-schema'],
   ['PATCH', '/api/v1/admin/products/' + b4CategoryId, {}],
@@ -215,7 +220,7 @@ before(async () => {
     tools.file(
       scratch,
       service,
-      'sql/' + (service === 'identity' ? '01_identity.sql' : '19_catalog_media_core_fresh.sql'),
+      'sql/' + (service === 'identity' ? '01_identity.sql' : '22_catalog_admin_fresh.sql'),
       { owner: true, atomic: true },
     );
     tools.grantRuntime(scratch, service);
@@ -431,6 +436,25 @@ test('sessions use hashed database credentials, HttpOnly cookies, and session-bo
     ).status,
     401,
   );
+});
+test('credentialed browser preflight accepts only configured origins and headers', async () => {
+  const allowed = await fetch(gateway + '/api/v1/auth/login', {
+    method: 'OPTIONS',
+    headers: {
+      origin,
+      'access-control-request-method': 'POST',
+      'access-control-request-headers': 'content-type,x-csrf-token',
+    },
+  });
+  assert.equal(allowed.status, 204);
+  assert.equal(allowed.headers.get('access-control-allow-origin'), origin);
+  assert.equal(allowed.headers.get('access-control-allow-credentials'), 'true');
+  assert.ok(allowed.headers.get('access-control-allow-headers')?.includes('x-csrf-token'));
+  const foreign = await fetch(gateway + '/api/v1/auth/login', {
+    method: 'OPTIONS',
+    headers: { origin: 'https://foreign.invalid', 'access-control-request-method': 'POST' },
+  });
+  assert.equal(foreign.headers.get('access-control-allow-origin'), null);
 });
 test('role boundaries deny Admin account administration and Super Admin content access', async () => {
   await assertB4Status(superSession, 403);

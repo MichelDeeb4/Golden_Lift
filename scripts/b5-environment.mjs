@@ -148,8 +148,13 @@ if (process.argv[2] === 'start') {
   });
   if (status.error || ![0, 3].includes(status.status))
     throw new Error('Cannot establish disposable PostgreSQL shutdown state.');
+  const pidFile = path.join(directory, 'postgres', 'postmaster.pid');
+  if (status.status === 3 && fs.existsSync(pidFile))
+    throw new Error('PostgreSQL retains a process marker; retry cleanup with process visibility.');
   if (status.status === 0)
     run('pg_ctl', ['-D', path.join(directory, 'postgres'), '-w', '-t', '30', '-m', 'fast', 'stop']);
+  if (fs.existsSync(pidFile))
+    throw new Error('PostgreSQL shutdown did not remove its process marker.');
   fs.rmSync(directory, { recursive: true, force: true });
   fs.unlinkSync(pointer);
   console.log('Removed only the owned B5 disposable cluster.');

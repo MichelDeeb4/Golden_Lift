@@ -95,6 +95,14 @@ export async function httpApplication(
     bodyParser: false,
     abortOnError: false,
   });
+  app.enableCors({
+    origin: (origin, callback) =>
+      callback(null, !!origin && config.allowedOrigins.includes(origin)),
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['content-type', 'x-csrf-token', 'x-request-id'],
+    exposedHeaders: ['x-request-id'],
+  });
   app.use((request: IncomingMessage, response: ServerResponse, next: () => void) => {
     const value = request.headers['x-request-id'];
     const requestId =

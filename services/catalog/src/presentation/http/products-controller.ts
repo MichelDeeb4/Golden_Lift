@@ -72,6 +72,7 @@ export class AdminProductsController {
     const actor = await this.authentication.authenticate(staffRequest(req, true)),
       v = strictRecord(value, [
         'categoryId',
+        'active',
         'productTypeId',
         'coverAssetId',
         'modelCode',
@@ -81,11 +82,14 @@ export class AdminProductsController {
         'values',
       ]),
       changes = values(v['values']);
+    if (v['active'] !== undefined && typeof v['active'] !== 'boolean')
+      throw new ApplicationError('VALIDATION_FAILED', 'Active must be a boolean.');
     if (changes.some((c) => c.value === null))
       throw new ApplicationError('VALIDATION_FAILED', 'Creation values cannot be removals.');
     return this.create.execute(
       {
         categoryId: uuid(v['categoryId']),
+        ...(v['active'] === undefined ? {} : { active: v['active'] as boolean }),
         productTypeId: uuid(v['productTypeId']),
         coverAssetId: uuid(v['coverAssetId']),
         modelCode: v['modelCode'] === undefined ? null : nullableText(v['modelCode'], 128),

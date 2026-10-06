@@ -29,6 +29,9 @@ import {
 import { ChangeCatalogSchema } from '../src/application/use-cases/change-catalog-schema.js';
 import { CreateProduct, EditProduct } from '../src/application/use-cases/save-product.js';
 import { ReadProducts } from '../src/application/use-cases/read-products.js';
+import { ManageProducts } from '../src/application/use-cases/manage-products.js';
+import { PrismaProductManagementUnitOfWork } from '../src/infrastructure/prisma/product-management.js';
+import { PrismaMediaRegistry } from '../src/infrastructure/prisma/media-registry.js';
 import { ReadCatalogConfiguration } from '../src/application/use-cases/read-catalog-configuration.js';
 import { ChangeProductType } from '../src/application/use-cases/change-product-type.js';
 import { CreateCategory } from '../src/application/use-cases/create-category.js';
@@ -62,6 +65,201 @@ after(async () => {
 function reader() {
   return new ReadCatalogConfiguration(uow);
 }
+test('manual product pagination preserves bigint ordering and ID tie breaks', async () => {
+  const t = await type(),
+    management = new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock);
+  const products = [];
+  for (let index = 0; index < 3; index++) products.push(await product(t.id));
+  for (const [index, p] of products.entries())
+    await management.publication(
+      p.id,
+      p.version,
+      {
+        active: true,
+        featured: false,
+        sortOrder: index === 2 ? '9223372036854775807' : '0',
+        featuredOrder: '0',
+      },
+      actor,
+    );
+  const seen: string[] = [];
+  let afterId: Uuid | undefined, afterOrder: string | undefined;
+  for (let index = 0; index < 3; index++) {
+    const page = await management.list(
+      {
+        locale: 'en',
+        productTypeId: t.id,
+        limit: 1,
+        sort: 'manual',
+        cursorScope: 'fixture',
+        ...(afterId ? { afterId } : {}),
+        ...(afterOrder !== undefined ? { afterOrder } : {}),
+      },
+      actor,
+    );
+    assert.equal(page.items.length, 1);
+    seen.push(page.items[0]!.id);
+    if (page.nextCursor) {
+      const cursor = JSON.parse(Buffer.from(page.nextCursor, 'base64url').toString('utf8')) as {
+        id: string;
+        order: string;
+        scope: string;
+      };
+      afterId = uuid(cursor.id);
+      afterOrder = cursor.order;
+      assert.equal(cursor.scope, 'fixture');
+    } else assert.equal(index, 2);
+  }
+  assert.deepEqual(seen, [
+    ...products
+      .slice(0, 2)
+      .map((p) => p.id)
+      .sort(),
+    products[2]!.id,
+  ]);
+});
+test('Admin management preserves versions, publication privacy, ordered media and retained tombstones', async () => {
+  const t = await type(),
+    p = await product(t.id);
+  const management = new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock);
+  const read = new ReadProducts(uow);
+  const registry = new PrismaMediaRegistry(db, 300),
+    context = { ownerType: 'PRODUCT' as const, ownerId: p.id };
+  assert.ok((await registry.authorize(p.coverAssetId, context, 'PREVIEW')).expiresAt);
+  const superAdmin = { ...actor, role: 'SUPER_ADMIN' as const };
+  await assert.rejects(() => management.detail(p.id, superAdmin), isCode('FORBIDDEN'));
+  const before = await management.detail(p.id, actor);
+  assert.equal(before.active, true);
+  const unpublished = await management.publication(
+    p.id,
+    before.version,
+    {
+      active: false,
+      featured: true,
+      sortOrder: '9223372036854775807',
+      featuredOrder: '-7',
+    },
+    actor,
+  );
+  assert.equal(unpublished.sortOrder, '9223372036854775807');
+  assert.ok(BigInt(unpublished.version) > BigInt(before.version));
+  await assert.rejects(() => read.public(p.id, 'en'), isCode('NOT_FOUND'));
+  await assert.rejects(
+    () => registry.authorize(p.coverAssetId, context, 'PREVIEW'),
+    isCode('FORBIDDEN'),
+  );
+  assert.ok((await registry.usage(p.coverAssetId, 0, 25)).some((owner) => owner.ownerId === p.id));
+  assert.equal(
+    (
+      await management.list({ locale: 'ar', active: false, featured: true, limit: 25 }, actor)
+    ).items.some((x) => x.id === p.id),
+    true,
+  );
+  await assert.rejects(
+    () =>
+      management.publication(
+        p.id,
+        before.version,
+        { active: true, featured: false, sortOrder: '0', featuredOrder: '0' },
+        actor,
+      ),
+    isCode('VERSION_CONFLICT'),
+  );
+  await assert.rejects(
+    () =>
+      management.publication(
+        p.id,
+        unpublished.version,
+        { active: true, featured: false, sortOrder: '9223372036854775808', featuredOrder: '0' },
+        actor,
+      ),
+    isCode('VALIDATION_FAILED'),
+  );
+  const video = ids.newUuid();
+  await db.$transaction(
+    (tx) =>
+      tx.mediaAssetRefs.create({
+        data: { id: video, media_kind: 'VIDEO', source_version: 1n, ready_at: new Date() },
+      }),
+    { isolationLevel: 'Serializable' },
+  );
+  const media = [
+    {
+      id: ids.newUuid(),
+      assetId: video,
+      kind: 'VIDEO' as const,
+      sortOrder: '0',
+      blocked: false,
+      translations: [
+        { locale: 'ckb' as const, title: 'Test caption', caption: null, altText: null },
+      ],
+    },
+    ...unpublished.media,
+  ];
+  const updated = await management.media(p.id, unpublished.version, p.coverAssetId, media, actor);
+  assert.equal(updated.media[0]?.assetId, video);
+  assert.equal(updated.media[0]?.translations[0]?.title, 'Test caption');
+  await db.$transaction(
+    (tx) =>
+      tx.mediaAssetRefs.update({
+        where: { id: video },
+        data: { security_blocked: true, source_version: 2n },
+      }),
+    { isolationLevel: 'Serializable' },
+  );
+  await assert.rejects(
+    () =>
+      management.publication(
+        p.id,
+        updated.version,
+        { active: true, featured: false, sortOrder: '0', featuredOrder: '0' },
+        actor,
+      ),
+    isCode('INVALID_STATE'),
+  );
+  const detached = await management.media(
+    p.id,
+    updated.version,
+    p.coverAssetId,
+    updated.media.filter((m) => m.assetId !== video),
+    actor,
+  );
+  assert.equal(
+    await db.productMedia.count({
+      where: { product_id: p.id, asset_id: video, deleted_at: { not: null } },
+    }),
+    1,
+  );
+  assert.equal(
+    (await db.mediaAssetRefs.findUniqueOrThrow({ where: { id: video } })).deleted_at,
+    null,
+  );
+  await assert.rejects(
+    () => management.remove(p.id, detached.version, false, actor),
+    isCode('VALIDATION_FAILED'),
+  );
+  const published = await management.publication(
+    p.id,
+    detached.version,
+    { active: true, featured: false, sortOrder: '0', featuredOrder: '0' },
+    actor,
+  );
+  assert.equal((await read.public(p.id, 'ckb')).id, p.id);
+  await management.remove(p.id, published.version, true, actor);
+  await assert.rejects(() => management.detail(p.id, actor), isCode('NOT_FOUND'));
+  await assert.rejects(() => read.public(p.id, 'ar'), isCode('NOT_FOUND'));
+  const tombstone = await db.products.findUniqueOrThrow({ where: { id: p.id } });
+  assert.ok(tombstone.deleted_at);
+  assert.equal(tombstone.is_active, false);
+  const deletedEvents = await db.outboxEvents.findMany({
+    where: { aggregate_id: p.id, event_type: 'catalog.product.deleted.v1' },
+  });
+  assert.equal(deletedEvents.length, 1);
+  assert.equal(
+    (deletedEvents[0]!.payload as { aggregate?: { version?: unknown } }).aggregate?.version,
+    tombstone.version.toString(),
+  );
+});
 function changes() {
   return new ChangeCatalogSchema(uow, ids, clock);
 }

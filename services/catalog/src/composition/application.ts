@@ -12,6 +12,12 @@ import {
   identityClientConfig,
 } from '@golden-lift/platform';
 import { PrismaCategoryRepository } from '../infrastructure/prisma/category-repository.js';
+import { PrismaProductManagementUnitOfWork } from '../infrastructure/prisma/product-management.js';
+import { ManageProducts } from '../application/use-cases/manage-products.js';
+import {
+  ProductManagementController,
+  PRODUCT_MANAGEMENT,
+} from '../presentation/http/product-management-controller.js';
 import { PrismaMediaRegistry } from '../infrastructure/prisma/media-registry.js';
 import { MediaCoordination } from '../application/use-cases/media-coordination.js';
 import {
@@ -96,6 +102,7 @@ export function catalogApplication(
     shutdown: () => closePersistence(database, pool),
     controllers: [
       CategoriesController,
+      ProductManagementController,
       AdminCategoriesController,
       CategoryTreeController,
       PublicProductsController,
@@ -130,6 +137,10 @@ export function catalogApplication(
       {
         provide: SCHEMA_CHANGES,
         useValue: new ChangeCatalogSchema(dynamicTransactions, ids, clock),
+      },
+      {
+        provide: PRODUCT_MANAGEMENT,
+        useValue: new ManageProducts(new PrismaProductManagementUnitOfWork(database), ids, clock),
       },
       { provide: READ_PRODUCTS, useValue: new ReadProducts(dynamicTransactions) },
       { provide: CREATE_PRODUCT, useValue: new CreateProduct(dynamicTransactions, ids, clock) },

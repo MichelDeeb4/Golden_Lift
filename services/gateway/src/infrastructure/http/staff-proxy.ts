@@ -7,6 +7,18 @@ import type {
 } from '../../application/ports/staff-proxy.js';
 const id = '[0-9a-fA-F-]{36}';
 const routes: readonly { method: string; path: RegExp; service: BusinessService }[] = [
+  { method: 'GET', path: /^\/api\/v1\/admin\/products$/, service: 'catalog' },
+  {
+    method: 'GET',
+    path: new RegExp('^/api/v1/admin/products/' + id + '/management$'),
+    service: 'catalog',
+  },
+  {
+    method: 'POST',
+    path: new RegExp('^/api/v1/admin/products/' + id + '/(publication|media)$'),
+    service: 'catalog',
+  },
+  { method: 'DELETE', path: new RegExp('^/api/v1/admin/products/' + id + '$'), service: 'catalog' },
   {
     method: 'GET',
     path: new RegExp(

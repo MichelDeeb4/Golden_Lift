@@ -34,12 +34,14 @@
     "db:dynamic": "node database/scripts/dynamic-catalog.mjs",
     "db:verify:dynamic": "node database/scripts/verify-dynamic.mjs",
     "db:media": "node database/scripts/media-core.mjs",
+    "db:admin": "node database/scripts/admin-core.mjs",
     "smoke:media": "npm run build && node scripts/media-smoke.mjs",
     "storefront:dev": "npm run dev --workspace @golden-lift/storefront",
     "storefront:build": "npm run build --workspace @golden-lift/storefront",
     "storefront:preview": "node scripts/storefront-preview.mjs",
     "test:frontend": "tsx --test tests/frontend.unit.test.ts",
-    "test:storefront": "playwright test --config tests/frontend.playwright.config.ts"
+    "test:storefront": "playwright test --config tests/frontend.playwright.config.ts",
+    "test:admin": "playwright test --config tests/frontend.admin.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

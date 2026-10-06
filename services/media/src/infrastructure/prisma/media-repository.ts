@@ -55,6 +55,17 @@ function asset(
             : null,
     })),
     originalName: row.original_name,
+    purpose:
+      row.metadata &&
+      typeof row.metadata === 'object' &&
+      !Array.isArray(row.metadata) &&
+      (row.metadata['purpose'] === 'CATALOG' || row.metadata['purpose'] === 'TECHNICAL_SOURCE')
+        ? row.metadata['purpose']
+        : null,
+    updatedAt: row.updated_at.toISOString(),
+    width: row.width_px,
+    height: row.height_px,
+    duration: row.duration_ms?.toString() ?? null,
     inputVersion: row.input_version,
     id: uuid(row.id),
     kind: row.media_kind as MediaKind,
@@ -304,10 +315,19 @@ class PrismaMediaRepository implements MediaRepository {
     if (!row) throw new ApplicationError('NOT_FOUND', 'Asset not found.');
     return asset(row);
   }
-  async list(after: Uuid | null, limit: number) {
+  async list(
+    after: Uuid | null,
+    limit: number,
+    filters: Parameters<import('../../application/ports/media.js').MediaRepository['list']>[2] = {},
+  ) {
     return (
       await this.db.assets.findMany({
-        where: { deleted_at: null, ...(after ? { id: { gt: after } } : {}) },
+        where: {
+          deleted_at: null,
+          ...(after ? { id: { gt: after } } : {}),
+          ...(filters?.kind ? { media_kind: filters.kind } : {}),
+          ...(filters?.status ? { status: filters.status } : {}),
+        },
         orderBy: { id: 'asc' },
         take: limit,
         include: {

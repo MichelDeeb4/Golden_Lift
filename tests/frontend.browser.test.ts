@@ -11,6 +11,9 @@ test('homepage, category/card data, history and scoped pages', async ({ page }) 
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Engineering movement');
   await expect(page.locator('.gl-category-card')).toHaveCount(3);
   await expect(page.locator('.gl-product-card')).toHaveCount(4);
+  await page.mouse.wheel(0, 700);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.locator('.gl-category-card a').first().click();
   await expect(page).toHaveURL(/categories\/cabins/);
   await expect(page.locator('.gl-product-card')).toHaveCount(2);

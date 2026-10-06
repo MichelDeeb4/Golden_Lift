@@ -116,7 +116,8 @@ export class PrismaMediaRegistry implements CatalogMediaRegistry {
         { eligible: boolean }[]
       >`SELECT EXISTS(SELECT 1 FROM catalog.public_asset_usage u
         JOIN catalog.media_asset_refs a ON a.id=u.asset_id WHERE u.asset_id=${id}::uuid AND u.owner_type=${context.ownerType}
-          AND u.owner_id IS NOT DISTINCT FROM ${context.ownerId}::uuid AND NOT a.security_blocked AND a.deleted_at IS NULL) eligible`;
+          AND u.owner_id IS NOT DISTINCT FROM ${context.ownerId}::uuid AND NOT a.security_blocked AND a.deleted_at IS NULL
+          AND (u.owner_type <> 'PRODUCT' OR EXISTS(SELECT 1 FROM catalog.products p WHERE p.id=u.owner_id AND p.is_active AND p.deleted_at IS NULL))) eligible`;
       if (!rows[0]?.eligible)
         throw new ApplicationError('FORBIDDEN', 'Media is not public in this context.');
       return { expiresAt: new Date(start.getTime() + this.grantSeconds * 1000).toISOString() };

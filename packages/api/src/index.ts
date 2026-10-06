@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiOrigin } from './origin';
 export type Language = 'ar' | 'en' | 'ckb';
 export interface MediaReference {
   readonly id: string;
@@ -92,20 +93,7 @@ export class ApiError extends Error {
 export class PublicApiClient {
   readonly origin: string;
   constructor(origin: string) {
-    const u = new URL(origin);
-    if (
-      u.username ||
-      u.password ||
-      u.search ||
-      u.hash ||
-      u.pathname !== '/' ||
-      !(
-        u.protocol === 'https:' ||
-        (u.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(u.hostname))
-      )
-    )
-      throw new Error('Expected HTTPS Gateway origin or local HTTP origin');
-    this.origin = u.origin;
+    this.origin = apiOrigin(origin);
   }
   async get<T>(
     path: string,
@@ -317,3 +305,4 @@ export const catalogKeys = {
   product: (source: string, locale: Language, id: string) =>
     ['catalog', source, locale, 'product', id] as const,
 };
+export * from './staff';

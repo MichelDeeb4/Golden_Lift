@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import http from 'node:http';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import { openSync } from 'fontkit';
 import { colors, palette, contrastRatio, space } from '@golden-lift/tokens';
 import {
@@ -9,8 +11,131 @@ import {
   ApiCatalogDataSource,
   ApiMediaResolver,
   catalogKeys,
+  StaffApiClient,
+  StaffApiError,
+  fieldSchema,
 } from '@golden-lift/api';
 import { DemoCatalogDataSource, DemoMediaResolver } from '../apps/storefront/features/catalog/demo';
+import { validateDynamicValue } from '../apps/storefront/features/admin/dynamic-values';
+test('dynamic editing preserves exact decimal bounds, false, translated text and choice cardinality', () => {
+  const field = fieldSchema.parse({
+    definitionId: randomUUID(),
+    assignmentId: randomUUID(),
+    code: 'precision',
+    label: 'Quantity',
+    description: null,
+    kind: 'NUMBER',
+    control: 'number',
+    required: true,
+    groupPlacementId: null,
+    sortOrder: '1024',
+    unit: null,
+    minimum: '0',
+    maximum: '99999999999999.999999',
+    allowMultiple: false,
+    textMaxLength: 4,
+    textMultiline: false,
+    deprecated: false,
+    options: [],
+  });
+  assert.equal(
+    validateDynamicValue(field, { kind: 'NUMBER', number: '99999999999999.999999' }),
+    true,
+  );
+  for (const number of ['100000000000000', '1.0000001', '1e3', 'NaN', '-0.000001'])
+    assert.equal(validateDynamicValue(field, { kind: 'NUMBER', number }), false);
+  assert.equal(
+    validateDynamicValue({ ...field, kind: 'BOOLEAN' }, { kind: 'BOOLEAN', boolean: false }),
+    true,
+  );
+  assert.equal(
+    validateDynamicValue(
+      { ...field, kind: 'TEXT' },
+      { kind: 'TEXT', translations: [{ locale: 'en', text: 'abcd' }] },
+    ),
+    false,
+  );
+  assert.equal(
+    validateDynamicValue(
+      { ...field, kind: 'TEXT' },
+      { kind: 'TEXT', translations: [{ locale: 'ar', text: 'abcd' }] },
+    ),
+    true,
+  );
+  assert.equal(
+    validateDynamicValue(
+      { ...field, kind: 'CHOICE' },
+      { kind: 'CHOICE', optionIds: [randomUUID()] },
+    ),
+    false,
+  );
+  assert.equal(validateDynamicValue(field, undefined), false);
+});
+test('staff client uses memory CSRF, safe errors, schema parsing and clears expired authorization', async () => {
+  const csrf = randomBytes(32).toString('base64url'),
+    now = new Date().toISOString();
+  let invalidated = 0,
+    header: string | undefined;
+  const server = http.createServer((req, res) => {
+    res.setHeader('content-type', 'application/json');
+    if (req.url === '/api/v1/auth/login')
+      res.end(
+        JSON.stringify({
+          account: {
+            id: randomUUID(),
+            email: 'fixture@example.test',
+            displayName: 'Fixture',
+            role: 'ADMIN',
+            status: 'ACTIVE',
+            version: '1',
+            createdAt: now,
+          },
+          expiresAt: new Date(Date.now() + 60000).toISOString(),
+          csrfToken: csrf,
+        }),
+      );
+    else if (req.url === '/api/v1/admin/write') {
+      header = req.headers['x-csrf-token'] as string | undefined;
+      res.end('{}');
+    } else {
+      res.statusCode = 401;
+      res.end(
+        JSON.stringify({
+          error: {
+            code: 'UNAUTHENTICATED',
+            requestId: 'fixture',
+            message: 'internal secret MUST NOT DISPLAY',
+          },
+        }),
+      );
+    }
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Missing test port');
+  try {
+    const client = new StaffApiClient(`http://127.0.0.1:${address.port}`, () => invalidated++);
+    await assert.rejects(
+      () => client.request('/admin/write', z.object({}), {}, 'POST'),
+      (e) => e instanceof StaffApiError && e.status === 401,
+    );
+    await client.login('fixture@example.test', randomBytes(24).toString('base64url'));
+    await client.request('/admin/write', z.object({}), {}, 'POST');
+    assert.equal(header, csrf);
+    await assert.rejects(
+      () => client.request('/admin/expired', z.unknown()),
+      (e) => e instanceof StaffApiError && !e.message.includes('secret'),
+    );
+    assert.equal(invalidated, 1);
+    await assert.rejects(
+      () => client.request('/admin/write', z.object({}), {}, 'POST'),
+      (e) => e instanceof StaffApiError && e.status === 401,
+    );
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});
 test('specified palette and semantic text/action contrast are preserved', () => {
   assert.equal(palette.gold500, '#C9A15B');
   assert.equal(palette.charcoal950, '#0D0F10');

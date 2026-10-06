@@ -7,6 +7,7 @@ import type {
   Version,
 } from '@golden-lift/contracts';
 export interface ProductCreate {
+  readonly active?: boolean;
   readonly categoryId: Uuid;
   readonly productTypeId: Uuid;
   readonly coverAssetId: Uuid;

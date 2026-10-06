@@ -1,7 +1,7 @@
 import { ApplicationError } from '@golden-lift/contracts';
 import type { AuthenticatedActor, Uuid, Version } from '@golden-lift/contracts';
 import { requireAdmin } from '../../domain/staff-access.js';
-import type { MediaUnitOfWork, CatalogMedia } from '../ports/media.js';
+import type { MediaUnitOfWork, CatalogMedia, MediaRepository } from '../ports/media.js';
 
 export class MediaLibrary {
   async statistics(actor: AuthenticatedActor) {
@@ -12,11 +12,21 @@ export class MediaLibrary {
     private readonly transactions: MediaUnitOfWork,
     private readonly catalog: CatalogMedia,
   ) {}
-  async list(after: Uuid | null, limit: number, actor: AuthenticatedActor) {
+  async list(
+    after: Uuid | null,
+    limit: number,
+    actor: AuthenticatedActor,
+    filters: Parameters<MediaRepository['list']>[2] = {},
+  ) {
     requireAdmin(actor);
     if (!Number.isInteger(limit) || limit < 1 || limit > 100)
       throw new ApplicationError('VALIDATION_FAILED', 'Invalid library limit.');
-    return this.transactions.execute((r) => r.list(after, limit));
+    if (
+      (filters?.kind && !['IMAGE', 'VIDEO', 'PDF'].includes(filters.kind)) ||
+      (filters?.status && !['UPLOADING', 'PROCESSING', 'READY', 'FAILED'].includes(filters.status))
+    )
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid library filters.');
+    return this.transactions.execute((r) => r.list(after, limit, filters));
   }
   async detail(id: Uuid, actor: AuthenticatedActor) {
     requireAdmin(actor);

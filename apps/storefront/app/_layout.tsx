@@ -9,10 +9,13 @@ import IBMPlexSansArabic_600SemiBold from '@expo-google-fonts/ibm-plex-sans-arab
 import NotoSansArabic_400Regular from '@expo-google-fonts/noto-sans-arabic/400Regular/NotoSansArabic_400Regular.ttf';
 import { StorefrontProvider } from '../providers/storefront';
 import { Shell } from '../features/layout/shell';
+import { usePathname } from 'expo-router';
+import { StaffActionTokenProvider } from '../features/admin/action-token';
 import '@golden-lift/ui/styles.css';
 import '../features/layout/storefront.css';
 export { StorefrontErrorBoundary as ErrorBoundary } from '../features/layout/error-boundary';
 export default function Layout() {
+  const pathname = usePathname();
   const [loaded, error] = useFonts({
     Manrope: Manrope_400Regular,
     ManropeSemiBold: Manrope_600SemiBold,
@@ -30,9 +33,15 @@ export default function Layout() {
     );
   return (
     <StorefrontProvider>
-      <Shell>
-        <Slot />
-      </Shell>
+      {pathname.startsWith('/admin') || pathname.startsWith('/super-admin') ? (
+        <StaffActionTokenProvider>
+          <Slot />
+        </StaffActionTokenProvider>
+      ) : (
+        <Shell>
+          <Slot />
+        </Shell>
+      )}
     </StorefrontProvider>
   );
 }

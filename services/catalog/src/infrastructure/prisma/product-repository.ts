@@ -88,6 +88,7 @@ export class PrismaProductRepository implements ProductRepository {
         });
     return {
       id: uuid(row.id),
+      active: row.is_active,
       categoryId: uuid(row.category_id),
       productTypeId: uuid(row.product_type_id),
       coverAssetId: uuid(row.product_media_products_id_cover_media_idToproduct_media.asset_id),
@@ -130,6 +131,7 @@ export class PrismaProductRepository implements ProductRepository {
         id,
         category_id: input.categoryId,
         product_type_id: input.productTypeId,
+        is_active: input.active ?? true,
         cover_media_id: mediaId,
       },
     });

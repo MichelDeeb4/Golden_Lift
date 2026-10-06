@@ -1,0 +1,448 @@
+{
+  "milestone": "Full Admin Dashboard",
+  "generatedAt": "2026-10-06T12:39:33.944Z",
+  "status": "PASS",
+  "acceptanceScope": "Local implemented web dashboard and owning-service contracts. Production B5 provider acceptance is excluded and remains open.",
+  "repository": {
+    "baselineCommit": "2b1384cc7805adc109e906584c839af05d441a6b",
+    "branch": "main",
+    "committedOrPushed": false
+  },
+  "environment": {
+    "node": "v24.21.0",
+    "os": "Windows",
+    "database": "PostgreSQL 18 disposable isolated cluster",
+    "browser": "Microsoft Edge / Playwright",
+    "installedProjectDatabasesModified": false
+  },
+  "checks": {
+    "buildTypeFormatArchitecture": {
+      "status": "PASS",
+      "command": "npm.cmd run check",
+      "sourceFiles": 199,
+      "architectureProbes": 14,
+      "prismaSchemas": 4,
+      "passed": 36,
+      "failed": 0,
+      "completedAt": "2026-10-06T12:33:54.912Z",
+      "localLog": ".local/admin-check.log"
+    },
+    "frontendExport": {
+      "status": "PASS",
+      "command": "npm.cmd run storefront:build",
+      "completedAt": "2026-10-06T12:33:01.664Z"
+    },
+    "backendIntegration": {
+      "status": "PASS",
+      "command": "npm.cmd run test:integration",
+      "passed": 91,
+      "failed": 0,
+      "completedAt": "2026-10-06T08:48:57.161Z",
+      "localLog": ".local/admin-integration.log"
+    },
+    "frontendUnit": {
+      "status": "PASS",
+      "command": "npm.cmd run test:frontend",
+      "passed": 7,
+      "failed": 0,
+      "completedAt": "2026-10-06T09:15:08.068Z",
+      "localLog": ".local/admin-frontend-unit.log"
+    },
+    "databaseParity": {
+      "status": "PASS",
+      "command": "node scripts/verify-orm.mjs",
+      "models": 66,
+      "columns": 664,
+      "foreignKeys": 73,
+      "completedAt": "2026-10-06T09:06:39.091Z"
+    },
+    "adminBrowser": {
+      "status": "PASS",
+      "command": "npm.cmd run test:admin",
+      "startTime": "2026-10-06T12:34:07.196Z",
+      "duration": 154562.346,
+      "expected": 10,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "errors": []
+    },
+    "publicBrowser": {
+      "status": "PASS",
+      "command": "npm.cmd run test:storefront",
+      "startTime": "2026-10-06T12:35:33.877Z",
+      "duration": 18971.154,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "errors": []
+    },
+    "cleanupHelper": {
+      "status": "PASS",
+      "commands": [
+        "node --check scripts/b5-environment.mjs",
+        "npm.cmd exec -- prettier --check scripts/b5-environment.mjs"
+      ],
+      "note": "Added a retained postmaster.pid guard after Windows process visibility produced a misleading stopped status. This helper-only final change has syntax/format checks; production code was unchanged after final browser tests."
+    }
+  },
+  "totalPassingTests": 149,
+  "browserJourneys": [
+    "anonymous redirect, real login, role separation and logout",
+    "category and type create, independent translations, product editor, publication and stale version",
+    "real upload parts, completion, processing feedback and controlled private preview",
+    "video playback and PDF preview/download use private Media grants and Catalog associations",
+    "recursive category edit, sibling reorder, move and confirmed branch deletion",
+    "choice options preserve definition drafts and reviewed deletion uses current versions",
+    "Arabic and Sorani RTL, mobile navigation and page scrolling",
+    "product edits persist and confirmed deletion removes public access",
+    "invitation, single-use action tokens, password recovery and own password change",
+    "Super Admin invitation, disable/enable, session revocation and retained deletion"
+  ],
+  "verificationCoverage": [
+    "Live Admin/Super Admin authentication, logout, wrong-role denial and disabled account session revocation",
+    "Recursive category creation/edit, sibling ordering, move and confirmed branch deletion",
+    "Product creation/edit/publication, exact numeric dynamic attributes, category/type selection, stale-version draft preservation and confirmed soft deletion",
+    "Definition/required assignment creation, independent translations, choice option editing and reviewed deletion without losing parent drafts",
+    "Actual upload HTTP parts, lost acknowledgement recovery, processing feedback, ready selection, image decoding, video playback, PDF preview/download, gallery ordering/detachment and retained shared assets",
+    "Single-use invitation/reset tokens, fragment removal, recovery, own password change and revoked session",
+    "Super Admin invite/resend/disable/enable/delete, Arabic/Sorani RTL, responsive drawer keyboard focus and real page scrolling",
+    "PostgreSQL transactions, exact bigint pagination, CSRF/Origin/CORS, public inactive-product denial, blocked media policy and outbox/retention regressions"
+  ],
+  "visualReview": {
+    "status": "PASS",
+    "inspected": [
+      ".local/admin-ar-desktop.png",
+      ".local/admin-ckb-desktop.png",
+      ".local/admin-ckb-mobile-viewport.png"
+    ],
+    "note": "Manual screenshot inspection plus browser overflow, direction, drawer/focus and scroll assertions. Screenshots contain disposable test data and are not committed."
+  },
+  "harnessLimitations": [
+    "Browser fixture uses actual Identity/Gateway/Catalog/Media HTTP applications and separate databases, but a test-only security/processing adapter publishes IMAGE/VIDEO/PDF derivatives. Video bytes are actual browser-recorded MP4; raster fixtures are synthetic. This does not verify production scanning/transcoding/broker delivery.",
+    "Invitation/reset mail is captured locally, not delivered through a production SMTP provider.",
+    "Windows runner-owned preview shutdown stalled after all assertions passed. Stopping only its verified preview process allowed the runner to finalize successfully with exit code 0; public browser run exited 0.",
+    "Unit/integration/parity checks have their recorded execution times; they are not presented as newly repeated during the last browser rerun."
+  ],
+  "remainingExternalB5Gates": [
+    "Real ClamAV fail-closed scanning",
+    "Real FFmpeg and Poppler pipelines",
+    "RabbitMQ recovery/redelivery",
+    "Chosen private S3 provider",
+    "Linux worker isolation"
+  ],
+  "deferredScope": [
+    "Technical-sheet editors",
+    "Inquiries business workflows",
+    "Native Admin applications",
+    "Restoration and unsupported session directory",
+    "Full public collection/search integration",
+    "Hosted CI, deployment and production provider validation"
+  ],
+  "cleanup": {
+    "disposableServiceFixturesRemoved": true,
+    "ownedClusterRemoved": true,
+    "isolatedPortClosed": true,
+    "unrelatedServicesStopped": false,
+    "note": "Windows process visibility interfered with the first cleanup. Remaining empty directory/test log were removed only after exact path/link checks and isolated-port refusal; normal database processes were left alone."
+  },
+  "changedFilesAtReportCreation": [
+    {
+      "path": ".env.example",
+      "sha256": "80bfb0e1ba4baa211dcd7a7765455f191f3f4d9e68b0970db96e56ebf6fad6c2"
+    },
+    {
+      "path": "README.md",
+      "sha256": "e853e5e3acdc7039c7cd857ac661debcbdcdfe191ad456887650d40ee0d8f5c2"
+    },
+    {
+      "path": "apps/storefront/.env.example",
+      "sha256": "322bc0ec9eb0acb4fe61901203792bea0ee47306c0243c83d40c9ddbd4b29abd"
+    },
+    {
+      "path": "apps/storefront/app/_layout.tsx",
+      "sha256": "ef445372d0d04130b3f1515487b2d655c612c14b755e0977899a46cee4bd4239"
+    },
+    {
+      "path": "apps/storefront/app/admin/[...path].tsx",
+      "sha256": "24242fbdfed5c6ba20d28734db407fa76b3ad192faa4e062a1d7ee9c2beb6c43"
+    },
+    {
+      "path": "apps/storefront/app/admin/index.tsx",
+      "sha256": "24242fbdfed5c6ba20d28734db407fa76b3ad192faa4e062a1d7ee9c2beb6c43"
+    },
+    {
+      "path": "apps/storefront/app/super-admin/[...path].tsx",
+      "sha256": "24242fbdfed5c6ba20d28734db407fa76b3ad192faa4e062a1d7ee9c2beb6c43"
+    },
+    {
+      "path": "apps/storefront/features/admin/accounts.tsx",
+      "sha256": "c4365ae7df09b0aa8661524506d25d126e0d2e7006e327ab2c81822f5494966c"
+    },
+    {
+      "path": "apps/storefront/features/admin/action-token.tsx",
+      "sha256": "59b80cd03696ccb3594514333e49c2520cc1d44d0fe1a11446690eef79627748"
+    },
+    {
+      "path": "apps/storefront/features/admin/auth-actions.tsx",
+      "sha256": "c3971e2c14b486e56f967d0757121a96f32f3f29cf4495686726b317d7f794d2"
+    },
+    {
+      "path": "apps/storefront/features/admin/categories.tsx",
+      "sha256": "56c54645427b9b414669966a69702ada8925c2b645d47c142b6148c9ae25c0f6"
+    },
+    {
+      "path": "apps/storefront/features/admin/common.tsx",
+      "sha256": "3f095473c7a2389c9432ff03b5f29b711da56e5a6752dd57c11cb504a7c5be36"
+    },
+    {
+      "path": "apps/storefront/features/admin/configuration-editors.tsx",
+      "sha256": "768a463fabe3769899c71cfb13b1601d6ff9b873074212d92f8a7846a316b426"
+    },
+    {
+      "path": "apps/storefront/features/admin/configuration.tsx",
+      "sha256": "6f04a4b54c6bfbc1c3814621c06b84d25e74f894a1e5422557245d2cd67193dd"
+    },
+    {
+      "path": "apps/storefront/features/admin/context.tsx",
+      "sha256": "c001fa073e37b5d045f2ae5560c323f60db68f62ffb15aaf9e991aa7b77db018"
+    },
+    {
+      "path": "apps/storefront/features/admin/dynamic-fields.tsx",
+      "sha256": "63331c6c0e9a49611012dc3371077211143ccc91c6794b2488d1b5d6d75c6278"
+    },
+    {
+      "path": "apps/storefront/features/admin/dynamic-values.ts",
+      "sha256": "960a1de0dc042483fd99738e681d99ead4c998feb5f1aa40bf9ff7b56317d202"
+    },
+    {
+      "path": "apps/storefront/features/admin/media.tsx",
+      "sha256": "23dd633d5f2b822387a46d97bbaef43391d6a02eb21203ff1c19ea11ff6dde11"
+    },
+    {
+      "path": "apps/storefront/features/admin/products.tsx",
+      "sha256": "d1f7c761f8a024fc32fafb2e94c82daddcdb4e954861c8010b1c4bcbd5090c1b"
+    },
+    {
+      "path": "apps/storefront/features/admin/reviewed-change.tsx",
+      "sha256": "0b9be3817b13b4b3d8271cddd7ed46ed8735a9ecd5289d8920164c4fbc0012ab"
+    },
+    {
+      "path": "apps/storefront/features/admin/routes.tsx",
+      "sha256": "51e312eb49f1dfb3a5a9e2492fcf348c41878fa6e730fcba9f4d6c2d6a4961aa"
+    },
+    {
+      "path": "apps/storefront/features/admin/styles.css",
+      "sha256": "0c51ce003ce07149a453e064e9d2b3a8285b9df3eeae5770a6d8ea5fab49db0f"
+    },
+    {
+      "path": "apps/storefront/features/admin/translations.ts",
+      "sha256": "2de678717e94f77d158d1442da2675f7fa8233b060bb27e18d0d0950ed895303"
+    },
+    {
+      "path": "apps/storefront/features/layout/storefront.css",
+      "sha256": "d371bd055268dcc5801a59643f7e7747077fdac8c2c43bb60ce111823640944e"
+    },
+    {
+      "path": "database/README.md",
+      "sha256": "8fbebfa301335563c462db866e96f31d2987bd9b727a7b6014164ea68559a3db"
+    },
+    {
+      "path": "database/schema-manifest.json",
+      "sha256": "12a11cb420ba329b77b65eee551863e6c1996a77e9d0e230ec7419efc9f79def"
+    },
+    {
+      "path": "database/scripts/admin-core.mjs",
+      "sha256": "3e97000677cb7f9009ef142bfd768404ec489ff73e1635e16ebbd7895b1a28fb"
+    },
+    {
+      "path": "database/scripts/db.mjs",
+      "sha256": "93d85476fb9a1e48c2f564fa14d41b4515eb9e7d009d54a0ecb14051ae316b87"
+    },
+    {
+      "path": "database/sql/21_catalog_product_management.sql",
+      "sha256": "e43cdf200f26b63492760c140b2e7bb0bccd165fe368275b1c2e4bcee8ddacc1"
+    },
+    {
+      "path": "database/sql/22_catalog_admin_fresh.sql",
+      "sha256": "05e19d978a22d5f1ac3152be892e5812bba0a0f2daadeaf13ebaa4b19dfef9b3"
+    },
+    {
+      "path": "documentation/admin-dashboard.md",
+      "sha256": "bf9bd34b8596bdceeffa9a9ab552e249a1b5095c334d17543e84e55e1462add2"
+    },
+    {
+      "path": "documentation/api/openapi.json",
+      "sha256": "67c22790b9c732a3a93962816d74ba8fa5a01a7efa21539a98788ae32dcf736c"
+    },
+    {
+      "path": "documentation/architecture.md",
+      "sha256": "b9cc780fd7424a2b395cbdcec71dbff9b9bf9edef5e194cd6db2ad83cca6ab19"
+    },
+    {
+      "path": "documentation/decisions/009-admin-dashboard.md",
+      "sha256": "ac5907b0c45d23d7cb7e20caf368c89424f0b78908140948cb62f80b94b8a2c3"
+    },
+    {
+      "path": "documentation/implementation/admin-dashboard-baseline.md",
+      "sha256": "2b7499dcdffec3a729f7a30d5eec81426bfb472ba5287226c852f72407d5c5db"
+    },
+    {
+      "path": "documentation/implementation/admin-dashboard-completed-work.md",
+      "sha256": "d735681e4381a664813b6deb6fe661e08bbb37c863a5b3b054eaed8958300473"
+    },
+    {
+      "path": "documentation/operations/admin-local.md",
+      "sha256": "6e0c240f7c0a1d43582e83d37ff31fb2c87227b916f3e6f712fc7937ebd06109"
+    },
+    {
+      "path": "documentation/operations/identity.md",
+      "sha256": "132ad01e23300b72d8c63aae09cccbf87b8580fd0932d972530e81378579af45"
+    },
+    {
+      "path": "documentation/project-progress.md",
+      "sha256": "d519946dc5f4984dcd334951e16b960f3eae315a11ddb00e3feefc1633e80f56"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3bae6609d2a27822520311060a54dcd9a1309c6439595e14cbb79ef925c22568"
+    },
+    {
+      "path": "packages/api/src/index.ts",
+      "sha256": "e7fb837d08ebb20094cceefdddea64fbf4d7b54446dd941aae974dd778216c96"
+    },
+    {
+      "path": "packages/api/src/origin.ts",
+      "sha256": "deaa80b57c6564be21f197d9caf06c794cf114b6db2a77899b5e6ae990cbac62"
+    },
+    {
+      "path": "packages/api/src/staff.ts",
+      "sha256": "dff28c3ff33160191fd1f470853cb5d171d70bdd03c72a7c96e2e1050a85142d"
+    },
+    {
+      "path": "packages/contracts/src/dynamic-catalog.ts",
+      "sha256": "94c7e9acf8b4ce7b408da7252555243bb9819e12626321855ad0769ebe9f3f18"
+    },
+    {
+      "path": "packages/contracts/src/index.ts",
+      "sha256": "403fa3046f3d689592ec38b4bb6f37377c17b2205af033dd6e85e3a3e69fb0ff"
+    },
+    {
+      "path": "packages/contracts/src/product-management.ts",
+      "sha256": "ee1e64bd670202ac3c983040238f59005346022e8ed3f4cba155b2f35631adb6"
+    },
+    {
+      "path": "packages/platform/src/http.ts",
+      "sha256": "c536c7c8d3152ba1045736c82367af3b509233e12ca771e9e5cce680c7c904c6"
+    },
+    {
+      "path": "packages/platform/tests/support/database-fixture.ts",
+      "sha256": "814855020833354be76cf7e2b5330e562db881c04aaa2eb1913140c158d5484b"
+    },
+    {
+      "path": "scripts/admin-browser-fixture.mjs",
+      "sha256": "695425c23a7a0299786227d6bca86951fa71c168bbf4b0035979607a6b42af82"
+    },
+    {
+      "path": "scripts/b5-environment.mjs",
+      "sha256": "8ef6b344cf60343b680b157f0c37ba8bc657397c26a46e683f301c260593bf9f"
+    },
+    {
+      "path": "services/catalog/prisma/schema.prisma",
+      "sha256": "3f3d07d86bb78bf4879dba3d46c578b2cf40268a2e123ab61f6dd5813437286d"
+    },
+    {
+      "path": "services/catalog/src/application/ports/product-management.ts",
+      "sha256": "56822535f58cfee0d1586c08ec14917fa53ae41ec6191da80ec629c3ca74d147"
+    },
+    {
+      "path": "services/catalog/src/application/ports/products.ts",
+      "sha256": "35ff658019c808a54d708fb67e55a5f2cee2798a41776e91d0e6c0a4286f31c5"
+    },
+    {
+      "path": "services/catalog/src/application/use-cases/manage-products.ts",
+      "sha256": "d10399e30982342cb8cbabae89c9a8c8219caa8bb929cc0056ab18640c58a74c"
+    },
+    {
+      "path": "services/catalog/src/application/use-cases/read-products.ts",
+      "sha256": "d42c6ed0b5568fbb356a71b0671c365d9055cf6da12c59febceeb5942a6dbd54"
+    },
+    {
+      "path": "services/catalog/src/composition/application.ts",
+      "sha256": "b367e0c0bd3effc44387dfef8f7cb8f434f7e20192948e785d748b45ab1647c0"
+    },
+    {
+      "path": "services/catalog/src/infrastructure/prisma/media-registry.ts",
+      "sha256": "3dcec8b61fded7dfcdefb3298f8186d8a2a4e3b356b620d3e39168145b461637"
+    },
+    {
+      "path": "services/catalog/src/infrastructure/prisma/product-management.ts",
+      "sha256": "1f9c83289d34fed6e606eef78b32d1fb096125db696ca6d496f461d3774a7afc"
+    },
+    {
+      "path": "services/catalog/src/infrastructure/prisma/product-repository.ts",
+      "sha256": "681d14a477c9328a70bef83c27851566588ce36d354b41c2030136df8ffb8744"
+    },
+    {
+      "path": "services/catalog/src/infrastructure/prisma/unit-of-work.ts",
+      "sha256": "f8879e63c927a5af1c225923ee06c52993d9a88841ac082ac70e0aeb29c6775d"
+    },
+    {
+      "path": "services/catalog/src/presentation/http/product-management-controller.ts",
+      "sha256": "76c56b448510c99e15efd675cb96bc7ac98434f8cb6e83061f06a9c1372b4ef8"
+    },
+    {
+      "path": "services/catalog/src/presentation/http/products-controller.ts",
+      "sha256": "45e4d26bf4b8041c9efdf058481dc012a1e053ee57b2a5f83abeb9b26559a12a"
+    },
+    {
+      "path": "services/catalog/tests/dynamic-catalog.integration.test.ts",
+      "sha256": "7656e9135933eb4413ceaabbc122f0a0f05318d4aabf9d320e70ad645b0c959e"
+    },
+    {
+      "path": "services/gateway/src/infrastructure/http/staff-proxy.ts",
+      "sha256": "782b1dcb875b79ab2073a91b0dea5de64f0f4e0c2403573ff3e0cd47c5adfa7d"
+    },
+    {
+      "path": "services/gateway/src/presentation/http/openapi-controller.ts",
+      "sha256": "dfffdcbc4aa83c535082ac015c3363a9724b74d6b22dc860417a9bd4639419f0"
+    },
+    {
+      "path": "services/identity/tests/identity.integration.test.ts",
+      "sha256": "1eb89fe5f7f6ea9fa5f1b6f56904f47c6025b91ceb8c16078e9b795752b093c6"
+    },
+    {
+      "path": "services/media/src/application/ports/media.ts",
+      "sha256": "864ef0f2e3c25355bf0ef6e14647cd221b706d768a6f27b0004f6dfab615d4e4"
+    },
+    {
+      "path": "services/media/src/application/use-cases/library.ts",
+      "sha256": "dcb363b69a542558c456a6c233bc9dd7f407f8a80a462ee5f5b3882585c23c5f"
+    },
+    {
+      "path": "services/media/src/infrastructure/prisma/media-repository.ts",
+      "sha256": "698eefec3c799948a620b5f19a9971fd3fcae08a3b3c82b655e947d8654f4272"
+    },
+    {
+      "path": "services/media/src/presentation/http/media-controller.ts",
+      "sha256": "52a5e2ab746141986267d1d853871de80c5b6836dc22120770cc5ec491cfb672"
+    },
+    {
+      "path": "tests/frontend.admin.config.ts",
+      "sha256": "7091dcb4c1a82c180997d97a42aabfa1dc455e9a99ee306f8042dffcd1e7efb4"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts",
+      "sha256": "b6339ef80ecfd59276bbb65f5e4501dcfc599c7c82add8c2506243d092ffc067"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts",
+      "sha256": "ff0bf5d957865cdc04e8f7f3ef0c94f6285011ecfe286ccfc5e48f50402e2731"
+    },
+    {
+      "path": "tests/frontend.unit.test.ts",
+      "sha256": "0fddb1bea405696743fd47040e13879b095587d1eef341dddcb88f8639ca85d1"
+    }
+  ]
+}

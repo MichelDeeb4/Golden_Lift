@@ -4,9 +4,9 @@ const document = {
   openapi: '3.1.0',
   info: {
     title: 'Golden Lift API',
-    version: '0.5.0',
+    version: '0.6.0',
     description:
-      'B1–B4 and Dynamic Catalog Core plus B5 Media uploads, private library, fenced processing, durable Media–Catalog integration, controlled delivery, security blocking and reference-protected retirement. Real native/scanner/broker/cloud acceptance is tracked separately in B5 validation; full product/technical UX and Inquiry workflows remain deferred.',
+      'Identity, category administration, Dynamic Catalog Core, B5 Media and Admin product management. Live staff verification, optimistic versions, exact typed values, reviewed schema changes, inactive-product privacy, ordered media and retained soft deletion. External B5 scanner/codec/broker/provider/isolation acceptance and deployment remain separate.',
   },
   servers: [
     {
@@ -6451,6 +6451,179 @@ const document = {
           },
         },
       },
+      get: {
+        operationId: 'list_managed_products',
+        summary: 'List Admin products with bounded keyset pagination',
+        tags: ['Catalog Administration'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductManagementPage',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        parameters: [
+          {
+            in: 'query',
+            name: 'locale',
+            required: true,
+            schema: {
+              $ref: '#/components/schemas/Locale',
+            },
+          },
+          {
+            in: 'query',
+            name: 'categoryId',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            in: 'query',
+            name: 'productTypeId',
+            required: false,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            in: 'query',
+            name: 'text',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 120,
+            },
+          },
+          {
+            in: 'query',
+            name: 'active',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['true', 'false'],
+            },
+          },
+          {
+            in: 'query',
+            name: 'featured',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['true', 'false'],
+            },
+          },
+          {
+            in: 'query',
+            name: 'cursor',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 1024,
+              description:
+                'ID keyset for default order; opaque scope-bound bigint/ID cursor for manual order.',
+            },
+          },
+          {
+            in: 'query',
+            name: 'limit',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+          {
+            in: 'query',
+            name: 'sort',
+            schema: {
+              type: 'string',
+              enum: ['id', 'manual'],
+              default: 'id',
+            },
+          },
+        ],
+      },
     },
     '/api/v1/admin/products/{id}': {
       get: {
@@ -6654,6 +6827,107 @@ const document = {
                 schema: {
                   $ref: '#/components/schemas/ApiError',
                 },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        operationId: 'delete_product',
+        summary: 'Soft delete product and retain associations',
+        tags: ['Catalog Administration'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '204': {
+            description: 'Product soft deleted',
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteProductInput',
               },
             },
           },
@@ -8098,6 +8372,22 @@ const document = {
               minimum: 1,
               maximum: 100,
               default: 25,
+            },
+          },
+          {
+            in: 'query',
+            name: 'kind',
+            schema: {
+              type: 'string',
+              enum: ['IMAGE', 'VIDEO', 'PDF'],
+            },
+          },
+          {
+            in: 'query',
+            name: 'status',
+            schema: {
+              type: 'string',
+              enum: ['UPLOADING', 'PROCESSING', 'READY', 'FAILED'],
             },
           },
         ],
@@ -10103,6 +10393,326 @@ const document = {
         },
       },
     },
+    '/api/v1/admin/products/{id}/management': {
+      get: {
+        operationId: 'read_managed_product',
+        summary: 'Read full Admin product including private media metadata',
+        tags: ['Catalog Administration'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ManagedProduct',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/products/{id}/publication': {
+      post: {
+        operationId: 'update_product_publication',
+        summary: 'Change activation, featured state and exact manual ordering',
+        tags: ['Catalog Administration'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ManagedProduct',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/PublicationInput',
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/products/{id}/media': {
+      post: {
+        operationId: 'replace_product_media',
+        summary: 'Replace ordered ready media, image cover and translations',
+        tags: ['Catalog Administration'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ManagedProduct',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ReplaceProductMediaInput',
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -12013,6 +12623,7 @@ const document = {
           'translations',
           'missingTranslationLocales',
           'values',
+          'active',
         ],
         properties: {
           id: {
@@ -12062,6 +12673,9 @@ const document = {
               $ref: '#/components/schemas/ProductValue',
             },
             maxItems: 500,
+          },
+          active: {
+            type: 'boolean',
           },
         },
       },
@@ -12307,6 +12921,10 @@ const document = {
               $ref: '#/components/schemas/ProductValue',
             },
             maxItems: 100,
+          },
+          active: {
+            type: 'boolean',
+            default: true,
           },
         },
         description:
@@ -13227,6 +13845,27 @@ const document = {
               $ref: '#/components/schemas/MediaVariant',
             },
           },
+          name: {
+            type: 'string',
+          },
+          purpose: {
+            type: ['string', 'null'],
+            enum: ['CATALOG', 'TECHNICAL_SOURCE', null],
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          width: {
+            type: ['integer', 'null'],
+          },
+          height: {
+            type: ['integer', 'null'],
+          },
+          duration: {
+            type: ['string', 'null'],
+            description: 'Exact duration in milliseconds.',
+          },
         },
         required: [
           'jobs',
@@ -13239,6 +13878,12 @@ const document = {
           'byteSize',
           'failureCode',
           'variants',
+          'name',
+          'purpose',
+          'updatedAt',
+          'width',
+          'height',
+          'duration',
         ],
       },
       MediaRegistration: {
@@ -13387,6 +14032,333 @@ const document = {
             },
           },
           required: ['ownerType', 'ownerId'],
+        },
+      },
+      ProductMedia: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'assetId', 'kind', 'sortOrder', 'blocked', 'translations'],
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          assetId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          kind: {
+            type: 'string',
+            enum: ['IMAGE', 'VIDEO', 'PDF'],
+          },
+          sortOrder: {
+            type: 'string',
+          },
+          blocked: {
+            type: 'boolean',
+          },
+          translations: {
+            type: 'array',
+            maxItems: 3,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['locale', 'title', 'altText', 'caption'],
+              properties: {
+                locale: {
+                  $ref: '#/components/schemas/Locale',
+                },
+                title: {
+                  type: ['string', 'null'],
+                  maxLength: 4000,
+                },
+                altText: {
+                  type: ['string', 'null'],
+                  maxLength: 4000,
+                },
+                caption: {
+                  type: ['string', 'null'],
+                  maxLength: 4000,
+                },
+              },
+            },
+          },
+        },
+      },
+      ManagedProduct: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'id',
+          'categoryId',
+          'productTypeId',
+          'coverAssetId',
+          'modelCode',
+          'version',
+          'schemaRevision',
+          'translations',
+          'missingTranslationLocales',
+          'values',
+          'active',
+          'featured',
+          'sortOrder',
+          'featuredOrder',
+          'updatedAt',
+          'media',
+        ],
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          categoryId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          productTypeId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          coverAssetId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          modelCode: {
+            anyOf: [
+              {
+                type: 'string',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          schemaRevision: {
+            $ref: '#/components/schemas/Version',
+          },
+          translations: {
+            $ref: '#/components/schemas/CatalogTranslations',
+          },
+          missingTranslationLocales: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/Locale',
+            },
+          },
+          values: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/ProductValue',
+            },
+            maxItems: 500,
+          },
+          active: {
+            type: 'boolean',
+          },
+          featured: {
+            type: 'boolean',
+          },
+          sortOrder: {
+            type: 'string',
+          },
+          featuredOrder: {
+            type: 'string',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          media: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/ProductMedia',
+            },
+          },
+        },
+      },
+      ProductListItem: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'id',
+          'name',
+          'modelCode',
+          'categoryId',
+          'productTypeId',
+          'coverAssetId',
+          'active',
+          'featured',
+          'version',
+          'sortOrder',
+          'updatedAt',
+          'categoryName',
+          'productTypeName',
+        ],
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          name: {
+            type: 'string',
+          },
+          modelCode: {
+            type: ['string', 'null'],
+          },
+          categoryId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          productTypeId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          coverAssetId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          active: {
+            type: 'boolean',
+          },
+          featured: {
+            type: 'boolean',
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          sortOrder: {
+            type: 'string',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          categoryName: {
+            type: 'string',
+          },
+          productTypeName: {
+            type: 'string',
+          },
+        },
+      },
+      ProductManagementPage: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['items', 'nextCursor'],
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/ProductListItem',
+            },
+          },
+          nextCursor: {
+            type: ['string', 'null'],
+          },
+        },
+      },
+      PublicationInput: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedVersion', 'active', 'featured', 'sortOrder', 'featuredOrder'],
+        properties: {
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          active: {
+            type: 'boolean',
+          },
+          featured: {
+            type: 'boolean',
+          },
+          sortOrder: {
+            type: 'string',
+            description: 'Exact signed PostgreSQL bigint string.',
+          },
+          featuredOrder: {
+            type: 'string',
+            description: 'Exact signed PostgreSQL bigint string.',
+          },
+        },
+      },
+      ReplaceProductMediaInput: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedVersion', 'coverAssetId', 'media'],
+        properties: {
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          coverAssetId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          media: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 100,
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['id', 'assetId', 'kind', 'translations'],
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                assetId: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                kind: {
+                  type: 'string',
+                  enum: ['IMAGE', 'VIDEO', 'PDF'],
+                },
+                translations: {
+                  type: 'array',
+                  maxItems: 3,
+                  items: {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: ['locale', 'title', 'altText', 'caption'],
+                    properties: {
+                      locale: {
+                        $ref: '#/components/schemas/Locale',
+                      },
+                      title: {
+                        type: ['string', 'null'],
+                        maxLength: 4000,
+                      },
+                      altText: {
+                        type: ['string', 'null'],
+                        maxLength: 4000,
+                      },
+                      caption: {
+                        type: ['string', 'null'],
+                        maxLength: 4000,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      DeleteProductInput: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['expectedVersion', 'confirmed'],
+        properties: {
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          confirmed: {
+            const: true,
+          },
         },
       },
     },

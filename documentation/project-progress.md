@@ -1,12 +1,12 @@
 # Golden Lift: Completed Work and Project Status
 
-Updated: 2026-10-05. Earlier dated milestone evidence below remains historical.
+Updated: 2026-10-06. Earlier dated milestone evidence below remains historical.
 
 This document summarizes the implemented project in this repository. B4 adds current locally executed category administration evidence in the [timestamped B4 report](validation/b4-2026-10-04T09-14-07-069Z.json). Earlier Prisma validation at 08:37 UTC and other milestone reports remain preserved as historical evidence.
 
 ## 1. Current status
 
-The v1.1 database design, backend foundation, staff Identity workflows and Prisma integration are implemented locally. Public browsing and complete Admin category workflows, including navigation/moves/reordering/deletion preview and confirmed soft deletion, are available. Dynamic Catalog Core additionally implements configurable types/attributes and narrow headless products; full content workflows and application interfaces remain separate planned milestones.
+The database foundation, staff Identity workflows and Prisma integration are implemented locally. Public browsing, recursive category administration, configurable types/attributes, product management, private Media workflows and Super Admin account management are available. The web dashboard has [149 passing tests and dated local evidence](validation/admin-dashboard-2026-10-06T12-39-33-944Z.json); see the [completion report](implementation/admin-dashboard-completed-work.md). Production B5 provider acceptance and the deferred scope remain separate.
 
 | Area                                            | Current state                                                                                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,10 +18,11 @@ The v1.1 database design, backend foundation, staff Identity workflows and Prism
 | Inquiries                                       | Database, Prisma models, readiness and authenticated staff access checks implemented; submission/inbox/notification workflows remain planned |
 | Prisma adoption                                 | Separate schemas and clients for the four database-owning services implemented                                                               |
 | Public website                                  | S1 shared design system and multilingual responsive catalog shell implemented; demo/API boundary and component lab added |
-| Mobile apps and staff dashboard                 | Planned; S1 does not create these applications |
+| Staff dashboard                                | Shared S1-based web Admin/Super Admin routes, real Catalog/Media/configuration/Identity workflows and additive product management APIs implemented; see the dated Admin report |
+| Mobile apps                                    | Planned; the staff dashboard is web-only |
 | Production deployment                           | Planned; local validation does not establish production readiness                                                                            |
 
-The database includes support for more business operations than the currently exposed APIs. Technical-sheet editors and Inquiry notification business workflows remain planned. B4 exposes category branch deletion, and B5 adds Media processing orchestration with external acceptance gates.
+The database includes support for more business operations than the currently exposed APIs. Technical-sheet editors and Inquiry notification business workflows remain planned. B4 exposes category branch deletion, B5 adds Media processing orchestration with external acceptance gates, and Admin now exposes product publication, ordered associations and retained deletion. The current reviewed 1.4 manifest has 66 tables and 664 columns; the B5 counts in the table retain that milestone's historical evidence. No installed project database was migrated during Admin work.
 
 ## 2. Technology and service ownership
 
@@ -261,11 +262,11 @@ Reviewed SQL 13/14/15, explicit inventory/mapping/backfill/validation/switch too
 Subsequent work includes:
 
 - B5 real ClamAV/FFmpeg/Poppler/RabbitMQ/S3 acceptance, deployment isolation, retention recovery and load/abuse verification.
-- Full product management UX/media association workflows and technical-sheet APIs beyond the implemented headless dynamic core.
+- Technical-sheet editors and broader content APIs beyond the implemented Admin product/media workflows.
 - Company-content/settings administration beyond the existing database support.
 - Anonymous Inquiry submission, trusted product snapshots, staff inbox/status management and notification workflows.
 - Broader supported event consumers outside the implemented B5-only Media/Catalog paths.
-- Public storefront live-data integration and production hosting, Android/iOS applications and the separate staff web dashboard.
+- Public storefront live-data collection/search integration and production hosting, plus Android/iOS applications.
 - Production hosting, HTTPS/reverse-proxy configuration, real mail/storage providers, load/abuse controls and backup restoration exercises.
 
 The [backend implementation plan](backend-implementation-plan.md) records the wider milestone sequence. This status report describes what is implemented today and identifies the remaining work separately.

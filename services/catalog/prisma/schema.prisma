@@ -375,6 +375,7 @@ model ProductTranslations {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model Products {
+  is_active Boolean @default(true)
   id                                                                                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   category_id                                                                            String                       @db.Uuid
   cover_media_id                                                                         String                       @db.Uuid

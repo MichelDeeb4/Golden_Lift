@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.3",
+  "schemaVersion": "1.4",
   "physicalTables": 66,
   "databases": {
     "golden_lift_identity": [
@@ -2697,6 +2697,13 @@
             "default": null,
             "nullable": true,
             "generated": ""
+          },
+          {
+            "name": "is_active",
+            "type": "boolean",
+            "default": "true",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -2720,6 +2727,7 @@
           "NOT NULL created_at",
           "NOT NULL featured_order",
           "NOT NULL id",
+          "NOT NULL is_active",
           "NOT NULL is_featured",
           "FOREIGN KEY (id, current_model_code_id) REFERENCES catalog.product_code_reservations(product_id, id) DEFERRABLE INITIALLY DEFERRED",
           "FOREIGN KEY (id, cover_media_id) REFERENCES catalog.product_media(product_id, id) DEFERRABLE INITIALLY DEFERRED",

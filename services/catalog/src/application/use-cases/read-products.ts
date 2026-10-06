@@ -16,7 +16,7 @@ export class ReadProducts {
   async public(id: Uuid, language: Locale): Promise<PublicProductDto> {
     return this.uow.execute(async (r) => {
       const p = await r.products.find(id);
-      if (!p) throw new ApplicationError('NOT_FOUND', 'Product not found.');
+      if (!p || !p.active) throw new ApplicationError('NOT_FOUND', 'Product not found.');
       const schema = await r.productTypes.schema(p.productTypeId),
         text = translated(p.translations, language);
       return {

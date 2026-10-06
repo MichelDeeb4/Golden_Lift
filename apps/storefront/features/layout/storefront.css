@@ -1,3 +1,12 @@
+/* Expo's native-oriented web reset locks the body; this shell scrolls the document. */
+html body {
+  height: auto;
+  overflow-y: auto;
+}
+#root {
+  height: auto;
+  min-height: 100vh;
+}
 .gl-bootstrap {
   min-height: 100vh;
   display: grid;

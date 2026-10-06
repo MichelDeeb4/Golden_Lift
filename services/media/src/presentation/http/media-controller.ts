@@ -34,6 +34,12 @@ function body(input: unknown, keys: readonly string[]) {
 function publicAsset(asset: Awaited<ReturnType<MediaLibrary['list']>>[number]) {
   return {
     id: asset.id,
+    name: asset.originalName,
+    purpose: asset.purpose,
+    updatedAt: asset.updatedAt,
+    width: asset.width,
+    height: asset.height,
+    duration: asset.duration,
     kind: asset.kind,
     status: asset.status,
     security: asset.security,
@@ -204,12 +210,23 @@ export class AdminMediaController {
   @Get('assets') async list(
     @Query('after') after: string | undefined,
     @Query('limit') limit: string | undefined,
+    @Query('kind') kind: string | undefined,
+    @Query('status') status: string | undefined,
     @Req() req: IncomingMessage,
   ) {
+    if (
+      (kind !== undefined && !['IMAGE', 'VIDEO', 'PDF'].includes(kind)) ||
+      (status !== undefined && !['UPLOADING', 'PROCESSING', 'READY', 'FAILED'].includes(status))
+    )
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid Media filter.');
     const assets = await this.library.list(
       after ? uuid(after) : null,
       Number(limit ?? 25),
       await this.auth.execute(staffRequest(req, false)),
+      {
+        ...(kind ? { kind: kind as MediaKind } : {}),
+        ...(status ? { status: status as 'UPLOADING' | 'PROCESSING' | 'READY' | 'FAILED' } : {}),
+      },
     );
     return { items: assets.map(publicAsset), next: assets.at(-1)?.id ?? null };
   }
