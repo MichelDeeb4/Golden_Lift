@@ -257,10 +257,15 @@ export class PrismaCategoryNavigation implements CategoryNavigation {
       productTechnicalConfigurationCount: count('productTechnicalConfigurationCount'),
     };
     const [stage] = await this.database.$queryRaw<
-      { expanded: boolean }[]
-    >`SELECT to_regclass('catalog.product_types') IS NOT NULL expanded`;
+      { expanded: boolean; categoryAuthority: boolean }[]
+    >`SELECT to_regclass('catalog.product_types') IS NOT NULL expanded, to_regprocedure('catalog.assert_valid_category_catalog()') IS NOT NULL AS "categoryAuthority"`;
     let typeState = '';
-    if (stage?.expanded) {
+    if (stage?.categoryAuthority) {
+      const [dependencies] = await this.database.$queryRaw<{ state: string }[]>`
+        WITH RECURSIVE branch AS(SELECT id,schema_revision FROM catalog.categories WHERE id=${id}::uuid AND deleted_at IS NULL UNION ALL SELECT c.id,c.schema_revision FROM catalog.categories c JOIN branch b ON c.parent_id=b.id WHERE c.deleted_at IS NULL)
+        SELECT coalesce(string_agg(id::text||':'||schema_revision::text,',' ORDER BY id),'') state FROM branch`;
+      typeState = '\n' + (dependencies?.state ?? '');
+    } else if (stage?.expanded) {
       const [dependencies] = await this.database.$queryRaw<
         { state: string }[]
       >`WITH RECURSIVE branch AS(SELECT id FROM catalog.categories WHERE id=${id}::uuid AND deleted_at IS NULL UNION ALL SELECT c.id FROM catalog.categories c JOIN branch b ON c.parent_id=b.id WHERE c.deleted_at IS NULL)

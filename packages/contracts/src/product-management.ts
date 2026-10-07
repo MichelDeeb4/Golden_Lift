@@ -28,9 +28,7 @@ export interface ProductListItem {
   readonly modelCode: string | null;
   readonly categoryId: Uuid;
   readonly categoryName: string;
-  readonly productTypeId: Uuid;
-  readonly productTypeName: string;
-  readonly coverAssetId: Uuid;
+  readonly coverAssetId: Uuid | null;
   readonly active: boolean;
   readonly featured: boolean;
   readonly version: Version;

@@ -1,6 +1,12 @@
 # Golden Lift — Visitor and Administration Design
 
+The [Category-driven catalog and UX phase](implementation/catalog-model-and-ux-fix-completed-work.md) remains **in progress** for replacing Product Type with leaf-category schemas and reusable group/attribute selection. The independently delivered category tree below now supplies recursive management; it does not activate the pending classification migration. The earlier phase report remains dated foundation evidence.
+
+The [Admin CRUD modal phase](implementation/admin-crud-modal-fix-completed-work.md) keeps collection context while creating or editing reusable configuration and category metadata. Create actions remain visible when a record is selected. Small forms use responsive, accessible modals with dirty-close warnings; the full product editor, category tree, Media grid and complex type assignments retain their workspaces. Product creation uses an overlay with required type/category/cover/specification inputs before client-side editor navigation. See [decision 014](decisions/014-admin-crud-modals.md) for concurrency, cache and contract tradeoffs.
+
 Updated: 2026-10-07.
+
+Category administration now uses a 350px recursive catalog tree beside selected-category details, with logical 20px nesting, 40px rows, subtle gold selection, disclosure separate from selection and contextual overflow ordering. Below 900px, Browse Categories opens a full-height drawer. Search retains ancestors, keyboard arrows follow locale direction, and in-memory expansion survives SPA navigation and CRUD. Root and subcategory creation have distinct actions and fixed parent context. See [decision 016](decisions/016-category-tree-workspace.md) and the [desktop workspace](assets/category-tree/workspace-desktop.png), [mobile details](assets/category-tree/detail-mobile.png), [Arabic tree](assets/category-tree/tree-mobile-ar.png) and [Sorani tree](assets/category-tree/tree-mobile-ckb.png). The pending category group migration is not represented as an implemented assignment workflow.
 
 Normal visitor pages now load real Gateway/Catalog data, including category covers, bounded collections, search, dynamic public filters, eligible gallery/video associations and permitted technical-source PDFs. Demo content is an explicit fixture mode. The workspace composition below is retained, with shared hover/focus/pressed/selected states, keyboard overflow menus and reduced motion. Native local upload and delivery acceptance is recorded in the [functional integration report](implementation/functional-integration-completed-work.md); production provider gates remain separate.
 
@@ -275,7 +281,7 @@ PRODUCT EDITOR — desktop at 1300px and wider
 
 Below 1300px, Product summary opens as a read-only drawer. Below 1100px, shell navigation uses a drawer. Below 768px, section navigation is horizontal, fields stack and tables retain bounded horizontal scrolling. The public mobile header uses a 64px command row and 36px locale row; neither overlaps the demo notice. Arabic/Sorani preserve logical placement and field direction. Technical identifiers use directional isolation.
 
-Category editing stays in the main canvas instead of a primary modal. Move/delete impact reviews stay focused confirmations. Product types, attributes, groups and units retain a bounded master list alongside details and inline creation. These workspaces retain existing save, schema-impact and lifecycle rules.
+Category navigation stays in the main canvas; focused modals handle creation and metadata editing. Move/delete impact reviews stay focused confirmations. Product types, attributes, groups and units retain bounded master lists and details, with permanent Create actions and focused creation/metadata overlays. Complex assignments remain in the workspace. These workspaces retain existing save, schema-impact and lifecycle rules.
 
 Media drag/drop and earlier/later actions both operate on the actual global association order. Removing an association retains shared bytes. The library's filename search applies only to the loaded page, as its label states. Private grants, readiness/security checks and owner authorization remain authoritative.
 

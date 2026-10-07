@@ -160,6 +160,7 @@ export class ChangeCatalogSchema {
         throw new ApplicationError('VERSION_CONFLICT', 'Source type schema has changed.');
       if (
         !destination ||
+        !('type' in destination) ||
         source.type.id === destination.type.id ||
         source.type.deprecated ||
         destination.type.deprecated
@@ -188,10 +189,10 @@ export class ChangeCatalogSchema {
     }
     let invalidProducts = 0;
     for (const p of facts.products) {
-      const schema = schemas.find((s) => s.type.id === p.productTypeId);
+      const schema = schemas.find((s) => 'categoryId' in s && s.categoryId === p.categoryId);
       if (!schema) continue;
       try {
-        validateValues(schema, p.values);
+        validateValues(schema, p.values, p.active);
       } catch (e) {
         if (e instanceof ApplicationError) invalidProducts++;
         else throw e;

@@ -34,6 +34,8 @@
     "orm:format": "node scripts/prisma.mjs format",
     "db:dynamic": "node database/scripts/dynamic-catalog.mjs",
     "db:verify:dynamic": "node database/scripts/verify-dynamic.mjs",
+    "db:category": "node database/scripts/category-catalog.mjs",
+    "test:catalog-migration": "node --test database/tests/category-catalog-plan.test.mjs database/tests/category-catalog.integration.test.mjs",
     "db:media": "node database/scripts/media-core.mjs",
     "db:admin": "node database/scripts/admin-core.mjs",
     "smoke:media": "npm run build && node scripts/media-smoke.mjs",
@@ -45,6 +47,7 @@
     "test:admin": "playwright test --config tests/frontend.admin.config.ts",
     "media:tools": "node scripts/media-tools.mjs",
     "media:setup": "node scripts/media-local.mjs",
+    "demo:seed": "node scripts/seed-demo-catalog.mjs",
     "doctor": "node scripts/doctor.mjs"
   },
   "devDependencies": {

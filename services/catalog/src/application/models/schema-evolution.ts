@@ -3,6 +3,7 @@ import type {
   AttributeDefinitionDto,
   AttributeOptionDto,
   EffectiveTypeSchema,
+  EffectiveCategorySchema,
   TypeAttributeDto,
 } from '@golden-lift/contracts';
 import type { ConfigurationChange, SchemaChangeFacts } from '../ports/product-schema.js';
@@ -12,7 +13,7 @@ const invalid = (message: string): never => {
 export function evolvedSchemas(
   facts: SchemaChangeFacts,
   change: ConfigurationChange,
-): readonly EffectiveTypeSchema[] {
+): readonly (EffectiveTypeSchema | EffectiveCategorySchema)[] {
   return facts.schemas.map((schema) => {
     let attributes = [...schema.attributes],
       groups = [...schema.groups];
@@ -35,7 +36,8 @@ export function evolvedSchemas(
           definition,
           groupPlacementId: draft.groupPlacementId,
           sortOrder: draft.sortOrder,
-          version: previous?.version ?? schema.type.version,
+          version:
+            previous?.version ?? ('type' in schema ? schema.type.version : schema.categoryVersion),
           required: draft.required,
           public: draft.public,
           searchable: draft.searchable,

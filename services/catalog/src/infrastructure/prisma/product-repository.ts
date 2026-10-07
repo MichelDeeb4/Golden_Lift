@@ -15,11 +15,11 @@ import type {
 import type { Database } from './client.js';
 import type { Prisma } from './generated/client.js';
 import { missing, names } from './configuration-mapping.js';
-import { PrismaProductTypeRepository } from './product-type-repository.js';
+import { PrismaCategorySchemaRepository } from './category-schema-repository.js';
 import { PrismaPublicProducts } from './public-products.js';
 const include = {
   product_translations: { where: { deleted_at: null } },
-  product_types: true,
+  categories: true,
   product_media_products_id_cover_media_idToproduct_media: true,
   product_code_reservations_products_id_current_model_code_idToproduct_code_reservations: true,
   product_specification_values: {
@@ -44,15 +44,10 @@ export class PrismaProductRepository implements ProductRepository {
     >`SELECT id FROM catalog.live_products WHERE id=${id}::uuid`;
     if (!live.length) return null;
     const row = await this.db.products.findUnique({ where: { id }, include });
-    if (!row?.product_type_id || !row.product_types) return null;
+    if (!row) return null;
     return this.dto(row);
   }
   private dto(row: Prisma.ProductsGetPayload<{ include: typeof include }>): ProductDto {
-    if (!row.product_type_id || !row.product_types)
-      throw new ApplicationError(
-        'INVALID_STATE',
-        'Catalog cutover is required before using product workflows.',
-      );
     const translations = names(
         row.product_translations.map((t) => ({
           locale: t.locale,
@@ -97,27 +92,33 @@ export class PrismaProductRepository implements ProductRepository {
       id: uuid(row.id),
       active: row.is_active,
       categoryId: uuid(row.category_id),
-      productTypeId: uuid(row.product_type_id),
-      coverAssetId: uuid(row.product_media_products_id_cover_media_idToproduct_media.asset_id),
+      coverAssetId: row.product_media_products_id_cover_media_idToproduct_media
+        ? uuid(row.product_media_products_id_cover_media_idToproduct_media.asset_id)
+        : null,
       modelCode:
         row.product_code_reservations_products_id_current_model_code_idToproduct_code_reservations
           ?.code ?? null,
       version: version(row.version.toString()),
-      schemaRevision: version(row.product_types.schema_revision.toString()),
+      schemaRevision: version(row.categories.schema_revision.toString()),
       translations,
       missingTranslationLocales: missing(translations),
       values,
     };
   }
-  async validateLocalReferences(input: Pick<ProductCreate, 'categoryId' | 'coverAssetId'>) {
+  async validateLocalReferences(input: {
+    readonly categoryId: Uuid;
+    readonly coverAssetId?: Uuid | null;
+  }) {
     const [category] = await this.db.$queryRaw<
-      { id: string }[]
-    >`SELECT id FROM catalog.live_categories WHERE id=${input.categoryId}::uuid AND NOT EXISTS(SELECT 1 FROM catalog.categories WHERE parent_id=${input.categoryId}::uuid AND deleted_at IS NULL)`;
-    if (!category)
+      { id: string; leaf: boolean }[]
+    >`SELECT id, NOT EXISTS(SELECT 1 FROM catalog.categories WHERE parent_id=${input.categoryId}::uuid AND deleted_at IS NULL) AS leaf FROM catalog.live_categories WHERE id=${input.categoryId}::uuid`;
+    if (!category) throw new ApplicationError('NOT_FOUND', 'Category not found.');
+    if (!category.leaf)
       throw new ApplicationError(
         'INVALID_STATE',
         'Product placement requires an active leaf category.',
       );
+    if (!input.coverAssetId) return;
     const asset = await this.db.mediaAssetRefs.findFirst({
       where: {
         id: input.coverAssetId,
@@ -133,22 +134,17 @@ export class PrismaProductRepository implements ProductRepository {
         'An existing verified IMAGE cover is required; Media readiness must be established before saving.',
       );
   }
-  async create(id: Uuid, mediaId: Uuid, codeId: Uuid, input: ProductCreate) {
+  async create(id: Uuid, codeId: Uuid, input: ProductCreate) {
     await this.db.products.create({
       data: {
         id,
         category_id: input.categoryId,
-        product_type_id: input.productTypeId,
-        is_active: input.active ?? true,
-        cover_media_id: mediaId,
+        is_active: false,
+        cover_media_id: null,
       },
-    });
-    await this.db.productMedia.create({
-      data: { id: mediaId, product_id: id, asset_id: input.coverAssetId },
     });
     await this.translations(id, input.translations);
     await this.modelCode(id, codeId, input.modelCode);
-    await this.values(id, input.values);
   }
   async save(id: Uuid, expectedVersion: Version, input: ProductWrite) {
     const changed = await this.db.products.updateMany({
@@ -284,20 +280,20 @@ export class PrismaProductRepository implements ProductRepository {
       }
     }
   }
-  async productsByType(typeId: Uuid, limit: number) {
+  async productsByCategory(categoryId: Uuid, limit: number) {
     return (
       await this.db.products.findMany({
-        where: { product_type_id: typeId, deleted_at: null },
+        where: { category_id: categoryId, deleted_at: null },
         include,
         orderBy: { id: 'asc' },
         take: limit,
       })
     ).map((row) => this.dto(row));
   }
-  async impactState(typeIds: readonly Uuid[]) {
+  async impactState(categoryIds: readonly Uuid[]) {
     const [row] = await this.db.$queryRaw<
       { state: string }[]
-    >`WITH p AS(SELECT * FROM catalog.products WHERE product_type_id=ANY(${[...typeIds]}::uuid[]) AND deleted_at IS NULL),v AS(SELECT v.* FROM catalog.product_specification_values v JOIN p ON p.id=v.product_id WHERE v.deleted_at IS NULL),s AS(SELECT 'p' k,id,version FROM p UNION ALL SELECT 'v',id,version FROM v UNION ALL SELECT 'x',x.id,x.version FROM catalog.product_specification_texts x JOIN v ON v.id=x.value_id WHERE x.deleted_at IS NULL UNION ALL SELECT 'c',c.id,c.version FROM catalog.product_specification_choices c JOIN v ON v.id=c.value_id WHERE c.deleted_at IS NULL UNION ALL SELECT 'l',l.id,l.version FROM catalog.product_technical_sheets l JOIN p ON p.id=l.product_id WHERE l.deleted_at IS NULL) SELECT coalesce(string_agg(k||':'||id::text||':'||version::text,',' ORDER BY k,id),'') state FROM s`;
+    >`WITH p AS(SELECT * FROM catalog.products WHERE category_id=ANY(${[...categoryIds]}::uuid[]) AND deleted_at IS NULL),v AS(SELECT v.* FROM catalog.product_specification_values v JOIN p ON p.id=v.product_id WHERE v.deleted_at IS NULL),s AS(SELECT 'p' k,id,version FROM p UNION ALL SELECT 'v',id,version FROM v UNION ALL SELECT 'x',x.id,x.version FROM catalog.product_specification_texts x JOIN v ON v.id=x.value_id WHERE x.deleted_at IS NULL UNION ALL SELECT 'c',c.id,c.version FROM catalog.product_specification_choices c JOIN v ON v.id=c.value_id WHERE c.deleted_at IS NULL UNION ALL SELECT 'l',l.id,l.version FROM catalog.product_technical_sheets l JOIN p ON p.id=l.product_id WHERE l.deleted_at IS NULL) SELECT coalesce(string_agg(k||':'||id::text||':'||version::text,',' ORDER BY k,id),'') state FROM s`;
     return row?.state ?? '';
   }
   async retainedDefinitionUsage(id: Uuid) {
@@ -305,26 +301,6 @@ export class PrismaProductRepository implements ProductRepository {
       { used: boolean }[]
     >`SELECT EXISTS(SELECT 1 FROM catalog.product_specification_values WHERE definition_id=${id}::uuid) OR EXISTS(SELECT 1 FROM catalog.technical_measurements WHERE definition_id=${id}::uuid) used`;
     return row?.used === true;
-  }
-  async technicalTypeChangeBlocked(productId: Uuid) {
-    return (
-      (await this.db.productTechnicalSheets.count({
-        where: { product_id: productId, relation_kind: 'PRODUCT_SPECIFICATION', deleted_at: null },
-      })) > 0
-    );
-  }
-  async changeType(
-    id: Uuid,
-    typeId: Uuid,
-    expectedVersion: Version,
-    values: readonly ProductAttributeValue[],
-  ) {
-    const result = await this.db.products.updateMany({
-      where: { id, version: BigInt(expectedVersion), deleted_at: null },
-      data: { product_type_id: typeId },
-    });
-    if (result.count !== 1) throw new ApplicationError('VERSION_CONFLICT', 'Product has changed.');
-    await this.values(id, values);
   }
   async move(id: Uuid, categoryId: Uuid, expectedVersion: Version) {
     const result = await this.db.products.updateMany({
@@ -336,6 +312,6 @@ export class PrismaProductRepository implements ProductRepository {
   async schemaFor(id: Uuid) {
     const row = await this.find(id);
     if (!row) throw new ApplicationError('NOT_FOUND', 'Product not found.');
-    return new PrismaProductTypeRepository(this.db).schema(row.productTypeId);
+    return new PrismaCategorySchemaRepository(this.db).schema(row.categoryId);
   }
 }

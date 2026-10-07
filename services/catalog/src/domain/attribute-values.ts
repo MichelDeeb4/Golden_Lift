@@ -3,6 +3,7 @@ import type {
   AttributeValue,
   AttributeValueMutation,
   EffectiveTypeSchema,
+  EffectiveCategorySchema,
   ProductAttributeValue,
   TypeAttributeDto,
 } from '@golden-lift/contracts';
@@ -65,20 +66,21 @@ const validators: Readonly<
   },
 };
 export function validateValues(
-  schema: EffectiveTypeSchema,
+  schema: Pick<EffectiveTypeSchema | EffectiveCategorySchema, 'attributes'>,
   values: readonly ProductAttributeValue[],
+  requireComplete = true,
 ): void {
   const seen = new Set<string>();
   for (const item of values) {
     if (seen.has(item.definitionId)) invalid('Duplicate attribute value.');
     seen.add(item.definitionId);
     const field = schema.attributes.find((a) => a.definition.id === item.definitionId);
-    if (!field) invalid('Attribute is not assigned to this product type.');
+    if (!field) invalid('Attribute is not assigned to this category.');
     if (field.definition.kind !== item.value.kind)
       invalid('Attribute value type does not match its definition.');
     validators[item.value.kind](field, item.value);
   }
-  if (schema.attributes.some((a) => a.required && !seen.has(a.definition.id)))
+  if (requireComplete && schema.attributes.some((a) => a.required && !seen.has(a.definition.id)))
     invalid('Required product attributes are missing.');
 }
 export function equalAttributeValues(a: AttributeValue | undefined, b: AttributeValue): boolean {
@@ -101,9 +103,10 @@ export function equalAttributeValues(a: AttributeValue | undefined, b: Attribute
   return false;
 }
 export function applyValueMutations(
-  schema: EffectiveTypeSchema,
+  schema: Pick<EffectiveTypeSchema | EffectiveCategorySchema, 'attributes'>,
   current: readonly ProductAttributeValue[],
   changes: readonly AttributeValueMutation[],
+  requireComplete = true,
 ): readonly ProductAttributeValue[] {
   if (changes.length > 100)
     throw new ApplicationError(
@@ -141,6 +144,6 @@ export function applyValueMutations(
     }
   }
   const values = [...result.values()];
-  validateValues(schema, values);
+  validateValues(schema, values, requireComplete);
   return values;
 }

@@ -1,0 +1,147 @@
+{
+  "checkedAt": "2026-10-07T14:00:48.319Z",
+  "status": "IN_PROGRESS",
+  "foundationStatus": "PASS",
+  "scope": "Staged migration foundation and authoritative category-schema read; full runtime/Admin/visitor integration remains pending.",
+  "commands": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "backendUnit": {
+        "status": "PASS",
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0
+      },
+      "architectureSourceFiles": 212,
+      "enforcementProbes": 14,
+      "prismaSchemas": 4
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "command": "npm.cmd run test:catalog-migration",
+      "status": "PASS",
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "plannerTests": 9,
+      "postgresCliHttpTests": 12
+    },
+    {
+      "command": "npm.cmd run format:check",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "command": "npm.cmd run doctor",
+      "status": "PASS",
+      "scope": "Existing local profile; RabbitMQ production acceptance is not claimed."
+    }
+  ],
+  "approvedResolution": {
+    "assignmentId": "623d6ec1-6c52-497e-b370-9371462c878f",
+    "definitionId": "6388346a-dd98-4d55-923c-08bc030c1f75",
+    "groupId": "3ff8719a-264f-4cb7-bf80-ed9e6419ab54",
+    "label": "length to existing Dimensions",
+    "unresolvedNormalProposalIssues": 0
+  },
+  "databaseVerification": {
+    "profile": "task-owned disposable PostgreSQL",
+    "databaseDropped": true,
+    "clusterStoppedAndRemoved": true,
+    "typedKinds": [
+      "NUMBER",
+      "BOOLEAN",
+      "TEXT",
+      "CHOICE"
+    ],
+    "exactNumber": "99999999999999.123456",
+    "retainedSoftDeletedDetails": [
+      "TEXT translation",
+      "CHOICE selection"
+    ],
+    "cliChecks": [
+      "review required",
+      "ambiguity rejection",
+      "stale inventory rejection",
+      "idempotent backfill",
+      "conflicting row refusal without overwrite",
+      "exact retained typed-row parity"
+    ],
+    "httpChecks": [
+      "Gateway forwarding",
+      "ADMIN schema resolution",
+      "SUPER_ADMIN forbidden",
+      "missing session rejected",
+      "unsupported input rejected",
+      "missing category rejected",
+      "Arabic fallback",
+      "deduplicated fields"
+    ],
+    "authentication": "explicit transport fixture; production live Identity adapter unchanged"
+  },
+  "normal": {
+    "database": "golden_lift_catalog",
+    "expanded": false,
+    "categoryauthority": false,
+    "migrated": false,
+    "runningProductTypeWorkflowsRetained": true,
+    "readiness": [
+      {
+        "port": 8081,
+        "httpStatus": 200
+      },
+      {
+        "port": 3000,
+        "httpStatus": 200
+      },
+      {
+        "port": 3001,
+        "httpStatus": 200
+      },
+      {
+        "port": 3002,
+        "httpStatus": 200
+      },
+      {
+        "port": 3003,
+        "httpStatus": 200
+      },
+      {
+        "port": 3004,
+        "httpStatus": 200
+      }
+    ]
+  },
+  "sourceFingerprints": {
+    "database/sql/23_category_schema_expand.sql": "642d673f4e4de325260fa43e805737db54a74d2a08b0eb6636162e8e885fbdaf",
+    "database/sql/24_category_schema_cutover.sql": "fcdb35e6cf8c7e38dae5342778ed9d88b635239088471b06c4f25c3634ca2d78",
+    "database/scripts/category-catalog-plan.mjs": "fd5f3cc8e46f8dee6cb464c7332475f949d409184c96b1025d687b796fe9ec72",
+    "database/scripts/category-catalog.mjs": "785bb9b33c096f1d9a94bd811d2303f5547e9752940c397abd2f648e196924c8"
+  },
+  "pending": [
+    "Product Type runtime/API/Prisma removal",
+    "Reviewed relationship CRUD and category-change integration",
+    "Category-only Create & Continue and draft/publication DTOs",
+    "Recursive lazy category tree and searchable multi-selects",
+    "Media grid/list and unified gallery interaction",
+    "Visitor authoritative contextual navigation",
+    "Live Identity/CSRF/process/browser and visual acceptance",
+    "Coordinated normal backup/cutover/restart"
+  ],
+  "limitations": [
+    "No full phase acceptance",
+    "No new browser/screenshot run",
+    "No hosted CI or deployment validation",
+    "No production provider validation"
+  ]
+}

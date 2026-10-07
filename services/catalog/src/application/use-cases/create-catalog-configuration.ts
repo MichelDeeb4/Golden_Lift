@@ -1,5 +1,5 @@
 import { ApplicationError, version } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Uuid } from '@golden-lift/contracts';
+import type { AuthenticatedActor, Uuid, ProductTypeDto } from '@golden-lift/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { exactQuantity } from '../../domain/attribute-values.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';
@@ -60,28 +60,14 @@ export function validateLabels(input: NamedDraft): void {
       'Units and options support labels without descriptions.',
     );
 }
+/** Retired transport adapter retained so stale clients get a policy error, not a database error. */
 export class CreateProductType {
-  constructor(
-    private readonly uow: CatalogUnitOfWork,
-    private readonly ids: IdGenerator,
-    private readonly clock: Clock,
-  ) {}
-  async execute(input: NamedDraft, actor: AuthenticatedActor) {
+  async execute(_input: NamedDraft, actor: AuthenticatedActor): Promise<ProductTypeDto> {
     requireContentAdmin(actor);
-    validateNamed(input);
-    const id = this.ids.newUuid(),
-      event = configurationEvent(this.ids, this.clock, 'ProductType', id, version('1'));
-    return this.uow.execute(async (r) => {
-      await r.productTypes.create(id, input);
-      const result = await r.productTypes.find(id);
-      if (!result)
-        throw new ApplicationError('INTERNAL_ERROR', 'Created configuration could not be read.');
-      await r.outbox.append({
-        ...event,
-        aggregate: { ...event.aggregate, version: result.version },
-      });
-      return result;
-    });
+    throw new ApplicationError(
+      'INVALID_STATE',
+      'Product Type is retired; use category classification.',
+    );
   }
 }
 export class CreateAttributeDefinition {

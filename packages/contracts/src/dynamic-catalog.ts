@@ -43,13 +43,14 @@ export interface AttributeDefinitionDto extends NamedConfiguration {
   readonly textMaxLength: number;
   readonly options: readonly AttributeOptionDto[];
 }
-export interface TypeGroupDto {
+export interface SchemaGroupDto {
   readonly id: Uuid;
   readonly group: AttributeGroupDto;
   readonly sortOrder: string;
   readonly version: Version;
 }
-export interface TypeAttributeDto {
+export type TypeGroupDto = SchemaGroupDto;
+export interface EffectiveAttributeDto {
   readonly id: Uuid;
   readonly definition: AttributeDefinitionDto;
   readonly groupPlacementId: Uuid | null;
@@ -60,6 +61,15 @@ export interface TypeAttributeDto {
   readonly searchable: boolean;
   readonly filterable: boolean;
   readonly comparable: boolean;
+}
+export type TypeAttributeDto = EffectiveAttributeDto;
+export interface EffectiveCategorySchema {
+  readonly categoryId: Uuid;
+  readonly categoryVersion: Version;
+  readonly schemaRevision: Version;
+  readonly leaf: boolean;
+  readonly groups: readonly SchemaGroupDto[];
+  readonly attributes: readonly EffectiveAttributeDto[];
 }
 export interface EffectiveTypeSchema {
   readonly type: ProductTypeDto;
@@ -86,8 +96,7 @@ export interface ProductDto {
   readonly active: boolean;
   readonly id: Uuid;
   readonly categoryId: Uuid;
-  readonly productTypeId: Uuid;
-  readonly coverAssetId: Uuid;
+  readonly coverAssetId: Uuid | null;
   readonly modelCode: string | null;
   readonly version: Version;
   readonly schemaRevision: Version;
@@ -131,6 +140,16 @@ export interface ProductFormSchema {
   }[];
   readonly fields: readonly FormField[];
 }
+export interface CategoryFormSchema {
+  readonly categoryId: Uuid;
+  readonly schemaRevision: Version;
+  readonly groups: ProductFormSchema['groups'];
+  readonly fields: readonly FormField[];
+}
+export interface CategorySchemaResponse {
+  readonly configuration: EffectiveCategorySchema;
+  readonly form: CategoryFormSchema;
+}
 export interface SchemaChangeImpact {
   readonly precondition: string;
   readonly affectedProductCount: string;
@@ -142,14 +161,12 @@ export interface SchemaChangeImpact {
 export interface PublicProductDto {
   readonly id: Uuid;
   readonly categoryId: Uuid;
-  readonly productTypeId: Uuid;
   readonly name: string;
   readonly description: string | null;
   readonly resolvedNameLocale: Locale;
   readonly coverAssetId: Uuid;
   readonly modelCode: string | null;
   readonly categoryName: string;
-  readonly productTypeName: string;
   readonly media: readonly PublicProductMedia[];
   readonly documents: readonly {
     readonly assetId: Uuid;

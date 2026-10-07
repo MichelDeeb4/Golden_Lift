@@ -23,7 +23,7 @@ export function AddChoiceOption({
 }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
-    action = useAction();
+    action = useAction('configuration');
   const [open, setOpen] = useState(false),
     [code, setCode] = useState(''),
     [codeError, setCodeError] = useState<string | null>(null);

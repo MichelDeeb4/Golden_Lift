@@ -81,15 +81,15 @@ export class ReadProducts {
     language: Locale,
   ): Promise<PublicProductDto> {
     const p = await r.products.find(id);
-    if (!p || !p.active) throw new ApplicationError('NOT_FOUND', 'Product not found.');
+    if (!p || !p.active || !p.coverAssetId)
+      throw new ApplicationError('NOT_FOUND', 'Product not found.');
     const context = await r.products.publicContext(id, language);
     if (!context) throw new ApplicationError('NOT_FOUND', 'Product not found.');
-    const schema = await r.productTypes.schema(p.productTypeId),
+    const schema = await r.categorySchemas.schema(p.categoryId),
       text = translated(p.translations, language);
     return {
       id: p.id,
       categoryId: p.categoryId,
-      productTypeId: p.productTypeId,
       name: text.name,
       description: text.description,
       resolvedNameLocale: text.resolvedLocale,

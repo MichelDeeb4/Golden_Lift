@@ -32,7 +32,7 @@ const entrypoints: Record<FixtureService, string> = {
 };
 export async function databaseFixture(
   service: FixtureService,
-  options: { readonly catalogProfile?: 'v1.1' | 'v1.2' } = {},
+  options: { readonly catalogProfile?: 'v1.1' | 'v1.2' | 'category' } = {},
 ) {
   const original = tools.config(),
     scratch = structuredClone(original),
@@ -53,7 +53,9 @@ export async function databaseFixture(
     const entrypoint =
       service === 'catalog' && options.catalogProfile === 'v1.1'
         ? '20_catalog_media_legacy_fresh.sql'
-        : entrypoints[service];
+        : service === 'catalog' && options.catalogProfile === 'category'
+          ? '25_category_catalog_fresh.sql'
+          : entrypoints[service];
     tools.file(scratch, service, 'sql/' + entrypoint, { owner: true, atomic: true });
     if (service === 'catalog' && options.catalogProfile === 'v1.1')
       tools.file(scratch, service, 'sql/21_catalog_product_management.sql', {

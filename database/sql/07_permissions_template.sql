@@ -20,5 +20,11 @@ REVOKE ALL ON catalog.write_gate FROM :"runtime_role";
 GRANT EXECUTE ON FUNCTION catalog.soft_delete_branch(uuid,bigint),
     catalog.soft_delete_technical_sheet(uuid,bigint),
     catalog.retire_media_asset(uuid,text,bigint) TO :"runtime_role";
+-- Retired type configuration remains migration-owner evidence, never runtime data.
+SELECT to_regprocedure('catalog.assert_valid_category_catalog()') IS NOT NULL AS category_classification \gset
+\if :category_classification
+REVOKE ALL ON catalog.product_types,catalog.product_type_translations,
+    catalog.product_type_groups,catalog.product_type_specifications FROM :"runtime_role";
+\endif
 \endif
 COMMIT;

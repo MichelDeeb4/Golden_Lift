@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { GLButton, GLModal } from '@golden-lift/ui';
-import { useStaffApi } from './context';
+import { useStaffApi, useStaffFeedback } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, jsonResponse, useAction } from './common';
 const impactSchema = z.object({
@@ -17,6 +17,8 @@ export function ReviewedChange({
   change,
   label,
   onSaved,
+  reload,
+  onPending,
 }: {
   path: string;
   version: string;
@@ -24,10 +26,12 @@ export function ReviewedChange({
   change: unknown;
   label: string;
   onSaved?: () => void;
+  reload?: () => void;
+  onPending?: (pending: boolean) => void;
 }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
-    action = useAction(),
+    action = useAction('configuration', false),
     [impact, setImpact] = useState<z.infer<typeof impactSchema> | null>(null),
     [open, setOpen] = useState(false),
     [reviewed, setReviewed] = useState<{
@@ -35,6 +39,19 @@ export function ReviewedChange({
       version: string;
       schemaRevision: string | null;
     } | null>(null);
+  const notify = useStaffFeedback();
+  const reloadLatest = reload
+    ? () => {
+        setOpen(false);
+        setImpact(null);
+        setReviewed(null);
+        action.reset();
+        reload();
+      }
+    : undefined;
+  useEffect(() => {
+    onPending?.(action.isPending);
+  }, [action.isPending, onPending]);
   return (
     <>
       <GLButton
@@ -62,13 +79,20 @@ export function ReviewedChange({
       >
         {label}
       </GLButton>
-      <GLModal open={open} onClose={() => setOpen(false)} title={t('impact')}>
+      {!open && <ActionFeedback action={action} reload={reloadLatest} />}
+      <GLModal
+        open={open}
+        onClose={() => {
+          if (!action.isPending) setOpen(false);
+        }}
+        title={t('impact')}
+      >
         <p>
           {t('products')}: {impact?.affectedProductCount} · {t('status')}:{' '}
           {impact?.invalidProductCount}
         </p>
         {impact?.blockers.length ? <p role="alert">{t('error')}</p> : null}
-        <ActionFeedback action={action} />
+        <ActionFeedback action={action} reload={reloadLatest} />
         <GLButton
           disabled={!impact || !!impact.blockers.length}
           loading={action.isPending}
@@ -89,6 +113,7 @@ export function ReviewedChange({
                 ),
               {
                 onSuccess: () => {
+                  notify?.(t('saved'));
                   setOpen(false);
                   onSaved?.();
                 },

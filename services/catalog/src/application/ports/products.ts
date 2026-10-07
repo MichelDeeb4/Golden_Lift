@@ -1,6 +1,6 @@
 import type {
   CatalogTranslation,
-  EffectiveTypeSchema,
+  EffectiveCategorySchema,
   ProductAttributeValue,
   ProductDto,
   Uuid,
@@ -10,15 +10,9 @@ import type {
   Locale,
 } from '@golden-lift/contracts';
 export interface ProductCreate {
-  readonly active?: boolean;
   readonly categoryId: Uuid;
-  readonly productTypeId: Uuid;
-  readonly coverAssetId: Uuid;
   readonly modelCode: string | null;
   readonly translations: readonly CatalogTranslation[];
-  readonly expectedSchemaRevision: Version;
-  readonly expectedCategoryVersion: Version;
-  readonly values: readonly ProductAttributeValue[];
 }
 export interface ProductWrite {
   readonly translations?: readonly CatalogTranslation[];
@@ -37,7 +31,6 @@ export interface ProductRepository {
     language: Locale,
   ): Promise<{
     readonly categoryName: string;
-    readonly productTypeName: string;
     readonly media: readonly PublicProductMedia[];
     readonly documents: readonly {
       readonly assetId: Uuid;
@@ -46,19 +39,15 @@ export interface ProductRepository {
     }[];
   } | null>;
   find(id: Uuid): Promise<ProductDto | null>;
-  create(id: Uuid, mediaId: Uuid, codeId: Uuid, input: ProductCreate): Promise<void>;
+  create(id: Uuid, codeId: Uuid, input: ProductCreate): Promise<void>;
   save(id: Uuid, expectedVersion: Version, input: ProductWrite): Promise<void>;
-  productsByType(typeId: Uuid, limit: number): Promise<readonly ProductDto[]>;
-  impactState(typeIds: readonly Uuid[]): Promise<string>;
+  productsByCategory(categoryId: Uuid, limit: number): Promise<readonly ProductDto[]>;
+  impactState(categoryIds: readonly Uuid[]): Promise<string>;
   retainedDefinitionUsage(id: Uuid): Promise<boolean>;
-  technicalTypeChangeBlocked(productId: Uuid): Promise<boolean>;
-  changeType(
-    id: Uuid,
-    typeId: Uuid,
-    expectedVersion: Version,
-    values: readonly ProductAttributeValue[],
-  ): Promise<void>;
   move(id: Uuid, categoryId: Uuid, expectedVersion: Version): Promise<void>;
-  validateLocalReferences(input: Pick<ProductCreate, 'categoryId' | 'coverAssetId'>): Promise<void>;
-  schemaFor(id: Uuid): Promise<EffectiveTypeSchema>;
+  validateLocalReferences(input: {
+    readonly categoryId: Uuid;
+    readonly coverAssetId?: Uuid | null;
+  }): Promise<void>;
+  schemaFor(id: Uuid): Promise<EffectiveCategorySchema>;
 }

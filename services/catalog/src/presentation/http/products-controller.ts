@@ -74,40 +74,17 @@ export class AdminProductsController {
   }
   @Post() async creation(@Body() value: unknown, @Req() req: IncomingMessage) {
     const actor = await this.authentication.authenticate(staffRequest(req, true)),
-      v = strictRecord(value, [
-        'categoryId',
-        'active',
-        'productTypeId',
-        'coverAssetId',
-        'modelCode',
-        'translations',
-        'expectedSchemaRevision',
-        'expectedCategoryVersion',
-        'values',
-      ]),
-      changes = values(v['values']);
-    if (v['active'] !== undefined && typeof v['active'] !== 'boolean')
-      throw new ApplicationError('VALIDATION_FAILED', 'Active must be a boolean.');
-    if (changes.some((c) => c.value === null))
-      throw new ApplicationError('VALIDATION_FAILED', 'Creation values cannot be removals.');
+      v = strictRecord(value, ['categoryId', 'modelCode', 'translations']);
     return this.create.execute(
       {
         categoryId: uuid(v['categoryId']),
-        ...(v['active'] === undefined ? {} : { active: v['active'] as boolean }),
-        productTypeId: uuid(v['productTypeId']),
-        coverAssetId: uuid(v['coverAssetId']),
         modelCode: v['modelCode'] === undefined ? null : nullableText(v['modelCode'], 128),
         translations: translations(v['translations']),
-        expectedSchemaRevision: version(v['expectedSchemaRevision']),
-        expectedCategoryVersion: version(v['expectedCategoryVersion']),
-        values: changes.map((c) => {
-          if (!c.value) throw new ApplicationError('VALIDATION_FAILED', 'Expected a typed value.');
-          return { definitionId: c.definitionId, value: c.value };
-        }),
       },
       actor,
     );
   }
+
   @Patch(':id') async update(
     @Param('id') id: string,
     @Body() value: unknown,

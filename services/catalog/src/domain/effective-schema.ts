@@ -4,6 +4,10 @@ import type {
   PublicAttributeValue,
   CatalogTranslation,
   EffectiveTypeSchema,
+  EffectiveCategorySchema,
+  CategoryFormSchema,
+  EffectiveAttributeDto,
+  SchemaGroupDto,
   FormField,
   Locale,
   ProductFormSchema,
@@ -52,6 +56,27 @@ export function formSchema(schema: EffectiveTypeSchema, language: Locale): Produ
   return {
     productTypeId: schema.type.id,
     schemaRevision: schema.type.schemaRevision,
+    ...formContent(schema, language),
+  };
+}
+export function categoryFormSchema(
+  schema: EffectiveCategorySchema,
+  language: Locale,
+): CategoryFormSchema {
+  return {
+    categoryId: schema.categoryId,
+    schemaRevision: schema.schemaRevision,
+    ...formContent(schema, language),
+  };
+}
+function formContent(
+  schema: {
+    readonly groups: readonly SchemaGroupDto[];
+    readonly attributes: readonly EffectiveAttributeDto[];
+  },
+  language: Locale,
+) {
+  return {
     groups: schema.groups.map((g) => ({
       id: g.id,
       label: translated(g.group.translations, language).name,

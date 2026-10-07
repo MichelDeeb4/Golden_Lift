@@ -26,7 +26,7 @@ import { ProcessMedia } from '../services/media/dist/application/use-cases/proce
 import { MediaOutboxRelay } from '../services/media/dist/infrastructure/prisma/outbox-relay.js';
 import { CatalogMediaOutboxRelay } from '../services/catalog/dist/infrastructure/prisma/media-outbox-relay.js';
 
-export async function adminBrowserFixture() {
+export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) {
   const native = process.env.GL_MEDIA_NATIVE_FIXTURE === 'true';
   const nativeCommands = native
     ? JSON.parse(await readFile('.local/tools/commands.json', 'utf8')).commands
@@ -78,7 +78,7 @@ export async function adminBrowserFixture() {
     await rm(absolute, { recursive: true, force: true });
   }
   async function fixture(service) {
-    const item = await databaseFixture(service);
+    const item = await databaseFixture(service, service === 'catalog' ? { catalogProfile } : {});
     fixtures.push(item);
     return item;
   }

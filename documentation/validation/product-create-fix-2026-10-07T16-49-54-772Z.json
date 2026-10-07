@@ -1,0 +1,206 @@
+{
+  "checkedAt": "2026-10-07T16:49:54.772Z",
+  "status": "PASS",
+  "scope": "Focused inactive Product Create definition of done; category-derived editing/publication separation",
+  "decision": "017-minimal-category-product-drafts",
+  "rootCause": "Obsolete Product Type/schema/specification/cover prerequisites across frontend/backend and staged category authority",
+  "requiredFields": [
+    "live leaf categoryId",
+    "nonblank Arabic name"
+  ],
+  "optionalFields": [
+    "modelCode",
+    "English name",
+    "Sorani name"
+  ],
+  "definitionOfDone": {
+    "createModalOpens": true,
+    "onlyLeafSelectable": true,
+    "selectionWritesRHF": true,
+    "arabicRequired": true,
+    "noProductTypeField": true,
+    "noInternalTypeCreationPrerequisite": true,
+    "watchedEligibility": true,
+    "noRequiredSpecifications": true,
+    "noRequiredMedia": true,
+    "noRequiredCover": true,
+    "inactiveCreation": true,
+    "postgresqlPersistence": true,
+    "modalCloses": true,
+    "productListUpdated": true,
+    "clientSideEditorNavigation": true,
+    "documentMarkerPreserved": true,
+    "refreshPersistence": true,
+    "typeDependencyRegression": true
+  },
+  "checks": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "build": true,
+      "types": true,
+      "format": true,
+      "architectureSources": 216,
+      "enforcementProbes": 14,
+      "prismaSchemas": 4,
+      "unitTests": 37
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "passed": 9
+    },
+    {
+      "command": "node --test .local/test-build/services/catalog/tests/product-draft.integration.test.js",
+      "profile": "disposable category Catalog",
+      "status": "PASS",
+      "passed": 6
+    },
+    {
+      "command": "npm.cmd run test:catalog-migration",
+      "profile": "disposable PostgreSQL",
+      "status": "PASS",
+      "passed": 21
+    },
+    {
+      "command": "npm.cmd run test:admin -- frontend.product-create.test.ts frontend.category-tree.test.ts --output .local/product-create-browser-results",
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-07T16:44:35.719Z",
+        "duration": 37983.816,
+        "expected": 10,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "productCreateTests": 6,
+      "categoryTreeTests": 4
+    },
+    {
+      "command": "npm.cmd run test:storefront -- --output .local/product-create-visitor-results",
+      "dataMode": "explicit demo export",
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-07T16:45:51.818Z",
+        "duration": 24594.107,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "visualComparisons": 7
+    },
+    {
+      "command": "npm.cmd run storefront:build",
+      "status": "PASS",
+      "finalMode": "api"
+    },
+    {
+      "command": "npm.cmd run format:check",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "command": "node --check scripts/seed-demo-catalog.mjs; node --check database/scripts/category-catalog.mjs",
+      "status": "PASS"
+    }
+  ],
+  "passingTests": 88,
+  "visualComparisons": 7,
+  "migration": {
+    "target": "normal local Catalog",
+    "writersStopped": true,
+    "fullOwningBackup": true,
+    "restoreRetainedRowHashesMatched": true,
+    "restoredCopyMigration": true,
+    "reviewedMappingIssues": 0,
+    "preparedLeafCategories": 7,
+    "groupPlacements": 21,
+    "groupMembers": 9,
+    "commands": [
+      "expand",
+      "backfill",
+      "validate",
+      "cutover"
+    ],
+    "status": "PASS",
+    "publishedDemoProductsPreserved": 10,
+    "accountsAndMediaRetained": true,
+    "normalReseedExecuted": false,
+    "retiredTypeBindings": "retained immutable historical evidence; new type binding forbidden"
+  },
+  "normalProject": {
+    "checkedAt": "2026-10-07T16:50:55.976Z",
+    "status": "PASS",
+    "readiness": [
+      {
+        "port": 3000,
+        "status": 200
+      },
+      {
+        "port": 3001,
+        "status": 200
+      },
+      {
+        "port": 3002,
+        "status": 200
+      },
+      {
+        "port": 3003,
+        "status": 200
+      },
+      {
+        "port": 3004,
+        "status": 200
+      }
+    ],
+    "website": {
+      "port": 8081,
+      "status": 200
+    },
+    "publishedProducts": 10,
+    "categoryAttributesPerProduct": 9,
+    "allPublishedDetailResponses": 200,
+    "allProductImagesLoaded": true,
+    "mobileArabicOverflow": false,
+    "pageErrors": [],
+    "failedApiRequests": []
+  },
+  "cleanup": {
+    "fixtureDatabasesDisposed": true,
+    "ownedDisposablePostgresqlClusterRemoved": true,
+    "normalClusterRetained": true
+  },
+  "screenshots": [
+    "documentation/assets/product-create/create-en.png",
+    "documentation/assets/product-create/create-ar-mobile.png",
+    "documentation/assets/product-create/create-ckb-mobile.png",
+    "documentation/assets/product-create/draft-editor.png",
+    "documentation/assets/product-create/live-products.png",
+    "documentation/assets/product-create/live-products-ar-mobile.png"
+  ],
+  "limitations": [
+    "Category/group relationship editing is unfinished separate work.",
+    "Historical full Admin/Dynamic Catalog suites require porting retired Type workflows; their historic counts are not current acceptance.",
+    "Seed tool requires prepared demo relationships; it was syntax checked, not reseeded.",
+    "Browser scanner/processor adapters are test-only; production providers, hosted CI/deployment, external accessibility certification and device benchmarks were not validated."
+  ],
+  "investigation": [
+    "Initial stale-category recovery test required both cache invalidation and navigating the refreshed parent.",
+    "Category deletion preview still read a retired runtime table; category schema revisions now protect its fingerprint.",
+    "An initial visitor run used API mode against a demo composition test; the final run used its explicit demo export, followed by API export restoration.",
+    "Concurrent Playwright runs shared an artifact directory; final suites ran separately with task-specific directories.",
+    "A browser launch raced test-build regeneration; final launch followed completed compilation.",
+    "Exact toast text included its Close button; corrected the locator without adding an extra navigation store."
+  ],
+  "finalDocumentSync": {
+    "openapiVersion": "0.8.0",
+    "apiSync": true,
+    "typecheck": "PASS",
+    "formatCheck": "PASS",
+    "diffCheck": "PASS"
+  }
+}

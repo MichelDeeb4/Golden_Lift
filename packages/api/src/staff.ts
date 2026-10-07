@@ -84,6 +84,9 @@ export const formSchema = z.object({
   groups: z.array(z.object({ id, label: z.string(), sortOrder: z.string() })),
   fields: z.array(fieldSchema),
 });
+export const categoryFormSchema = formSchema
+  .omit({ productTypeId: true })
+  .extend({ categoryId: id });
 export const attributeValueSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('NUMBER'), number: z.string() }),
   z.object({ kind: z.literal('BOOLEAN'), boolean: z.boolean() }),
@@ -111,8 +114,7 @@ export const productMediaSchema = z.object({
 export const managedProductSchema = z.object({
   id,
   categoryId: id,
-  productTypeId: id,
-  coverAssetId: id,
+  coverAssetId: id.nullable(),
   modelCode: z.string().nullable(),
   version,
   schemaRevision: version,
@@ -131,9 +133,7 @@ export const productRowSchema = z.object({
   modelCode: z.string().nullable(),
   categoryId: id,
   categoryName: z.string(),
-  productTypeId: id,
-  productTypeName: z.string(),
-  coverAssetId: id,
+  coverAssetId: id.nullable(),
   active: z.boolean(),
   featured: z.boolean(),
   version,

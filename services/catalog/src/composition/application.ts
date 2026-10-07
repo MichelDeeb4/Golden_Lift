@@ -12,6 +12,12 @@ import {
   identityClientConfig,
 } from '@golden-lift/platform';
 import { PrismaCategoryRepository } from '../infrastructure/prisma/category-repository.js';
+import { PrismaCategorySchemaReader } from '../infrastructure/prisma/category-schema-reader.js';
+import { ReadCategorySchema } from '../application/use-cases/read-category-schema.js';
+import {
+  CategorySchemaController,
+  CATEGORY_SCHEMA,
+} from '../presentation/http/category-schema-controller.js';
 import { PrismaProductManagementUnitOfWork } from '../infrastructure/prisma/product-management.js';
 import { ManageProducts } from '../application/use-cases/manage-products.js';
 import {
@@ -105,12 +111,17 @@ export function catalogApplication(
       ProductManagementController,
       AdminCategoriesController,
       CategoryTreeController,
+      CategorySchemaController,
       PublicProductsController,
       AdminProductsController,
       DynamicConfigurationController,
       CatalogMediaController,
     ],
     providers: [
+      {
+        provide: CATEGORY_SCHEMA,
+        useValue: new ReadCategorySchema(new PrismaCategorySchemaReader(database)),
+      },
       {
         provide: MEDIA_REGISTRY,
         useValue: new MediaCoordination(new PrismaMediaRegistry(database, 300)),
@@ -120,7 +131,7 @@ export function catalogApplication(
         provide: CONFIGURATION_READER,
         useValue: new ReadCatalogConfiguration(dynamicTransactions),
       },
-      { provide: CREATE_TYPE, useValue: new CreateProductType(dynamicTransactions, ids, clock) },
+      { provide: CREATE_TYPE, useValue: new CreateProductType() },
       {
         provide: CREATE_DEFINITION,
         useValue: new CreateAttributeDefinition(dynamicTransactions, ids, clock),

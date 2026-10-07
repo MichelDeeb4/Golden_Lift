@@ -5,6 +5,7 @@ import type {
   AttributeOptionDto,
   CatalogTranslation,
   EffectiveTypeSchema,
+  EffectiveCategorySchema,
   ProductTypeDto,
   UnitDto,
   Uuid,
@@ -132,7 +133,7 @@ export interface ConfigurationPreconditions {
 export interface SchemaChangeFacts {
   readonly target:
     ProductTypeDto | AttributeDefinitionDto | AttributeOptionDto | AttributeGroupDto | UnitDto;
-  readonly schemas: readonly EffectiveTypeSchema[];
+  readonly schemas: readonly (EffectiveTypeSchema | EffectiveCategorySchema)[];
   readonly products: readonly import('@golden-lift/contracts').ProductDto[];
   readonly retainedSemanticUse: boolean;
   readonly activeReferenceCount: string;

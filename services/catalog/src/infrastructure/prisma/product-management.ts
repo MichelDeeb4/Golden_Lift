@@ -21,7 +21,6 @@ class Repository implements ProductManagementRepository {
     const rows = await this.tx.products.findMany({
       where: {
         deleted_at: null,
-        product_type_id: { not: null },
         ...(input.afterId
           ? input.sort === 'manual'
             ? {
@@ -60,7 +59,6 @@ class Repository implements ProductManagementRepository {
       take: input.limit + 1,
       include: {
         categories: { include: { category_translations: { where: { deleted_at: null } } } },
-        product_types: { include: { product_type_translations: { where: { deleted_at: null } } } },
         product_translations: { where: { deleted_at: null } },
         product_media_products_id_cover_media_idToproduct_media: true,
         product_code_reservations_products_id_current_model_code_idToproduct_code_reservations: true,
@@ -84,13 +82,9 @@ class Repository implements ProductManagementRepository {
             p.categories.category_translations.find((t) => t.locale === input.locale) ??
             p.categories.category_translations.find((t) => t.locale === 'ar')
           )?.name ?? '',
-        productTypeId: uuid(p.product_type_id),
-        productTypeName:
-          (
-            p.product_types?.product_type_translations.find((t) => t.locale === input.locale) ??
-            p.product_types?.product_type_translations.find((t) => t.locale === 'ar')
-          )?.name ?? '',
-        coverAssetId: uuid(p.product_media_products_id_cover_media_idToproduct_media.asset_id),
+        coverAssetId: p.product_media_products_id_cover_media_idToproduct_media
+          ? uuid(p.product_media_products_id_cover_media_idToproduct_media.asset_id)
+          : null,
         active: p.is_active,
         featured: p.is_featured,
         version: version(p.version.toString()),
@@ -144,6 +138,9 @@ class Repository implements ProductManagementRepository {
         })),
       })),
     };
+  }
+  async publicationSchema(id: Uuid) {
+    return new PrismaProductRepository(this.tx).schemaFor(id);
   }
   async publication(id: Uuid, expectedVersion: Version, input: PublicationWrite) {
     const changed = await this.tx.products.updateMany({

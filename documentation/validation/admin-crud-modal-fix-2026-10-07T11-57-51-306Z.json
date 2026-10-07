@@ -1,0 +1,200 @@
+{
+  "recordedAt": "2026-10-07T11:57:51.306Z",
+  "status": "PASS",
+  "scope": "Admin focused CRUD modals, permanent creation actions, SPA navigation, scoped cache refresh and real persistence",
+  "baseCommit": "80a8a6c",
+  "commands": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "backendUnitTests": 37,
+      "sourceFiles": 208,
+      "architectureProbes": 14,
+      "prismaSchemas": 4
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "tests": 9
+    },
+    {
+      "command": "npm.cmd run storefront:build",
+      "status": "PASS",
+      "mode": "API; restored after separate demo visitor export"
+    },
+    {
+      "command": "npm.cmd run test:admin",
+      "status": "PASS",
+      "profile": "task-owned disposable PostgreSQL with real owning services and Gateway",
+      "stats": {
+        "startTime": "2026-10-07T11:52:18.864Z",
+        "duration": 153234.652,
+        "expected": 22,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "visualComparisons": 17,
+      "baselineUpdatesDuringFinalRun": false
+    },
+    {
+      "command": "npm.cmd run test:storefront",
+      "status": "PASS",
+      "profile": "explicit labeled demo export",
+      "stats": {
+        "startTime": "2026-10-07T11:55:56.070Z",
+        "duration": 22664.218999999997,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "visualComparisons": 7,
+      "baselineUpdatesDuringFinalRun": false
+    },
+    {
+      "command": "npm.cmd run format:check",
+      "status": "PASS",
+      "includedInCheck": true
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/doctor.mjs",
+      "status": "PASS",
+      "services": {
+        "catalog": {
+          "port": 3002,
+          "status": 200,
+          "ready": true
+        },
+        "identity": {
+          "port": 3001,
+          "status": 200,
+          "ready": true
+        },
+        "inquiries": {
+          "port": 3004,
+          "status": 200,
+          "ready": true
+        },
+        "media": {
+          "port": 3003,
+          "status": 200,
+          "ready": true
+        },
+        "gateway": {
+          "port": 3000,
+          "status": 200,
+          "ready": true
+        },
+        "frontend": {
+          "port": 8081,
+          "ready": true
+        }
+      }
+    }
+  ],
+  "passingTests": {
+    "backendUnit": 37,
+    "frontendUnit": 9,
+    "staffBrowser": 22,
+    "visitorBrowser": 5,
+    "total": 73
+  },
+  "visualReview": {
+    "captureStats": {
+      "startTime": "2026-10-07T11:37:12.458Z",
+      "duration": 157952.051,
+      "expected": 22,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "finalListCaptureStats": {
+      "startTime": "2026-10-07T11:51:21.720Z",
+      "duration": 33347.181000000004,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "reviewBeforeBaselineReplacement": true,
+    "finalComparisonSeparateFromCapture": true,
+    "staffBaselines": 17,
+    "visitorBaselines": 7,
+    "documentationScreenshots": [
+      "admin-asset-inspector.png",
+      "admin-attribute-editor.png",
+      "admin-category-editor.png",
+      "admin-dashboard.png",
+      "admin-media-library.png",
+      "admin-product-editor-ar.png",
+      "admin-product-editor-ckb.png",
+      "admin-product-editor-mobile.png",
+      "admin-product-editor-tablet.png",
+      "admin-product-editor.png",
+      "admin-product-list.png",
+      "admin-product-media.png",
+      "admin-product-overview.png",
+      "admin-product-summary-mobile.png",
+      "admin-type-editor.png",
+      "admin-upload-drawer.png",
+      "attribute-create-ar-mobile.png",
+      "attribute-create-ckb-mobile.png",
+      "attribute-create-en-mobile.png",
+      "attribute-edit-desktop.png",
+      "product-create-desktop.png",
+      "super-admin-staff.png"
+    ]
+  },
+  "assertions": [
+    "configuration/category CRUD persists after explicit reload",
+    "product creation and soft deletion verified in PostgreSQL",
+    "document markers persist through CRUD and SPA editor navigation",
+    "Media READY and grid refresh persist after reload",
+    "stale version before and after signed impact preview retains draft and supports explicit reload/review",
+    "ADMIN and SUPER_ADMIN role separation",
+    "English, Arabic and Sorani mobile dirty-close, focus restoration and no horizontal overflow"
+  ],
+  "cleanup": {
+    "isolatedDatabasesDisposedByFixture": true,
+    "taskOwnedPostgresStoppedAndRemoved": true,
+    "normalProjectRestarted": true,
+    "existingAccountsAndNormalDatabaseConfigurationRetained": true
+  },
+  "limitations": [
+    "Configuration filters apply to loaded cursor page; global usage totals and updated timestamps are absent from contracts.",
+    "Product cover and required specifications remain mandatory backend constraints.",
+    "No backend, SQL, OpenAPI or shared contract change.",
+    "Browser fixtures use test-only scanner/processing adapters and mail capture; production providers and hosted CI are not established.",
+    "No fresh full backend PostgreSQL integration suite or external accessibility certification."
+  ],
+  "normalRuntimeBrowser": {
+    "checkedAt": "2026-10-07T11:59:13.591Z",
+    "status": "PASS",
+    "mode": "api",
+    "routes": [
+      {
+        "route": "/",
+        "demoNotice": false
+      },
+      {
+        "route": "/categories",
+        "demoNotice": false
+      },
+      {
+        "route": "/products",
+        "demoNotice": false
+      },
+      {
+        "route": "/admin/login",
+        "demoNotice": false
+      }
+    ],
+    "pageErrors": [],
+    "failedApiRequests": []
+  }
+}

@@ -60,7 +60,7 @@ test('dependency outages show errors, preserve login input and never substitute 
       if (service === 'media') {
         await page.getByRole('button', { name: 'Upload Media', exact: true }).click();
         await expect(
-          page.getByRole('dialog').getByRole('button', { name: 'Upload', exact: true }),
+          page.getByRole('dialog').last().getByRole('button', { name: 'Upload', exact: true }),
         ).toBeDisabled();
       }
     } finally {
@@ -68,6 +68,17 @@ test('dependency outages show errors, preserve login input and never substitute 
     }
   }
 });
+async function openCreate(page: Page) {
+  const resource = new URL(page.url()).pathname.split('/')[2];
+  const label: Record<string, string> = {
+    attributes: 'Create Attribute',
+    'product-types': 'Create Product Type',
+    'attribute-groups': 'Create Group',
+    units: 'Create Unit',
+    categories: 'Create Root Category',
+  };
+  await page.getByRole('button', { name: label[resource!], exact: true }).click();
+}
 async function english(page: Page) {
   await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
 }
@@ -77,8 +88,8 @@ test('attribute creation normalizes changed types and preserves drafts after val
   await english(page);
   await login(page, fixture.adminEmail);
   await page.goto('/admin/attributes');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  const editor = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  const editor = page.getByRole('dialog').last();
   await editor.getByLabel('Code', { exact: true }).fill('invalid code');
   await translation(editor, 'ar', 'Attribute regression Arabic');
   await translation(editor, 'en', 'Attribute regression English');
@@ -151,7 +162,10 @@ async function editorSection(page: Page, name: string) {
   await nav.getByRole('button', { name: new RegExp('^0?[1-5]?\\s*' + name) }).click();
 }
 async function translation(scope: Page | Locator, language: 'ar' | 'en' | 'ckb', value: string) {
-  if ('url' in scope && /\/admin\/products\/(new|[0-9a-f-]{36})$/.test(scope.url()))
+  if (
+    'url' in scope &&
+    /\/admin\/products\/(new|[0-9a-f-]{36})$/.test(new URL(scope.url()).pathname)
+  )
     await editorSection(scope, 'Translations');
   await scope
     .getByRole('tab', {
@@ -164,8 +178,32 @@ async function translation(scope: Page | Locator, language: 'ar' | 'en' | 'ckb',
 async function reviewSnapshot(page: Page, name: string, target?: Locator) {
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator('.gl-admin-skeleton')).toHaveCount(0);
-  if (await page.locator('.gl-toast').isVisible()) await page.locator('.gl-toast button').click();
+  if (await page.locator('.gl-toast').isVisible()) {
+    if (await page.getByRole('dialog').count())
+      await expect(page.locator('.gl-toast')).not.toBeVisible({ timeout: 7000 });
+    else await page.locator('.gl-toast button').click();
+  }
   const surface = target ?? page;
+  if (!target) await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator('dialog[open]').evaluateAll((dialogs) => {
+    for (const dialog of dialogs) dialog.scrollTop = 0;
+  });
+  if (process.env.GL_MODAL_CAPTURE) {
+    await surface.screenshot({
+      path: `documentation/assets/admin-crud-modals/${name}.png`,
+      animations: 'disabled',
+      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+    });
+    return;
+  }
+  if (process.env.GL_STAFF_CAPTURE_DIR) {
+    await surface.screenshot({
+      path: `${process.env.GL_STAFF_CAPTURE_DIR}/${name}.png`,
+      animations: 'disabled',
+      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+    });
+    return;
+  }
   if (process.env.GL_FUNCTIONAL_CAPTURE) {
     await surface.screenshot({
       path: `documentation/assets/functional-integration/${name}.png`,
@@ -220,18 +258,18 @@ test('category and type create, independent translations, product editor, public
     .toBeGreaterThan(0);
   await reviewSnapshot(page, 'admin-media-library');
   await page.goto('/admin/categories');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  let dialog = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  let dialog = page.getByRole('dialog').last();
   await translation(dialog, 'ar', 'Browser category Arabic');
   await translation(dialog, 'en', 'Browser category English');
   await reviewSnapshot(page, 'admin-category-editor');
-  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Create Root Category', exact: true }).click();
   await expect(
     page.getByRole('link', { name: 'Browser category English', exact: true }),
   ).toBeVisible();
   await page.goto('/admin/product-types');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  dialog = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  dialog = page.getByRole('dialog').last();
   await dialog.getByLabel('Code', { exact: true }).fill('browser-type');
   await translation(dialog, 'ar', 'Browser type Arabic');
   await translation(dialog, 'en', 'Browser type English');
@@ -242,8 +280,8 @@ test('category and type create, independent translations, product editor, public
     .getByRole('link', { name: 'Browser type English', exact: true })
     .getAttribute('href');
   await page.goto('/admin/attributes');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  dialog = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  dialog = page.getByRole('dialog').last();
   await dialog.getByLabel('Code', { exact: true }).fill('browser-capacity');
   await translation(dialog, 'ar', 'Browser capacity Arabic');
   await translation(dialog, 'en', 'Browser capacity English');
@@ -266,6 +304,7 @@ test('category and type create, independent translations, product editor, public
   await page.getByRole('button', { name: 'Assign attribute', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
   await expect(
@@ -278,7 +317,7 @@ test('category and type create, independent translations, product editor, public
   await translation(page, 'en', 'Browser product English');
   await editorSection(page, 'Overview');
   await page.getByRole('button', { name: /^Browse categories:/ }).click();
-  dialog = page.getByRole('dialog');
+  dialog = page.getByRole('dialog').last();
   await dialog
     .getByRole('row')
     .filter({ hasText: 'Browser category English' })
@@ -290,7 +329,7 @@ test('category and type create, independent translations, product editor, public
   await page.getByLabel('Browser capacity English *', { exact: true }).fill('0.000001');
   await editorSection(page, 'Media');
   await page.getByRole('button', { name: 'Cover image', exact: true }).click();
-  dialog = page.getByRole('dialog');
+  dialog = page.getByRole('dialog').last();
   await dialog.getByRole('button', { name: 'Select', exact: true }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}$/);
@@ -406,13 +445,13 @@ test('real upload parts, completion, processing feedback and controlled private 
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Upload Media', exact: true }).click();
   await expect(
-    page.getByRole('dialog').getByText('Browser upload.png', { exact: false }),
+    page.getByRole('dialog').last().getByText('Browser upload.png', { exact: false }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Resume', exact: true }).click();
-  await expect(page.getByRole('dialog').getByText('READY', { exact: true })).toBeVisible({
+  await expect(page.getByRole('dialog').last().getByText('READY', { exact: true })).toBeVisible({
     timeout: 30000,
   });
-  await reviewSnapshot(page, 'admin-upload-drawer', page.getByRole('dialog'));
+  await reviewSnapshot(page, 'admin-upload-drawer', page.getByRole('dialog').last());
   await page.keyboard.press('Escape');
   fixture.checkProcessing();
   await expect(page.locator('img').first()).toBeVisible();
@@ -437,6 +476,7 @@ test('real upload parts, completion, processing feedback and controlled private 
   await media.getByRole('button', { name: 'Select', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .locator('.gl-admin-media section')
     .filter({ hasText: 'Browser upload.png' })
     .getByRole('button', { name: 'Select', exact: true })
@@ -469,7 +509,7 @@ test('real upload parts, completion, processing feedback and controlled private 
   expect((await detached).status()).toBe(200);
   await page.goto(assetHref!);
   await expect(page.getByText('Browser upload.png · IMAGE · READY', { exact: true })).toBeVisible();
-  await reviewSnapshot(page, 'admin-asset-inspector', page.getByRole('dialog'));
+  await reviewSnapshot(page, 'admin-asset-inspector', page.getByRole('dialog').last());
 });
 test('video playback and PDF preview/download use private Media grants and Catalog associations', async ({
   page,
@@ -536,7 +576,7 @@ test('video playback and PDF preview/download use private Media grants and Catal
     await page.getByLabel('Choose file', { exact: true }).setInputFiles(file);
     await page.getByRole('button', { name: 'Upload', exact: true }).click();
     const card = page.locator('.gl-admin-media section').filter({ hasText: file.name });
-    await expect(page.getByRole('dialog').getByText('READY', { exact: true })).toBeVisible({
+    await expect(page.getByRole('dialog').last().getByText('READY', { exact: true })).toBeVisible({
       timeout: 30000,
     });
     await page.keyboard.press('Escape');
@@ -581,6 +621,7 @@ test('video playback and PDF preview/download use private Media grants and Catal
     await section.getByRole('button', { name: 'Select', exact: true }).click();
     await page
       .getByRole('dialog')
+      .last()
       .locator('.gl-admin-media section')
       .filter({ hasText: asset.name })
       .getByRole('button', { name: 'Select', exact: true })
@@ -709,54 +750,76 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
   await login(page, fixture.adminEmail);
   async function create(name: string) {
     await page.goto('/admin/categories');
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
-    const dialog = page.locator('.gl-inline-editor');
+    await openCreate(page);
+    const dialog = page.getByRole('dialog').last();
     await translation(dialog, 'ar', name + ' Arabic');
     await translation(dialog, 'en', name);
-    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Create Root Category', exact: true }).click();
     await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
     return (await page.getByRole('link', { name, exact: true }).getAttribute('href'))!;
   }
   const parent = await create('Browser parent');
   const child = await create('Browser child');
-  const childRow = page.getByRole('row').filter({ hasText: 'Browser child' });
+  await page
+    .getByRole('tree')
+    .getByRole('button', { name: 'Actions — Browser child', exact: true })
+    .click();
+  const childRow = page.getByRole('group', { name: 'Actions — Browser child', exact: true });
   const earlier = childRow.getByRole('button', { name: 'Move earlier', exact: true });
   await (
     (await earlier.isEnabled())
       ? earlier
       : childRow.getByRole('button', { name: 'Move later', exact: true })
   ).click();
-  await page.getByRole('button', { name: 'Save sibling order', exact: true }).click();
   await expect(page.locator('.gl-toast')).toContainText('Saved');
   await page.goto(child);
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('dialog').last().getByRole('tab', { name: 'English', exact: true }).click();
   await page
-    .locator('.gl-inline-editor')
-    .getByRole('tab', { name: 'English', exact: true })
-    .click();
-  await page
-    .locator('.gl-inline-editor')
+    .getByRole('dialog')
+    .last()
     .getByLabel('Name (en)', { exact: true })
     .fill('Browser child edited');
-  await page
-    .locator('.gl-inline-editor')
-    .getByRole('button', { name: 'Save', exact: true })
-    .click();
+  await page.getByRole('dialog').last().getByRole('button', { name: 'Save', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Browser child edited', exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Move', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: 'Actions — Browser child edited', exact: true })
+    .click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: 'Move', exact: true })
+    .click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Browser parent', exact: true })
     .click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page
+    .getByRole('dialog')
+    .last()
+    .getByRole('button', { name: 'Move Category', exact: true })
+    .click();
+  await expect(page.getByRole('dialog').last()).not.toBeVisible();
   await page.goto(parent);
+  await page.getByRole('button', { name: 'Expand Browser parent', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Browser child edited', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Categories: 2');
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: 'Actions — Browser parent', exact: true })
+    .click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: 'Delete', exact: true })
+    .click();
+  await expect(page.getByRole('dialog').last()).toContainText('Categories: 2');
+  await page
+    .getByRole('dialog')
+    .last()
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/categories$/);
   await expect(page.getByRole('link', { name: 'Browser parent', exact: true })).not.toBeVisible();
 });
@@ -766,8 +829,8 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
 }) => {
   await login(page, fixture.adminEmail);
   await page.goto('/admin/attributes');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  let dialog = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  let dialog = page.getByRole('dialog').last();
   await dialog.getByLabel('Code', { exact: true }).fill('browser-choice');
   await translation(dialog, 'ar', 'Browser choice Arabic');
   await translation(dialog, 'en', 'Browser choice English');
@@ -775,17 +838,20 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
   await page.getByRole('option', { name: 'Choice', exact: true }).click();
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await page.getByRole('link', { name: 'Browser choice English', exact: true }).click();
-  const translations = page.locator('.gl-detail-canvas > .gl-translation-section');
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  const translations = page.getByRole('dialog', { name: 'Edit', exact: true });
   await translation(translations, 'en', 'Browser choice edited');
+  page.once('dialog', (prompt) => prompt.accept());
+  await translations.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
-  dialog = page.getByRole('dialog');
+  dialog = page.getByRole('dialog').last();
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option');
   await translation(dialog, 'ar', 'Browser option Arabic');
   await translation(dialog, 'en', 'Browser option English');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Browser option English', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
-  dialog = page.getByRole('dialog');
+  dialog = page.getByRole('dialog').last();
   await expect(dialog.getByLabel('Code', { exact: true })).toHaveValue('');
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option');
   await translation(dialog, 'ar', 'Second option Arabic');
@@ -801,15 +867,17 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option-two');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Second option English', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await expect(translations.getByLabel('Name (en)', { exact: true })).toHaveValue(
     'Browser choice edited',
   );
   await page.getByRole('button', { name: 'Save', exact: true }).filter({ visible: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.getByRole('dialog').last()).not.toBeVisible();
   const option = page
     .locator('main section > div')
     .filter({ has: page.locator('summary').filter({ hasText: /^Edit — browser-option$/ }) });
@@ -818,12 +886,14 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
   await option.getByRole('button', { name: 'Save', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
   await expect(page.getByText('Browser option edited', { exact: true })).toBeVisible();
   await option.getByRole('button', { name: 'Delete', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
   await expect(option).not.toBeVisible();
@@ -833,6 +903,7 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
     .click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
   await expect(page).toHaveURL(/\/admin\/attributes$/);
@@ -863,12 +934,15 @@ test('Arabic and Sorani RTL, mobile navigation and page scrolling', async ({ pag
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.gl-admin-sidebar')).not.toBeVisible();
   await page.locator('.gl-admin-menu').click();
-  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').last()).toBeVisible();
   expect(
-    await page.getByRole('dialog').evaluate((dialog) => dialog.contains(document.activeElement)),
+    await page
+      .getByRole('dialog')
+      .last()
+      .evaluate((dialog) => dialog.contains(document.activeElement)),
   ).toBe(true);
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.getByRole('dialog').last()).not.toBeVisible();
   await page.mouse.wheel(0, 600);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   expect(
@@ -894,7 +968,7 @@ test('Arabic and Sorani RTL, mobile navigation and page scrolling', async ({ pag
     await page.setViewportSize({ width, height: 1000 });
     await editorSection(page, 'Media');
     await page.getByRole('button', { name: 'Cover image', exact: true }).click();
-    const picker = page.getByRole('dialog');
+    const picker = page.getByRole('dialog').last();
     await expect(picker.locator('.gl-admin-media img').first()).toBeVisible();
     await picker
       .locator('.gl-admin-media section')
@@ -929,7 +1003,11 @@ test('product edits persist and confirmed deletion removes public access', async
   await expect(page.getByLabel('Name (en)', { exact: true })).toHaveValue('Browser product edited');
   await editorSection(page, 'Visibility');
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .last()
+    .getByRole('button', { name: 'Confirm', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/products$/);
   const response = await page.request.get(
     `http://localhost:3000/api/v1/products/${productHref.split('/').at(-1)}?locale=en`,
@@ -943,11 +1021,11 @@ test('units, groups and three translated choice options persist through assignme
   test.setTimeout(120000);
   await login(page, fixture.adminEmail);
   await page.goto('/admin/categories');
-  await page.getByRole('button', { name: 'Create', exact: true }).click();
-  const categoryEditor = page.locator('.gl-inline-editor');
+  await openCreate(page);
+  const categoryEditor = page.getByRole('dialog').last();
   await translation(categoryEditor, 'ar', 'Workflow category Arabic');
   await translation(categoryEditor, 'en', 'Workflow category English');
-  await categoryEditor.getByRole('button', { name: 'Save', exact: true }).click();
+  await categoryEditor.getByRole('button', { name: 'Create Root Category', exact: true }).click();
   await expect(
     page.getByRole('link', { name: 'Workflow category English', exact: true }),
   ).toBeVisible();
@@ -958,8 +1036,8 @@ test('units, groups and three translated choice options persist through assignme
     configure?: (editor: Locator) => Promise<void>,
   ) {
     await page.goto('/admin/' + resource);
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
-    const editor = page.locator('.gl-inline-editor');
+    await openCreate(page);
+    const editor = page.getByRole('dialog').last();
     await editor.getByLabel('Code', { exact: true }).fill(code);
     await translation(editor, 'ar', name + ' Arabic');
     await translation(editor, 'en', name + ' English');
@@ -1001,7 +1079,7 @@ test('units, groups and three translated choice options persist through assignme
   await page.goto(choice);
   for (let index = 1; index <= 3; index++) {
     await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog').last();
     await dialog.getByLabel('Code', { exact: true }).fill('workflow-option-' + index);
     for (const language of ['ar', 'en', 'ckb'] as const)
       await translation(dialog, language, `Workflow option ${index} ${language}`);
@@ -1016,18 +1094,20 @@ test('units, groups and three translated choice options persist through assignme
   await option.getByRole('button', { name: 'Save', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
-  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await expect(page.getByRole('dialog').last()).not.toBeVisible();
   await page.reload();
   await option.locator('summary').click();
   await expect(option.getByLabel('Sort order', { exact: true })).toHaveValue('-1');
   async function confirm() {
     await page
       .getByRole('dialog')
+      .last()
       .getByRole('button', { name: 'Apply reviewed change', exact: true })
       .click();
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByRole('dialog').last()).not.toBeVisible();
   }
   await page.goto(type);
   await page.getByLabel('Attribute groups', { exact: true }).click();
@@ -1052,6 +1132,7 @@ test('units, groups and three translated choice options persist through assignme
   await page.getByRole('button', { name: /^Browse categories:/ }).click();
   await page
     .getByRole('dialog')
+    .last()
     .getByRole('row')
     .filter({ hasText: 'Workflow category English' })
     .getByRole('button', { name: 'Select', exact: true })
@@ -1067,6 +1148,7 @@ test('units, groups and three translated choice options persist through assignme
   await page.getByRole('button', { name: 'Cover image', exact: true }).click();
   await page
     .getByRole('dialog')
+    .last()
     .locator('.gl-admin-media section')
     .filter({ hasText: 'Browser fixture image.png' })
     .getByRole('button', { name: 'Select', exact: true })
@@ -1142,7 +1224,7 @@ test('invitation, single-use action tokens, password recovery and own password c
   await consume('invitation', invitation, fixture.password);
   await expect(page.locator('.gl-toast')).toContainText('Saved');
   await consume('invitation', invitation, fixture.password);
-  await expect(page.getByRole('alert')).toContainText('could not');
+  await expect(page.getByRole('alert')).toContainText('Action token is invalid or expired');
   await login(page, email);
   await page.goto('/admin/reset-request');
   await page.getByLabel('Email', { exact: true }).fill(email);
@@ -1192,7 +1274,11 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
       .filter({ hasText: fixture.adminEmail })
       .getByRole('button', { name: 'Disable', exact: true })
       .click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+    await page
+      .getByRole('dialog')
+      .last()
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click();
     await expect(page.getByRole('row').filter({ hasText: fixture.adminEmail })).toContainText(
       'DISABLED',
     );
@@ -1208,7 +1294,11 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
       .filter({ hasText: fixture.adminEmail })
       .getByRole('button', { name: 'Enable', exact: true })
       .click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+    await page
+      .getByRole('dialog')
+      .last()
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click();
     await expect(page.getByRole('row').filter({ hasText: fixture.adminEmail })).toContainText(
       'ACTIVE',
     );
@@ -1216,11 +1306,19 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
     const invited = page.getByRole('row').filter({ hasText: 'browser-invite@example.test' });
     await invited.getByRole('button', { name: 'Actions', exact: true }).click();
     await invited.getByRole('button', { name: 'Resend invitation', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await page
+      .getByRole('dialog')
+      .last()
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click();
+    await expect(page.getByRole('dialog').last()).not.toBeVisible();
     await invited.getByRole('button', { name: 'Actions', exact: true }).click();
     await invited.getByRole('button', { name: 'Delete', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+    await page
+      .getByRole('dialog')
+      .last()
+      .getByRole('button', { name: 'Confirm', exact: true })
+      .click();
     await expect(invited).not.toBeVisible();
   } finally {
     await adminContext.close();

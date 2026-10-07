@@ -1,0 +1,165 @@
+import { useId, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { categorySchema, StaffApiError } from '@golden-lift/api';
+import { GLButton, GLInput, GLDrawer, GLActionBar, GLAlert } from '@golden-lift/ui';
+import { useStaffApi, useStaffFeedback, useUnsaved } from './context';
+import { useAdminTranslation } from './translations';
+import {
+  ActionFeedback,
+  FocusedEditor,
+  useAction,
+  emptyTranslations,
+  TranslationFields,
+  translationInput,
+} from './common';
+import type { TranslationForm } from './common';
+import { CategoryPicker } from './categories';
+
+const createdProduct = z.object({
+  id: z.string().uuid(),
+  version: z.string(),
+  active: z.literal(false),
+});
+export function CreateProduct({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const api = useStaffApi(),
+    t = useAdminTranslation(),
+    router = useRouter(),
+    action = useAction('products', false),
+    notify = useStaffFeedback(),
+    query = useQueryClient(),
+    helpId = useId();
+  const defaults = { ...structuredClone(emptyTranslations), categoryId: '', modelCode: '' };
+  const form = useForm<TranslationForm>({ defaultValues: defaults });
+  const [category, setCategory] = useState<z.infer<typeof categorySchema> | null>(null),
+    [categoryOpen, setCategoryOpen] = useState(false);
+  const categoryId = form.watch('categoryId'),
+    arabicName = form.watch('names.ar');
+  const eligible = !!category?.canAddProducts && category.id === categoryId && !!arabicName?.trim();
+  const dirty = form.formState.isDirty;
+  useUnsaved(dirty);
+  return (
+    <>
+      <FocusedEditor
+        dialog
+        open={open}
+        dirty={dirty}
+        pending={action.isPending}
+        title={t('createProduct')}
+        onClose={onClose}
+      >
+        <p>{t('minimalDraftHelp')}</p>
+        <form
+          noValidate
+          onSubmit={form.handleSubmit((input) => {
+            if (!eligible || action.isPending) return;
+            action.mutate(
+              () =>
+                api.request(
+                  '/admin/products',
+                  createdProduct,
+                  {
+                    categoryId: input.categoryId,
+                    translations: translationInput(input),
+                    modelCode: input.modelCode?.trim() || null,
+                  },
+                  'POST',
+                ),
+              {
+                onError: (error) => {
+                  if (
+                    error instanceof StaffApiError &&
+                    ['INVALID_STATE', 'NOT_FOUND'].includes(error.code)
+                  )
+                    void query.invalidateQueries({ queryKey: ['staff', 'categories'] });
+                },
+                onSuccess: (response) => {
+                  const result = createdProduct.parse(response);
+                  const returnTo = window.location.pathname + window.location.search;
+                  form.reset(defaults);
+                  setCategory(null);
+                  onClose();
+                  notify?.(t('productCreated'));
+                  router.push({
+                    pathname: '/admin/[...path]',
+                    params: {
+                      path: ['products', result.id],
+                      returnTo,
+                    },
+                  });
+                },
+              },
+            );
+          })}
+        >
+          <input
+            type="hidden"
+            {...form.register('categoryId', { required: t('chooseLeafCategory') })}
+          />
+          <GLButton
+            variant="secondary"
+            disabled={action.isPending}
+            onClick={() => setCategoryOpen(true)}
+          >
+            {t('selectCategory')}: {category?.name ?? t('choose')}
+          </GLButton>
+          <GLInput label={t('code')} maxLength={128} {...form.register('modelCode')} />
+          <TranslationFields form={form} labelsOnly />
+          {action.error instanceof StaffApiError && action.error.code === 'INVALID_STATE' ? (
+            <GLAlert tone="error">{t('leafCategoryOnly')}</GLAlert>
+          ) : action.error instanceof StaffApiError && action.error.code === 'NOT_FOUND' ? (
+            <GLAlert tone="error">{t('categoryGone')}</GLAlert>
+          ) : action.error instanceof StaffApiError && action.error.code === 'CONFLICT' ? (
+            <GLAlert tone="error">{t('modelCodeTaken')}</GLAlert>
+          ) : action.error instanceof StaffApiError &&
+            action.error.code === 'DEPENDENCY_UNAVAILABLE' ? (
+            <GLAlert tone="error">{t('createUnavailable')}</GLAlert>
+          ) : (
+            <ActionFeedback action={action} />
+          )}
+          <p id={helpId} role="status" aria-live="polite">
+            {!category
+              ? t('chooseLeafCategory')
+              : !arabicName?.trim()
+                ? t('requiredArabic')
+                : t('draftHelp')}
+          </p>
+          <GLActionBar>
+            <GLButton
+              type="submit"
+              loading={action.isPending}
+              disabled={!eligible || action.isPending}
+              aria-describedby={helpId}
+            >
+              {t('createProduct')}
+            </GLButton>
+            <GLButton
+              variant="secondary"
+              disabled={action.isPending}
+              onClick={() => {
+                if (!dirty || window.confirm(t('unsaved'))) onClose();
+              }}
+            >
+              {t('cancel')}
+            </GLButton>
+          </GLActionBar>
+        </form>
+      </FocusedEditor>
+      <GLDrawer open={categoryOpen} title={t('category')} onClose={() => setCategoryOpen(false)}>
+        <CategoryPicker
+          leaf
+          onSelect={(selected) => {
+            setCategory(selected);
+            form.setValue('categoryId', selected?.id ?? '', {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+            setCategoryOpen(false);
+          }}
+        />
+      </GLDrawer>
+    </>
+  );
+}

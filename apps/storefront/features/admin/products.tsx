@@ -5,9 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { z } from 'zod';
 import {
   categorySchema,
-  formSchema,
+  categoryFormSchema,
   managedProductSchema,
-  namedSchema,
   pageSchema,
   productRowSchema,
 } from '@golden-lift/api';
@@ -41,11 +40,10 @@ import {
   translationDefaults,
   translationInput,
   useAction,
-  useStaffOptions,
-  MoreOptions,
 } from './common';
 import type { TranslationForm } from './common';
 import { CategoryPicker } from './categories';
+import { CreateProduct } from './create-product';
 import { MediaPicker, MediaPreview, PdfDownload } from './media';
 import {
   DynamicAttributeField,
@@ -53,7 +51,7 @@ import {
   validateDynamicValue,
 } from './dynamic-fields';
 import type { AttributeValue } from './dynamic-fields';
-export function Products() {
+export function Products({ create = false }: { create?: boolean } = {}) {
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
@@ -69,6 +67,7 @@ export function Products() {
     }>(),
     [text, setText] = useState(params.text ?? '');
   const [categoryFilter, setCategoryFilter] = useState(false);
+  const [creating, setCreating] = useState(create);
   const search = new URLSearchParams({
     locale,
     limit: '25',
@@ -83,6 +82,11 @@ export function Products() {
       ),
     ),
   });
+  const returnTo =
+    '/admin/products?' +
+    new URLSearchParams(
+      [...search.entries()].filter(([key]) => key !== 'locale' && key !== 'limit'),
+    ).toString();
   const rows = useQuery({
     queryKey: ['staff', 'products', locale, params],
     queryFn: ({ signal }) =>
@@ -94,7 +98,6 @@ export function Products() {
         signal,
       ),
   });
-  const types = useStaffOptions('/admin/product-types', namedSchema);
   return (
     <>
       <GLPageHeader
@@ -104,14 +107,9 @@ export function Products() {
           { label: t('dashboard'), href: '/admin' },
           { label: t('products'), href: '/admin/products' },
         ]}
-        actions={
-          <a className="gl-button gl-button-primary gl-button-md" href="/admin/products/new">
-            {t('create')}
-          </a>
-        }
+        actions={<GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>}
       />
       <div className="gl-admin-toolbar gl-product-filters">
-        <MoreOptions query={types} label={t('types')} />
         <GLInput
           label={t('search')}
           value={text}
@@ -159,20 +157,6 @@ export function Products() {
             {t('all')} — {t('categories')}
           </GLButton>
         )}
-        <GLSelect
-          label={t('type')}
-          value={params.productTypeId ?? ''}
-          onChange={(productTypeId) => router.setParams({ productTypeId, cursor: '' })}
-          options={[
-            { value: '', label: t('all') },
-            ...types.items.map((type) => ({
-              value: type.id,
-              label:
-                (type.translations.find((x) => x.locale === locale) ?? type.translations[0])
-                  ?.name ?? type.code,
-            })),
-          ]}
-        />
         <GLButton
           variant="ghost"
           onClick={() => {
@@ -197,19 +181,17 @@ export function Products() {
         empty={!rows.data?.items.length}
         emptyTitle={t('emptyProducts')}
         emptyDescription={t('createProductHelp')}
-        emptyAction={
-          <a href="/admin/products/new" className="gl-button gl-button-primary gl-button-md">
-            {t('create')}
-          </a>
-        }
+        emptyAction={<GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>}
       >
         <GLTable
           columns={[t('name'), t('catalog'), t('status'), t('updated'), t('actions')]}
           rows={(rows.data?.items ?? []).map((row) => [
             <div className="gl-table-identity" key="identity">
-              <CollectionCover assetId={row.coverAssetId} />
+              {row.coverAssetId && <CollectionCover assetId={row.coverAssetId} />}
               <div>
-                <a href={'/admin/products/' + row.id}>{row.name}</a>
+                <a href={'/admin/products/' + row.id + '?returnTo=' + encodeURIComponent(returnTo)}>
+                  {row.name}
+                </a>
                 <small>
                   <bdi>{row.modelCode || '—'}</bdi>
                 </small>
@@ -217,9 +199,6 @@ export function Products() {
             </div>,
             <div key="catalog">
               <a href={'/admin/categories/' + row.categoryId}>{row.categoryName}</a>
-              <small>
-                <a href={'/admin/product-types/' + row.productTypeId}>{row.productTypeName}</a>
-              </small>
             </div>,
             <div key="status">
               <span className={row.active ? 'gl-status-dot is-active' : 'gl-status-dot'}>
@@ -237,9 +216,11 @@ export function Products() {
               key="actions"
               label={t('actions') + ' — ' + row.name}
               items={[
-                { label: t('edit'), href: '/admin/products/' + row.id },
+                {
+                  label: t('edit'),
+                  href: '/admin/products/' + row.id + '?returnTo=' + encodeURIComponent(returnTo),
+                },
                 { label: t('category'), href: '/admin/categories/' + row.categoryId },
-                { label: t('type'), href: '/admin/product-types/' + row.productTypeId },
               ]}
             />,
           ])}
@@ -271,6 +252,7 @@ export function Products() {
           }}
         />
       </GLDrawer>
+      <CreateProduct open={creating} onClose={() => setCreating(false)} />
     </>
   );
 }
@@ -282,217 +264,16 @@ function CollectionCover({ assetId }: { assetId: string }) {
     </div>
   );
 }
-function ProductTypeChange({
-  product,
-  onSaved,
-  beforeOpen,
-}: {
-  product: Managed;
-  onSaved: () => Promise<unknown>;
-  beforeOpen: () => boolean;
-}) {
-  const api = useStaffApi(),
-    { locale } = useLocale(),
-    t = useAdminTranslation(),
-    action = useAction(),
-    [open, setOpen] = useState(false),
-    [typeId, setTypeId] = useState(''),
-    [values, setValues] = useState<Record<string, AttributeValue>>({}),
-    [reviewed, setReviewed] = useState<{
-      payload: unknown;
-      precondition: string;
-      blockers: string[];
-      incompatibleDefinitionIds: string[];
-      requiredMissingDefinitionIds: string[];
-    } | null>(null);
-  const types = useStaffOptions('/admin/product-types', namedSchema);
-  const schema = useQuery({
-    queryKey: ['staff', 'type-change-schema', typeId, locale],
-    queryFn: ({ signal }) =>
-      api.request(
-        `/admin/product-types/${typeId}/schema?locale=${locale}`,
-        z.object({ form: formSchema }),
-        undefined,
-        'GET',
-        signal,
-      ),
-    enabled: open && !!typeId,
-  });
-  const payload = {
-    productTypeId: typeId,
-    expectedVersion: product.version,
-    expectedSchemaRevision: product.schemaRevision,
-    expectedDestinationSchemaRevision: schema.data?.form.schemaRevision,
-    values: [
-      ...product.values
-        .filter(
-          (v) => !schema.data?.form.fields.some((field) => field.definitionId === v.definitionId),
-        )
-        .map((v) => ({ definitionId: v.definitionId, value: null })),
-      ...Object.entries(values).map(([definitionId, value]) => ({ definitionId, value })),
-    ],
-  };
-  return (
-    <>
-      <GLButton
-        variant="secondary"
-        onClick={() => {
-          if (beforeOpen()) setOpen(true);
-        }}
-      >
-        {t('typeChange')}
-      </GLButton>
-      <GLModal open={open} onClose={() => setOpen(false)} title={t('typeChange')}>
-        <MoreOptions query={types} label={t('types')} />
-        <GLSelect
-          label={t('type')}
-          value={typeId}
-          onChange={(id) => {
-            setTypeId(id);
-            setReviewed(null);
-            setValues(Object.fromEntries(product.values.map((v) => [v.definitionId, v.value])));
-          }}
-          options={[
-            { value: '', label: t('choose') },
-            ...types.items
-              .filter((type) => !type.deprecated && type.id !== product.productTypeId)
-              .map((type) => ({ value: type.id, label: type.code })),
-          ]}
-        />
-        {schema.data?.form.fields.map((field) => (
-          <DynamicAttributeField
-            key={field.definitionId}
-            field={field}
-            value={values[field.definitionId]}
-            onChange={(value) => {
-              setReviewed(null);
-              setValues((old) => {
-                const next = { ...old };
-                if (value) next[field.definitionId] = value;
-                else delete next[field.definitionId];
-                return next;
-              });
-            }}
-          />
-        ))}
-        <ActionFeedback action={action} />
-        {reviewed && (
-          <GLAlert>
-            {t('impact')}: {reviewed.blockers.length ? t('error') : t('confirmAction')}
-          </GLAlert>
-        )}
-        {reviewed && (
-          <>
-            <p>
-              {t('detach')}: {reviewed.incompatibleDefinitionIds.join(', ') || '—'}
-            </p>
-            <p>
-              {t('required')}:{' '}
-              {reviewed.requiredMissingDefinitionIds
-                .map(
-                  (id) =>
-                    schema.data?.form.fields.find((field) => field.definitionId === id)?.label ??
-                    id,
-                )
-                .join(', ') || '—'}
-            </p>
-          </>
-        )}
-        <GLButton
-          disabled={!schema.data}
-          loading={action.isPending}
-          onClick={() =>
-            action.mutate(
-              () =>
-                api.request(
-                  `/admin/products/${product.id}/type-change/preview`,
-                  z.object({
-                    precondition: z.string(),
-                    blockers: z.array(z.string()),
-                    incompatibleDefinitionIds: z.array(z.string()),
-                    requiredMissingDefinitionIds: z.array(z.string()),
-                  }),
-                  {
-                    ...payload,
-                    values: payload.values.filter(
-                      (v) =>
-                        v.value === null ||
-                        schema.data!.form.fields.some(
-                          (field) => field.definitionId === v.definitionId,
-                        ),
-                    ),
-                  },
-                  'POST',
-                ),
-              {
-                onSuccess: (result) => {
-                  action.setSaved(false);
-                  const impact = result as {
-                    precondition: string;
-                    blockers: string[];
-                    incompatibleDefinitionIds: string[];
-                    requiredMissingDefinitionIds: string[];
-                  };
-                  setReviewed({
-                    payload: {
-                      ...payload,
-                      values: payload.values.filter(
-                        (v) =>
-                          v.value === null ||
-                          schema.data!.form.fields.some(
-                            (field) => field.definitionId === v.definitionId,
-                          ),
-                      ),
-                    },
-                    ...impact,
-                  });
-                },
-              },
-            )
-          }
-        >
-          {t('impact')}
-        </GLButton>
-        {reviewed && (
-          <GLButton
-            disabled={!!reviewed.blockers.length}
-            loading={action.isPending}
-            onClick={() =>
-              action.mutate(
-                () =>
-                  api
-                    .request(
-                      `/admin/products/${product.id}/type-change`,
-                      jsonResponse,
-                      {
-                        ...(reviewed.payload as Record<string, unknown>),
-                        precondition: reviewed.precondition,
-                        confirm: true,
-                      },
-                      'POST',
-                    )
-                    .then(onSaved),
-                { onSuccess: () => setOpen(false) },
-              )
-            }
-          >
-            {t('apply')}
-          </GLButton>
-        )}
-      </GLModal>
-    </>
-  );
-}
-export function ProductEditor({ id }: { id?: string }) {
+export function ProductEditor({ id }: { id: string }) {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
     router = useRouter(),
-    action = useAction(),
+    action = useAction('products'),
     [section, setSection] = useState('overview'),
     [draggedMedia, setDraggedMedia] = useState<string | null>(null),
     [loaded, setLoaded] = useState<Managed | null>(null),
-    [typeId, setTypeId] = useState(''),
     [category, setCategory] = useState<z.infer<typeof categorySchema> | null>(null),
     [model, setModel] = useState(''),
     [cover, setCover] = useState(''),
@@ -510,9 +291,7 @@ export function ProductEditor({ id }: { id?: string }) {
       featuredOrder: '1024',
     });
   const form = useForm<TranslationForm>({ defaultValues: structuredClone(emptyTranslations) });
-  const identityDirty = loaded
-    ? model !== (loaded.modelCode ?? '')
-    : Boolean(model || typeId || category);
+  const identityDirty = loaded ? model !== (loaded.modelCode ?? '') : Boolean(model || category);
   const specificationsDirty = loaded
     ? JSON.stringify(values) !==
       JSON.stringify(
@@ -520,7 +299,8 @@ export function ProductEditor({ id }: { id?: string }) {
       )
     : Object.keys(values).length > 0;
   const mediaDirty = loaded
-    ? cover !== loaded.coverAssetId || JSON.stringify(media) !== JSON.stringify(loaded.media)
+    ? cover !== (loaded.coverAssetId ?? '') ||
+      JSON.stringify(media) !== JSON.stringify(loaded.media)
     : Boolean(cover || media.length);
   const visibilityDirty = loaded
     ? JSON.stringify(publication) !==
@@ -545,18 +325,17 @@ export function ProductEditor({ id }: { id?: string }) {
       ),
     enabled: !!id,
   });
-  const types = useStaffOptions('/admin/product-types', namedSchema);
   const schema = useQuery({
-    queryKey: ['staff', 'product-form', typeId, locale],
+    queryKey: ['staff', 'product-form', id, loaded?.categoryId, locale],
     queryFn: ({ signal }) =>
       api.request(
-        `/admin/product-types/${typeId}/schema?locale=${locale}`,
-        z.object({ form: formSchema }),
+        `/admin/products/${id}/edit-schema?locale=${locale}`,
+        z.object({ form: categoryFormSchema }),
         undefined,
         'GET',
         signal,
       ),
-    enabled: !!typeId,
+    enabled: !!id && !!loaded,
   });
   const currentCategory = useQuery({
     queryKey: ['staff', 'product-category-context', loaded?.categoryId, locale],
@@ -572,9 +351,8 @@ export function ProductEditor({ id }: { id?: string }) {
   });
   function load(product: Managed) {
     setLoaded(product);
-    setTypeId(product.productTypeId);
     setModel(product.modelCode ?? '');
-    setCover(product.coverAssetId);
+    setCover(product.coverAssetId ?? '');
     setValues(Object.fromEntries(product.values.map((v) => [v.definitionId, v.value])));
     setMedia(product.media);
     setPublication({
@@ -597,7 +375,7 @@ export function ProductEditor({ id }: { id?: string }) {
     setLoaded(product);
     if (section === 'media') {
       setMedia(product.media);
-      setCover(product.coverAssetId);
+      setCover(product.coverAssetId ?? '');
     } else
       setPublication({
         active: product.active,
@@ -613,12 +391,18 @@ export function ProductEditor({ id }: { id?: string }) {
       form.setError('names.ar', { message: t('required') });
       throw new Error('invalid');
     }
-    if (!schema.data || (!id && !category) || !cover) {
-      setSection(!cover ? 'media' : 'overview');
+    if (!schema.data || !id) {
+      setSection('overview');
       throw new Error('invalid');
     }
     const invalid = schema.data.form.fields
-      .filter((field) => !validateDynamicValue(field, values[field.definitionId]))
+      .filter(
+        (field) =>
+          !validateDynamicValue(
+            { ...field, required: loaded?.active ? field.required : false },
+            values[field.definitionId],
+          ),
+      )
       .map((field) => field.definitionId);
     setErrors(invalid);
     if (invalid.length) {
@@ -627,7 +411,7 @@ export function ProductEditor({ id }: { id?: string }) {
     }
     const payload = {
       translations: translationInput(v),
-      coverAssetId: cover,
+      ...(cover ? { coverAssetId: cover } : {}),
       modelCode: model.trim() || null,
       values: [
         ...Object.entries(values).map(([definitionId, value]) => ({ definitionId, value })),
@@ -637,33 +421,20 @@ export function ProductEditor({ id }: { id?: string }) {
               .map((value) => ({ definitionId: value.definitionId, value: null }))
           : []),
       ],
-      expectedSchemaRevision: id ? loaded!.schemaRevision : schema.data.form.schemaRevision,
+      expectedSchemaRevision: loaded!.schemaRevision,
     };
     const result = await api.request(
-      id ? `/admin/products/${id}` : '/admin/products',
+      `/admin/products/${id}`,
       z.object({ id: z.string().uuid() }),
-      id
-        ? { ...payload, expectedVersion: loaded!.version }
-        : {
-            ...payload,
-            categoryId: category!.id,
-            productTypeId: typeId,
-            expectedCategoryVersion: category!.version,
-            active: false,
-          },
-      id ? 'PATCH' : 'POST',
+      { ...payload, expectedVersion: loaded!.version },
+      'PATCH',
     );
     form.reset(v);
 
-    if (!id)
-      router.replace({ pathname: '/admin/[...path]', params: { path: ['products', result.id] } });
-    else {
-      const product = await api.request(`/admin/products/${id}/management`, managedProductSchema);
-      setLoaded(product);
-      setValues(
-        Object.fromEntries(product.values.map((value) => [value.definitionId, value.value])),
-      );
-    }
+    const product = await api.request(`/admin/products/${id}/management`, managedProductSchema);
+    setLoaded(product);
+    setValues(Object.fromEntries(product.values.map((value) => [value.definitionId, value.value])));
+
     return result;
   }
   function shift(index: number, step: number) {
@@ -718,12 +489,7 @@ export function ProductEditor({ id }: { id?: string }) {
             {
               id: 'overview',
               label: t('overview'),
-              status:
-                !typeId || (!category && !loaded)
-                  ? t('required')
-                  : identityDirty
-                    ? t('dirty')
-                    : undefined,
+              status: !category && !loaded ? t('required') : identityDirty ? t('dirty') : undefined,
             },
             {
               id: 'content',
@@ -766,16 +532,6 @@ export function ProductEditor({ id }: { id?: string }) {
                   <dd>{category?.name ?? currentCategory.data?.name ?? '—'}</dd>
                 </div>
                 <div>
-                  <dt>{t('type')}</dt>
-                  <dd>
-                    {types.items
-                      .find((x) => x.id === typeId)
-                      ?.translations.find((x) => x.locale === locale)?.name ??
-                      types.items.find((x) => x.id === typeId)?.code ??
-                      '—'}
-                  </dd>
-                </div>
-                <div>
                   <dt>{t('status')}</dt>
                   <dd>{publication.active ? t('active') : t('inactive')}</dd>
                 </div>
@@ -813,31 +569,8 @@ export function ProductEditor({ id }: { id?: string }) {
           >
             <GLWorkspacePanel id="overview">
               <GLFormSection title={t('identity')} description={t('productIdentityHelp')}>
-                <MoreOptions query={types} label={t('types')} />
                 <div className="gl-admin-grid">
                   {' '}
-                  <GLSelect
-                    label={t('type')}
-                    value={typeId}
-                    disabled={!!id}
-                    onChange={(value) => {
-                      setTypeId(value);
-                      setValues({});
-                    }}
-                    options={[
-                      { value: '', label: t('choose') },
-                      ...types.items
-                        .filter((type) => !type.deprecated || type.id === typeId)
-                        .map((type) => ({
-                          value: type.id,
-                          label:
-                            (
-                              type.translations.find((x) => x.locale === locale) ??
-                              type.translations[0]
-                            )?.name ?? type.code,
-                        })),
-                    ]}
-                  />
                   <GLButton variant="secondary" onClick={() => setCategoryOpen(true)}>
                     {t('selectCategory')}: {category?.name ?? currentCategory.data?.name ?? ''}
                   </GLButton>
@@ -850,15 +583,6 @@ export function ProductEditor({ id }: { id?: string }) {
                     }}
                   />
                 </div>
-                {id && loaded && (
-                  <ProductTypeChange
-                    product={loaded}
-                    onSaved={refresh}
-                    beforeOpen={() =>
-                      !(dirty || form.formState.isDirty) || window.confirm(t('unsaved'))
-                    }
-                  />
-                )}
               </GLFormSection>
             </GLWorkspacePanel>
             <GLWorkspacePanel id="content">
@@ -883,38 +607,6 @@ export function ProductEditor({ id }: { id?: string }) {
                 )}
               </GLFormSection>
             </GLWorkspacePanel>
-            {!id && (
-              <GLWorkspacePanel id="media">
-                <GLFormSection title={t('media')}>
-                  <div className="gl-cover-editor">
-                    {cover && (
-                      <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} profile="detail" />
-                    )}
-                    <div>
-                      <GLButton
-                        variant="secondary"
-                        onClick={() => {
-                          setCoverPicking(true);
-                          setPickKind('IMAGE');
-                          setMediaOpen(true);
-                        }}
-                      >
-                        {t('cover')}
-                      </GLButton>
-                      {!cover && <GLAlert>{t('coverRequired')}</GLAlert>}
-                      <p className="gl-muted">{t('coverHelp')}</p>
-                    </div>
-                  </div>
-                </GLFormSection>
-              </GLWorkspacePanel>
-            )}
-            {!id && (
-              <GLWorkspacePanel id="visibility">
-                <GLFormSection title={t('publication')}>
-                  <p>{t('draftHelp')}</p>
-                </GLFormSection>
-              </GLWorkspacePanel>
-            )}
             {(!id || ['overview', 'content', 'specifications'].includes(section)) && (
               <GLActionBar>
                 <a href="/admin/products" className="gl-button gl-button-ghost gl-button-md">
@@ -928,7 +620,11 @@ export function ProductEditor({ id }: { id?: string }) {
                     ? t('dirty')
                     : t('saved')}
                 </span>{' '}
-                <GLButton type="submit" loading={action.isPending} disabled={!typeId || !cover}>
+                <GLButton
+                  type="submit"
+                  loading={action.isPending}
+                  disabled={!schema.data || action.isPending}
+                >
                   {t('save')}
                 </GLButton>
               </GLActionBar>
@@ -1113,7 +809,7 @@ export function ProductEditor({ id }: { id?: string }) {
                   <GLActionBar>
                     <span className="gl-dirty-status">
                       {JSON.stringify(media) !== JSON.stringify(loaded.media) ||
-                      cover !== loaded.coverAssetId
+                      cover !== (loaded.coverAssetId ?? '')
                         ? t('dirty')
                         : t('saved')}
                     </span>
@@ -1181,6 +877,7 @@ export function ProductEditor({ id }: { id?: string }) {
                   <div className="gl-product-danger">
                     {' '}
                     <Confirm
+                      scope="products"
                       title={t('remove')}
                       work={() =>
                         api
@@ -1191,7 +888,39 @@ export function ProductEditor({ id }: { id?: string }) {
                             'DELETE',
                           )
                           .then(() => {
-                            router.replace('/admin/products');
+                            let filters: Record<string, string> = {};
+                            try {
+                              const destination = new URL(
+                                returnTo ?? '/admin/products',
+                                window.location.origin,
+                              );
+                              if (
+                                destination.origin === window.location.origin &&
+                                destination.pathname === '/admin/products'
+                              )
+                                filters = Object.fromEntries(
+                                  [...destination.searchParams].filter(([key]) =>
+                                    [
+                                      'text',
+                                      'active',
+                                      'featured',
+                                      'productTypeId',
+                                      'categoryId',
+                                      'cursor',
+                                      'sort',
+                                    ].includes(key),
+                                  ),
+                                );
+                            } catch {
+                              filters = {};
+                            }
+                            router.replace({
+                              pathname: '/admin/[...path]',
+                              params: {
+                                ...filters,
+                                path: ['products'],
+                              },
+                            });
                           })
                       }
                     >

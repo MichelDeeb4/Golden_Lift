@@ -1,11 +1,16 @@
+import {
+  AttributeKind,
+  AttributeConstraints,
+  AttributeVisibility,
+} from './attribute-definition-fields';
 import { ReviewedChange } from './reviewed-change';
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { z } from 'zod';
 import { namedSchema, pageSchema } from '@golden-lift/api';
 import { useLocale } from '@golden-lift/i18n';
-import { useRouter } from 'expo-router';
 import {
   GLButton,
   GLCheckbox,
@@ -16,8 +21,9 @@ import {
   GLPageHeader,
   GLFormSection,
   GLActionBar,
+  GLActionMenu,
 } from '@golden-lift/ui';
-import { useStaffApi, useUnsaved } from './context';
+import { useStaffApi, useUnsaved, StaffError } from './context';
 import { useAdminTranslation } from './translations';
 import {
   FocusedEditor,
@@ -57,12 +63,25 @@ const definitionSchema = namedSchema.extend({
 const unitSchema = namedSchema
   .omit({ id: true })
   .extend({ symbol: z.string(), dimension: z.string() });
-export function Configuration({ resource, id }: { resource: ConfigurationResource; id?: string }) {
+export function Configuration({
+  resource,
+  id: initialId,
+}: {
+  resource: ConfigurationResource;
+  id?: string;
+}) {
+  const [id, setId] = useState(initialId),
+    [editing, setEditing] = useState(false);
+  const queryClient = useQueryClient();
+  const [editPending, setEditPending] = useState(false);
+  const [editPrecondition, setEditPrecondition] = useState<{
+    version: string;
+    schemaRevision: string | null;
+  } | null>(null);
   const api = useStaffApi(),
-    router = useRouter(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
-    action = useAction(),
+    action = useAction('configuration'),
     [cursor, setCursor] = useState(''),
     [create, setCreate] = useState(false),
     [code, setCode] = useState(''),
@@ -81,11 +100,16 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
     [required, setRequired] = useState(false),
     [groupPlacement, setGroupPlacement] = useState(''),
     [groupId, setGroupId] = useState('');
+  const router = useRouter(),
+    filters = useLocalSearchParams<{
+      q?: string;
+      kind?: string;
+      visibility?: string;
+      state?: string;
+    }>();
   const [constraintsBaseline, setConstraintsBaseline] = useState<string | null>(null);
   const form = useForm<TranslationForm>({ defaultValues: structuredClone(emptyTranslations) });
-  const createForm = useForm<TranslationForm>({
-    defaultValues: structuredClone(emptyTranslations),
-  });
+
   const constraints = JSON.stringify([
     kind,
     unit,
@@ -98,13 +122,7 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
     maxLength,
   ]);
   const constraintsDirty = constraintsBaseline !== null && constraints !== constraintsBaseline;
-  useUnsaved(
-    form.formState.isDirty ||
-      createForm.formState.isDirty ||
-      constraintsDirty ||
-      create ||
-      Boolean(definitionId || groupId),
-  );
+  useUnsaved(form.formState.isDirty || constraintsDirty || Boolean(definitionId || groupId));
   const title =
     resource === 'product-types'
       ? t('types')
@@ -226,88 +244,50 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
     textMultiline: kind === 'TEXT' && multiline,
     textMaxLength: kind === 'TEXT' ? Number(maxLength) : 4000,
   };
-  const typeField = (
-    <GLSelect
-      label={t('type')}
-      value={kind}
-      onChange={setKind}
-      options={['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'].map((value) => ({
-        value,
-        label: t(value.toLowerCase() as 'number' | 'boolean' | 'text' | 'choice'),
-      }))}
+  const typeField = <AttributeKind kind={kind} setKind={setKind} />;
+  const constraintsFields = (
+    <AttributeConstraints
+      {...{
+        kind,
+        unit,
+        minimum,
+        maximum,
+        multiple,
+        multiline,
+        maxLength,
+        setUnit,
+        setMinimum,
+        setMaximum,
+        setMultiple,
+        setMultiline,
+        setMaxLength,
+        units,
+      }}
     />
   );
-  const constraintsFields = (
-    <GLFormSection title={t('constraints')}>
-      <div className="gl-admin-grid">
-        {kind === 'NUMBER' && (
-          <>
-            <GLSelect
-              label={t('unit')}
-              value={unit}
-              onChange={setUnit}
-              options={[
-                { value: '', label: t('choose') },
-                ...units.items.map((item) => ({
-                  value: item.code,
-                  label: `${item.code} (${item.symbol})`,
-                })),
-              ]}
-            />
-            <MoreOptions query={units} label={t('unit')} />
-            <GLInput
-              label={t('minimum')}
-              value={minimum}
-              onChange={(e) => setMinimum(e.target.value)}
-            />
-            <GLInput
-              label={t('maximum')}
-              value={maximum}
-              onChange={(e) => setMaximum(e.target.value)}
-            />
-          </>
-        )}
-        {kind === 'CHOICE' && (
-          <GLCheckbox
-            label={t('multiple')}
-            checked={multiple}
-            onChange={(e) => setMultiple(e.target.checked)}
-          />
-        )}
-        {kind === 'TEXT' && (
-          <>
-            <GLCheckbox
-              label={t('multiline')}
-              checked={multiline}
-              onChange={(e) => setMultiline(e.target.checked)}
-            />
-            <GLInput
-              label={t('maxLength')}
-              value={maxLength}
-              onChange={(e) => setMaxLength(e.target.value)}
-            />
-          </>
-        )}
-        {kind === 'BOOLEAN' && <p>{t('boolean')}</p>}
-      </div>
-    </GLFormSection>
-  );
-  const visibilityFields = (
-    <GLFormSection title={t('visibility')}>
-      <div className="gl-admin-grid">
-        <GLCheckbox label={t('public')} checked={pub} onChange={(e) => setPub(e.target.checked)} />
-        <GLCheckbox
-          label={t('filterable')}
-          checked={filterable}
-          onChange={(e) => setFilterable(e.target.checked)}
-        />
-      </div>
-    </GLFormSection>
-  );
+  const visibilityFields = <AttributeVisibility {...{ pub, filterable, setPub, setFilterable }} />;
   return (
     <>
       <GLPageHeader
         title={title}
+        actions={
+          <GLButton
+            onClick={() => {
+              action.reset();
+              setCreate(true);
+            }}
+          >
+            {t(
+              resource === 'attributes'
+                ? 'createAttribute'
+                : resource === 'product-types'
+                  ? 'createType'
+                  : resource === 'units'
+                    ? 'createUnit'
+                    : 'createGroup',
+            )}
+          </GLButton>
+        }
         breadcrumbs={[
           { label: t('dashboard'), href: '/admin' },
           { label: title, href: '/admin/' + resource },
@@ -322,43 +302,157 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
         }
       />
       <ActionFeedback action={action} reload={() => void detail.refetch()} />
-      <div className="gl-master-detail">
+      <p className="gl-muted">{t('loadedPageFilters')}</p>
+      <div className="gl-admin-toolbar">
+        <GLInput
+          label={t('search')}
+          value={filters.q ?? ''}
+          onChange={(event) => router.setParams({ q: event.target.value })}
+        />
+        {resource === 'attributes' && (
+          <>
+            <GLSelect
+              label={t('type')}
+              value={filters.kind ?? ''}
+              onChange={(kind) => router.setParams({ kind })}
+              options={[
+                { value: '', label: t('all') },
+                ...['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'].map((value) => ({
+                  value,
+                  label: t(value.toLowerCase() as 'number' | 'boolean' | 'text' | 'choice'),
+                })),
+              ]}
+            />
+            <GLSelect
+              label={t('visibility')}
+              value={filters.visibility ?? ''}
+              onChange={(visibility) => router.setParams({ visibility })}
+              options={[
+                { value: '', label: t('all') },
+                { value: 'public', label: t('public') },
+                { value: 'internal', label: t('internal') },
+              ]}
+            />
+          </>
+        )}
+        <GLSelect
+          label={t('state')}
+          value={filters.state ?? ''}
+          onChange={(state) => router.setParams({ state })}
+          options={[
+            { value: '', label: t('all') },
+            { value: 'active', label: t('active') },
+            { value: 'deprecated', label: t('deprecated') },
+          ]}
+        />
+        <GLButton
+          variant="ghost"
+          onClick={() => router.setParams({ q: '', kind: '', visibility: '', state: '' })}
+        >
+          {t('clear')}
+        </GLButton>
+      </div>
+      <div
+        className={
+          'gl-master-detail' + (resource === 'attributes' || !id ? ' gl-configuration-list' : '')
+        }
+      >
         <aside className="gl-master-list" aria-label={title}>
-          {!id && (
-            <GLButton
-              onClick={() => {
-                setCreate(true);
-                createForm.reset(structuredClone(emptyTranslations));
-              }}
-            >
-              {t('create')}
-            </GLButton>
-          )}
           <TableState pending={list.isPending} error={list.error} empty={!list.data?.items.length}>
             <table>
               <thead>
                 <tr>
                   <th>{t('name')}</th>
                   <th>{t('code')}</th>
+                  {resource === 'attributes' && (
+                    <>
+                      <th>{t('type')}</th>
+                      <th>{t('unit')}</th>
+                      <th>{t('visibility')}</th>
+                    </>
+                  )}
                   <th>{t('status')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
-                {list.data?.items.map((row) => (
-                  <tr key={row.code}>
-                    <td>
-                      <a
-                        aria-current={id === ('id' in row ? row.id : row.code) ? 'page' : undefined}
-                        href={`/admin/${resource}/${'id' in row ? row.id : row.code}`}
-                      >
-                        {(row.translations.find((x) => x.locale === locale) ?? row.translations[0])
-                          ?.name ?? row.code}
-                      </a>
-                    </td>
-                    <td>{row.code}</td>
-                    <td>{row.deprecated ? t('deprecated') : t('active')}</td>
-                  </tr>
-                ))}
+                {list.data?.items
+                  .filter(
+                    (row) =>
+                      (!filters.q ||
+                        (row.code + ' ' + row.translations.map((value) => value.name).join(' '))
+                          .toLocaleLowerCase()
+                          .includes(filters.q.toLocaleLowerCase())) &&
+                      (!filters.kind || ('kind' in row && row.kind === filters.kind)) &&
+                      (!filters.visibility ||
+                        ('public' in row && row.public === (filters.visibility === 'public'))) &&
+                      (!filters.state || row.deprecated === (filters.state === 'deprecated')),
+                  )
+                  .map((row) => (
+                    <tr key={row.code} aria-selected={id === ('id' in row ? row.id : row.code)}>
+                      <td>
+                        <a
+                          aria-current={
+                            id === ('id' in row ? row.id : row.code) ? 'page' : undefined
+                          }
+                          href={`/admin/${resource}/${'id' in row ? row.id : row.code}`}
+                          data-local-selection
+                          onClick={(event) => {
+                            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
+                              return;
+                            event.preventDefault();
+                            if (
+                              !(form.formState.isDirty || constraintsDirty) ||
+                              window.confirm(t('unsaved'))
+                            ) {
+                              if (id !== ('id' in row ? row.id : row.code)) {
+                                form.reset(structuredClone(emptyTranslations));
+                                setConstraintsBaseline(null);
+                              }
+                              setId('id' in row ? row.id : row.code);
+                            }
+                          }}
+                        >
+                          {(
+                            row.translations.find((x) => x.locale === locale) ?? row.translations[0]
+                          )?.name ?? row.code}
+                        </a>
+                      </td>
+                      <td>{row.code}</td>
+                      {resource === 'attributes' && 'kind' in row && (
+                        <>
+                          <td>{row.kind}</td>
+                          <td>{row.unit?.symbol ?? '—'}</td>
+                          <td>{row.public ? t('public') : t('internal')}</td>
+                        </>
+                      )}
+                      <td>{row.deprecated ? t('deprecated') : t('active')}</td>
+                      <td>
+                        <GLActionMenu
+                          label={t('actions') + ' — ' + row.code}
+                          items={[
+                            {
+                              label: t('edit'),
+                              onSelect: () => {
+                                if (
+                                  !(form.formState.isDirty || constraintsDirty) ||
+                                  window.confirm(t('unsaved'))
+                                ) {
+                                  if (id !== ('id' in row ? row.id : row.code)) {
+                                    form.reset(structuredClone(emptyTranslations));
+                                    setConstraintsBaseline(null);
+                                    setEditPrecondition(null);
+                                  }
+                                  setId('id' in row ? row.id : row.code);
+                                  setEditing(true);
+                                }
+                              },
+                            },
+                          ]}
+                        />
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </TableState>
@@ -374,48 +468,128 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
           )}
           {id && detail.data && (
             <>
-              <GLFormSection title={t('identity')}>
-                <div className="gl-admin-grid">
-                  <GLInput label={t('code')} value={detail.data.code} disabled />
-                  {resource === 'attributes' && typeField}
-                </div>
-              </GLFormSection>
-              <TranslationFields form={form} />
-              {resource === 'units' && 'symbol' in detail.data && (
-                <>
-                  <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
-                  <GLInput label={t('dimension')} value={detail.data.dimension} disabled />
-                </>
-              )}
-              {resource === 'attributes' && (
-                <>
-                  {constraintsFields}
-                  {visibilityFields}
-                </>
-              )}
-              <GLActionBar>
-                <ReviewedChange
-                  path={`/admin/${resource}/${id}`}
-                  version={detail.data.version}
-                  schemaRevision={detail.data.schemaRevision ?? null}
-                  change={
-                    resource === 'attributes'
-                      ? {
-                          kind: changeKind,
-                          definition: {
-                            ...definitionInput,
-                            translations: translationInput(form.watch()),
-                          },
+              <GLHeading level={2} role="heading4">
+                {(
+                  detail.data.translations.find((row) => row.locale === locale) ??
+                  detail.data.translations[0]
+                )?.name ?? detail.data.code}
+              </GLHeading>
+              <GLButton
+                variant="secondary"
+                onClick={() => {
+                  setEditPrecondition({
+                    version: detail.data!.version,
+                    schemaRevision: detail.data!.schemaRevision ?? null,
+                  });
+                  setEditing(true);
+                }}
+              >
+                {t('edit')}
+              </GLButton>
+              <FocusedEditor
+                dialog
+                open={editing}
+                pending={editPending}
+                dirty={form.formState.isDirty || constraintsDirty}
+                title={t('edit')}
+                onClose={() => setEditing(false)}
+              >
+                {detail.error && (
+                  <StaffError error={detail.error} reload={() => void detail.refetch()} />
+                )}
+                <GLFormSection title={t('identity')}>
+                  <div className="gl-admin-grid">
+                    <GLInput label={t('code')} value={detail.data.code} disabled />
+                    {resource === 'attributes' && typeField}
+                  </div>
+                </GLFormSection>
+                <TranslationFields form={form} labelsOnly={resource === 'units'} />
+                {resource === 'units' && 'symbol' in detail.data && (
+                  <>
+                    <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
+                    <GLInput label={t('dimension')} value={detail.data.dimension} disabled />
+                  </>
+                )}
+                {resource === 'attributes' && (
+                  <>
+                    {constraintsFields}
+                    {visibilityFields}
+                  </>
+                )}
+                <GLActionBar>
+                  <ReviewedChange
+                    onPending={setEditPending}
+                    path={`/admin/${resource}/${id}`}
+                    version={editPrecondition?.version ?? detail.data.version}
+                    schemaRevision={editPrecondition?.schemaRevision ?? null}
+                    change={
+                      resource === 'attributes'
+                        ? {
+                            kind: changeKind,
+                            definition: {
+                              ...definitionInput,
+                              translations: translationInput(form.watch()),
+                            },
+                          }
+                        : { kind: changeKind, translations: translationInput(form.watch()) }
+                    }
+                    label={t('save')}
+                    onSaved={() => {
+                      form.reset(form.getValues());
+                      setConstraintsBaseline(constraints);
+                      setEditing(false);
+                    }}
+                    reload={async () => {
+                      const latest = await detail.refetch();
+                      if (latest.data) {
+                        form.reset(translationDefaults(latest.data.translations));
+                        setEditPrecondition({
+                          version: latest.data.version,
+                          schemaRevision: latest.data.schemaRevision ?? null,
+                        });
+                        if ('kind' in latest.data) {
+                          const d = latest.data;
+                          setKind(d.kind);
+                          setUnit(d.unit?.code ?? '');
+                          setMinimum(d.minimum ?? '');
+                          setMaximum(d.maximum ?? '');
+                          setMultiple(d.allowMultiple);
+                          setPub(d.public);
+                          setFilterable(d.filterable);
+                          setMultiline(d.textMultiline);
+                          setMaxLength(String(d.textMaxLength));
+                          setConstraintsBaseline(
+                            JSON.stringify([
+                              d.kind,
+                              d.unit?.code ?? '',
+                              d.minimum ?? '',
+                              d.maximum ?? '',
+                              d.allowMultiple,
+                              d.public,
+                              d.filterable,
+                              d.textMultiline,
+                              String(d.textMaxLength),
+                            ]),
+                          );
                         }
-                      : { kind: changeKind, translations: translationInput(form.watch()) }
-                  }
-                  label={t('save')}
-                  onSaved={() => {
-                    form.reset(form.getValues());
-                    setConstraintsBaseline(constraints);
+                      }
+                    }}
+                  />
+                </GLActionBar>
+                <GLButton
+                  variant="secondary"
+                  disabled={editPending}
+                  onClick={() => {
+                    if (
+                      !(form.formState.isDirty || constraintsDirty) ||
+                      window.confirm(t('unsaved'))
+                    )
+                      setEditing(false);
                   }}
-                />
-              </GLActionBar>
+                >
+                  {t('cancel')}
+                </GLButton>
+              </FocusedEditor>
               {resource === 'attributes' &&
                 'options' in detail.data &&
                 detail.data.kind === 'CHOICE' && (
@@ -633,73 +807,217 @@ export function Configuration({ resource, id }: { resource: ConfigurationResourc
                             : 'group.delete',
                   }}
                   label={t('remove')}
-                  onSaved={() => router.replace(`/admin/${resource}`)}
+                  onSaved={() => {
+                    form.reset(structuredClone(emptyTranslations));
+                    setId(undefined);
+                  }}
                 />
               </GLFormSection>
             </>
           )}
-          <FocusedEditor open={create} onClose={() => setCreate(false)} title={t('create')}>
-            <form
-              onSubmit={createForm.handleSubmit((v) => {
-                action.mutate(
-                  () =>
-                    api.request(
-                      `/admin/${resource}`,
-                      jsonResponse,
-                      resource === 'attributes'
-                        ? { ...definitionInput, translations: translationInput(v) }
-                        : resource === 'units'
-                          ? { code, symbol, dimension, translations: translationInput(v) }
-                          : { code, translations: translationInput(v) },
-                      'POST',
-                    ),
-                  {
-                    onSuccess: () => {
-                      createForm.reset(v);
-                      setCreate(false);
-                    },
-                  },
-                );
-              })}
-            >
-              <GLInput
-                label={t('code')}
-                value={code}
-                required
-                onChange={(e) => setCode(e.target.value)}
-              />
-              {resource === 'attributes' && !id && (
-                <GLFormSection title={t('type')}>{typeField}</GLFormSection>
-              )}
-              <TranslationFields form={createForm} />
-              {resource === 'attributes' && !id && (
-                <>
-                  {constraintsFields}
-                  {visibilityFields}
-                </>
-              )}
-              {resource === 'units' && (
-                <>
-                  <GLInput
-                    label={t('symbol')}
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value)}
-                  />
-                  <GLInput
-                    label={t('dimension')}
-                    value={dimension}
-                    onChange={(e) => setDimension(e.target.value)}
-                  />
-                </>
-              )}
-              <ActionFeedback action={action} />
-              <GLButton type="submit" loading={action.isPending}>
-                {t('save')}
-              </GLButton>
-            </form>
-          </FocusedEditor>
+          <ConfigurationCreate
+            resource={resource}
+            open={create}
+            onClose={() => setCreate(false)}
+            onCreated={(value) => {
+              const record = response.parse(value);
+              const key = 'id' in record ? record.id : record.code;
+              queryClient.setQueryData(['staff', 'configuration', resource, key], record);
+              if (!(form.formState.isDirty || constraintsDirty || definitionId || groupId)) {
+                form.reset(structuredClone(emptyTranslations));
+                setConstraintsBaseline(null);
+                setId(key);
+              }
+            }}
+          />
         </div>
       </div>
+    </>
+  );
+}
+
+function ConfigurationCreate({
+  resource,
+  open,
+  onClose,
+  onCreated,
+}: {
+  resource: ConfigurationResource;
+  open: boolean;
+  onClose: () => void;
+  onCreated: (value: unknown) => void;
+}) {
+  const api = useStaffApi(),
+    t = useAdminTranslation(),
+    action = useAction('configuration');
+  const form = useForm<TranslationForm>({ defaultValues: structuredClone(emptyTranslations) });
+  const [code, setCode] = useState(''),
+    [kind, setKind] = useState('NUMBER'),
+    [unit, setUnit] = useState(''),
+    [minimum, setMinimum] = useState(''),
+    [maximum, setMaximum] = useState(''),
+    [pub, setPub] = useState(false),
+    [filterable, setFilterable] = useState(false),
+    [multiple, setMultiple] = useState(false),
+    [multiline, setMultiline] = useState(false),
+    [maxLength, setMaxLength] = useState('4000'),
+    [symbol, setSymbol] = useState(''),
+    [dimension, setDimension] = useState('');
+  const units = useStaffOptions('/admin/units', unitSchema, open && resource === 'attributes');
+  const dirty =
+    form.formState.isDirty ||
+    Boolean(
+      code ||
+      symbol ||
+      dimension ||
+      unit ||
+      minimum ||
+      maximum ||
+      pub ||
+      filterable ||
+      multiple ||
+      multiline,
+    ) ||
+    kind !== 'NUMBER' ||
+    maxLength !== '4000';
+  useUnsaved(dirty);
+  const definitionInput = {
+    code,
+    kind,
+    unitCode: kind === 'NUMBER' ? unit || null : null,
+    minimum: kind === 'NUMBER' ? minimum || null : null,
+    maximum: kind === 'NUMBER' ? maximum || null : null,
+    allowMultiple: kind === 'CHOICE' && multiple,
+    public: pub,
+    filterable,
+    textMultiline: kind === 'TEXT' && multiline,
+    textMaxLength: kind === 'TEXT' ? Number(maxLength) : 4000,
+  };
+  const typeField = <AttributeKind kind={kind} setKind={setKind} />;
+  const constraintsFields = (
+    <AttributeConstraints
+      {...{
+        kind,
+        unit,
+        minimum,
+        maximum,
+        multiple,
+        multiline,
+        maxLength,
+        setUnit,
+        setMinimum,
+        setMaximum,
+        setMultiple,
+        setMultiline,
+        setMaxLength,
+        units,
+      }}
+    />
+  );
+  const visibilityFields = <AttributeVisibility {...{ pub, filterable, setPub, setFilterable }} />;
+  return (
+    <>
+      {' '}
+      <ActionFeedback action={action} />
+      <FocusedEditor
+        dialog
+        open={open}
+        dirty={dirty}
+        pending={action.isPending}
+        onClose={onClose}
+        title={t(
+          resource === 'attributes'
+            ? 'createAttribute'
+            : resource === 'product-types'
+              ? 'createType'
+              : resource === 'units'
+                ? 'createUnit'
+                : 'createGroup',
+        )}
+      >
+        <form
+          onSubmit={form.handleSubmit((v) => {
+            action.mutate(
+              () =>
+                api.request(
+                  `/admin/${resource}`,
+                  jsonResponse,
+                  resource === 'attributes'
+                    ? { ...definitionInput, code, translations: translationInput(v) }
+                    : resource === 'units'
+                      ? { code, symbol, dimension, translations: translationInput(v) }
+                      : { code, translations: translationInput(v) },
+                  'POST',
+                ),
+              {
+                onSuccess: (value) => {
+                  onCreated(value);
+                  form.reset(structuredClone(emptyTranslations));
+                  setCode('');
+                  setKind('NUMBER');
+                  setUnit('');
+                  setMinimum('');
+                  setMaximum('');
+                  setPub(false);
+                  setFilterable(false);
+                  setMultiple(false);
+                  setMultiline(false);
+                  setMaxLength('4000');
+                  setSymbol('');
+                  setDimension('');
+                  onClose();
+                },
+              },
+            );
+          })}
+        >
+          <GLInput
+            label={t('code')}
+            value={code}
+            required
+            onChange={(e) => setCode(e.target.value)}
+          />
+          {resource === 'attributes' && (
+            <GLFormSection title={t('type')}>{typeField}</GLFormSection>
+          )}
+          <TranslationFields form={form} labelsOnly={resource === 'units'} />
+          {resource === 'attributes' && (
+            <>
+              {constraintsFields}
+              {visibilityFields}
+            </>
+          )}
+          {resource === 'units' && (
+            <>
+              <GLInput
+                label={t('symbol')}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+              />
+              <GLInput
+                label={t('dimension')}
+                value={dimension}
+                onChange={(e) => setDimension(e.target.value)}
+              />
+            </>
+          )}
+          <ActionFeedback action={action} />
+          <GLActionBar>
+            <GLButton type="submit" loading={action.isPending}>
+              {t('save')}
+            </GLButton>
+            <GLButton
+              variant="secondary"
+              disabled={action.isPending}
+              onClick={() => {
+                if (!dirty || window.confirm(t('unsaved'))) onClose();
+              }}
+            >
+              {t('cancel')}
+            </GLButton>
+          </GLActionBar>
+        </form>
+      </FocusedEditor>
     </>
   );
 }

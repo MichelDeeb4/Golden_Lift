@@ -1,6 +1,7 @@
 import { ApplicationError, version } from '@golden-lift/contracts';
 import type { AuthenticatedActor, CategoryDto, EventEnvelope } from '@golden-lift/contracts';
 import { categoryDraft, requireContentAdmin } from '../../domain/category.js';
+import { orderBetween } from '../../domain/category-order.js';
 import type { CategoryDraft } from '../../domain/category.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';
 export class CreateCategory {
@@ -16,7 +17,7 @@ export class CreateCategory {
       eventId = this.ids.newUuid(),
       correlationId = this.ids.newUuid(),
       occurredAt = this.clock.now();
-    return this.unitOfWork.execute(async ({ categories, outbox }) => {
+    return this.unitOfWork.execute(async ({ categories, navigation, outbox }) => {
       if (draft.parentId !== null && draft.expectedParentVersion !== null) {
         if (!(await categories.find(draft.parentId, 'ar')))
           throw new ApplicationError('NOT_FOUND', 'Parent category not found.');
@@ -27,7 +28,14 @@ export class CreateCategory {
           );
         await categories.touch(draft.parentId, draft.expectedParentVersion);
       }
-      await categories.insert(id, draft.parentId, draft.coverAssetId ?? null);
+      const placement = await navigation.placement(draft.parentId, id, null);
+      const sortOrder = orderBetween(placement.previous?.sortOrder ?? null, null);
+      if (sortOrder === null)
+        throw new ApplicationError(
+          'INVALID_STATE',
+          'Sibling order is exhausted; review and reorder the sibling list before creating another category.',
+        );
+      await categories.insert(id, draft.parentId, draft.coverAssetId ?? null, sortOrder);
       await categories.putTranslations(id, draft.translations);
       const event: EventEnvelope = {
         id: eventId,

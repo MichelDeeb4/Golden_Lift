@@ -1,5 +1,6 @@
 import { ApplicationError } from '@golden-lift/contracts';
 import type { AuthenticatedActor, ProductMediaDto, Uuid, Version } from '@golden-lift/contracts';
+import { validateValues } from '../../domain/attribute-values.js';
 import { requireContentAdmin } from '../../domain/category.js';
 import type {
   ProductListInput,
@@ -69,6 +70,14 @@ export class ManageProducts {
     return this.uow.execute(async (r) => {
       const product = await r.detail(id);
       if (!product) throw new ApplicationError('NOT_FOUND', 'Product not found.');
+      if (input.active) {
+        if (!product.coverAssetId)
+          throw new ApplicationError(
+            'INVALID_STATE',
+            'Choose a verified image cover before publishing.',
+          );
+        validateValues(await r.publicationSchema(id), product.values);
+      }
       if (input.active && product.media.some((m) => m.blocked))
         throw new ApplicationError('INVALID_STATE', 'Blocked media prevents publication.');
       await r.publication(id, expectedVersion, input);

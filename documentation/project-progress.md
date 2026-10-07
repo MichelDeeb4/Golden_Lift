@@ -1,6 +1,17 @@
 # Golden Lift: Completed Work and Project Status
 
+The 2026-10-07 [Product Create fix](implementation/fix-product-create-disabled.md) removes Product Type, Media and specification prerequisites from initial creation. Leaf category plus Arabic name creates an inactive PostgreSQL draft and opens the category-derived editor through SPA navigation. The normal Catalog cutover was applied after full backup/restore parity and restored-copy rehearsal. Category/group relationship editing and porting historical Type-specific regression suites remain separate work. Current evidence belongs to the dated fix report.
+
+
 Updated: 2026-10-07. Earlier dated milestone evidence below remains historical.
+
+The [Category tree workspace](implementation/category-tree-completed-work.md) now replaces the flat Admin category table with recursive disclosure, ancestor search, compact ordering/actions, fixed-parent subcategory creation and mobile/RTL navigation. The persistent staff layout retains branch state and query cache across routes. Catalog creation appends siblings transactionally instead of leaving UUID-dependent order-zero ties. This task does not activate the pending category attribute-group model.
+
+The normal local database now contains a [live catalog demonstration](operations/admin-local.md#live-local-catalog-demo): 10 published products, four featured products, seven leaf categories and six scanned/processed images. Identified placeholders were soft-deleted through authenticated APIs; useful roots, staff accounts and retained history remain. Desktop, mobile and Arabic visitor checks passed against the running APIs. [Dated evidence](validation/live-demo-2026-10-07.json) records this task separately from migration and production acceptance.
+
+The [Category catalog and UX phase](implementation/catalog-model-and-ux-fix-completed-work.md) is **in progress**. Its staged migration, deduplicated category schema endpoint and disposable PostgreSQL/HTTP foundation tests are implemented. This historical report predates the Product Create fix and normal category-authority cutover; remaining relationship CRUD is still unfinished. This is not final phase acceptance.
+
+The [Admin CRUD modal phase](implementation/admin-crud-modal-fix-completed-work.md) restores permanent creation actions, adds focused modal CRUD and replaces normal staff document navigation with SPA routing. Its report records the current verification and remaining contract limitations separately from the historical milestone counts below.
 
 Current functional integration connects visitor browsing, PostgreSQL search and schema-derived filters to real services by default. Native local ClamAV/Sharp/FFmpeg/Poppler upload, association and controlled delivery are exercised with signed durable local event relays. See [the functional integration report](implementation/functional-integration-completed-work.md) and [local setup](operations/local-development.md). RabbitMQ, S3, production SMTP and Linux processor isolation still require provider acceptance; historical milestone reports below retain their original scope.
 
@@ -8,7 +19,7 @@ This document summarizes the implemented project in this repository. B4 adds cur
 
 ## 1. Current status
 
-The database foundation, staff Identity workflows and Prisma integration are implemented locally. Public browsing, recursive category administration, configurable types/attributes, product management, private Media workflows and Super Admin account management are available. The web dashboard has [149 passing tests and dated local evidence](validation/admin-dashboard-2026-10-06T12-39-33-944Z.json); see the [completion report](implementation/admin-dashboard-completed-work.md). Production B5 provider acceptance and the deferred scope remain separate.
+The database foundation, staff Identity workflows and Prisma integration are implemented locally. Public browsing, recursive category administration, category-derived configurable attributes, product management, private Media workflows and Super Admin account management are available. The web dashboard has [149 passing tests and dated local evidence](validation/admin-dashboard-2026-10-06T12-39-33-944Z.json); see the [completion report](implementation/admin-dashboard-completed-work.md). Production B5 provider acceptance and the deferred scope remain separate.
 
 | Area                                            | Current state                                                                                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |

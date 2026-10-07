@@ -7,9 +7,8 @@ import type { Database } from './client.js';
 const eligible = Prisma.sql`p.is_active AND EXISTS (
   SELECT 1 FROM catalog.product_media cover JOIN catalog.media_asset_refs a ON a.id=cover.asset_id
   WHERE cover.id=p.cover_media_id AND cover.product_id=p.id AND cover.deleted_at IS NULL
-    AND a.media_kind='IMAGE' AND a.ready_at IS NOT NULL AND a.deleted_at IS NULL AND NOT a.security_blocked)
-  AND EXISTS(SELECT 1 FROM catalog.product_types t WHERE t.id=p.product_type_id AND t.deleted_at IS NULL)`;
-const publicField = Prisma.sql`d.deleted_at IS NULL AND d.is_public AND a.deleted_at IS NULL AND a.is_public`;
+    AND a.media_kind='IMAGE' AND a.ready_at IS NOT NULL AND a.deleted_at IS NULL AND NOT a.security_blocked)`;
+const publicField = Prisma.sql`d.deleted_at IS NULL AND d.is_public  AND a.is_public`;
 function scope(input: PublicProductQuery) {
   return Prisma.sql`${eligible}
     ${input.categoryId ? Prisma.sql`AND p.category_id=${input.categoryId}::uuid` : Prisma.empty}
@@ -28,7 +27,7 @@ export class PrismaPublicProducts {
           AND (t.name ILIKE ${pattern} OR t.description ILIKE ${pattern}))
         OR EXISTS(SELECT 1 FROM catalog.product_code_reservations c WHERE c.id=p.current_model_code_id AND c.code ILIKE ${pattern})
         OR EXISTS(SELECT 1 FROM catalog.product_specification_values v
-          JOIN catalog.product_type_specifications a ON a.product_type_id=p.product_type_id AND a.definition_id=v.definition_id
+          JOIN catalog.category_effective_attributes a ON a.category_id=p.category_id AND a.definition_id=v.definition_id
           JOIN catalog.specification_definitions d ON d.id=v.definition_id
           JOIN catalog.product_specification_texts t ON t.value_id=v.id
           WHERE v.product_id=p.id AND v.deleted_at IS NULL AND ${publicField} AND a.is_searchable
@@ -36,11 +35,11 @@ export class PrismaPublicProducts {
     }
     for (const filter of input.filters) {
       const policy = await this.tx.$queryRaw<{ id: string }[]>(Prisma.sql`
-        SELECT d.id FROM catalog.specification_definitions d JOIN catalog.product_type_specifications a ON a.definition_id=d.id
-        JOIN catalog.product_types pt ON pt.id=a.product_type_id AND pt.deleted_at IS NULL
+        SELECT d.id FROM catalog.specification_definitions d JOIN catalog.category_effective_attributes a ON a.definition_id=d.id
+        JOIN catalog.categories c ON c.id=a.category_id AND c.deleted_at IS NULL
         WHERE d.id=${filter.definitionId}::uuid AND d.value_type=${filter.kind} AND ${publicField}
           AND d.is_filterable AND a.is_filterable
-          ${input.productTypeId ? Prisma.sql`AND a.product_type_id=${input.productTypeId}::uuid` : Prisma.empty} LIMIT 1`);
+          ${input.categoryId ? Prisma.sql`AND a.category_id=${input.categoryId}::uuid` : Prisma.empty} LIMIT 1`);
       if (!policy.length)
         throw new ApplicationError(
           'VALIDATION_FAILED',
@@ -66,7 +65,7 @@ export class PrismaPublicProducts {
           break;
       }
       conditions.push(Prisma.sql`EXISTS(SELECT 1 FROM catalog.product_specification_values v
-        JOIN catalog.product_type_specifications a ON a.product_type_id=p.product_type_id AND a.definition_id=v.definition_id
+        JOIN catalog.category_effective_attributes a ON a.category_id=p.category_id AND a.definition_id=v.definition_id
         JOIN catalog.specification_definitions d ON d.id=v.definition_id
         WHERE v.product_id=p.id AND v.definition_id=${filter.definitionId}::uuid AND v.deleted_at IS NULL
           AND ${publicField} AND d.is_filterable AND a.is_filterable AND (${value}))`);
@@ -85,7 +84,7 @@ export class PrismaPublicProducts {
     const filters = await this.tx.$queryRaw<
       { id: string }[]
     >(Prisma.sql`SELECT DISTINCT d.id FROM catalog.live_products p
-      JOIN catalog.product_type_specifications a ON a.product_type_id=p.product_type_id
+      JOIN catalog.category_effective_attributes a ON a.category_id=p.category_id
       JOIN catalog.specification_definitions d ON d.id=a.definition_id
       WHERE ${scope(input)} AND ${publicField} AND a.is_filterable AND d.is_filterable
         AND d.deprecated_at IS NULL ORDER BY d.id LIMIT 100`);
@@ -98,9 +97,7 @@ export class PrismaPublicProducts {
   async context(id: Uuid, language: Locale) {
     const rows = await this.tx.$queryRaw<{ category_name: string; type_name: string }[]>(Prisma.sql`
       SELECT COALESCE((SELECT t.name FROM catalog.category_translations t WHERE t.category_id=p.category_id AND t.locale=${language} AND t.deleted_at IS NULL),
-        (SELECT t.name FROM catalog.category_translations t WHERE t.category_id=p.category_id AND t.locale='ar' AND t.deleted_at IS NULL)) category_name,
-        COALESCE((SELECT t.name FROM catalog.product_type_translations t WHERE t.product_type_id=p.product_type_id AND t.locale=${language} AND t.deleted_at IS NULL),
-        (SELECT t.name FROM catalog.product_type_translations t WHERE t.product_type_id=p.product_type_id AND t.locale='ar' AND t.deleted_at IS NULL)) type_name
+        (SELECT t.name FROM catalog.category_translations t WHERE t.category_id=p.category_id AND t.locale='ar' AND t.deleted_at IS NULL)) category_name
       FROM catalog.live_products p WHERE p.id=${id}::uuid AND ${eligible}`);
     if (!rows[0]) return null;
     const mediaIds = await this.tx.$queryRaw<{ id: string }[]>(Prisma.sql`
@@ -142,7 +139,6 @@ export class PrismaPublicProducts {
       ORDER BY l.sheet_id,u.asset_id LIMIT 100`);
     return {
       categoryName: rows[0].category_name,
-      productTypeName: rows[0].type_name,
       documents: documents.map((d) => ({
         assetId: uuid(d.asset_id),
         sheetId: uuid(d.sheet_id),

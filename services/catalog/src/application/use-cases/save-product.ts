@@ -7,7 +7,7 @@ import type {
   Version,
 } from '@golden-lift/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
-import { applyValueMutations, validateValues } from '../../domain/attribute-values.js';
+import { applyValueMutations } from '../../domain/attribute-values.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';
 import type { ProductCreate } from '../ports/products.js';
 import { configurationEvent } from '../models/configuration-event.js';
@@ -29,13 +29,7 @@ export class CreateProduct {
   async execute(input: ProductCreate, actor: AuthenticatedActor) {
     requireContentAdmin(actor);
     validateNamed({ code: 'product', translations: input.translations });
-    if (input.values.length > 100)
-      throw new ApplicationError(
-        'VALIDATION_FAILED',
-        'At most 100 values may be created in one request.',
-      );
     const id = this.ids.newUuid(),
-      mediaId = this.ids.newUuid(),
       codeId = this.ids.newUuid(),
       event = configurationEvent(
         this.ids,
@@ -46,19 +40,12 @@ export class CreateProduct {
         'catalog.product.created.v1',
       );
     return this.uow.execute(async (r) => {
-      const schema = await r.productTypes.schema(input.productTypeId);
-      if (schema.type.deprecated)
-        throw new ApplicationError(
-          'INVALID_STATE',
-          'Deprecated product type cannot receive new products.',
-        );
-      if (schema.type.schemaRevision !== input.expectedSchemaRevision)
-        throw new ApplicationError('VERSION_CONFLICT', 'Product type schema has changed.');
-      const values = applyValueMutations(schema, [], input.values);
-      validateValues(schema, values);
-      await r.products.validateLocalReferences(input);
-      await r.categories.touch(input.categoryId, input.expectedCategoryVersion);
-      await r.products.create(id, mediaId, codeId, { ...input, values });
+      await r.products.validateLocalReferences({ categoryId: input.categoryId });
+      // Serialize placement with child creation without a client schema prerequisite.
+      const category = await r.categories.find(input.categoryId, 'ar');
+      if (!category) throw new ApplicationError('NOT_FOUND', 'Category not found.');
+      await r.categories.touch(category.id, category.version);
+      await r.products.create(id, codeId, input);
       const result = await r.products.find(id);
       if (!result)
         throw new ApplicationError('INTERNAL_ERROR', 'Created product could not be read.');
@@ -90,13 +77,13 @@ export class EditProduct {
     return this.uow.execute(async (r) => {
       const product = await r.products.find(id);
       if (!product) throw new ApplicationError('NOT_FOUND', 'Product not found.');
-      const schema = await r.productTypes.schema(product.productTypeId);
+      const schema = await r.categorySchemas.schema(product.categoryId);
       if (
         product.version !== input.expectedVersion ||
-        schema.type.schemaRevision !== input.expectedSchemaRevision
+        schema.schemaRevision !== input.expectedSchemaRevision
       )
         throw new ApplicationError('VERSION_CONFLICT', 'Product or effective schema has changed.');
-      const values = applyValueMutations(schema, product.values, input.values);
+      const values = applyValueMutations(schema, product.values, input.values, product.active);
       await r.products.validateLocalReferences({
         categoryId: product.categoryId,
         coverAssetId: input.coverAssetId ?? product.coverAssetId,

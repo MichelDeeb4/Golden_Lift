@@ -37,7 +37,7 @@ const grantSchema = z.object({
 export function PdfDownload({ assetId }: { assetId: string }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
-    action = useAction(),
+    action = useAction('media'),
     [grant, setGrant] = useState<z.infer<typeof grantSchema> | null>(null);
   useEffect(() => {
     if (!grant) return;
@@ -170,7 +170,7 @@ export function MediaPreview({
 export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
-    action = useAction(),
+    action = useAction('media'),
     [file, setFile] = useState<File | null>(null),
     [session, setSession] = useState<z.infer<typeof uploadSchema> | null>(null),
     [progress, setProgress] = useState(0),
@@ -305,7 +305,11 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
         </p>
       )}
       {(file || session) && <progress max={100} value={progress} aria-label={t('upload')} />}
-      {(processing.data || session) && <p>{processing.data?.asset.status ?? session?.status}</p>}
+      {(processing.data || session) && (
+        <p role="status" aria-live="polite">
+          {processing.data?.asset.status ?? session?.status}
+        </p>
+      )}
       {capabilities.error && (
         <StaffError error={capabilities.error} reload={() => void capabilities.refetch()} />
       )}
@@ -615,6 +619,7 @@ export function MediaLibrary({
                         )
                         .map((operation) => (
                           <Confirm
+                            scope="media"
                             key={operation}
                             title={operation === 'reprocess' ? t('retry') : t(operation)}
                             work={() =>

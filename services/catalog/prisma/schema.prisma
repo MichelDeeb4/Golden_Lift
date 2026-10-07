@@ -12,6 +12,7 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Categories {
+  schema_revision BigInt @default(1)
   id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   parent_id                 String?                   @db.Uuid
   cover_asset_id            String?                   @db.Uuid
@@ -378,7 +379,7 @@ model Products {
   is_active Boolean @default(true)
   id                                                                                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   category_id                                                                            String                       @db.Uuid
-  cover_media_id                                                                         String                       @db.Uuid
+  cover_media_id                                                                         String?                       @db.Uuid
   current_model_code_id                                                                  String?                      @db.Uuid
   sort_order                                                                             BigInt                       @default(1024)
   is_featured                                                                            Boolean                      @default(false)
@@ -395,7 +396,7 @@ model Products {
   product_translations                                                                   ProductTranslations[]
   categories                                                                             Categories                   @relation(fields: [category_id], references: [id], onUpdate: NoAction)
   product_code_reservations_products_id_current_model_code_idToproduct_code_reservations ProductCodeReservations?     @relation("products_id_current_model_code_idToproduct_code_reservations", fields: [id, current_model_code_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_code_fk")
-  product_media_products_id_cover_media_idToproduct_media                                ProductMedia                 @relation("products_id_cover_media_idToproduct_media", fields: [id, cover_media_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_cover_fk")
+  product_media_products_id_cover_media_idToproduct_media                                ProductMedia?                 @relation("products_id_cover_media_idToproduct_media", fields: [id, cover_media_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_cover_fk")
   product_types                                                                          ProductTypes?                @relation(fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   // SQL-managed partial index: @@index([category_id, sort_order, id], map: "products_category_live_idx", where: raw("(deleted_at IS NULL)"))

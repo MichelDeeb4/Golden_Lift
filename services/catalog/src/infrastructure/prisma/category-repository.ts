@@ -112,9 +112,19 @@ export class PrismaCategoryRepository implements CategoryRepository {
       throw new ApplicationError('VERSION_CONFLICT', 'Category changed; reload it before editing.');
     return version(row.version.toString());
   }
-  async insert(id: Uuid, parentId: Uuid | null, coverAssetId: Uuid | null = null): Promise<void> {
+  async insert(
+    id: Uuid,
+    parentId: Uuid | null,
+    coverAssetId: Uuid | null = null,
+    sortOrder = '0',
+  ): Promise<void> {
     await this.database.categories.create({
-      data: { id, parent_id: parentId, cover_asset_id: coverAssetId },
+      data: {
+        id,
+        parent_id: parentId,
+        cover_asset_id: coverAssetId,
+        sort_order: BigInt(sortOrder),
+      },
       select: { id: true },
     });
   }

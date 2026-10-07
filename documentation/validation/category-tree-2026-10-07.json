@@ -1,0 +1,138 @@
+{
+  "phase": "Category management tree and existing CRUD",
+  "checkedAt": "2026-10-07T15:32:43.017Z",
+  "status": "PASS_IMPLEMENTED_TREE_SCOPE",
+  "fullPromptAcceptance": "Category-level attribute-group assignment remains incomplete pending the separately reviewed Catalog migration",
+  "implementation": {
+    "recursiveTree": true,
+    "hardcodedDepthLimit": false,
+    "independentDisclosureAndSelection": true,
+    "logicalIndentPixels": 20,
+    "rowHeightPixels": 40,
+    "desktopTreeWidthPixels": 350,
+    "mobileDrawerBelowPixels": 900,
+    "rootAndChildCreationSeparate": true,
+    "expansionSurvivesRoutesAndCrud": true,
+    "searchAncestorContext": true,
+    "searchRecordBound": 5000,
+    "branchPageBound": 100,
+    "siblingReorderBound": 500,
+    "keyboardAndRtl": true,
+    "mutationDocumentReload": false,
+    "backendChange": "CreateCategory appends with exact bigint order inside existing serializable Unit of Work",
+    "sqlMigrationApplied": false,
+    "contractShapeChanged": false
+  },
+  "commands": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "backendUnit": 37,
+      "architectureSourceFiles": 215,
+      "enforcementProbes": 14,
+      "prismaSchemas": 4
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "tests": 9
+    },
+    {
+      "command": "npm.cmd run storefront:build",
+      "status": "PASS"
+    },
+    {
+      "command": "node --test --test-concurrency=1 .local/test-build/services/catalog/tests/category-tree.integration.test.js",
+      "status": "PASS",
+      "tests": 25,
+      "database": "Task-owned disposable PostgreSQL"
+    },
+    {
+      "command": "npm.cmd run test:admin",
+      "status": "PASS",
+      "tests": 26,
+      "visualComparisons": 17,
+      "baselineUpdates": false,
+      "startedAt": "2026-10-07T15:25:36.870Z",
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0
+    },
+    {
+      "command": "npx.cmd playwright test --config tests/frontend.admin.config.ts tests/frontend.category-tree.test.ts",
+      "status": "PASS",
+      "tests": 4,
+      "startedAt": "2026-10-07T15:31:12.291Z",
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "note": "Targeted rerun after final category reload-error handling and explicit current-value recovery change; includes real concurrent edit preserving draft until Reload latest"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    },
+    {
+      "command": "npm.cmd run doctor",
+      "status": "PASS"
+    }
+  ],
+  "distinctTests": 97,
+  "visualReview": {
+    "separateCapturesBeforeBaselineReplacement": true,
+    "baselineReplaced": "tests/frontend.admin.test.ts-snapshots/admin-category-editor-win32.png",
+    "unrelatedStaffBaselinesRetained": true,
+    "screenshots": [
+      "../assets/category-tree/workspace-desktop.png",
+      "../assets/category-tree/tree-desktop.png",
+      "../assets/category-tree/create-root-desktop.png",
+      "../assets/category-tree/detail-mobile.png",
+      "../assets/category-tree/tree-mobile-ar.png",
+      "../assets/category-tree/tree-mobile-ckb.png"
+    ]
+  },
+  "regressions": [
+    "four-level nesting",
+    "selection without disclosure",
+    "automatic parent expansion on child creation",
+    "route/CRUD expansion retention",
+    "ancestor-preserving search",
+    "visible-node keyboard navigation",
+    "RTL keyboard and disclosure direction",
+    "40px tree rows",
+    "complete sibling reorder and persistence after reload",
+    "move destination/path and selection",
+    "self/descendant exclusion",
+    "uncached branch error/retry",
+    "confirmed deletion and persistence",
+    "UI and HTTP 422 INVALID_STATE product-leaf rejection; zero invalid children",
+    "concurrent category edit; draft preserved, explicit current values reload, successful resave",
+    "mobile drawer selection and document overflow",
+    "creation append order and concurrent root transactions",
+    "existing staff authorization, configuration, product, Media and account lifecycle"
+  ],
+  "cleanup": {
+    "browserFixturesDisposed": true,
+    "ownedClusterStoppedAndRemoved": true,
+    "normalDatabaseConfigurationAndAccountsPreserved": true,
+    "normalProjectRestarted": "npm.cmd start",
+    "website": "http://localhost:8081",
+    "serviceReadinessPorts": [
+      3000,
+      3001,
+      3002,
+      3003,
+      3004
+    ],
+    "allServiceHttpStatus": 200,
+    "databasesReady": 4,
+    "nativeScannerReady": true,
+    "retainedDemoPublicProducts": 10
+  },
+  "limitations": [
+    "Category attribute-group assignment and its child/group invariant are pending the separate migration; current runtime specifications still use Product Types",
+    "Current category contract has soft deletion, not a separate active flag",
+    "Search traverses bounded branch APIs rather than an indexed global search endpoint",
+    "No new full backend integration-suite execution, hosted CI/deployment, production providers, restore drill or external accessibility certification"
+  ]
+}

@@ -1,7 +1,12 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: '.',
-  testMatch: 'frontend.admin.test.ts',
+  testMatch: [
+    'frontend.admin.test.ts',
+    'frontend.admin-modal.test.ts',
+    'frontend.category-tree.test.ts',
+    'frontend.product-create.test.ts',
+  ],
   workers: 1,
   fullyParallel: false,
   timeout: 60000,

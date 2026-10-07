@@ -97,7 +97,7 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
     path: new RegExp(
       '^/api/v1/admin/categories(?:/' +
         id +
-        '(?:/(?:breadcrumbs|move-destinations|deletion-preview))?)?$',
+        '(?:/(?:breadcrumbs|move-destinations|deletion-preview|schema))?)?$',
     ),
     service: 'catalog',
   },

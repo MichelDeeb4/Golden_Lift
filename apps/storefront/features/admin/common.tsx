@@ -12,14 +12,13 @@ import {
   GLModal,
   GLAlert,
   GLSpinner,
-  GLToast,
   GLTabs,
   GLFormSection,
   GLSkeleton,
   GLEmptyState,
 } from '@golden-lift/ui';
 import type { UseFormReturn } from 'react-hook-form';
-import { useStaffApi, StaffError } from './context';
+import { useStaffApi, StaffError, useStaffFeedback } from './context';
 import { useAdminTranslation } from './translations';
 import { usePublicCatalogInvalidation } from '../../providers/storefront';
 export function FocusedEditor({
@@ -28,18 +27,31 @@ export function FocusedEditor({
   children,
   onClose,
   dialog = false,
+  dirty = false,
+  pending = false,
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
   dialog?: boolean;
+  dirty?: boolean;
+  pending?: boolean;
 }) {
   const id = useId();
+  const t = useAdminTranslation();
   if (dialog)
     return (
-      <GLModal open={open} title={title} onClose={onClose}>
-        {children}
+      <GLModal
+        open={open}
+        keepMounted
+        className="gl-admin-modal"
+        title={title}
+        onClose={() => {
+          if (!pending && (!dirty || window.confirm(t('unsaved')))) onClose();
+        }}
+      >
+        <div className="gl-admin-modal-body">{children}</div>
       </GLModal>
     );
   return open ? (
@@ -92,7 +104,8 @@ export function MoreOptions({
     </GLButton>
   ) : null;
 }
-export function useAction() {
+export function useAction(scope = 'account', feedback = true) {
+  const notify = useStaffFeedback();
   const invalidatePublic = usePublicCatalogInvalidation();
   const query = useQueryClient(),
     t = useAdminTranslation(),
@@ -102,8 +115,66 @@ export function useAction() {
     onMutate: () => setSaved(false),
     onSuccess: async () => {
       setSaved(true);
-      await query.invalidateQueries({ queryKey: ['staff'] });
-      await invalidatePublic?.();
+      if (feedback) notify?.(t('saved'));
+      const keys: Record<string, readonly string[]> = {
+        categories: [
+          'categories',
+          'category',
+          'category-picker',
+          'breadcrumbs',
+          'category-delete-preview',
+          'category-source',
+          'move-destinations',
+          'products',
+          'product-category-context',
+          'dashboard-products',
+        ],
+        products: [
+          'product-form',
+          'category-schema',
+          'products',
+          'product',
+          'dashboard-products',
+          'categories',
+          'category',
+          'category-picker',
+        ],
+        configuration: [
+          'category-schema',
+          'configuration',
+          'configuration-schema',
+          'options',
+          'product-form',
+          'type-change-schema',
+          'product',
+          'products',
+          'dashboard-products',
+        ],
+        media: [
+          'media',
+          'media-detail',
+          'media-usage',
+          'media-preview',
+          'upload-asset',
+          'products',
+          'product',
+          'categories',
+          'category',
+          'dashboard-products',
+          'dashboard-assets',
+          'media-statistics',
+        ],
+        account: ['session', 'admins', 'account'],
+      };
+      await query.invalidateQueries({
+        predicate: (entry) =>
+          entry.queryKey[0] === 'staff' &&
+          (keys[scope] ?? []).some(
+            (key) =>
+              String(entry.queryKey[1]) === key || String(entry.queryKey[1]).startsWith(key + '-'),
+          ),
+      });
+      if (scope !== 'account') await invalidatePublic?.();
     },
   });
   return { ...mutation, saved, setSaved, t };
@@ -115,13 +186,7 @@ export function ActionFeedback({
   action: ReturnType<typeof useAction>;
   reload?: () => void;
 }) {
-  const t = useAdminTranslation();
-  return (
-    <>
-      {action.error && <StaffError error={action.error} reload={reload} />}
-      <GLToast message={action.saved ? t('saved') : null} onClose={() => action.setSaved(false)} />
-    </>
-  );
+  return <>{action.error && <StaffError error={action.error} reload={reload} />}</>;
 }
 export function Confirm({
   title,
@@ -129,16 +194,18 @@ export function Confirm({
   children,
   label,
   disabled = false,
+  scope = 'account',
 }: {
   title: string;
   work: () => Promise<unknown>;
   children?: ReactNode;
   label?: string;
   disabled?: boolean;
+  scope?: string;
 }) {
   const [open, setOpen] = useState(false),
     [reviewedWork, setReviewedWork] = useState<(() => Promise<unknown>) | null>(null),
-    action = useAction(),
+    action = useAction(scope),
     t = useAdminTranslation();
   return (
     <>
@@ -176,6 +243,8 @@ export function Confirm({
   );
 }
 export interface TranslationForm {
+  categoryId?: string;
+  modelCode?: string;
   names: { ar: string; en: string; ckb: string };
   descriptions: { ar: string; en: string; ckb: string };
 }
@@ -315,5 +384,19 @@ export function ApiCommand({
   label: string;
 }) {
   const api = useStaffApi();
-  return <Confirm title={label} work={() => api.request(path, jsonResponse, body, method)} />;
+  return (
+    <Confirm
+      scope={
+        path.includes('/categories')
+          ? 'categories'
+          : path.includes('/products')
+            ? 'products'
+            : path.includes('/media')
+              ? 'media'
+              : 'configuration'
+      }
+      title={label}
+      work={() => api.request(path, jsonResponse, body, method)}
+    />
+  );
 }

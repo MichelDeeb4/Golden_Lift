@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import http from 'node:http';
+import { readdirSync, readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { openSync } from 'fontkit';
@@ -17,6 +18,18 @@ import {
 } from '@golden-lift/api';
 import { DemoCatalogDataSource, DemoMediaResolver } from '../apps/storefront/features/catalog/demo';
 import { validateDynamicValue } from '../apps/storefront/features/admin/dynamic-values';
+
+test('staff CRUD cannot introduce document reloads or hard navigation', () => {
+  const directory = 'apps/storefront/features/admin';
+  for (const name of readdirSync(directory).filter((name) => /\.tsx?$/.test(name))) {
+    const source = readFileSync(directory + '/' + name, 'utf8');
+    assert.doesNotMatch(
+      source,
+      /(?:window\.)?location\.(?:reload|assign|replace)\s*\(|document\.location\s*=|(?:window\.)?location(?:\.href)?\s*=/,
+      name,
+    );
+  }
+});
 test('dynamic editing preserves exact decimal bounds, false, translated text and choice cardinality', () => {
   const field = fieldSchema.parse({
     definitionId: randomUUID(),

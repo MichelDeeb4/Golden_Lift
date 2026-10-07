@@ -319,7 +319,7 @@ test('public collection searches and filters exact public values with bounded HT
   );
   assert.equal(exact.items[0]!.media[0]!.assetId, first.coverAssetId);
   assert.ok(exact.items[0]!.categoryName);
-  assert.ok(exact.items[0]!.productTypeName);
+  assert.equal('productTypeId' in exact.items[0]!, false);
   assert.equal(
     (await read.collection({ ...input, search: 'UnsearchablePrivateEvidence' })).items.length,
     0,
@@ -388,7 +388,7 @@ test('public collection searches and filters exact public values with bounded HT
   }
 });
 async function type() {
-  const t = await new CreateProductType(uow, ids, clock).execute(
+  const t = await new CreateProductType().execute(
     { code: 'type-' + randomUUID(), translations },
     actor,
   );
@@ -448,7 +448,7 @@ async function assign(typeId: Uuid, definitionId: Uuid, required = false, visibl
 async function product(
   typeId: Uuid,
   valueItems: readonly { definitionId: Uuid; value: AttributeValue }[] = [],
-): Promise<ProductDto> {
+): Promise<ProductDto & { coverAssetId: Uuid }> {
   const c = await new CreateCategory(uow, ids, clock).execute(
       {
         parentId: null,
@@ -466,21 +466,27 @@ async function product(
     { isolationLevel: 'Serializable' },
   );
   const schema = await reader().schema(typeId, 'ar', actor),
-    p = await new CreateProduct(uow, ids, clock).execute(
+    draft = await new CreateProduct(uow, ids, clock).execute(
       {
         categoryId: c.id,
-        productTypeId: typeId,
-        coverAssetId: assetId,
         modelCode: 'SYNTHETIC-' + randomUUID(),
         translations,
-        expectedSchemaRevision: schema.configuration.type.schemaRevision,
-        expectedCategoryVersion: c.version,
-        values: valueItems,
       },
       actor,
     );
-  assert.ok(p);
-  return p;
+  const p = await new EditProduct(uow, ids, clock).execute(
+    draft.id,
+    {
+      expectedVersion: draft.version,
+      expectedSchemaRevision: draft.schemaRevision,
+      coverAssetId: assetId,
+      values: valueItems,
+    },
+    actor,
+  );
+  assert.ok(p.coverAssetId);
+  assert.ok(schema);
+  return { ...p, coverAssetId: p.coverAssetId };
 }
 function pausedSnapshot() {
   let started!: () => void,
@@ -773,41 +779,28 @@ test('copy preview rejects collisions rather than overwriting destination polici
     isCode('INVALID_STATE'),
   );
 });
-test('explicit product type change removes incompatible values softly and accepts explicit replacements', async () => {
+test('retired product type change cannot mutate a product or its retained values', async () => {
   const source = await type(),
-    destination = await type(),
-    a = await attribute(),
-    b = await attribute('BOOLEAN');
+    a = await attribute();
   await assign(source.id, a.id);
-  await assign(destination.id, b.id, true);
   const p = await product(source.id, [
-      { definitionId: a.id, value: { kind: 'NUMBER', number: '12' } },
-    ]),
-    dst = await reader().schema(destination.id, 'ar', actor),
-    types = new ChangeProductType(uow, ids, clock),
-    input = {
-      productTypeId: destination.id,
-      expectedVersion: p.version,
-      expectedSchemaRevision: p.schemaRevision,
-      expectedDestinationSchemaRevision: dst.form.schemaRevision,
-      values: [
-        { definitionId: a.id, value: null },
-        { definitionId: b.id, value: { kind: 'BOOLEAN' as const, boolean: false } },
-      ],
-    };
-  const preview = await types.preview(p.id, input, actor);
-  assert.deepEqual(preview.blockers, []);
-  const result = await types.commit(p.id, input, preview.precondition, true, actor);
-  assert.equal(result.productTypeId, destination.id);
-  assert.equal(result.coverAssetId, p.coverAssetId);
-  assert.equal(result.modelCode, p.modelCode);
-  assert.equal(
-    await db.productSpecificationValues.count({
-      where: { product_id: p.id, definition_id: a.id, deleted_at: { not: null } },
-    }),
-    1,
-  );
-  assert.ok(result.values.some((v) => v.value.kind === 'BOOLEAN' && v.value.boolean === false));
+    { definitionId: a.id, value: { kind: 'NUMBER', number: '12' } },
+  ]);
+  const types = new ChangeProductType(uow, ids, clock);
+  const input = {
+    productTypeId: ids.newUuid(),
+    expectedVersion: p.version,
+    expectedSchemaRevision: p.schemaRevision,
+    expectedDestinationSchemaRevision: version('1'),
+    values: [],
+  };
+  await assert.rejects(types.preview(p.id, input, actor), isCode('INVALID_STATE'));
+  await assert.rejects(types.commit(p.id, input, 'retired', true, actor), isCode('INVALID_STATE'));
+  const current = await new ReadProducts(uow).admin(p.id, actor);
+  assert.equal(current.coverAssetId, p.coverAssetId);
+  assert.equal(current.modelCode, p.modelCode);
+  assert.deepEqual(current.values, p.values);
+  assert.equal(current.version, p.version);
 });
 test('option deprecation preserves unchanged selections and prohibits new use or reselection', async () => {
   const t = await type(),
@@ -1352,7 +1345,7 @@ test('representative fixture measures batched schema resolution, fanout, writes 
   );
 });
 test('configuration translation replacement retains omitted rows and reports actual missing locales', async () => {
-  const t = await new CreateProductType(uow, ids, clock).execute(
+  const t = await new CreateProductType().execute(
     {
       code: 'translated-' + randomUUID(),
       translations: [...translations, { locale: 'en', name: 'Saved English', description: null }],

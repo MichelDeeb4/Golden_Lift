@@ -206,7 +206,6 @@ const productSchema = z.object({
   modelCode: z.string().nullable(),
   coverAssetId: z.string().uuid(),
   categoryName: z.string(),
-  productTypeName: z.string(),
   media: z.array(
     z.object({
       assetId: z.string().uuid(),
@@ -342,7 +341,6 @@ export class ApiCatalogDataSource implements CatalogDataSource {
       description: p.description ?? '',
       model: p.modelCode,
       categoryName: p.categoryName,
-      productTypeName: p.productTypeName,
       media: [
         ...p.media.filter((m) => m.assetId === p.coverAssetId),
         ...p.media.filter((m) => m.assetId !== p.coverAssetId),

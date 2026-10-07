@@ -12,6 +12,7 @@ import { PrismaAttributeGroupRepository } from './attribute-group-repository.js'
 import { PrismaUnitRepository } from './unit-repository.js';
 import { PrismaProductRepository } from './product-repository.js';
 import { PrismaSchemaChangeReader } from './schema-change-reader.js';
+import { PrismaCategorySchemaRepository } from './category-schema-repository.js';
 export function mapFailure(error: unknown): Error {
   if (error instanceof ApplicationError) return error;
   switch (sqlState(error)) {
@@ -52,14 +53,15 @@ export class PrismaCatalogUnitOfWork implements CatalogUnitOfWork {
               if (this.requiresDynamicCutover) {
                 const [stage] = await tx.$queryRaw<
                   { ready: boolean }[]
-                >`SELECT to_regprocedure('catalog.assert_valid_dynamic_catalog()') IS NOT NULL ready`;
+                >`SELECT to_regprocedure('catalog.assert_valid_category_catalog()') IS NOT NULL ready`;
                 if (!stage?.ready)
                   throw new ApplicationError(
                     'INVALID_STATE',
-                    'Dynamic Catalog Core requires the approved Catalog cutover.',
+                    'Catalog requires the approved category classification cutover.',
                   );
               }
               return work({
+                categorySchemas: new PrismaCategorySchemaRepository(tx),
                 productTypes: new PrismaProductTypeRepository(tx),
                 definitions: new PrismaAttributeDefinitionRepository(tx),
                 groups: new PrismaAttributeGroupRepository(tx),

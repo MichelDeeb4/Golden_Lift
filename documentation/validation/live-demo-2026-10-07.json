@@ -1,0 +1,61 @@
+{
+  "phase": "Local live catalog demonstration",
+  "checkedAt": "2026-10-07T14:29:44.184Z",
+  "status": "PASS",
+  "scope": "Authenticated local catalog replacement and visitor verification, separate from pending Category migration and production acceptance",
+  "data": {
+    "publishedProducts": 10,
+    "featuredProducts": 4,
+    "preservedRootCategories": 6,
+    "newLeafCategories": 7,
+    "liveCategoryInventory": 13,
+    "liveProductInventory": 10,
+    "liveReadyImageInventory": 6,
+    "newTypedAttributes": 9,
+    "newProductTypes": 6,
+    "languages": ["en", "ar"],
+    "sorani": "Arabic fallback; no fabricated translation",
+    "content": "Sample models, illustrative specifications and original vector artwork rasterized to JPEG; not manufacturer or certification claims"
+  },
+  "cleanup": {
+    "softDeletedCategories": ["test", "Elevator cabins ar sub"],
+    "softDeletedProduct": "p1",
+    "softDeletedType": "metal",
+    "softDeletedAttributes": ["tf", "choice1", "choice2"],
+    "retiredUnusedPlaceholderAssets": 4,
+    "preserved": ["staff accounts", "six main categories", "length attribute", "Dimensions group", "retained history and files"],
+    "writes": "Authenticated Gateway and owning-service APIs with version/schema/impact preconditions; no direct business SQL writes",
+    "rerun": "Completed second pass reused the same products and images without duplicate records",
+    "initialBackup": ".local/demo-backup-2026-10-07T14-18-25-519Z",
+    "backupDatabases": ["catalog", "media"],
+    "restoreTested": false
+  },
+  "media": {
+    "pipeline": "Native local ClamAV and Sharp, resumable binary upload through Media HTTP, signed local event relay and Catalog registration",
+    "verifiedReadyImages": 6,
+    "productionProvidersAccepted": false
+  },
+  "verification": {
+    "npm.cmd run check": "PASS: build, backend/frontend types, format, 212-source architecture check, 14 enforcement probes, four Prisma schemas, 37 backend unit tests",
+    "npm.cmd run format:check": "PASS after command registration",
+    "git diff --check": "PASS",
+    "npm.cmd run doctor": "PASS: all five HTTP services, frontend, four databases and native scanner ready; local HTTP event transport selected",
+    "liveBrowser": {
+      "status": "PASS",
+      "browser": "Microsoft Edge via Playwright",
+      "checks": ["homepage featured product", "10 public product cards", "old p1 absent", "product detail and two gallery images", "typed load specification", "390px mobile listing", "Arabic locale with asserted RTL direction", "loaded images before captures"],
+      "pageErrors": [],
+      "failedApiRequests": []
+    },
+    "notExecuted": ["new full PostgreSQL integration suite", "production provider acceptance", "backup restore drill", "hosted deployment"]
+  },
+  "screenshots": [
+    "../assets/live-demo/home-desktop.png",
+    "../assets/live-demo/products-desktop.png",
+    "../assets/live-demo/product-desktop.png",
+    "../assets/live-demo/products-mobile.png",
+    "../assets/live-demo/products-ar-mobile.png"
+  ],
+  "runningWebsite": "http://localhost:8081",
+  "exampleProduct": "http://localhost:8081/products/96f88d89-c7fc-42f3-b15f-9af3eea150a3"
+}

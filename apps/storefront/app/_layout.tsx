@@ -11,8 +11,12 @@ import { StorefrontProvider } from '../providers/storefront';
 import { Shell } from '../features/layout/shell';
 import { usePathname } from 'expo-router';
 import { StaffActionTokenProvider } from '../features/admin/action-token';
+import { StaffProvider } from '../features/admin/context';
+import { CategoryTreeStateProvider } from '../features/admin/category-tree-state';
 import '@golden-lift/ui/styles.css';
 import '../features/layout/storefront.css';
+import '../features/admin/styles.css';
+import '../features/admin/workspace.css';
 export { StorefrontErrorBoundary as ErrorBoundary } from '../features/layout/error-boundary';
 export default function Layout() {
   const pathname = usePathname();
@@ -35,7 +39,11 @@ export default function Layout() {
     <StorefrontProvider>
       {pathname.startsWith('/admin') || pathname.startsWith('/super-admin') ? (
         <StaffActionTokenProvider>
-          <Slot />
+          <StaffProvider>
+            <CategoryTreeStateProvider>
+              <Slot />
+            </CategoryTreeStateProvider>
+          </StaffProvider>
         </StaffActionTokenProvider>
       ) : (
         <Shell>

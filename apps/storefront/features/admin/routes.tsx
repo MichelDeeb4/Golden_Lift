@@ -1,20 +1,23 @@
 import { usePathname } from 'expo-router';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { GLAlert, GLPageHeader } from '@golden-lift/ui';
+import { GLAlert, GLPageHeader, GLButton } from '@golden-lift/ui';
 import { pageSchema, productRowSchema, mediaAssetSchema } from '@golden-lift/api';
 import { useLocale } from '@golden-lift/i18n';
 import { TableState } from './common';
-import { StaffProvider, StaffShell, useStaffApi } from './context';
+import { StaffShell, useStaffApi } from './context';
 import { Account, AdminAccounts } from './accounts';
 import { Categories } from './categories';
 import { Configuration } from './configuration';
 import type { ConfigurationResource } from './configuration';
 import { MediaLibrary } from './media';
 import { ProductEditor, Products } from './products';
+import { CreateProduct } from './create-product';
 import { useAdminTranslation } from './translations';
 import { StaffAuthAction } from './auth-actions';
 function Dashboard() {
+  const [creating, setCreating] = useState(false);
   const t = useAdminTranslation(),
     api = useStaffApi(),
     { locale } = useLocale();
@@ -54,12 +57,11 @@ function Dashboard() {
   return (
     <>
       <GLPageHeader title={t('dashboard')} description={t('operationalHelp')} />
+      <CreateProduct open={creating} onClose={() => setCreating(false)} />
       <div className="gl-launchpad">
         <div>
           <h2 className="gl-launchpad-title">{t('createProductHelp')}</h2>
-          <a className="gl-button gl-button-primary gl-button-md" href="/admin/products/new">
-            {t('create')} — {t('products')}
-          </a>
+          <GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>
         </div>
         <div className="gl-launchpad-links">
           <a href="/admin/products">
@@ -136,6 +138,7 @@ function Dashboard() {
   );
 }
 function Page() {
+  const t = useAdminTranslation();
   const parts = usePathname().split('/').filter(Boolean),
     resource = parts[1],
     id = parts[2];
@@ -143,9 +146,17 @@ function Page() {
   if (parts[0] === 'super-admin' && resource === 'admins') return <AdminAccounts id={id} />;
   if (resource === 'categories') return <Categories id={id} />;
   if (resource === 'products')
-    return id ? <ProductEditor key={id} id={id === 'new' ? undefined : id} /> : <Products />;
+    return id === 'new' ? (
+      <Products create />
+    ) : id ? (
+      <ProductEditor key={id} id={id} />
+    ) : (
+      <Products />
+    );
   if (resource === 'media') return <MediaLibrary id={id} />;
-  if (['product-types', 'attributes', 'attribute-groups', 'units'].includes(resource ?? ''))
+  if (resource === 'product-types')
+    return <GLAlert tone="info">{t('retiredProductTypes')}</GLAlert>;
+  if (['attributes', 'attribute-groups', 'units'].includes(resource ?? ''))
     return (
       <Configuration
         key={resource + ':' + id}
@@ -158,16 +169,10 @@ function Page() {
 export function StaffRoute() {
   const resource = usePathname().split('/')[2];
   if (resource === 'invitation' || resource === 'password-reset' || resource === 'reset-request')
-    return (
-      <StaffProvider>
-        <StaffAuthAction action={resource} />
-      </StaffProvider>
-    );
+    return <StaffAuthAction action={resource} />;
   return (
-    <StaffProvider>
-      <StaffShell>
-        <Page />
-      </StaffShell>
-    </StaffProvider>
+    <StaffShell>
+      <Page />
+    </StaffShell>
   );
 }

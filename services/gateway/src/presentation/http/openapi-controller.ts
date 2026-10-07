@@ -4,9 +4,9 @@ const document = {
   openapi: '3.1.0',
   info: {
     title: 'Golden Lift API',
-    version: '0.7.0',
+    version: '0.8.0',
     description:
-      'Identity, category administration, Dynamic Catalog Core, B5 Media and Admin product management. Live staff verification, optimistic versions, exact typed values, reviewed schema changes, inactive-product privacy, ordered media and retained soft deletion. External B5 scanner/codec/broker/provider/isolation acceptance and deployment remain separate. Public collection/search/dynamic filters and safe gallery/video/allowed-PDF projection are integrated. Normal frontend defaults to real API mode.',
+      'Identity, category administration, category-derived Catalog, B5 Media and Admin product management. Minimal inactive Product creation requires a live leaf category and Arabic name; Product Type is retired. Category schema revisions protect edits; publication separately requires complete values and a ready image cover. Live staff verification, optimistic versions, exact typed values, ordered Media and retained soft deletion remain. Production provider/isolation acceptance and deployment are separate. Public collections/search/category-derived filters are integrated; normal frontend defaults to real APIs.',
   },
   servers: [
     {
@@ -3721,7 +3721,7 @@ const document = {
         summary: 'List product-types',
         tags: ['Dynamic Catalog Core'],
         description:
-          'Immutable UUID/code keyset pagination; cursor bound to resource. Concurrent changes do not provide a historical snapshot. ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -3821,13 +3821,14 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
       post: {
         operationId: 'create_product_types',
         summary: 'Create product-types',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -3918,6 +3919,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/product-types/{id}': {
@@ -3926,7 +3928,7 @@ const document = {
         summary: 'Read actual saved product-types',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -4018,6 +4020,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/attributes': {
@@ -5041,7 +5044,7 @@ const document = {
         summary: 'Preview guarded configuration change',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -5143,6 +5146,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/product-types/{id}/changes': {
@@ -5151,7 +5155,7 @@ const document = {
         summary: 'Commit confirmed configuration change',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -5253,6 +5257,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/attributes/{id}/changes/preview': {
@@ -6251,7 +6256,7 @@ const document = {
         summary: 'Resolve effective configuration and dynamic form',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -6351,15 +6356,16 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/products': {
       post: {
         operationId: 'create_product',
-        summary: 'Create valid product and typed values',
+        summary: 'Create an inactive product draft',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed. Requires only a live leaf category and Arabic name. Optional model code and English/Sorani names. No Product Type, specification values, cover, schema precondition or publication fields are accepted.',
         security: [
           {
             staffSession: [],
@@ -7045,7 +7051,7 @@ const document = {
     '/api/v1/admin/products/{id}/placement': {
       post: {
         operationId: 'move_product_placement',
-        summary: 'Move browsing placement preserving type and values',
+        summary: 'Move product to a live leaf category, retaining values for explicit resolution',
         tags: ['Dynamic Catalog Core'],
         description:
           ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
@@ -7158,7 +7164,7 @@ const document = {
         summary: 'Preview explicit type/value mapping',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -7260,6 +7266,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/admin/products/{id}/type-change': {
@@ -7268,7 +7275,7 @@ const document = {
         summary: 'Commit confirmed type/value mapping',
         tags: ['Dynamic Catalog Core'],
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
         security: [
           {
             staffSession: [],
@@ -7370,6 +7377,7 @@ const document = {
             },
           },
         },
+        deprecated: true,
       },
     },
     '/api/v1/products/{id}': {
@@ -10819,6 +10827,114 @@ const document = {
         },
       },
     },
+    '/api/v1/admin/categories/{id}/schema': {
+      get: {
+        operationId: 'read_category_schema',
+        summary: 'Resolve authoritative category schema and dynamic form',
+        tags: ['Dynamic Catalog Core'],
+        description:
+          'ADMIN only with live Identity verification. SUPER_ADMIN has no content permissions. Returns one bounded, deduplicated category schema from an owning-service snapshot, with locale fallback and exact constraints. Migration must be installed; a partial expansion is rejected. No frontend reconstruction or Product Type classification.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'locale',
+            in: 'query',
+            schema: {
+              $ref: '#/components/schemas/Locale',
+              default: 'ar',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CategorySchemaResponse',
+                },
+              },
+            },
+          },
+          '400': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description: 'Safe error envelope',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -12732,7 +12848,6 @@ const document = {
         required: [
           'id',
           'categoryId',
-          'productTypeId',
           'coverAssetId',
           'modelCode',
           'version',
@@ -12751,13 +12866,16 @@ const document = {
             type: 'string',
             format: 'uuid',
           },
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
           coverAssetId: {
-            type: 'string',
-            format: 'uuid',
+            anyOf: [
+              {
+                type: 'string',
+                format: 'uuid',
+              },
+              {
+                type: 'null',
+              },
+            ],
           },
           modelCode: {
             anyOf: [
@@ -12805,10 +12923,10 @@ const document = {
             $ref: '#/components/schemas/AdminProduct',
           },
           configuration: {
-            $ref: '#/components/schemas/EffectiveTypeSchema',
+            $ref: '#/components/schemas/EffectiveCategorySchema',
           },
           form: {
-            $ref: '#/components/schemas/ProductFormSchema',
+            $ref: '#/components/schemas/CategoryFormSchema',
           },
         },
       },
@@ -12901,7 +13019,6 @@ const document = {
         required: [
           'id',
           'categoryId',
-          'productTypeId',
           'name',
           'description',
           'resolvedNameLocale',
@@ -12909,7 +13026,6 @@ const document = {
           'modelCode',
           'attributes',
           'categoryName',
-          'productTypeName',
           'media',
           'documents',
         ],
@@ -12919,10 +13035,6 @@ const document = {
             format: 'uuid',
           },
           categoryId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          productTypeId: {
             type: 'string',
             format: 'uuid',
           },
@@ -12990,9 +13102,6 @@ const document = {
           categoryName: {
             type: 'string',
           },
-          productTypeName: {
-            type: 'string',
-          },
           media: {
             type: 'array',
             maxItems: 100,
@@ -13049,25 +13158,9 @@ const document = {
       CreateProductInput: {
         type: 'object',
         additionalProperties: false,
-        required: [
-          'categoryId',
-          'productTypeId',
-          'coverAssetId',
-          'translations',
-          'expectedSchemaRevision',
-          'expectedCategoryVersion',
-          'values',
-        ],
+        required: ['categoryId', 'translations'],
         properties: {
           categoryId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          coverAssetId: {
             type: 'string',
             format: 'uuid',
           },
@@ -13085,26 +13178,9 @@ const document = {
           translations: {
             $ref: '#/components/schemas/CatalogTranslations',
           },
-          expectedSchemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          expectedCategoryVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          values: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/ProductValue',
-            },
-            maxItems: 100,
-          },
-          active: {
-            type: 'boolean',
-            default: true,
-          },
         },
         description:
-          'Active leaf category and active nondeprecated type; trusted existing verified IMAGE cover. No asset registration/upload route. Arabic required; model codes permanently reserved.',
+          'Creates an inactive draft in a live leaf category. Requires an Arabic name; model code and other names are optional. No Product Type, schema revision, specifications, Media or publication input is accepted.',
       },
       EditProductInput: {
         type: 'object',
@@ -14267,7 +14343,6 @@ const document = {
         required: [
           'id',
           'categoryId',
-          'productTypeId',
           'coverAssetId',
           'modelCode',
           'version',
@@ -14291,13 +14366,16 @@ const document = {
             type: 'string',
             format: 'uuid',
           },
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
           coverAssetId: {
-            type: 'string',
-            format: 'uuid',
+            anyOf: [
+              {
+                type: 'string',
+                format: 'uuid',
+              },
+              {
+                type: 'null',
+              },
+            ],
           },
           modelCode: {
             anyOf: [
@@ -14363,7 +14441,6 @@ const document = {
           'name',
           'modelCode',
           'categoryId',
-          'productTypeId',
           'coverAssetId',
           'active',
           'featured',
@@ -14371,7 +14448,6 @@ const document = {
           'sortOrder',
           'updatedAt',
           'categoryName',
-          'productTypeName',
         ],
         properties: {
           id: {
@@ -14388,13 +14464,16 @@ const document = {
             type: 'string',
             format: 'uuid',
           },
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
           coverAssetId: {
-            type: 'string',
-            format: 'uuid',
+            anyOf: [
+              {
+                type: 'string',
+                format: 'uuid',
+              },
+              {
+                type: 'null',
+              },
+            ],
           },
           active: {
             type: 'boolean',
@@ -14413,9 +14492,6 @@ const document = {
             format: 'date-time',
           },
           categoryName: {
-            type: 'string',
-          },
-          productTypeName: {
             type: 'string',
           },
         },
@@ -14702,6 +14778,190 @@ const document = {
             items: {
               $ref: '#/components/schemas/PublicFilterDefinition',
             },
+          },
+        },
+      },
+      SchemaGroupPlacement: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'group', 'sortOrder', 'version'],
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          group: {
+            $ref: '#/components/schemas/AttributeGroup',
+          },
+          sortOrder: {
+            type: 'string',
+            pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
+            description: 'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+        },
+      },
+      EffectiveAttribute: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'id',
+          'definition',
+          'groupPlacementId',
+          'sortOrder',
+          'version',
+          'required',
+          'public',
+          'searchable',
+          'filterable',
+          'comparable',
+        ],
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          definition: {
+            $ref: '#/components/schemas/AttributeDefinition',
+          },
+          groupPlacementId: {
+            anyOf: [
+              {
+                type: 'string',
+                format: 'uuid',
+              },
+              {
+                type: 'null',
+              },
+            ],
+          },
+          sortOrder: {
+            type: 'string',
+            pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
+            description: 'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
+          },
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          required: {
+            type: 'boolean',
+          },
+          public: {
+            type: 'boolean',
+          },
+          searchable: {
+            type: 'boolean',
+          },
+          filterable: {
+            type: 'boolean',
+          },
+          comparable: {
+            type: 'boolean',
+          },
+        },
+        description:
+          'Effective public = global definition public AND assignment public. Search/comparison require effective public plus assignment permission; filtering additionally requires global filterable. Flags do not create search endpoints.',
+      },
+      EffectiveCategorySchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'categoryId',
+          'categoryVersion',
+          'schemaRevision',
+          'leaf',
+          'groups',
+          'attributes',
+        ],
+        properties: {
+          categoryId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          categoryVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          schemaRevision: {
+            $ref: '#/components/schemas/Version',
+          },
+          leaf: {
+            type: 'boolean',
+          },
+          groups: {
+            type: 'array',
+            maxItems: 500,
+            items: {
+              $ref: '#/components/schemas/SchemaGroupPlacement',
+            },
+          },
+          attributes: {
+            type: 'array',
+            maxItems: 500,
+            items: {
+              $ref: '#/components/schemas/EffectiveAttribute',
+            },
+          },
+        },
+        description:
+          'Catalog-owned category/group/attribute resolution. Attributes are unique by definitionId; first ordered group owns presentation. Requiredness is OR and disclosure capabilities are conservative AND across memberships and global definition restrictions. Exact bigint strings; one repeatable-read snapshot. Requires reviewed category authority cutover.',
+      },
+      CategoryFormSchema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['categoryId', 'schemaRevision', 'groups', 'fields'],
+        properties: {
+          schemaRevision: {
+            $ref: '#/components/schemas/Version',
+          },
+          groups: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['id', 'label', 'sortOrder'],
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                label: {
+                  type: 'string',
+                },
+                sortOrder: {
+                  type: 'string',
+                  pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
+                  description:
+                    'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
+                },
+              },
+            },
+            maxItems: 500,
+          },
+          fields: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/FormField',
+            },
+            maxItems: 500,
+          },
+          categoryId: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      },
+      CategorySchemaResponse: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['configuration', 'form'],
+        properties: {
+          configuration: {
+            $ref: '#/components/schemas/EffectiveCategorySchema',
+          },
+          form: {
+            $ref: '#/components/schemas/CategoryFormSchema',
           },
         },
       },

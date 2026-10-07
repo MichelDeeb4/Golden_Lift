@@ -11,7 +11,7 @@ export function DynamicAttributeFields({
   errors = [],
   onChange,
 }: {
-  schema: z.infer<typeof formSchema>;
+  schema: Pick<z.infer<typeof formSchema>, 'groups' | 'fields'>;
   values: Record<string, AttributeValue>;
   errors?: string[];
   onChange: (id: string, value: AttributeValue | undefined) => void;

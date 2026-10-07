@@ -1,5 +1,6 @@
 import type {
   EventEnvelope,
+  EffectiveCategorySchema,
   Locale,
   ManagedProductDto,
   Page,
@@ -31,6 +32,7 @@ export interface ProductManagementRepository {
   append(event: EventEnvelope): Promise<void>;
   list(input: ProductListInput): Promise<Page<ProductListItem>>;
   detail(id: Uuid): Promise<ManagedProductDto | null>;
+  publicationSchema(id: Uuid): Promise<EffectiveCategorySchema>;
   publication(id: Uuid, expectedVersion: Version, input: PublicationWrite): Promise<void>;
   remove(id: Uuid, expectedVersion: Version): Promise<Version>;
   replaceMedia(

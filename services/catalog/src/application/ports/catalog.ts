@@ -9,6 +9,7 @@ import type {
   SchemaChangeReader,
   UnitRepository,
 } from './product-schema.js';
+import type { CategorySchemaReader } from './category-schema.js';
 import type { ProductRepository } from './products.js';
 export type { CategoryCursor, CategoryList } from './category-query.js';
 export interface CategoryRepository {
@@ -16,13 +17,19 @@ export interface CategoryRepository {
   list(input: CategoryList): Promise<readonly CategoryDto[]>;
   hasProducts(id: Uuid): Promise<boolean>;
   touch(id: Uuid, expectedVersion: Version, coverAssetId?: Uuid | null): Promise<Version>;
-  insert(id: Uuid, parentId: Uuid | null, coverAssetId?: Uuid | null): Promise<void>;
+  insert(
+    id: Uuid,
+    parentId: Uuid | null,
+    coverAssetId?: Uuid | null,
+    sortOrder?: string,
+  ): Promise<void>;
   putTranslations(id: Uuid, translations: readonly Translation[]): Promise<void>;
 }
 export interface Outbox {
   append(event: EventEnvelope): Promise<void>;
 }
 export interface CatalogRepositories {
+  readonly categorySchemas: CategorySchemaReader;
   readonly productTypes: ProductTypeRepository;
   readonly definitions: AttributeDefinitionRepository;
   readonly groups: AttributeGroupRepository;

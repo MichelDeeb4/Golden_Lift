@@ -18,6 +18,7 @@ import {
   GLInput,
   GLLanguageSwitcher,
   GLSpinner,
+  GLToast,
 } from '@golden-lift/ui';
 import { Menu } from '@golden-lift/icons';
 import { usePathname, useRouter } from 'expo-router';
@@ -25,11 +26,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAdminTranslation } from './translations';
-import './styles.css';
-import './workspace.css';
 import { frontendConfiguration } from '../../configuration';
 const Context = createContext<StaffApiClient | null>(null);
 const UnsavedContext = createContext<((id: symbol, dirty: boolean) => void) | null>(null);
+const FeedbackContext = createContext<((message: string) => void) | null>(null);
+export function useStaffFeedback() {
+  return useContext(FeedbackContext);
+}
 function publicStaffPath(path: string) {
   return [
     '/admin/login',
@@ -44,7 +47,18 @@ export function useStaffApi() {
   return api;
 }
 export function StaffProvider({ children }: { children: ReactNode }) {
+  const [feedback, setFeedback] = useState<{ id: number; message: string } | null>(null);
+  const notify = useCallback(
+    (message: string) => setFeedback((previous) => ({ id: (previous?.id ?? 0) + 1, message })),
+    [],
+  );
+  const clearFeedback = useCallback(() => setFeedback(null), []);
+  const router = useRouter();
   const redirecting = useRef(false);
+  const pathname = usePathname();
+  useEffect(() => {
+    if (publicStaffPath(pathname)) redirecting.current = false;
+  }, [pathname]);
   const t = useAdminTranslation();
   const [dirtyEditors, setDirtyEditors] = useState<Set<symbol>>(() => new Set());
   const registerDirty = useCallback((id: symbol, dirty: boolean) => {
@@ -57,10 +71,11 @@ export function StaffProvider({ children }: { children: ReactNode }) {
     });
   }, []);
   useEffect(() => {
-    if (!dirtyEditors.size) return;
     function unload(event: BeforeUnloadEvent) {
-      event.preventDefault();
-      event.returnValue = '';
+      if (dirtyEditors.size) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
     }
     function click(event: MouseEvent) {
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
@@ -69,7 +84,8 @@ export function StaffProvider({ children }: { children: ReactNode }) {
       if (
         !(link instanceof HTMLAnchorElement) ||
         link.target === '_blank' ||
-        link.hasAttribute('download')
+        link.hasAttribute('download') ||
+        link.hasAttribute('data-local-selection')
       )
         return;
       const destination = new URL(link.href);
@@ -79,7 +95,21 @@ export function StaffProvider({ children }: { children: ReactNode }) {
         destination.search === location.search
       )
         return;
-      if (!window.confirm(t('unsaved'))) event.preventDefault();
+      if (dirtyEditors.size && !window.confirm(t('unsaved'))) {
+        event.preventDefault();
+        return;
+      }
+      if (
+        destination.origin === location.origin &&
+        /^\/(admin|super-admin)(\/|$)/.test(destination.pathname)
+      ) {
+        event.preventDefault();
+        const parts = destination.pathname.split('/').filter(Boolean);
+        router.push({
+          pathname: parts[0] === 'super-admin' ? '/super-admin/[...path]' : '/admin/[...path]',
+          params: { ...Object.fromEntries(destination.searchParams), path: parts.slice(1) },
+        });
+      }
     }
     window.addEventListener('beforeunload', unload);
     document.addEventListener('click', click, true);
@@ -87,7 +117,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('beforeunload', unload);
       document.removeEventListener('click', click, true);
     };
-  }, [dirtyEditors.size, t]);
+  }, [dirtyEditors.size, t, router]);
   const [client] = useState(
     () =>
       new QueryClient({
@@ -110,17 +140,20 @@ export function StaffProvider({ children }: { children: ReactNode }) {
           client.clear();
           if (!publicStaffPath(window.location.pathname) && !redirecting.current) {
             redirecting.current = true;
-            window.location.assign('/admin/login');
+            router.replace('/admin/login');
           }
         },
         frontendConfiguration.mediaOrigin,
       ),
-    [client],
+    [client, router],
   );
   return (
     <QueryClientProvider client={client}>
       <Context.Provider value={api}>
-        <UnsavedContext.Provider value={registerDirty}>{children}</UnsavedContext.Provider>
+        <FeedbackContext.Provider value={notify}>
+          <UnsavedContext.Provider value={registerDirty}>{children}</UnsavedContext.Provider>
+          <GLToast key={feedback?.id} message={feedback?.message ?? null} onClose={clearFeedback} />
+        </FeedbackContext.Provider>
       </Context.Provider>
     </QueryClientProvider>
   );
@@ -138,13 +171,17 @@ export function StaffError({ error, reload }: { error: unknown; reload?: () => v
   const t = useAdminTranslation();
   return (
     <GLAlert tone="error">
-      {error instanceof StaffApiError && error.status === 409
+      {error instanceof StaffApiError && error.code === 'VERSION_CONFLICT'
         ? t('conflict')
-        : error instanceof StaffApiError && error.status === 401
-          ? t('expired')
-          : error instanceof StaffApiError && error.validationMessage
-            ? error.validationMessage
-            : t('error')}
+        : error instanceof StaffApiError && error.code === 'CONFLICT'
+          ? t('duplicateRecord')
+          : error instanceof StaffApiError && error.status === 403
+            ? t('forbidden')
+            : error instanceof StaffApiError && error.status === 401
+              ? t('expired')
+              : error instanceof StaffApiError && error.validationMessage
+                ? error.validationMessage
+                : t('error')}
       {reload && (
         <GLButton variant="secondary" onClick={reload}>
           {t('reload')}
@@ -246,7 +283,6 @@ export function StaffShell({ children }: { children: ReactNode }) {
         ['/admin', t('dashboard')],
         ['/admin/categories', t('categories')],
         ['/admin/products', t('products')],
-        ['/admin/product-types', t('types')],
         ['/admin/attributes', t('attributes')],
         ['/admin/attribute-groups', t('groups')],
         ['/admin/units', t('units')],

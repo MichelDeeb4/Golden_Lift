@@ -60,6 +60,20 @@ async function category(parentId: Uuid | null = null) {
     actor,
   );
 }
+test('created siblings append in creation order, including concurrent root creation', async () => {
+  const parent = await category();
+  const first = await category(parent.id),
+    second = await category(parent.id),
+    third = await category(parent.id);
+  const siblings = await navigation.siblings(parent.id, 100);
+  assert.deepEqual(
+    siblings.map((row) => row.id),
+    [first.id, second.id, third.id],
+  );
+  const roots = await Promise.all([category(), category()]);
+  assert.notEqual(roots[0]!.sortOrder, roots[1]!.sortOrder);
+  assert.ok(BigInt(roots[0]!.sortOrder) > 0n && BigInt(roots[1]!.sortOrder) > 0n);
+});
 async function moveInput(id: Uuid, parentId: Uuid | null, beforeId: Uuid | null = null) {
   const row = await navigation.detail(id, 'ar');
   assert.ok(row);
