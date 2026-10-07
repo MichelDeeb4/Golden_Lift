@@ -123,19 +123,21 @@ export function GLMediaImage({
 export function GLCategoryCard({ category }: { category: Category }) {
   const { t } = useGLTranslation();
   return (
-    <GLCard className="gl-category-card">
+    <article className="gl-category-card">
       <a href={'/categories/' + category.id}>
         <GLMediaImage reference={category.image} />
         <div className="gl-category-card-body">
-          <GLHeading level={3} role="heading5">
-            {category.name}
-          </GLHeading>
+          <div>
+            <GLHeading fluid level={3} role="heading5">
+              {category.name}
+            </GLHeading>
+            {category.description && <p>{category.description}</p>}
+          </div>
           <ArrowUpRight aria-hidden="true" size={20} />
         </div>
-        {category.description && <p>{category.description}</p>}
         <span className="sr-only">{t('details')}</span>
       </a>
-    </GLCard>
+    </article>
   );
 }
 export function GLTechnicalValue({ value, unit }: { value: string; unit?: string | null }) {
@@ -158,7 +160,7 @@ export function GLProductCard({
   const { t } = useGLTranslation();
   const image = product.media.find((m) => m.kind === 'image');
   return (
-    <GLCard className="gl-product-card">
+    <article className="gl-product-card">
       <a href={'/products/' + product.id}>
         <div className="gl-product-card-image">
           <GLMediaImage reference={image ? { ...image, profile: 'card' } : null} />
@@ -170,7 +172,7 @@ export function GLProductCard({
           <GLText role="overline" className="gl-muted">
             {product.categoryName}
           </GLText>
-          <GLHeading level={3} role="heading5">
+          <GLHeading fluid level={3} role="heading5">
             {product.name}
           </GLHeading>
           {product.model && (
@@ -193,7 +195,7 @@ export function GLProductCard({
           </span>
         </div>
       </a>
-    </GLCard>
+    </article>
   );
 }
 export function GLSpecificationList({ attributes }: { attributes: readonly TechnicalAttribute[] }) {
@@ -252,7 +254,7 @@ export function GLTechnicalDocumentCard({ document: doc }: { document: Technical
     <GLCard className="gl-document-card" direction="row">
       <FileText size={28} />
       <div>
-        <GLHeading level={3} role="heading6">
+        <GLHeading fluid level={3} role="heading6">
           {doc.title}
         </GLHeading>
         <GLText role="caption">{doc.type}</GLText>
@@ -304,7 +306,9 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
     [selected, setSelected] = useState(0),
     [open, setOpen] = useState(false);
   const item = media[selected] ?? null;
-  const change = (step: number) => setSelected((v) => (v + step + media.length) % media.length);
+  const change = (step: number) => {
+    if (media.length > 1) setSelected((value) => (value + step + media.length) % media.length);
+  };
   function content() {
     return item?.kind === 'video' ? (
       <GLVideo reference={item} />
@@ -315,7 +319,19 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
     );
   }
   return (
-    <div className="gl-gallery" aria-label={t('gallery')}>
+    <div
+      className="gl-gallery"
+      role="region"
+      tabIndex={0}
+      aria-label={t('gallery')}
+      onKeyDown={(event) => {
+        if ((event.target as HTMLElement).closest('video, input, textarea, select')) return;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+          event.preventDefault();
+          change((event.key === 'ArrowRight' ? 1 : -1) * (locale === 'en' ? 1 : -1));
+        }
+      }}
+    >
       <div
         className="gl-gallery-main"
         onTouchStart={(e) => {

@@ -16,6 +16,7 @@ import type { Database } from './client.js';
 import type { Prisma } from './generated/client.js';
 import { missing, names } from './configuration-mapping.js';
 import { PrismaProductTypeRepository } from './product-type-repository.js';
+import { PrismaPublicProducts } from './public-products.js';
 const include = {
   product_translations: { where: { deleted_at: null } },
   product_types: true,
@@ -31,6 +32,12 @@ const include = {
 } as const;
 export class PrismaProductRepository implements ProductRepository {
   constructor(private readonly db: Database) {}
+  publicPage(input: Parameters<ProductRepository['publicPage']>[0]) {
+    return new PrismaPublicProducts(this.db).page(input);
+  }
+  publicContext(id: Uuid, language: Parameters<ProductRepository['publicContext']>[1]) {
+    return new PrismaPublicProducts(this.db).context(id, language);
+  }
   async find(id: Uuid): Promise<ProductDto | null> {
     const live = await this.db.$queryRaw<
       { id: string }[]
@@ -117,6 +124,7 @@ export class PrismaProductRepository implements ProductRepository {
         media_kind: 'IMAGE',
         deleted_at: null,
         ready_at: { not: null },
+        security_blocked: false,
       },
     });
     if (!asset)

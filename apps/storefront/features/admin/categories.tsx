@@ -4,10 +4,19 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { categoryPageSchema, categorySchema } from '@golden-lift/api';
 import { useLocale } from '@golden-lift/i18n';
-import { GLAlert, GLButton, GLHeading, GLModal, GLBreadcrumb } from '@golden-lift/ui';
+import {
+  GLAlert,
+  GLButton,
+  GLHeading,
+  GLModal,
+  GLBreadcrumb,
+  GLFormSection,
+  GLActionBar,
+} from '@golden-lift/ui';
 import { useStaffApi, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
+  FocusedEditor,
   ActionFeedback,
   Confirm,
   TableState,
@@ -235,6 +244,13 @@ export function Categories({ id }: { id?: string }) {
   const listed = ordered.length
     ? ordered.map((key) => items.find((c) => c.id === key)!).filter(Boolean)
     : items;
+  useEffect(() => {
+    if (id && detail.data?.id === id) {
+      form.reset(translationDefaults(detail.data.translations));
+      setCover(detail.data.coverAssetId);
+      setEditor('edit');
+    } else if (!id) setEditor(null);
+  }, [id, detail.data?.id]);
   function shift(index: number, step: number) {
     if (!ordered.length) setOrderRevision(rows.data!.pages[0]!.listRevision);
     const next = listed.map((c) => c.id);
@@ -270,208 +286,276 @@ export function Categories({ id }: { id?: string }) {
           void detail.refetch();
         }}
       />
-      <div className="gl-admin-toolbar">
-        <GLButton
-          disabled={!!id && !detail.data?.canAddChildren}
-          onClick={() => {
-            form.reset(structuredClone(emptyTranslations));
-            setCover(null);
-            setEditor('create');
-          }}
-        >
-          {t('create')}
-        </GLButton>
-        {detail.data && (
-          <>
-            <GLButton
-              variant="secondary"
-              onClick={() => {
-                form.reset(translationDefaults(detail.data!.translations));
-                setCover(detail.data!.coverAssetId);
-                setEditor('edit');
-              }}
-            >
-              {t('edit')}
-            </GLButton>
-            <GLButton variant="secondary" onClick={() => setMoving(true)}>
-              {t('move')}
-            </GLButton>
-            <Confirm
-              title={t('remove')}
-              disabled={!preview.data}
-              work={() =>
-                api
-                  .request(
-                    `/admin/categories/${id}`,
-                    jsonResponse,
-                    {
-                      confirm: true,
-                      expectedVersion: preview.data!.category.version,
-                      previewPrecondition: preview.data!.previewPrecondition,
-                    },
-                    'DELETE',
-                  )
-                  .then(() => {
-                    window.location.assign('/admin/categories');
-                  })
-              }
-            >
-              {t('confirmDelete')}
-              <pre>
-                {preview.data
-                  ? `${t('categories')}: ${preview.data.impact['totalCategoryCount']} · ${t('products')}: ${preview.data.impact['productCount']}`
-                  : t('loading')}
-              </pre>
-            </Confirm>
-          </>
-        )}
-      </div>
-      <TableState pending={rows.isPending} error={rows.error} empty={!items.length}>
-        <table>
-          <thead>
-            <tr>
-              <th>{t('name')}</th>
-              <th>{t('categories')}</th>
-              <th>{t('products')}</th>
-              <th>{t('order')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listed.map((c, index) => (
-              <tr key={c.id}>
-                <td>
-                  <a href={'/admin/categories/' + c.id}>{c.name}</a>
-                </td>
-                <td>{c.activeChildCount}</td>
-                <td>{c.activeProductCount}</td>
-                <td>
-                  <div className="gl-admin-toolbar">
-                    <GLButton
-                      variant="ghost"
-                      disabled={index === 0 || rows.hasNextPage || items.length > 500}
-                      onClick={() => shift(index, -1)}
-                    >
-                      {t('up')}
-                    </GLButton>
-                    <GLButton
-                      variant="ghost"
-                      disabled={
-                        index === listed.length - 1 || rows.hasNextPage || items.length > 500
-                      }
-                      onClick={() => shift(index, 1)}
-                    >
-                      {t('down')}
-                    </GLButton>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableState>
-      {rows.hasNextPage && (
-        <GLButton loading={rows.isFetchingNextPage} onClick={() => void rows.fetchNextPage()}>
-          {t('next')}
-        </GLButton>
-      )}
-      {ordered.length > 0 && (
-        <GLButton
-          disabled={rows.hasNextPage || items.length > 500}
-          loading={action.isPending}
-          onClick={() =>
-            action.mutate(
-              () =>
-                api.request(
-                  '/admin/categories/reorder',
-                  jsonResponse,
-                  {
-                    parentId: parent,
-                    orderedIds: ordered,
-                    expectedListRevision: orderRevision,
-                  },
-                  'POST',
-                ),
-              {
-                onSuccess: () => {
-                  setOrdered([]);
-                  setOrderRevision(null);
-                },
-              },
-            )
-          }
-        >
-          {t('reorder')}
-        </GLButton>
-      )}
-      <GLModal
-        open={editor != null}
-        title={editor === 'edit' ? t('edit') : t('create')}
-        onClose={() => setEditor(null)}
-      >
-        <form
-          onSubmit={form.handleSubmit((v) => {
-            if (!v.names.ar.trim()) {
-              form.setError('names.ar', { message: t('required') });
-              return;
-            }
-            action.mutate(
-              () =>
-                api.request(
-                  editor === 'edit' ? `/admin/categories/${id}` : '/admin/categories',
-                  categorySchema.omit({
-                    translations: true,
-                    coverAssetId: true,
-                    activeChildCount: true,
-                    activeProductCount: true,
-                    canAddProducts: true,
-                    canAddChildren: true,
-                  }),
-                  editor === 'edit'
-                    ? {
-                        expectedVersion: detail.data!.version,
-                        translations: translationInput(v),
-                        coverAssetId: cover,
-                      }
-                    : {
-                        parentId: parent,
-                        expectedParentVersion: detail.data?.version ?? null,
-                        translations: translationInput(v),
-                        coverAssetId: cover,
-                      },
-                  editor === 'edit' ? 'PATCH' : 'POST',
-                ),
-              {
-                onSuccess: () => {
-                  form.reset(v);
-                  setEditor(null);
-                },
-              },
-            );
-          })}
-        >
-          <TranslationFields form={form} />
-          {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} />}
-          <GLButton variant="secondary" onClick={() => setCoverOpen(true)}>
-            {t('cover')}
-          </GLButton>
-          {cover && (
-            <GLButton variant="secondary" onClick={() => setCover(null)}>
-              {t('detach')}
+      <div className="gl-master-detail gl-category-workspace">
+        <aside className="gl-master-list" aria-label={t('categories')}>
+          <div className="gl-category-path">
+            <span className="gl-overline">{t('location')}</span>
+            <p>{detail.data?.name ?? t('root')}</p>
+          </div>{' '}
+          <TableState pending={rows.isPending} error={rows.error} empty={!items.length}>
+            <table>
+              <thead>
+                <tr>
+                  <th>{t('name')}</th>
+                  <th>{t('categories')}</th>
+                  <th>{t('products')}</th>
+                  <th>{t('order')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listed.map((c, index) => (
+                  <tr key={c.id}>
+                    <td>
+                      <a href={'/admin/categories/' + c.id}>{c.name}</a>
+                      <small>
+                        {c.activeChildCount} / {t('categories')} · {c.activeProductCount} /{' '}
+                        {t('products')}
+                      </small>
+                    </td>
+                    <td>{c.activeChildCount}</td>
+                    <td>{c.activeProductCount}</td>
+                    <td>
+                      <div className="gl-admin-toolbar">
+                        <GLButton
+                          variant="ghost"
+                          disabled={index === 0 || rows.hasNextPage || items.length > 500}
+                          onClick={() => shift(index, -1)}
+                        >
+                          {t('up')}
+                        </GLButton>
+                        <GLButton
+                          variant="ghost"
+                          disabled={
+                            index === listed.length - 1 || rows.hasNextPage || items.length > 500
+                          }
+                          onClick={() => shift(index, 1)}
+                        >
+                          {t('down')}
+                        </GLButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableState>
+          {rows.hasNextPage && (
+            <GLButton loading={rows.isFetchingNextPage} onClick={() => void rows.fetchNextPage()}>
+              {t('next')}
             </GLButton>
           )}
-          <ActionFeedback action={action} />
-          <GLButton type="submit" loading={action.isPending}>
-            {t('save')}
-          </GLButton>
-        </form>
-      </GLModal>
+          {ordered.length > 0 && (
+            <GLButton
+              disabled={rows.hasNextPage || items.length > 500}
+              loading={action.isPending}
+              onClick={() =>
+                action.mutate(
+                  () =>
+                    api.request(
+                      '/admin/categories/reorder',
+                      jsonResponse,
+                      {
+                        parentId: parent,
+                        orderedIds: ordered,
+                        expectedListRevision: orderRevision,
+                      },
+                      'POST',
+                    ),
+                  {
+                    onSuccess: () => {
+                      setOrdered([]);
+                      setOrderRevision(null);
+                    },
+                  },
+                )
+              }
+            >
+              {t('reorder')}
+            </GLButton>
+          )}
+        </aside>
+        <div className="gl-detail-canvas">
+          {' '}
+          <div className="gl-admin-toolbar">
+            <GLButton
+              disabled={!!id && !detail.data?.canAddChildren}
+              onClick={() => {
+                form.reset(structuredClone(emptyTranslations));
+                setCover(null);
+                setEditor('create');
+              }}
+            >
+              {t('create')}
+            </GLButton>
+            {detail.data && (
+              <>
+                <GLButton
+                  variant="secondary"
+                  onClick={() => {
+                    form.reset(translationDefaults(detail.data!.translations));
+                    setCover(detail.data!.coverAssetId);
+                    setEditor('edit');
+                  }}
+                >
+                  {t('edit')}
+                </GLButton>
+                <GLButton variant="secondary" onClick={() => setMoving(true)}>
+                  {t('move')}
+                </GLButton>
+                <Confirm
+                  title={t('remove')}
+                  disabled={!preview.data}
+                  work={() =>
+                    api
+                      .request(
+                        `/admin/categories/${id}`,
+                        jsonResponse,
+                        {
+                          confirm: true,
+                          expectedVersion: preview.data!.category.version,
+                          previewPrecondition: preview.data!.previewPrecondition,
+                        },
+                        'DELETE',
+                      )
+                      .then(() => {
+                        window.location.assign('/admin/categories');
+                      })
+                  }
+                >
+                  {t('confirmDelete')}
+                  <pre>
+                    {preview.data
+                      ? `${t('categories')}: ${preview.data.impact['totalCategoryCount']} · ${t('products')}: ${preview.data.impact['productCount']}`
+                      : t('loading')}
+                  </pre>
+                </Confirm>
+              </>
+            )}
+          </div>
+          {!editor && (
+            <section className="gl-category-summary">
+              <GLHeading level={2} role="heading4">
+                {detail.data ? t('overview') : t('root')}
+              </GLHeading>
+              {detail.data && (
+                <p>
+                  {t('categories')}: <bdi>{detail.data.activeChildCount}</bdi> · {t('products')}:{' '}
+                  <bdi>{detail.data.activeProductCount}</bdi> · {t('version')}:{' '}
+                  <bdi>{detail.data.version}</bdi>
+                </p>
+              )}
+              <p>
+                {t('location')}:{' '}
+                <bdi>
+                  {path.data?.pages
+                    .flatMap((page) => page.items)
+                    .map((entry) => entry.name)
+                    .join(' / ') || '/'}
+                </bdi>
+              </p>
+            </section>
+          )}
+          <FocusedEditor
+            open={editor != null}
+            title={editor === 'edit' ? t('edit') : t('create')}
+            onClose={() => setEditor(null)}
+          >
+            <form
+              onSubmit={form.handleSubmit((v) => {
+                if (!v.names.ar.trim()) {
+                  form.setError('names.ar', { message: t('required') });
+                  return;
+                }
+                action.mutate(
+                  () =>
+                    api.request(
+                      editor === 'edit' ? `/admin/categories/${id}` : '/admin/categories',
+                      categorySchema.omit({
+                        translations: true,
+                        coverAssetId: true,
+                        activeChildCount: true,
+                        activeProductCount: true,
+                        canAddProducts: true,
+                        canAddChildren: true,
+                      }),
+                      editor === 'edit'
+                        ? {
+                            expectedVersion: detail.data!.version,
+                            translations: translationInput(v),
+                            coverAssetId: cover,
+                          }
+                        : {
+                            parentId: parent,
+                            expectedParentVersion: detail.data?.version ?? null,
+                            translations: translationInput(v),
+                            coverAssetId: cover,
+                          },
+                      editor === 'edit' ? 'PATCH' : 'POST',
+                    ),
+                  {
+                    onSuccess: () => {
+                      form.reset(v);
+                      setEditor(null);
+                    },
+                  },
+                );
+              })}
+            >
+              <GLFormSection title={t('location')}>
+                <GLBreadcrumb
+                  items={[
+                    { label: t('root'), href: '/admin/categories' },
+                    ...(path.data?.pages.flatMap((page) => page.items) ?? []).map((c) => ({
+                      label: c.name,
+                      href: '/admin/categories/' + c.id,
+                    })),
+                  ]}
+                />
+                <p>
+                  {editor === 'create'
+                    ? t('parent') + ': ' + (detail.data?.name ?? t('root'))
+                    : t('move')}
+                </p>
+              </GLFormSection>
+              <TranslationFields form={form} />
+              <GLFormSection title={t('cover')}>
+                <div className="gl-cover-editor">
+                  {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} />}
+                  <GLButton variant="secondary" onClick={() => setCoverOpen(true)}>
+                    {t('cover')}
+                  </GLButton>
+                  {cover && (
+                    <GLButton variant="secondary" onClick={() => setCover(null)}>
+                      {t('detach')}
+                    </GLButton>
+                  )}
+                </div>
+              </GLFormSection>
+              <ActionFeedback action={action} />
+              <GLActionBar>
+                <GLButton variant="ghost" onClick={() => setEditor(null)}>
+                  {t('cancel')}
+                </GLButton>
+                <GLButton type="submit" loading={action.isPending}>
+                  {t('save')}
+                </GLButton>
+              </GLActionBar>
+            </form>
+          </FocusedEditor>
+        </div>
+      </div>
       <MediaPicker
         open={coverOpen}
         onClose={() => setCoverOpen(false)}
         allowedKind="IMAGE"
         onSelect={(asset) => setCover(asset.id)}
       />
-      <GLModal open={moving} onClose={() => setMoving(false)} title={t('move')}>
+      <GLModal
+        className="gl-admin-overlay"
+        open={moving}
+        onClose={() => setMoving(false)}
+        title={t('move')}
+      >
         <GLButton variant="secondary" onClick={() => setDestination(null)}>
           {t('root')}
         </GLButton>

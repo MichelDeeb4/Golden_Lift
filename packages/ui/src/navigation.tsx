@@ -31,10 +31,12 @@ export function GLTabs({
   tabs,
   value,
   onChange,
+  idPrefix = '',
 }: {
   tabs: readonly { id: string; label: string }[];
   value: string;
   onChange: (id: string) => void;
+  idPrefix?: string;
 }) {
   return (
     <div
@@ -61,8 +63,9 @@ export function GLTabs({
         <button
           key={tab.id}
           role="tab"
-          id={'tab-' + tab.id}
-          aria-controls={'panel-' + tab.id}
+          type="button"
+          id={idPrefix + 'tab-' + tab.id}
+          aria-controls={idPrefix + 'panel-' + tab.id}
           aria-selected={tab.id === value}
           tabIndex={tab.id === value ? 0 : -1}
           onClick={() => onChange(tab.id)}
@@ -127,10 +130,6 @@ export function GLHeader({
   const { t } = useGLTranslation();
   return (
     <>
-      <div className="gl-utility">
-        <span>GOLDEN LIFT / {t('brand')}</span>
-        <GLLanguageSwitcher />
-      </div>
       <header className="gl-header">
         <div className="gl-header-inner">
           <div className="desktop-brand">{brand}</div>
@@ -143,6 +142,9 @@ export function GLHeader({
             ))}
           </nav>
           <div className="gl-header-search">
+            <div className="gl-utility">
+              <GLLanguageSwitcher />
+            </div>
             <GLIconButton label={t('search')} variant="ghost" onClick={onSearch}>
               <Search size={20} />
             </GLIconButton>

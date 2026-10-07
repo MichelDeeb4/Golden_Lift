@@ -26,6 +26,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAdminTranslation } from './translations';
 import './styles.css';
+import './workspace.css';
+import { frontendConfiguration } from '../../configuration';
 const Context = createContext<StaffApiClient | null>(null);
 const UnsavedContext = createContext<((id: symbol, dirty: boolean) => void) | null>(null);
 function publicStaffPath(path: string) {
@@ -103,7 +105,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
   const api = useMemo(
     () =>
       new StaffApiClient(
-        process.env.EXPO_PUBLIC_ADMIN_API_URL ?? 'http://localhost:3000',
+        frontendConfiguration.apiOrigin,
         () => {
           client.clear();
           if (!publicStaffPath(window.location.pathname) && !redirecting.current) {
@@ -111,7 +113,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
             window.location.assign('/admin/login');
           }
         },
-        process.env.EXPO_PUBLIC_MEDIA_ORIGIN ?? 'http://localhost:3003',
+        frontendConfiguration.mediaOrigin,
       ),
     [client],
   );
@@ -140,7 +142,9 @@ export function StaffError({ error, reload }: { error: unknown; reload?: () => v
         ? t('conflict')
         : error instanceof StaffApiError && error.status === 401
           ? t('expired')
-          : t('error')}
+          : error instanceof StaffApiError && error.validationMessage
+            ? error.validationMessage
+            : t('error')}
       {reload && (
         <GLButton variant="secondary" onClick={reload}>
           {t('reload')}
@@ -249,17 +253,37 @@ export function StaffShell({ children }: { children: ReactNode }) {
         ['/admin/media', t('media')],
         ['/admin/account', t('account')],
       ];
+  const groups = isSuper
+    ? [
+        { title: t('staff'), items: links.slice(0, 1) },
+        { title: t('account'), items: links.slice(1) },
+      ]
+    : [
+        { title: t('overview'), items: links.slice(0, 1) },
+        { title: t('catalog'), items: links.slice(1, 7) },
+        { title: t('media'), items: links.slice(7, 8) },
+        { title: t('account'), items: links.slice(8) },
+      ];
   const nav = (
     <nav aria-label={t('dashboard')}>
-      {links.map(([href, label]) => (
-        <a
-          key={href}
-          href={href}
-          aria-current={pathname === href ? 'page' : undefined}
-          onClick={() => setDrawer(false)}
-        >
-          {label}
-        </a>
+      {groups.map((group) => (
+        <div className="gl-nav-group" key={group.title}>
+          <p>{group.title}</p>
+          {group.items.map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              aria-current={
+                pathname === href || (href !== '/admin' && pathname.startsWith(href + '/'))
+                  ? 'page'
+                  : undefined
+              }
+              onClick={() => setDrawer(false)}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
       ))}
     </nav>
   );

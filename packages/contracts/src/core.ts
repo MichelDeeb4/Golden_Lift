@@ -95,6 +95,7 @@ export interface CategoryDto {
   readonly resolvedNameLocale: Locale;
   readonly sortOrder: string;
   readonly version: Version;
+  readonly coverAssetId?: Uuid | null;
 }
 export interface Page<T> {
   readonly items: readonly T[];

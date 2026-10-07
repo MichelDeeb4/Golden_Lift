@@ -148,12 +148,62 @@ export interface PublicProductDto {
   readonly resolvedNameLocale: Locale;
   readonly coverAssetId: Uuid;
   readonly modelCode: string | null;
+  readonly categoryName: string;
+  readonly productTypeName: string;
+  readonly media: readonly PublicProductMedia[];
+  readonly documents: readonly {
+    readonly assetId: Uuid;
+    readonly sheetId: Uuid;
+    readonly title: string;
+  }[];
   readonly attributes: readonly {
     readonly definitionId: Uuid;
     readonly label: string;
     readonly unitSymbol: string | null;
     readonly value: PublicAttributeValue;
   }[];
+}
+export interface PublicProductMedia {
+  readonly assetId: Uuid;
+  readonly kind: 'IMAGE' | 'VIDEO' | 'PDF';
+  readonly title: string;
+  readonly altText: string;
+}
+export type PublicProductFilter =
+  | {
+      readonly definitionId: Uuid;
+      readonly kind: 'NUMBER';
+      readonly minimum?: string;
+      readonly maximum?: string;
+    }
+  | { readonly definitionId: Uuid; readonly kind: 'BOOLEAN'; readonly value: boolean }
+  | { readonly definitionId: Uuid; readonly kind: 'TEXT'; readonly value: string }
+  | { readonly definitionId: Uuid; readonly kind: 'CHOICE'; readonly optionId: Uuid };
+export interface PublicFilterDefinition {
+  readonly id: Uuid;
+  readonly label: string;
+  readonly kind: AttributeKind;
+  readonly unitSymbol: string | null;
+  readonly minimum: string | null;
+  readonly maximum: string | null;
+  readonly options: readonly { readonly id: Uuid; readonly label: string }[];
+}
+export interface PublicProductQuery {
+  readonly locale: Locale;
+  readonly page: number;
+  readonly pageSize: number;
+  readonly categoryId?: Uuid;
+  readonly productTypeId?: Uuid;
+  readonly search?: string;
+  readonly sort: 'featured' | 'name';
+  readonly filters: readonly PublicProductFilter[];
+}
+export interface PublicProductPage {
+  readonly items: readonly PublicProductDto[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly hasNextPage: boolean;
+  readonly filters: readonly PublicFilterDefinition[];
 }
 export type PublicAttributeValue =
   | Extract<AttributeValue, { readonly kind: 'NUMBER' | 'BOOLEAN' }>

@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Golden Lift API",
-    "version": "0.6.0",
-    "description": "Identity, category administration, Dynamic Catalog Core, B5 Media and Admin product management. Live staff verification, optimistic versions, exact typed values, reviewed schema changes, inactive-product privacy, ordered media and retained soft deletion. External B5 scanner/codec/broker/provider/isolation acceptance and deployment remain separate."
+    "version": "0.7.0",
+    "description": "Identity, category administration, Dynamic Catalog Core, B5 Media and Admin product management. Live staff verification, optimistic versions, exact typed values, reviewed schema changes, inactive-product privacy, ordered media and retained soft deletion. External B5 scanner/codec/broker/provider/isolation acceptance and deployment remain separate. Public collection/search/dynamic filters and safe gallery/video/allowed-PDF projection are integrated. Normal frontend defaults to real API mode."
   },
   "servers": [
     {
@@ -10611,6 +10611,110 @@
           }
         }
       }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "listPublicProducts",
+        "summary": "Bounded public Catalog collection and PostgreSQL search",
+        "description": "Only active products in live categories with a ready, unblocked image cover and live type. Exact decimals, false booleans and choice IDs remain intact. Search names/descriptions in requested locale and Arabic fallback, model code and assigned public searchable TEXT values. Filters require public/filterable policy on both definition and assignment. Facets describe up to 100 eligible definitions in the category/type scope; no global count or snapshot guarantee. PDF documents include only existing technical sources with download_enabled; ordinary PDF associations do not grant download permission.",
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Locale"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 12,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "productType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["featured", "name"],
+              "default": "featured"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "description": "JSON array, at most 10 distinct definition IDs and 4096 characters. NUMBER requires minimum or maximum; range must be ordered. Unsupported/private filters are rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "maxItems": 10,
+                  "items": {
+                    "$ref": "#/components/schemas/PublicProductFilter"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eligible page; no-store",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProductPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bounded query or unsupported/private filter"
+          },
+          "503": {
+            "description": "Catalog unavailable"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -10702,6 +10806,17 @@
           },
           "version": {
             "$ref": "#/components/schemas/Version"
+          },
+          "coverAssetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -12663,7 +12778,11 @@
           "resolvedNameLocale",
           "coverAssetId",
           "modelCode",
-          "attributes"
+          "attributes",
+          "categoryName",
+          "productTypeName",
+          "media",
+          "documents"
         ],
         "properties": {
           "id": {
@@ -12738,6 +12857,60 @@
               }
             },
             "maxItems": 500
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "productTypeName": {
+            "type": "string"
+          },
+          "media": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["assetId", "kind", "title", "altText"],
+              "properties": {
+                "assetId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["IMAGE", "VIDEO"]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "altText": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Up to 100 eligible associations in global order, always including the current cover."
+          },
+          "documents": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["assetId", "sheetId", "title"],
+              "properties": {
+                "assetId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sheetId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "description": "Anonymous safe projection with field-level requested-locale then Arabic fallback. No private attributes, saved translation sets, admin counts or private evidence. Asset UUID is not a delivery URL."
@@ -14225,6 +14398,174 @@
           },
           "confirmed": {
             "const": true
+          }
+        }
+      },
+      "PublicFilterDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "kind", "unitSymbol", "minimum", "maximum", "options"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["NUMBER", "BOOLEAN", "TEXT", "CHOICE"]
+          },
+          "unitSymbol": {
+            "type": ["string", "null"]
+          },
+          "minimum": {
+            "type": ["string", "null"]
+          },
+          "maximum": {
+            "type": ["string", "null"]
+          },
+          "options": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "label"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "label": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "First 100 non-deprecated options in contract order."
+          }
+        }
+      },
+      "PublicProductFilter": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["definitionId", "kind"],
+            "properties": {
+              "definitionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "const": "NUMBER"
+              },
+              "minimum": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]{0,13})(?:\\.[0-9]{1,6})?$"
+              },
+              "maximum": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]{0,13})(?:\\.[0-9]{1,6})?$"
+              }
+            },
+            "anyOf": [
+              {
+                "required": ["minimum"]
+              },
+              {
+                "required": ["maximum"]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["definitionId", "kind", "value"],
+            "properties": {
+              "definitionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "const": "BOOLEAN"
+              },
+              "value": {
+                "type": "boolean"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["definitionId", "kind", "value"],
+            "properties": {
+              "definitionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "const": "TEXT"
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["definitionId", "kind", "optionId"],
+            "properties": {
+              "definitionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "const": "CHOICE"
+              },
+              "optionId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ]
+      },
+      "PublicProductPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "page", "pageSize", "hasNextPage", "filters"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PublicProduct"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "filters": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PublicFilterDefinition"
+            }
           }
         }
       }

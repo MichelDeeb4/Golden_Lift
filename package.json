@@ -12,6 +12,7 @@
     "services/*"
   ],
   "scripts": {
+    "start": "node scripts/dev.mjs --web",
     "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.check.json --noEmit && npm run typecheck --workspace @golden-lift/storefront",
     "lint": "npm run format:check && node scripts/check-boundaries.mjs && node scripts/test-boundaries.mjs && npm run orm:check",
@@ -41,7 +42,10 @@
     "storefront:preview": "node scripts/storefront-preview.mjs",
     "test:frontend": "tsx --test tests/frontend.unit.test.ts",
     "test:storefront": "playwright test --config tests/frontend.playwright.config.ts",
-    "test:admin": "playwright test --config tests/frontend.admin.config.ts"
+    "test:admin": "playwright test --config tests/frontend.admin.config.ts",
+    "media:tools": "node scripts/media-tools.mjs",
+    "media:setup": "node scripts/media-local.mjs",
+    "doctor": "node scripts/doctor.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

@@ -24,6 +24,9 @@ try {
       signingKey: process.env['MEDIA_EVENT_SECRET'] ?? '',
       verificationKey: process.env['CATALOG_EVENT_SECRET'] ?? '',
       signal: shutdown.signal,
+      ...(process.env['MEDIA_EVENT_TRANSPORT'] === 'local-http'
+        ? { localHttp: { listenPort: 3103, targetPort: 3102 } }
+        : {}),
       apply: async (input) => {
         const event = mediaEvent(input);
         if (event.type !== 'catalog.asset.retired.v1')

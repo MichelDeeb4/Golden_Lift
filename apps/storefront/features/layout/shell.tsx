@@ -27,6 +27,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const links = [
     { href: '/', label: t('home') },
     { href: '/products', label: t('products') },
+    { href: '/categories', label: t('categories') },
     { href: '/about', label: t('about') },
     { href: '/contact', label: t('contact') },
   ];
@@ -57,6 +58,11 @@ export function Shell({ children }: { children: ReactNode }) {
       </main>
       <footer className="gl-footer">
         <GLPageContainer>
+          <div className="gl-footer-statement">
+            <span className="gl-overline">GOLDEN LIFT / {t('brand')}</span>
+            <p>{t('heroTitle')}</p>
+            <a href="/products">{t('explore')} ↗</a>
+          </div>
           <div className="gl-footer-grid">
             <div>
               <Brand />

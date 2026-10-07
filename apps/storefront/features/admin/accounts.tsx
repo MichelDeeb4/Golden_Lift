@@ -4,10 +4,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { pageSchema, staffAccountSchema } from '@golden-lift/api';
-import { GLAlert, GLButton, GLHeading, GLInput } from '@golden-lift/ui';
+import {
+  GLAlert,
+  GLButton,
+  GLActionMenu,
+  GLModal,
+  GLPageHeader,
+  GLFormSection,
+  GLInput,
+} from '@golden-lift/ui';
 import { useStaffApi, useStaffSession, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
-import { ActionFeedback, ApiCommand, TableState, jsonResponse, useAction } from './common';
+import { ActionFeedback, TableState, jsonResponse, useAction } from './common';
 const inviteSchema = z.object({
   email: z.string().email(),
   displayName: z.string().trim().min(1).max(150),
@@ -17,6 +25,11 @@ export function AdminAccounts({ id }: { id?: string }) {
     t = useAdminTranslation(),
     [cursor, setCursor] = useState(''),
     [deliveryFailed, setDeliveryFailed] = useState(false),
+    [reviewed, setReviewed] = useState<{
+      account: z.infer<typeof staffAccountSchema>;
+      operation: 'disable' | 'enable' | 'invitation' | 'delete';
+      label: string;
+    } | null>(null),
     action = useAction(),
     form = useForm<z.infer<typeof inviteSchema>>({ resolver: zodResolver(inviteSchema) });
   const rows = useQuery({
@@ -40,50 +53,60 @@ export function AdminAccounts({ id }: { id?: string }) {
   const records = id ? (detail.data ? [detail.data] : []) : (rows.data?.items ?? []);
   return (
     <>
-      <GLHeading level={1} role="heading3">
-        {t('admins')}
-      </GLHeading>
+      <GLPageHeader
+        title={t('admins')}
+        breadcrumbs={[
+          { label: t('staff'), href: '/super-admin/admins' },
+          {
+            label: id ? t('edit') : t('admins'),
+            href: id ? '/super-admin/admins/' + id : '/super-admin/admins',
+          },
+        ]}
+      />
       <ActionFeedback action={action} />
       {deliveryFailed && <GLAlert tone="error">{t('deliveryFailed')}</GLAlert>}
       {!id && (
-        <form
-          onSubmit={form.handleSubmit((v) =>
-            action.mutate(
-              () =>
-                api.request(
-                  '/staff/admins',
-                  z.object({ account: staffAccountSchema, delivery: z.enum(['SENT', 'FAILED']) }),
-                  v,
-                  'POST',
-                ),
-              {
-                onSuccess: (result) => {
-                  setDeliveryFailed(
-                    (result as { delivery: 'SENT' | 'FAILED' }).delivery === 'FAILED',
-                  );
-                  form.reset();
+        <GLFormSection title={t('invite')}>
+          <form
+            className="gl-staff-invitation"
+            onSubmit={form.handleSubmit((v) =>
+              action.mutate(
+                () =>
+                  api.request(
+                    '/staff/admins',
+                    z.object({ account: staffAccountSchema, delivery: z.enum(['SENT', 'FAILED']) }),
+                    v,
+                    'POST',
+                  ),
+                {
+                  onSuccess: (result) => {
+                    setDeliveryFailed(
+                      (result as { delivery: 'SENT' | 'FAILED' }).delivery === 'FAILED',
+                    );
+                    form.reset();
+                  },
                 },
-              },
-            ),
-          )}
-        >
-          <div className="gl-admin-grid">
-            <GLInput
-              label={t('displayName')}
-              {...form.register('displayName')}
-              error={form.formState.errors.displayName ? t('error') : undefined}
-            />
-            <GLInput
-              label={t('email')}
-              type="email"
-              {...form.register('email')}
-              error={form.formState.errors.email ? t('error') : undefined}
-            />
-          </div>
-          <GLButton type="submit" loading={action.isPending}>
-            {t('invite')}
-          </GLButton>
-        </form>
+              ),
+            )}
+          >
+            <div className="gl-admin-grid gl-invitation-grid">
+              <GLInput
+                label={t('displayName')}
+                {...form.register('displayName')}
+                error={form.formState.errors.displayName ? t('error') : undefined}
+              />
+              <GLInput
+                label={t('email')}
+                type="email"
+                {...form.register('email')}
+                error={form.formState.errors.email ? t('error') : undefined}
+              />
+            </div>
+            <GLButton type="submit" loading={action.isPending}>
+              {t('invite')}
+            </GLButton>
+          </form>
+        </GLFormSection>
       )}
       <TableState
         pending={id ? detail.isPending : rows.isPending}
@@ -110,32 +133,81 @@ export function AdminAccounts({ id }: { id?: string }) {
                 <td>{row.status}</td>
                 <td>{row.version}</td>
                 <td>
-                  <div className="gl-admin-toolbar">
-                    <ApiCommand
-                      path={`/staff/admins/${row.id}/${row.status === 'DISABLED' ? 'enable' : 'disable'}`}
-                      body={{ expectedVersion: row.version }}
-                      label={row.status === 'DISABLED' ? t('enable') : t('disable')}
-                    />
-                    {row.status === 'INVITED' && (
-                      <ApiCommand
-                        path={`/staff/admins/${row.id}/invitation`}
-                        body={{ expectedVersion: row.version }}
-                        label={t('resend')}
-                      />
-                    )}
-                    <ApiCommand
-                      path={`/staff/admins/${row.id}`}
-                      method="DELETE"
-                      body={{ expectedVersion: row.version }}
-                      label={t('remove')}
-                    />
-                  </div>
+                  <GLActionMenu
+                    label={t('actions')}
+                    items={[
+                      {
+                        label: row.status === 'DISABLED' ? t('enable') : t('disable'),
+                        onSelect: () =>
+                          setReviewed({
+                            account: row,
+                            operation: row.status === 'DISABLED' ? 'enable' : 'disable',
+                            label: row.status === 'DISABLED' ? t('enable') : t('disable'),
+                          }),
+                      },
+                      ...(row.status === 'INVITED'
+                        ? [
+                            {
+                              label: t('resend'),
+                              onSelect: () =>
+                                setReviewed({
+                                  account: row,
+                                  operation: 'invitation',
+                                  label: t('resend'),
+                                }),
+                            },
+                          ]
+                        : []),
+                      {
+                        label: t('remove'),
+                        destructive: true,
+                        onSelect: () =>
+                          setReviewed({ account: row, operation: 'delete', label: t('remove') }),
+                      },
+                    ]}
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </TableState>
+      <GLModal
+        open={!!reviewed}
+        title={reviewed?.label ?? t('confirm')}
+        onClose={() => {
+          if (!action.isPending) setReviewed(null);
+        }}
+      >
+        <p>
+          {reviewed?.account.displayName} — {reviewed?.account.email}
+        </p>
+        <p>{t('confirmAction')}</p>
+        <ActionFeedback action={action} />
+        <GLButton
+          variant="destructive"
+          loading={action.isPending}
+          onClick={() => {
+            if (!reviewed) return;
+            const { account, operation } = reviewed;
+            action.mutate(
+              () =>
+                api.request(
+                  `/staff/admins/${account.id}${operation === 'delete' ? '' : '/' + operation}`,
+                  jsonResponse,
+                  { expectedVersion: account.version },
+                  operation === 'delete' ? 'DELETE' : 'POST',
+                ),
+              { onSuccess: () => setReviewed(null) },
+            );
+          }}
+        >
+          {t('confirm')}
+        </GLButton>
+        <GLButton variant="secondary" disabled={action.isPending} onClick={() => setReviewed(null)}>
+          {t('cancel')}
+        </GLButton>
+      </GLModal>
       {!id && rows.data?.nextCursor && (
         <GLButton variant="secondary" onClick={() => setCursor(rows.data!.nextCursor!)}>
           {t('next')}
@@ -157,43 +229,45 @@ export function Account() {
   useUnsaved(form.formState.isDirty);
   return (
     <>
-      <GLHeading level={1} role="heading3">
-        {t('account')}
-      </GLHeading>
-      <p>
-        {session.data?.account.displayName} · {session.data?.account.email}
-      </p>
-      <p>
-        {t('expires')}: {session.data?.expiresAt}
-      </p>
-      <form
-        onSubmit={form.handleSubmit((v) =>
-          action.mutate(() => api.request('/auth/password/change', jsonResponse, v, 'POST'), {
-            onSuccess: () => {
-              form.reset();
-              void api.logout().catch(() => {});
-            },
-          }),
-        )}
-      >
-        <GLInput
-          label={t('oldPassword')}
-          type="password"
-          autoComplete="current-password"
-          {...form.register('oldPassword')}
-        />
-        <GLInput
-          label={t('newPassword')}
-          type="password"
-          autoComplete="new-password"
-          {...form.register('password')}
-          error={form.formState.errors.password ? t('error') : undefined}
-        />
-        <ActionFeedback action={action} />
-        <GLButton type="submit" loading={action.isPending}>
-          {t('changePassword')}
-        </GLButton>
-      </form>
+      <GLPageHeader title={t('account')} />
+      <GLFormSection title={t('identity')}>
+        <p>
+          {session.data?.account.displayName} · {session.data?.account.email}
+        </p>
+        <p>
+          {t('expires')}: {session.data?.expiresAt}
+        </p>
+      </GLFormSection>
+      <GLFormSection title={t('changePassword')}>
+        <form
+          onSubmit={form.handleSubmit((v) =>
+            action.mutate(() => api.request('/auth/password/change', jsonResponse, v, 'POST'), {
+              onSuccess: () => {
+                form.reset();
+                void api.logout().catch(() => {});
+              },
+            }),
+          )}
+        >
+          <GLInput
+            label={t('oldPassword')}
+            type="password"
+            autoComplete="current-password"
+            {...form.register('oldPassword')}
+          />
+          <GLInput
+            label={t('newPassword')}
+            type="password"
+            autoComplete="new-password"
+            {...form.register('password')}
+            error={form.formState.errors.password ? t('error') : undefined}
+          />
+          <ActionFeedback action={action} />
+          <GLButton type="submit" loading={action.isPending}>
+            {t('changePassword')}
+          </GLButton>
+        </form>
+      </GLFormSection>
     </>
   );
 }

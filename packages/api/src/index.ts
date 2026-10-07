@@ -1,4 +1,31 @@
 import { z } from 'zod';
+export const publicProductFilterSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      definitionId: z.string().uuid(),
+      kind: z.literal('NUMBER'),
+      minimum: z.string().max(22).optional(),
+      maximum: z.string().max(22).optional(),
+    })
+    .strict(),
+  z
+    .object({ definitionId: z.string().uuid(), kind: z.literal('BOOLEAN'), value: z.boolean() })
+    .strict(),
+  z
+    .object({
+      definitionId: z.string().uuid(),
+      kind: z.literal('TEXT'),
+      value: z.string().min(1).max(200),
+    })
+    .strict(),
+  z
+    .object({
+      definitionId: z.string().uuid(),
+      kind: z.literal('CHOICE'),
+      optionId: z.string().uuid(),
+    })
+    .strict(),
+]);
 import { apiOrigin } from './origin';
 export type Language = 'ar' | 'en' | 'ckb';
 export interface MediaReference {
@@ -49,6 +76,7 @@ export interface Product {
   readonly description: string;
   readonly model: string | null;
   readonly categoryName: string;
+  readonly productTypeName?: string;
   readonly media: readonly MediaReference[];
   readonly attributes: readonly TechnicalAttribute[];
   readonly documents: readonly TechnicalDocument[];
@@ -57,12 +85,34 @@ export interface CatalogPage<T> {
   readonly items: readonly T[];
   readonly nextCursor: string | null;
   readonly total: number | null;
+  readonly filters?: readonly PublicFilterDefinition[];
 }
+export interface PublicFilterDefinition {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: 'NUMBER' | 'BOOLEAN' | 'TEXT' | 'CHOICE';
+  readonly unitSymbol: string | null;
+  readonly minimum: string | null;
+  readonly maximum: string | null;
+  readonly options: readonly { readonly id: string; readonly label: string }[];
+}
+export type PublicProductFilter =
+  | {
+      readonly definitionId: string;
+      readonly kind: 'NUMBER';
+      readonly minimum?: string;
+      readonly maximum?: string;
+    }
+  | { readonly definitionId: string; readonly kind: 'BOOLEAN'; readonly value: boolean }
+  | { readonly definitionId: string; readonly kind: 'TEXT'; readonly value: string }
+  | { readonly definitionId: string; readonly kind: 'CHOICE'; readonly optionId: string };
 export interface ProductQuery {
   readonly text?: string;
   readonly categoryId?: string;
   readonly sort?: 'featured' | 'name';
   readonly page?: number;
+  readonly productTypeId?: string;
+  readonly filters?: readonly PublicProductFilter[];
 }
 export interface CatalogDataSource {
   readonly identity: string;
@@ -133,6 +183,7 @@ const categorySchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   resolvedNameLocale: z.enum(['ar', 'en', 'ckb']),
+  coverAssetId: z.string().uuid().nullable().optional(),
 });
 const categoryPage = z.object({
   items: z.array(categorySchema).max(100),
@@ -154,6 +205,19 @@ const productSchema = z.object({
   description: z.string().nullable(),
   modelCode: z.string().nullable(),
   coverAssetId: z.string().uuid(),
+  categoryName: z.string(),
+  productTypeName: z.string(),
+  media: z.array(
+    z.object({
+      assetId: z.string().uuid(),
+      kind: z.enum(['IMAGE', 'VIDEO', 'PDF']),
+      title: z.string(),
+      altText: z.string(),
+    }),
+  ),
+  documents: z.array(
+    z.object({ assetId: z.string().uuid(), sheetId: z.string().uuid(), title: z.string() }),
+  ),
   attributes: z.array(
     z.object({
       definitionId: z.string().uuid(),
@@ -173,7 +237,16 @@ export class ApiCatalogDataSource implements CatalogDataSource {
       parentId: c.parentId,
       name: c.name,
       description: c.description,
-      image: null,
+      image: c.coverAssetId
+        ? {
+            id: c.coverAssetId,
+            kind: 'image',
+            alt: c.name,
+            profile: 'card',
+            ownerType: 'CATEGORY',
+            ownerId: c.id,
+          }
+        : null,
     };
   }
   async categories(
@@ -210,11 +283,47 @@ export class ApiCatalogDataSource implements CatalogDataSource {
     );
   }
   async products(
-    _language: Language,
-    _query: ProductQuery,
-    _signal?: AbortSignal,
+    language: Language,
+    query: ProductQuery,
+    signal?: AbortSignal,
   ): Promise<CatalogPage<Product>> {
-    throw new ApiError('unsupported');
+    const p = await this.client.get(
+      '/api/v1/products',
+      {
+        locale: language,
+        page: String(query.page ?? 1),
+        pageSize: '12',
+        sort: query.sort ?? 'featured',
+        ...(query.text?.trim() ? { search: query.text.trim() } : {}),
+        ...(query.categoryId ? { category: query.categoryId } : {}),
+        ...(query.productTypeId ? { productType: query.productTypeId } : {}),
+        ...(query.filters?.length ? { filters: JSON.stringify(query.filters) } : {}),
+      },
+      z.object({
+        items: z.array(productSchema).max(100),
+        page: z.number().int(),
+        pageSize: z.number().int(),
+        hasNextPage: z.boolean(),
+        filters: z.array(
+          z.object({
+            id: z.string().uuid(),
+            label: z.string(),
+            kind: z.enum(['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE']),
+            unitSymbol: z.string().nullable(),
+            minimum: z.string().nullable(),
+            maximum: z.string().nullable(),
+            options: z.array(z.object({ id: z.string().uuid(), label: z.string() })),
+          }),
+        ),
+      }),
+      signal,
+    );
+    return {
+      items: p.items.map((item) => this.productModel(item, language)),
+      nextCursor: p.hasNextPage ? String(p.page + 1) : null,
+      total: null,
+      filters: p.filters,
+    };
   }
   async product(id: string, language: Language, signal?: AbortSignal): Promise<Product> {
     const p = await this.client.get(
@@ -223,24 +332,30 @@ export class ApiCatalogDataSource implements CatalogDataSource {
       productSchema,
       signal,
     );
-    const c = await this.category(p.categoryId, language, signal);
+    return this.productModel(p, language);
+  }
+  private productModel(p: z.infer<typeof productSchema>, language: Language): Product {
     return {
       id: p.id,
       categoryId: p.categoryId,
       name: p.name,
       description: p.description ?? '',
       model: p.modelCode,
-      categoryName: c.name,
+      categoryName: p.categoryName,
+      productTypeName: p.productTypeName,
       media: [
-        {
-          id: p.coverAssetId,
-          kind: 'image',
-          alt: p.name,
-          profile: 'detail',
+        ...p.media.filter((m) => m.assetId === p.coverAssetId),
+        ...p.media.filter((m) => m.assetId !== p.coverAssetId),
+      ]
+        .filter((m) => m.kind !== 'PDF')
+        .map((m) => ({
+          id: m.assetId,
+          kind: m.kind === 'VIDEO' ? 'video' : 'image',
+          alt: m.altText || m.title || p.name,
+          profile: m.kind === 'VIDEO' ? 'playback' : 'detail',
           ownerType: 'PRODUCT',
           ownerId: p.id,
-        },
-      ],
+        })),
       attributes: p.attributes.map((a) => ({
         id: a.definitionId,
         label: a.label,
@@ -264,7 +379,21 @@ export class ApiCatalogDataSource implements CatalogDataSource {
                 ? a.value.text
                 : a.value.options.map((o) => o.label).join('، '),
       })),
-      documents: [],
+      documents: p.documents.map((d) => ({
+        id: d.sheetId + ':' + d.assetId,
+        title: d.title,
+        type: 'PDF',
+        permitted: true,
+        media: {
+          id: d.assetId,
+          kind: 'document',
+          alt: d.title,
+          profile: 'original',
+          ownerType: 'TECHNICAL_SOURCE',
+          ownerId: d.sheetId,
+          mime: 'application/pdf',
+        },
+      })),
     };
   }
 }

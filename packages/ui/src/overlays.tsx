@@ -8,12 +8,16 @@ interface OverlayProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  className?: string;
+  keepMounted?: boolean;
 }
 function Overlay({
   open,
   onClose,
   title,
   children,
+  className = '',
+  keepMounted = false,
   drawer = false,
 }: OverlayProps & { drawer?: boolean }) {
   const { t } = useGLTranslation();
@@ -33,12 +37,12 @@ function Overlay({
       prior?.focus();
     };
   }, [open]);
-  if (!open || typeof document === 'undefined') return null;
+  if ((!open && !keepMounted) || typeof document === 'undefined') return null;
   return createPortal(
     <dialog
       ref={ref}
       aria-labelledby={id}
-      className={'gl-dialog ' + (drawer ? 'gl-drawer' : 'gl-modal')}
+      className={'gl-dialog ' + (drawer ? 'gl-drawer' : 'gl-modal') + ' ' + className}
       onCancel={(e) => {
         e.preventDefault();
         onClose();

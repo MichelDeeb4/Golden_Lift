@@ -1,6 +1,8 @@
 # Golden Lift: Completed Work and Project Status
 
-Updated: 2026-10-06. Earlier dated milestone evidence below remains historical.
+Updated: 2026-10-07. Earlier dated milestone evidence below remains historical.
+
+Current functional integration connects visitor browsing, PostgreSQL search and schema-derived filters to real services by default. Native local ClamAV/Sharp/FFmpeg/Poppler upload, association and controlled delivery are exercised with signed durable local event relays. See [the functional integration report](implementation/functional-integration-completed-work.md) and [local setup](operations/local-development.md). RabbitMQ, S3, production SMTP and Linux processor isolation still require provider acceptance; historical milestone reports below retain their original scope.
 
 This document summarizes the implemented project in this repository. B4 adds current locally executed category administration evidence in the [timestamped B4 report](validation/b4-2026-10-04T09-14-07-069Z.json). Earlier Prisma validation at 08:37 UTC and other milestone reports remain preserved as historical evidence.
 
@@ -14,10 +16,10 @@ The database foundation, staff Identity workflows and Prisma integration are imp
 | Backend foundation, B1/B2                       | Five independent services, shared contracts, health checks and HTTP infrastructure implemented                                               |
 | Identity, B3                                    | Staff authentication, invitations, password recovery and Admin lifecycle implemented                                                         |
 | Catalog                                         | B4 implemented locally: editor navigation, moves, root/nested ordering and preview/confirmed branch deletion                                 |
-| Media                                           | B5 code implemented; local Sharp/PostgreSQL/API evidence; native/scanner/broker/provider acceptance remains open |
+| Media                                           | Native local scanner/Sharp/video/PDF upload and delivery tested with signed durable HTTP event relays; RabbitMQ/cloud/Linux production gates remain open |
 | Inquiries                                       | Database, Prisma models, readiness and authenticated staff access checks implemented; submission/inbox/notification workflows remain planned |
 | Prisma adoption                                 | Separate schemas and clients for the four database-owning services implemented                                                               |
-| Public website                                  | S1 shared design system and multilingual responsive catalog shell implemented; demo/API boundary and component lab added |
+| Public website                                  | API-default multilingual browsing, category covers, bounded collections, PostgreSQL search, schema-derived filters and controlled Media; explicit demo fixture and component lab retained |
 | Staff dashboard                                | Shared S1-based web Admin/Super Admin routes, real Catalog/Media/configuration/Identity workflows and additive product management APIs implemented; see the dated Admin report |
 | Mobile apps                                    | Planned; the staff dashboard is web-only |
 | Production deployment                           | Planned; local validation does not establish production readiness                                                                            |

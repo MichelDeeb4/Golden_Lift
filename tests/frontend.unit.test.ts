@@ -97,6 +97,17 @@ test('staff client uses memory CSRF, safe errors, schema parsing and clears expi
     else if (req.url === '/api/v1/admin/write') {
       header = req.headers['x-csrf-token'] as string | undefined;
       res.end('{}');
+    } else if (req.url === '/api/v1/admin/invalid-unit') {
+      res.statusCode = 422;
+      res.end(
+        JSON.stringify({
+          error: {
+            code: 'INVALID_STATE',
+            requestId: 'fixture',
+            message: 'Canonical unit must be active.',
+          },
+        }),
+      );
     } else {
       res.statusCode = 401;
       res.end(
@@ -123,8 +134,13 @@ test('staff client uses memory CSRF, safe errors, schema parsing and clears expi
     await client.request('/admin/write', z.object({}), {}, 'POST');
     assert.equal(header, csrf);
     await assert.rejects(
+      () => client.request('/admin/invalid-unit', z.unknown()),
+      (e) => e instanceof StaffApiError && e.validationMessage === 'Canonical unit must be active.',
+    );
+    await assert.rejects(
       () => client.request('/admin/expired', z.unknown()),
-      (e) => e instanceof StaffApiError && !e.message.includes('secret'),
+      (e) =>
+        e instanceof StaffApiError && !e.message.includes('secret') && e.validationMessage === null,
     );
     assert.equal(invalidated, 1);
     await assert.rejects(
@@ -160,6 +176,85 @@ test('actual loaded Arabic fonts cover Sorani-specific glyphs', () => {
     const font = openSync('node_modules/@expo-google-fonts/' + family + '/' + file);
     for (const char of sample)
       assert.ok(font.hasGlyphForCodePoint(char.codePointAt(0)!), family + ' lacks ' + char);
+  }
+});
+test('live collection maps exact filters, cover-first media and permitted PDF owner context', async () => {
+  const productId = randomUUID(),
+    categoryId = randomUUID(),
+    typeId = randomUUID(),
+    imageId = randomUUID(),
+    videoId = randomUUID(),
+    sheetId = randomUUID(),
+    pdfId = randomUUID(),
+    definitionId = randomUUID();
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url ?? '/', 'http://fixture');
+    assert.equal(url.pathname, '/api/v1/products');
+    assert.equal(url.searchParams.get('locale'), 'ckb');
+    assert.equal(url.searchParams.get('category'), categoryId);
+    assert.deepEqual(JSON.parse(url.searchParams.get('filters')!), [
+      { definitionId, kind: 'NUMBER', minimum: '0.000001', maximum: '0.000001' },
+    ]);
+    res.setHeader('content-type', 'application/json');
+    res.end(
+      JSON.stringify({
+        items: [
+          {
+            id: productId,
+            categoryId,
+            productTypeId: typeId,
+            name: 'Product',
+            description: null,
+            modelCode: 'Exact',
+            coverAssetId: imageId,
+            categoryName: 'Category',
+            productTypeName: 'Type',
+            resolvedNameLocale: 'ckb',
+            media: [
+              { assetId: videoId, kind: 'VIDEO', title: 'Video', altText: '' },
+              { assetId: imageId, kind: 'IMAGE', title: 'Image', altText: 'Real cover' },
+            ],
+            documents: [{ assetId: pdfId, sheetId, title: 'Permitted document' }],
+            attributes: [
+              {
+                definitionId,
+                label: 'Measure',
+                unitSymbol: 'mm',
+                value: { kind: 'NUMBER', number: '0.000001' },
+              },
+            ],
+          },
+        ],
+        filters: [],
+        page: 1,
+        pageSize: 12,
+        hasNextPage: true,
+      }),
+    );
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const page = await new ApiCatalogDataSource(
+      new PublicApiClient('http://127.0.0.1:' + address.port),
+    ).products('ckb', {
+      categoryId,
+      filters: [{ definitionId, kind: 'NUMBER', minimum: '0.000001', maximum: '0.000001' }],
+    });
+    assert.equal(page.nextCursor, '2');
+    assert.equal(page.total, null);
+    assert.deepEqual(
+      page.items[0]!.media.map((m) => m.id),
+      [imageId, videoId],
+    );
+    assert.equal(page.items[0]!.attributes[0]!.value, '0.000001');
+    assert.equal(page.items[0]!.documents[0]!.media.ownerId, sheetId);
+    assert.equal(page.items[0]!.documents[0]!.media.ownerType, 'TECHNICAL_SOURCE');
+    assert.equal(page.items[0]!.documents[0]!.media.profile, 'original');
+    assert.equal(page.items[0]!.documents[0]!.id, sheetId + ':' + pdfId);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
 test('demo categories enforce children versus products and generic attributes', async () => {
@@ -257,7 +352,7 @@ test('real HTTP adapter maps locale/category cursors, validates payloads and exp
     );
     await assert.rejects(
       source.products('en', {}),
-      (e: unknown) => e instanceof ApiError && e.code === 'unsupported',
+      (e: unknown) => e instanceof ApiError && e.code === 'network',
     );
   } finally {
     await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())));

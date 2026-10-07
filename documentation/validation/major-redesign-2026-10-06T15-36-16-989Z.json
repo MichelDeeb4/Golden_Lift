@@ -1,0 +1,758 @@
+{
+  "phase": "Major visual redesign and experience rebuild",
+  "recordedAt": "2026-10-06T15:36:16.989Z",
+  "acceptance": "PASS",
+  "acceptanceScope": "Local implemented presentation scope and preserved workflows, subject to documented contract/provider limitations; no user or external design sign-off claimed.",
+  "environment": {
+    "platform": "Windows",
+    "node": "v24.21.0",
+    "browser": "Microsoft Edge through Playwright",
+    "visitorSource": "Explicitly labeled demonstration catalog",
+    "staffSource": "Real service/Gateway HTTP and disposable PostgreSQL"
+  },
+  "backendChanges": "none",
+  "newDependencies": [],
+  "visualReview": {
+    "recordedAt": "2026-10-06T15:27:23.960Z",
+    "status": "PASS",
+    "reviewer": "Local implementation visual review; no external or user sign-off claimed",
+    "beforeDirectory": "documentation/assets/major-redesign/before",
+    "afterDirectory": "documentation/assets/major-redesign/after",
+    "criteria": [
+      "Changed public composition and imagery proportions",
+      "Focused task hierarchy instead of long product form",
+      "Inline category/configuration context",
+      "Grid-first Media browsing and separate drawers",
+      "Readable desktop/tablet/mobile and RTL layouts"
+    ],
+    "corrections": [
+      "Responsive heading-size precedence",
+      "Mobile locale overlap",
+      "Mosaic row geometry",
+      "Old mobile listing grid",
+      "Row header identity styling",
+      "Filter label wrapping",
+      "Tablet header brand duplication",
+      "Destructive action placement",
+      "Duplicate Media inspector preview/heading",
+      "Deterministic derivative metadata ordering"
+    ],
+    "regressionBaselinesUpdatedAtReview": false
+  },
+  "verification": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "backendUnitTests": 36,
+      "architectureSourceFiles": 201,
+      "boundaryRegressionProbes": 14,
+      "prismaSchemas": 4,
+      "includes": [
+        "build",
+        "typecheck",
+        "format:check",
+        "architecture lint",
+        "architecture enforcement probes",
+        "Prisma generation/validation",
+        "backend unit tests"
+      ],
+      "log": ".local/major-check-final.log"
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "tests": 7,
+      "log": ".local/major-unit-final.log",
+      "execution": "Authorized Windows account access required by tsx"
+    },
+    {
+      "command": "npm.cmd run storefront:build",
+      "status": "PASS",
+      "log": ".local/major-export.log"
+    },
+    {
+      "command": "npm.cmd run test:admin",
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-06T15:29:27.728Z",
+        "duration": 70084.392,
+        "expected": 10,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "snapshots": 17,
+      "updateSnapshots": false,
+      "profile": "Owned disposable PostgreSQL cluster",
+      "log": ".local/major-admin-final.log"
+    },
+    {
+      "command": "npm.cmd run test:storefront",
+      "status": "PASS",
+      "stats": {
+        "startTime": "2026-10-06T15:30:38.612Z",
+        "duration": 22416.564,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "snapshots": 7,
+      "updateSnapshots": false,
+      "log": ".local/major-public-final.log"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS",
+      "log": ".local/major-diff.log"
+    }
+  ],
+  "tests": {
+    "backendUnit": 36,
+    "frontendUnit": 7,
+    "staffBrowser": 10,
+    "visitorBrowser": 5,
+    "total": 58
+  },
+  "visualComparisons": {
+    "staff": 17,
+    "visitor": 7,
+    "total": 24,
+    "baselineUpdates": [
+      "npm.cmd run test:admin -- --update-snapshots",
+      "npm.cmd run test:storefront -- --update-snapshots"
+    ],
+    "updatesAfterReview": true,
+    "finalComparisonRunWithoutUpdates": true,
+    "masks": [
+      "volatile Media identifiers in captions",
+      "timestamps",
+      "video pixels"
+    ],
+    "transientToastHandling": "Dismiss feedback before capture",
+    "determinism": "Initial one-account staff fixture; derivative metadata sorted by profile. Business association order is unchanged."
+  },
+  "performance": {
+    "javascript": [
+      {
+        "path": "apps/storefront/dist/_expo/static/js/web/entry-fef307de65ef2628b08334d6d9651db5.js",
+        "bytes": 4830059
+      }
+    ],
+    "css": [
+      {
+        "path": "apps/storefront/dist/_expo/static/css/global-70bce1aa1409ab962d8cb89b0ce3da7a.css",
+        "bytes": 21119
+      },
+      {
+        "path": "apps/storefront/dist/_expo/static/css/storefront-e073d9776f0dfbfadf1bf08ba9be0e82.css",
+        "bytes": 10543
+      },
+      {
+        "path": "apps/storefront/dist/_expo/static/css/styles-da112c4442e92be71d15439a232b5a36.css",
+        "bytes": 7728
+      },
+      {
+        "path": "apps/storefront/dist/_expo/static/css/workspace-d85a64c5c31eaf043229648f2af174cc.css",
+        "bytes": 8552
+      }
+    ],
+    "javascriptBytes": 4830059,
+    "cssBytes": 47942,
+    "previousExpoRoundedJavaScript": "4.8 MB (historical refinement export)",
+    "currentExpoRoundedJavaScript": "4.8 MB",
+    "comparisonLimit": "Historical baseline is rounded; no precise percentage comparison or device benchmark claimed."
+  },
+  "beforeScreenshots": [
+    {
+      "path": "documentation/assets/major-redesign/before/admin-category-editor-win32.png",
+      "bytes": 70313,
+      "sha256": "1b7cb50ce9245e85d709309f149806350bf1e5f56d9cd64053463bd44300eaaa"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-category-editor.png",
+      "bytes": 70313,
+      "sha256": "1b7cb50ce9245e85d709309f149806350bf1e5f56d9cd64053463bd44300eaaa"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-dashboard.png",
+      "bytes": 48941,
+      "sha256": "baf3571b62266857048a5e7f731b2598ea36758cb428e15786f39d126ea878cb"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-media-library-win32.png",
+      "bytes": 61580,
+      "sha256": "5a38321457901f815b99b8a705273a8c796882f00683c6b7907a577aea1570bb"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-media-library.png",
+      "bytes": 61580,
+      "sha256": "abc66cf836848b4e0049706d2bf0f3decdf5d34b130c3f77938f47ef2b3233b1"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-ar-win32.png",
+      "bytes": 50759,
+      "sha256": "32438ed83b7f3bb132ca28daebbe1840ac1c9c0d1dc05c54ad4712441fbcfe15"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-ar.png",
+      "bytes": 50795,
+      "sha256": "b6e749dda0264078f9480091e47ffa695be984c9141318468d99d5d82fe886f4"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-ckb-win32.png",
+      "bytes": 58671,
+      "sha256": "9f28eeab7f1a4ecce28729b9bb387645c38b3e4eca9fd6bb217c6d651b90f5bd"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-ckb.png",
+      "bytes": 58642,
+      "sha256": "d513317aa26e3c4762be873952591ef9870ee1d945a8da7ad1bccd43b86bae43"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-mobile-win32.png",
+      "bytes": 38683,
+      "sha256": "aeb72aa980d4cb145905d232b6b7e250f874b0753e0081383ad9fd915dd6c09a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-mobile.png",
+      "bytes": 38683,
+      "sha256": "aeb72aa980d4cb145905d232b6b7e250f874b0753e0081383ad9fd915dd6c09a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor-win32.png",
+      "bytes": 76110,
+      "sha256": "3b0e2cd2802e07447d7e4fc96374f6d686b17d85b67cd4a5d02ff37fa66cfb13"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-editor.png",
+      "bytes": 75732,
+      "sha256": "cbed794fee7c8c2bfc46c8b9da85290730f95742f1fd4f0c533c9af19168666f"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-list-win32.png",
+      "bytes": 76077,
+      "sha256": "e385742dcb430eef8d5c4508c1c6ad5e6132fd89dc6056bb7118d706bfa6915d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/admin-product-list.png",
+      "bytes": 76077,
+      "sha256": "e385742dcb430eef8d5c4508c1c6ad5e6132fd89dc6056bb7118d706bfa6915d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/category-1440.png",
+      "bytes": 153865,
+      "sha256": "d6d48ed67184e1864a5399f56c9496a05a3985977706f88200b1f1201063e62d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/category-390.png",
+      "bytes": 91135,
+      "sha256": "13fd0a8de9c4a45e856930a3573332407267866d5e6d037d551c8d4d7bdbb1b1"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/category-768.png",
+      "bytes": 166029,
+      "sha256": "19220b932e3bfefc1c665844fabf27e3cb17d2fe94d569ada22bcbd2648f2ce6"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/category-ar-desktop-win32.png",
+      "bytes": 119434,
+      "sha256": "fe177d43ddb38c9f4cbf17fe799d6d0119b6fb578f4d553a4f8bf452ebd86b84"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/home-1440.png",
+      "bytes": 722445,
+      "sha256": "403d61ad1799ac60aab817196a55ecbae4efdaf4d4743aad867814dabd899517"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/home-390.png",
+      "bytes": 400324,
+      "sha256": "f53fa95023bfd15a54a9906a4ef617525d48abe3304584dec6db2e22688388fb"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/home-768.png",
+      "bytes": 574538,
+      "sha256": "9133a2148977a05aaf5f44c8bb7fa4a34571d6444a6350c2275dc52ed17acdd1"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/home-ar-mobile-win32.png",
+      "bytes": 286155,
+      "sha256": "53833e7f8dbe28ff9d0798776633a5571b79deaf26ea6968b623870e3b24c5f2"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/home-en-desktop-win32.png",
+      "bytes": 722445,
+      "sha256": "403d61ad1799ac60aab817196a55ecbae4efdaf4d4743aad867814dabd899517"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/listing-1440.png",
+      "bytes": 205936,
+      "sha256": "78d226708a9fe4d4b5d46f455fd3716ac096c2811bc8ef2b691b53ad47b908b3"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/listing-390.png",
+      "bytes": 132343,
+      "sha256": "d5ec49fd41c8182b697c3cff0ab363dea06679b8ea4574b87caff2ece367dc8a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/listing-768.png",
+      "bytes": 242214,
+      "sha256": "2b91cc091d2a0aa914687375f1fed36e15068ea27799af970a9e6fc9b57586ba"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/listing-en-desktop-win32.png",
+      "bytes": 205936,
+      "sha256": "78d226708a9fe4d4b5d46f455fd3716ac096c2811bc8ef2b691b53ad47b908b3"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-1440.png",
+      "bytes": 380441,
+      "sha256": "140b9b70e7f894983e15447598e8c93a335f0e484a79416baf0c88b23078a9b2"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-390.png",
+      "bytes": 213583,
+      "sha256": "5ed3d99aa446110803fc5a75bb80782e334c2b1900085213e8fb06bd1723864d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-768.png",
+      "bytes": 291646,
+      "sha256": "2fb8cca5aefe506ee95cf286d93a2c4e5c4574550c35a949ebc6ce9546739cd4"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-ar-mobile-win32.png",
+      "bytes": 159619,
+      "sha256": "0f5b709790ca13a25e71347a0a1dab287d6ab41462ed8e5070eee607a275625d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-ckb-tablet-win32.png",
+      "bytes": 255708,
+      "sha256": "73dffa2fc151b9cfa031fa45b5ce4b74c0740423d26bcc9daca9fac0d604da63"
+    },
+    {
+      "path": "documentation/assets/major-redesign/before/product-en-desktop-win32.png",
+      "bytes": 380441,
+      "sha256": "140b9b70e7f894983e15447598e8c93a335f0e484a79416baf0c88b23078a9b2"
+    }
+  ],
+  "afterScreenshots": [
+    {
+      "path": "documentation/assets/major-redesign/after/admin-asset-inspector.png",
+      "bytes": 41068,
+      "sha256": "41b4fb076e37dfc8072cb95a2bfb2c180ceceb39f3b30d3aa616972b03420506"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-attribute-editor.png",
+      "bytes": 70423,
+      "sha256": "3cdffe25dfc41bc51880345a9f055a07005daf220bd378f4de10bd4acc393a2a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-category-editor.png",
+      "bytes": 87176,
+      "sha256": "504544ec55d4599a87485153e8e4256cc97af4cca8c81a80e49fd7e6ef380970"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-dashboard.png",
+      "bytes": 88045,
+      "sha256": "43baa9f39fa796640a221780c348c5036875fb603d8b5a605ae31838a34112cd"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-media-library.png",
+      "bytes": 54153,
+      "sha256": "afc7a24732397fff06926d8775553bc322f9a6c2df531d5bf7d0b358e23ba1ff"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-editor-ar.png",
+      "bytes": 61541,
+      "sha256": "d6f626463e606814faeafcad3f058afcdf07246c53bc6fe854494ec4d456239a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-editor-ckb.png",
+      "bytes": 68233,
+      "sha256": "6ce27e60c34e6a54e0cd298f1a051565f0b464331060b44239bc945365a01132"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-editor-mobile.png",
+      "bytes": 34678,
+      "sha256": "19d69ba2bd229ee7f82c702b4cee33149b532ae289e8d7db2e6f821d82683afc"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-editor-tablet.png",
+      "bytes": 45003,
+      "sha256": "baa6e13241a7186f3e1ffcfc6ceda203e1d6e448e5d5d6a36c1f89c68e5f68eb"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-editor.png",
+      "bytes": 87615,
+      "sha256": "677e14d523ee69bcce235dbb47310c05f1e1285018ff74770cb2360cb28a520e"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-list.png",
+      "bytes": 73619,
+      "sha256": "9b9401e807ffbbed0e950205a755253c20272465aa62b632522d245e5197c490"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-media.png",
+      "bytes": 87796,
+      "sha256": "73b99daf86a8944def0744614a5656a7bddbb5bf29d3ddaf3c1a6d61923225ac"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-overview.png",
+      "bytes": 93467,
+      "sha256": "2522ed0fe7093826716a6cbd5c097b935273782d2bbc24f1f7224e610552f08e"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-product-summary-mobile.png",
+      "bytes": 27446,
+      "sha256": "23c0f0c4eb3e5db8340f0ff5dc9afbb5df5551d1bf25e4133b7e42427b5b47fa"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-type-editor.png",
+      "bytes": 69279,
+      "sha256": "8757e736c2e9e69999b2f3f47b364f13a22d61741f59d3c2d72296dcc441b8fa"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/admin-upload-drawer.png",
+      "bytes": 28192,
+      "sha256": "191ddcc9cc6ee33ee68018e828059be707f00cacf5bcccc9c5133706869bb5e7"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-1440-viewport.png",
+      "bytes": 312507,
+      "sha256": "3333b6c93d911d1c016ad7d77f4418d7d127676c419906e21c88bc3933066ccd"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-1440.png",
+      "bytes": 551082,
+      "sha256": "2a5530801935d9c7c7f2ebf9e05305bd30946b10a7ebef7147b8c5e021fd8bda"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-390-viewport.png",
+      "bytes": 106603,
+      "sha256": "ab44380c0845fabe008413fe142c204d051b1faaa2e7cfa2eab80769544ed304"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-390.png",
+      "bytes": 287400,
+      "sha256": "fdcd3eeef37b47e8e3e9fd515811a74c744217cb8ed05912ebbbbfd5398bc686"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-768-viewport.png",
+      "bytes": 175052,
+      "sha256": "726933ee4d62d6cbd0248c2a5a90d35a58afe8f19297661c7d6f1d997eae4c0d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-768.png",
+      "bytes": 357310,
+      "sha256": "6159ffb24ae63a61bca8cbbd9b5212d9dea02a59631a319f3ba64a35a097821a"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/category-ar-desktop.png",
+      "bytes": 498398,
+      "sha256": "8d131ee73cbfaf0e526d49e68e4e5985b496fdd85b986023c2712559eccf58da"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-1440-viewport.png",
+      "bytes": 387155,
+      "sha256": "fd40fff95d29f90bcf4ddb81058486cf3f9e42b71d47d64d9153f3fdb1fe8754"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-1440.png",
+      "bytes": 1342197,
+      "sha256": "df650b00001c66a796ce60fcb242786d9e7270aa42427208a04499aabf164b45"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-390-viewport.png",
+      "bytes": 110834,
+      "sha256": "5a93e7912b724bae69c58482a1a6fa1f52e9e180b6e3ca1e58f870672a195d92"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-390.png",
+      "bytes": 647962,
+      "sha256": "2bb741c845aa5c517e2e074766435e1348129bee31ffe112b5f4a789f96ae776"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-768-viewport.png",
+      "bytes": 223504,
+      "sha256": "12d1d52399c43b1a2b1e28447de5301c7f9b8f59c4c1a656a8417d2f8ca36d7e"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-768.png",
+      "bytes": 811302,
+      "sha256": "82524210e24c1d636f7811d955bf833f5d4effac3600a14de43720f83d254d44"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-ar-mobile.png",
+      "bytes": 488186,
+      "sha256": "9241c65302ad4a78d3ec26516f91d1c28edeac1f3ecf49d011cebdc9dc9b421d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-desktop-viewport.png",
+      "bytes": 387155,
+      "sha256": "fd40fff95d29f90bcf4ddb81058486cf3f9e42b71d47d64d9153f3fdb1fe8754"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-en-desktop.png",
+      "bytes": 1342197,
+      "sha256": "df650b00001c66a796ce60fcb242786d9e7270aa42427208a04499aabf164b45"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/home-mobile-viewport.png",
+      "bytes": 105923,
+      "sha256": "93fb867db724943e1efddfcbb6caffcfd785a5526c6ff0a27943a62b7a69f320"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-1440-viewport.png",
+      "bytes": 198919,
+      "sha256": "06adf5220f44d50ca7e0222f82866003396c8d2fcb087a0ec52d42e6eaa857b1"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-1440.png",
+      "bytes": 399167,
+      "sha256": "07f038342339791468547f38464be0b5b4926f39300d21c886674a900eb4f985"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-390-viewport.png",
+      "bytes": 96849,
+      "sha256": "ec79aa96e795114badaf97d80e4e9cafd942041cdc004252785ce86ca1b7ad30"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-390.png",
+      "bytes": 304452,
+      "sha256": "fb858a2a3b0813bf0e385ef87f843e23a4660fe997f183db6b9235012d0560ed"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-768-viewport.png",
+      "bytes": 128208,
+      "sha256": "716d02280b40423b9a4c7139643814a32cd0cc7df5670ed9db47769afab9b06c"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-768.png",
+      "bytes": 318087,
+      "sha256": "e43a7d6a83ff0643dd658e27265c1b1d62063deee5e07778a8457ba05e1b7298"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/listing-en-desktop.png",
+      "bytes": 399167,
+      "sha256": "07f038342339791468547f38464be0b5b4926f39300d21c886674a900eb4f985"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-1440-viewport.png",
+      "bytes": 313604,
+      "sha256": "c49c3e3e973148410bca8f36c19a56b64643ec2c1f7c16ed299f574d639cfbba"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-1440.png",
+      "bytes": 628088,
+      "sha256": "9aa63f70a10c59fdf914352b4aa35f87f52540e88cdbdd150c2be8c4698a11d6"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-390-viewport.png",
+      "bytes": 102812,
+      "sha256": "4b9230a5206704644d6052cc1e5817337e460024f87e56aaf30a68a1a423e424"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-390.png",
+      "bytes": 381770,
+      "sha256": "2b09f2ce832ba8ab36ed5b895e88317672348f756c32d4fe35a7989f8a4c799c"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-768-viewport.png",
+      "bytes": 153987,
+      "sha256": "33d308eefedc3b1acc864f549320c080b79f2fe6e8613dc94ff3beed557af4f3"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-768.png",
+      "bytes": 426013,
+      "sha256": "7e660044e0a211988aa0c1a308cc260ea4bf165e5fae281a82d86f9a3232978d"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-ar-mobile.png",
+      "bytes": 300878,
+      "sha256": "d933b06a47243f755a2dea5b56cbd75e4943b90c9c8d22057959dc25a90ea361"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-ckb-tablet.png",
+      "bytes": 360747,
+      "sha256": "edc8e8fd6ad5697401972a518a69c154225286346f003f34e954c45cb466f85e"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/product-en-desktop.png",
+      "bytes": 628088,
+      "sha256": "9aa63f70a10c59fdf914352b4aa35f87f52540e88cdbdd150c2be8c4698a11d6"
+    },
+    {
+      "path": "documentation/assets/major-redesign/after/super-admin-staff.png",
+      "bytes": 40305,
+      "sha256": "f114ae7ad9c60092ab33dfc4bcb41a3b85f78932e3bd540cfff07b6529b6b52a"
+    }
+  ],
+  "regressionSnapshots": [
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-asset-inspector-win32.png",
+      "bytes": 41071,
+      "sha256": "00031b0cd5a4809f98bbf874943e17e608b61a48a1147bd687e70c13278ecd0f"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-attribute-editor-win32.png",
+      "bytes": 68174,
+      "sha256": "00b9352251a6ce203dfe19ad7a4275aced1af59f6aa11378d73eb12c19cda92c"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-category-editor-win32.png",
+      "bytes": 87176,
+      "sha256": "504544ec55d4599a87485153e8e4256cc97af4cca8c81a80e49fd7e6ef380970"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-dashboard-win32.png",
+      "bytes": 88045,
+      "sha256": "43baa9f39fa796640a221780c348c5036875fb603d8b5a605ae31838a34112cd"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-media-library-win32.png",
+      "bytes": 54153,
+      "sha256": "afc7a24732397fff06926d8775553bc322f9a6c2df531d5bf7d0b358e23ba1ff"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ar-win32.png",
+      "bytes": 61541,
+      "sha256": "d6f626463e606814faeafcad3f058afcdf07246c53bc6fe854494ec4d456239a"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ckb-win32.png",
+      "bytes": 68233,
+      "sha256": "6ce27e60c34e6a54e0cd298f1a051565f0b464331060b44239bc945365a01132"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-mobile-win32.png",
+      "bytes": 34678,
+      "sha256": "19d69ba2bd229ee7f82c702b4cee33149b532ae289e8d7db2e6f821d82683afc"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-tablet-win32.png",
+      "bytes": 45003,
+      "sha256": "baa6e13241a7186f3e1ffcfc6ceda203e1d6e448e5d5d6a36c1f89c68e5f68eb"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-win32.png",
+      "bytes": 87615,
+      "sha256": "677e14d523ee69bcce235dbb47310c05f1e1285018ff74770cb2360cb28a520e"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-list-win32.png",
+      "bytes": 73619,
+      "sha256": "9b9401e807ffbbed0e950205a755253c20272465aa62b632522d245e5197c490"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-media-win32.png",
+      "bytes": 87796,
+      "sha256": "73b99daf86a8944def0744614a5656a7bddbb5bf29d3ddaf3c1a6d61923225ac"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-overview-win32.png",
+      "bytes": 93467,
+      "sha256": "2522ed0fe7093826716a6cbd5c097b935273782d2bbc24f1f7224e610552f08e"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-summary-mobile-win32.png",
+      "bytes": 27446,
+      "sha256": "23c0f0c4eb3e5db8340f0ff5dc9afbb5df5551d1bf25e4133b7e42427b5b47fa"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-type-editor-win32.png",
+      "bytes": 69279,
+      "sha256": "8757e736c2e9e69999b2f3f47b364f13a22d61741f59d3c2d72296dcc441b8fa"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-upload-drawer-win32.png",
+      "bytes": 28192,
+      "sha256": "191ddcc9cc6ee33ee68018e828059be707f00cacf5bcccc9c5133706869bb5e7"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/super-admin-staff-win32.png",
+      "bytes": 40305,
+      "sha256": "f114ae7ad9c60092ab33dfc4bcb41a3b85f78932e3bd540cfff07b6529b6b52a"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/category-ar-desktop-win32.png",
+      "bytes": 498398,
+      "sha256": "8d131ee73cbfaf0e526d49e68e4e5985b496fdd85b986023c2712559eccf58da"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-ar-mobile-win32.png",
+      "bytes": 488186,
+      "sha256": "9241c65302ad4a78d3ec26516f91d1c28edeac1f3ecf49d011cebdc9dc9b421d"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-en-desktop-win32.png",
+      "bytes": 1342197,
+      "sha256": "df650b00001c66a796ce60fcb242786d9e7270aa42427208a04499aabf164b45"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/listing-en-desktop-win32.png",
+      "bytes": 399167,
+      "sha256": "07f038342339791468547f38464be0b5b4926f39300d21c886674a900eb4f985"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ar-mobile-win32.png",
+      "bytes": 300878,
+      "sha256": "d933b06a47243f755a2dea5b56cbd75e4943b90c9c8d22057959dc25a90ea361"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ckb-tablet-win32.png",
+      "bytes": 360747,
+      "sha256": "edc8e8fd6ad5697401972a518a69c154225286346f003f34e954c45cb466f85e"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-en-desktop-win32.png",
+      "bytes": 628088,
+      "sha256": "9aa63f70a10c59fdf914352b4aa35f87f52540e88cdbdd150c2be8c4698a11d6"
+    }
+  ],
+  "localRuntime": {
+    "verifiedAt": "2026-10-06T15:34:24.815Z",
+    "command": "npm.cmd start",
+    "disposableClusterCleanup": "PASS",
+    "checks": [
+      {
+        "url": "http://localhost:8081",
+        "port": 8081,
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3000/health/ready",
+        "port": 3000,
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/health/ready",
+        "port": 3001,
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/health/ready",
+        "port": 3002,
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/health/ready",
+        "port": 3003,
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3004/health/ready",
+        "port": 3004,
+        "status": 200
+      }
+    ],
+    "existingAccountsAndConfigurationRetained": true
+  },
+  "limitations": [
+    "Full public collection/search/filter API integration remains deferred; default visitor content is labeled demo.",
+    "No global totals, chronological activity projection, separate short-description field or public specification group labels.",
+    "Basics, Media and publication save independently; association order is global.",
+    "Original vector imagery remains pending approved photography/brand assets.",
+    "Fixture scanner/processing and mail adapters do not establish production SMTP/scanner/codec/broker/S3/Linux acceptance.",
+    "No hosted CI, deployment, new full PostgreSQL integration-suite run, external accessibility audit or device performance benchmark claimed."
+  ]
+}

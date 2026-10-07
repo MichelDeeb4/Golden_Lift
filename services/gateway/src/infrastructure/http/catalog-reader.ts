@@ -18,7 +18,7 @@ export class HttpCatalogReader implements CatalogReader {
       });
       if (response.status === 404) throw new ApplicationError('NOT_FOUND', 'Resource not found.');
       if (response.status === 400)
-        throw new ApplicationError('VALIDATION_FAILED', 'Invalid category request.');
+        throw new ApplicationError('VALIDATION_FAILED', 'Invalid Catalog request.');
       if (!response.ok)
         throw new ApplicationError('DEPENDENCY_UNAVAILABLE', 'Catalog is unavailable.');
       return (await response.json()) as unknown;

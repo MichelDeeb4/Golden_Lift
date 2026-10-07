@@ -1,0 +1,461 @@
+{
+  "phase": "functional-integration",
+  "checkedAt": "2026-10-07T09:11:19.370Z",
+  "acceptance": "PASS",
+  "acceptanceScope": "Local development with actual ClamAV/Sharp/FFmpeg/Poppler, private filesystem storage and signed durable local HTTP event relays; not production provider acceptance.",
+  "tests": {
+    "backendUnit": {
+      "passed": 37,
+      "failed": 0,
+      "log": ".local/functional-check-final.log"
+    },
+    "postgresqlIntegration": {
+      "passed": 92,
+      "failed": 0,
+      "log": ".local/functional-integration-final.log"
+    },
+    "frontendUnit": {
+      "passed": 8,
+      "failed": 0,
+      "log": ".local/functional-frontend-final.log"
+    },
+    "nativeAdminAndPublic": {
+      "startTime": "2026-10-07T08:47:59.464Z",
+      "duration": 111978.64499999999,
+      "expected": 14,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "deterministicStaff": {
+      "startTime": "2026-10-07T08:52:53.892Z",
+      "duration": 110195.906,
+      "expected": 14,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "explicitDemoVisitor": {
+      "startTime": "2026-10-07T08:58:10.985Z",
+      "duration": 27347.540999999997,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "uniquePrimaryTests": 156
+  },
+  "checks": {
+    "backendBuildTypesCheck": "PASS",
+    "finalCleanApiExport": "PASS",
+    "finalTypesLintFormatPrisma": "PASS",
+    "architecture": {
+      "sourceFiles": 205,
+      "enforcementProbes": 14
+    },
+    "processSmoke": "PASS",
+    "installedNormalOrmParity": {
+      "models": 66,
+      "columns": 664,
+      "foreignKeys": 73,
+      "reviewedConstraintsIndexesTriggers": "PASS"
+    },
+    "diff": "PASS"
+  },
+  "visual": {
+    "staffComparisons": 17,
+    "visitorComparisons": 7,
+    "totalComparisons": 24,
+    "finalRunsWithoutUpdates": true,
+    "reviewedBeforeBaselineUpdates": true,
+    "captures": "documentation/assets/functional-integration",
+    "captureCount": 21
+  },
+  "nativeProcessing": {
+    "checkedAt": "2026-10-07T08:49:05.509Z",
+    "profile": "native-local-http",
+    "assets": [
+      {
+        "media_kind": "IMAGE",
+        "status": "READY",
+        "security_state": "VERIFIED",
+        "pipeline_version": "b5-v1",
+        "verification": {
+          "vips": "8.18.7",
+          "sharp": "0.35.5",
+          "scanner": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026",
+          "pipeline": "b5-v1",
+          "inputSha256": "43cec50b2755e71d048082e6547f94c68ed4638d31e1b4934831f0aef37d344a"
+        },
+        "asset_variants": [
+          {
+            "variant_key": "card",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "detail",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "large",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "thumbnail",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          }
+        ]
+      },
+      {
+        "media_kind": "IMAGE",
+        "status": "READY",
+        "security_state": "VERIFIED",
+        "pipeline_version": "b5-v1",
+        "verification": {
+          "vips": "8.18.7",
+          "sharp": "0.35.5",
+          "scanner": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026",
+          "pipeline": "b5-v1",
+          "inputSha256": "43cec50b2755e71d048082e6547f94c68ed4638d31e1b4934831f0aef37d344a"
+        },
+        "asset_variants": [
+          {
+            "variant_key": "card",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "detail",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "large",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          },
+          {
+            "variant_key": "thumbnail",
+            "mime_type": "image/webp",
+            "byte_size": "88",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          }
+        ]
+      },
+      {
+        "media_kind": "VIDEO",
+        "status": "READY",
+        "security_state": "VERIFIED",
+        "pipeline_version": "b5-v1",
+        "verification": {
+          "ffmpeg": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\r",
+          "scanner": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026",
+          "pipeline": "b5-v1",
+          "inputSha256": "3dc88eadeb689f5207e4a35050e5486d9f983fd78e6a80557b7274125f0c134e"
+        },
+        "asset_variants": [
+          {
+            "variant_key": "playback",
+            "mime_type": "video/mp4",
+            "byte_size": "2376",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": "867"
+          },
+          {
+            "variant_key": "poster",
+            "mime_type": "image/jpeg",
+            "byte_size": "260",
+            "width_px": 80,
+            "height_px": 80,
+            "duration_ms": null
+          }
+        ]
+      },
+      {
+        "media_kind": "PDF",
+        "status": "READY",
+        "security_state": "VERIFIED",
+        "pipeline_version": "b5-v1",
+        "verification": {
+          "poppler": "pdfinfo version 26.09.0\r\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\r\nCopyright 1996-2011, 2022 Glyph & Cog, LLC\r\n",
+          "scanner": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026",
+          "pipeline": "b5-v1",
+          "inputSha256": "49679f2584f1c61782ceeaf1b45bf2141cd857759697def21c3c2bdae16074b9"
+        },
+        "asset_variants": [
+          {
+            "variant_key": "preview",
+            "mime_type": "image/png",
+            "byte_size": "6626",
+            "width_px": 1280,
+            "height_px": 1280,
+            "duration_ms": null
+          }
+        ]
+      }
+    ]
+  },
+  "portablePackages": [
+    {
+      "name": "ffmpeg",
+      "version": "9.0.2",
+      "url": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip",
+      "sha256": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba"
+    },
+    {
+      "name": "poppler",
+      "version": "26.09.0-0",
+      "url": "https://github.com/oschwartz10612/poppler-windows/releases/download/v26.09.0-0/Release-26.09.0-0.zip",
+      "sha256": "7a6f256a0ddf7536182246a5733331bf4677cbcc34f4663774947ad34556c8d0"
+    },
+    {
+      "name": "clamav",
+      "version": "1.5.4",
+      "url": "https://github.com/Cisco-Talos/clamav/releases/download/clamav-1.5.4/clamav-1.5.4.win.x64.zip",
+      "sha256": "0d9e0228b2674137ea1a2853566c98a0278ad52ab2582c3d6dbd75373848c395"
+    }
+  ],
+  "normalRuntime": {
+    "checkedAt": "2026-10-07T09:05:30.621Z",
+    "services": {
+      "catalog": {
+        "port": 3002,
+        "status": 200,
+        "ready": true
+      },
+      "identity": {
+        "port": 3001,
+        "status": 200,
+        "ready": true
+      },
+      "media": {
+        "port": 3003,
+        "status": 200,
+        "ready": true
+      },
+      "inquiries": {
+        "port": 3004,
+        "status": 200,
+        "ready": true
+      },
+      "gateway": {
+        "port": 3000,
+        "status": 200,
+        "ready": true
+      },
+      "frontend": {
+        "port": 8081,
+        "ready": true
+      }
+    },
+    "databases": {
+      "identity": {
+        "ready": true
+      },
+      "catalog": {
+        "ready": true
+      },
+      "media": {
+        "ready": true
+      },
+      "inquiries": {
+        "ready": true
+      }
+    },
+    "tools": {
+      "ffmpeg": {
+        "available": true,
+        "version": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+      },
+      "ffprobe": {
+        "available": true,
+        "version": "ffprobe version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers"
+      },
+      "pdfinfo": {
+        "available": true,
+        "version": "pdfinfo version 26.09.0"
+      },
+      "pdftoppm": {
+        "available": true,
+        "version": "pdftoppm version 26.09.0"
+      },
+      "clamd": {
+        "available": true,
+        "version": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026"
+      }
+    },
+    "dependencies": {
+      "scanner": {
+        "ready": true
+      },
+      "rabbitmq": {
+        "reachable": false
+      },
+      "events": {
+        "profile": "native-local-http",
+        "catalogLocalListener": true,
+        "mediaLocalListener": true
+      }
+    }
+  },
+  "normalBrowser": {
+    "checkedAt": "2026-10-07T09:03:28.949Z",
+    "mode": "api",
+    "routes": [
+      {
+        "route": "/",
+        "demoNotice": false,
+        "heading": "Engineering movement.\nElevating spaces.",
+        "alerts": 0
+      },
+      {
+        "route": "/categories",
+        "demoNotice": false,
+        "heading": "Categories",
+        "alerts": 0
+      },
+      {
+        "route": "/products",
+        "demoNotice": false,
+        "heading": "Products",
+        "alerts": 0
+      },
+      {
+        "route": "/admin/login",
+        "demoNotice": false,
+        "heading": "Staff sign in",
+        "alerts": 0
+      }
+    ],
+    "pageErrors": [],
+    "failedApiRequests": []
+  },
+  "persistence": {
+    "realOwningServiceTransactions": true,
+    "reloadAndApiRead": true,
+    "directCatalogValuesAndAssociationsRead": true,
+    "directNativeMediaVerificationRead": true,
+    "normalDataAccountsSecretsRetained": true,
+    "noSqlMigrationInPhase": true,
+    "disposableClusterRemoved": true
+  },
+  "fixes": [
+    "API-default shared configuration; bounded PostgreSQL collection/search/schema filters and public Media projection",
+    "Real native local startup, capability-driven upload guards and signed durable event confirmation",
+    "Browser MP4 canonical limited-range yuv420p normalization",
+    "URL pagination through locale bootstrap; clearable malformed filters; public/staff cache invalidation",
+    "Keyboard and reduced-motion interaction states",
+    "Clean Expo export/start transforms to prevent stale bundled environment modes",
+    "Doctor uses running scanner PING/VERSION instead of a portable binary with an unconfigured signature path"
+  ],
+  "expectedNegativeRequests": [
+    "Anonymous staff session bootstrap 401",
+    "Role/Origin/CSRF/version/schema/invalid-query rejection assertions",
+    "Denied PDF owner policy 403",
+    "Explicit Catalog/Media/Identity/Gateway outage requests"
+  ],
+  "knownLimitations": [
+    "RabbitMQ absent; no RabbitMQ acceptance",
+    "S3, production SMTP, Linux sandbox/cgroups and hosted deployment not validated",
+    "Technical-sheet editor deferred; ordinary attached PDF is private, public original requires existing allowed technical-source policy",
+    "READY image required even at inactive product creation; section saves and global Media order retained",
+    "Exact category scope and documented collection/facet/media/document bounds",
+    "No fabricated global dashboard totals, company facts, photography or contract fields",
+    "Edge/Windows local checks do not constitute cross-browser/assistive-technology certification or device benchmarks"
+  ],
+  "logs": [
+    {
+      "file": ".local/functional-check-final.log",
+      "sha256": "001dbdb489fb0af0aab9add6ab1acc1bb387d0422d76a7728f35af0b2846c4f7",
+      "modifiedAt": "2026-10-07T08:47:54.457Z"
+    },
+    {
+      "file": ".local/functional-types-final.log",
+      "sha256": "dee9336ebde2aeb24dfaf9414460a07c7edf7778ea5fda0765db15f369cbc220",
+      "modifiedAt": "2026-10-07T09:00:29.681Z"
+    },
+    {
+      "file": ".local/functional-lint-final.log",
+      "sha256": "8c69a5863dcd812f9c864dfceac375086c53ffdf362d450c0574d4e985db5e4d",
+      "modifiedAt": "2026-10-07T09:00:54.931Z"
+    },
+    {
+      "file": ".local/functional-format-check-final.log",
+      "sha256": "df4e7e3eab283b8eb1fcad487ab41672b281f62c7ac954b1c27dde050752b888",
+      "modifiedAt": "2026-10-07T09:05:35.284Z"
+    },
+    {
+      "file": ".local/functional-export-final.log",
+      "sha256": "8549ba563825964171cc84467984356e631ac76e245157b8335b8f113a868429",
+      "modifiedAt": "2026-10-07T09:00:23.681Z"
+    },
+    {
+      "file": ".local/functional-smoke-final.log",
+      "sha256": "9087cb2957e3025d06dc95eb4322669bac5bc878b0f3ed4e50ef67474969e7b4",
+      "modifiedAt": "2026-10-07T08:48:55.258Z"
+    },
+    {
+      "file": ".local/functional-orm-final.log",
+      "sha256": "885a5eaf359f3c06928a3c12ba5136013fbe8a0f6338b1f1844a18f9cb8760e7",
+      "modifiedAt": "2026-10-07T08:48:55.917Z"
+    },
+    {
+      "file": ".local/functional-cleanup.log",
+      "sha256": "9591a5ae0375228777869f5da7494e9e0337fc622dee4c1cd444a734708b6463",
+      "modifiedAt": "2026-10-07T08:56:49.085Z"
+    },
+    {
+      "file": ".local/functional-diff-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "modifiedAt": "2026-10-07T09:09:01.383Z"
+    }
+  ],
+  "sourceHashes": {
+    "apps/storefront/configuration.ts": "a74b2410699bcdd962c9f6fbf3136783a1cb84d066e05f41984565ae1a0d8c6b",
+    "apps/storefront/package.json": "ee862ad626f336350882d2ca2ef81cb925fa7dd3e6943c0105844afef3a334b7",
+    "apps/storefront/features/catalog/pages.tsx": "7ac94f32a51d9c91f8f0166026ced2692829e89aaa50f5afcdc0d1fdd0093ef7",
+    "apps/storefront/features/catalog/filters.tsx": "c5d91e0a002cf1255849f5f36b16170d718f774212d376289eeeeaebb2e0f58a",
+    "packages/api/src/index.ts": "ca57bb48ba8c8f6f084219ae0a2f899d9c89ac540cac800d8810038da1710b50",
+    "packages/platform/src/outbox-relay.ts": "6cb9bea9a74ae7eac0c0ee6d247456cebff9b8464738c4a49e58809768925469",
+    "scripts/dev.mjs": "3b1b2a7afa1f2c4cdc5f72ba8a4e4325d007933340fd7a56f8ee62277ec736c0",
+    "scripts/doctor.mjs": "063970b02c806626ab7ab83abd9de5c2985eb08c1e4a97d5513f688d4d387619",
+    "scripts/media-tools.mjs": "f184456966c23d7cc4ddd7fdb5d7faa1a6e7bc2763ad937eb2a411577ca851d0",
+    "scripts/media-local.mjs": "87456fcd839ae6abb465fabc1c32eea132722d5866c4923cef538ec093f3fdfa",
+    "services/catalog/src/infrastructure/prisma/public-products.ts": "db5851f7139e6b9ccae16c1cf8079692dfb63b4ae772c9b1834662f67b9a12f9",
+    "services/catalog/src/application/use-cases/read-products.ts": "35ab42a46566559abb23c4195e3e33796d9d6a8ffd12e056ea7136aefa0d118d",
+    "services/catalog/src/presentation/http/public-product-query.ts": "067bed8903d5615a497bfd8bfafe888775ef41d8c78c52b16673b054d9986dc6",
+    "services/media/src/infrastructure/processes/pipeline.ts": "1668b7974ce6dfcab9af642d464a667a005889849dc14e43ecf94e0db6930e8f",
+    "documentation/api/openapi.json": "9671d1f0f7655b21fda26b775fdb4a3e97bba0cf8fcb12031036b23cc982ab16",
+    "tests/frontend.admin.test.ts": "e72347b8ba074ef76e55cf78d76094e54c945e7b2d7cf82b38673c86333935cb",
+    "tests/frontend.unit.test.ts": "231ed5b0f2032a240280b5063a8bb99d4e96916ccd167c0167cb90d874539e47",
+    "services/catalog/tests/dynamic-catalog.integration.test.ts": "e78b55c59cdc36a5fe05c80fa6d3d553abe3849e26746cec19d15b5744691b24"
+  }
+}

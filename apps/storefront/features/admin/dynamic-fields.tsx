@@ -26,17 +26,26 @@ export function DynamicAttributeFields({
       {sections.map((group) => {
         const fields = schema.fields.filter((field) => field.groupPlacementId === group.id);
         return fields.length ? (
-          <fieldset key={group.id ?? 'ungrouped'}>
+          <fieldset className="gl-attribute-group" key={group.id ?? 'ungrouped'}>
             <legend>{group.label}</legend>
-            {fields.map((field) => (
-              <DynamicAttributeField
-                key={field.definitionId}
-                field={field}
-                value={values[field.definitionId]}
-                error={errors.includes(field.definitionId) ? t('error') : undefined}
-                onChange={(value) => onChange(field.definitionId, value)}
-              />
-            ))}
+            <div className="gl-admin-grid">
+              {fields.map((field) => (
+                <div
+                  className={
+                    field.kind === 'TEXT' && field.control === 'textarea' ? 'gl-field-wide' : ''
+                  }
+                  key={field.definitionId}
+                >
+                  <DynamicAttributeField
+                    key={field.definitionId}
+                    field={field}
+                    value={values[field.definitionId]}
+                    error={errors.includes(field.definitionId) ? t('error') : undefined}
+                    onChange={(value) => onChange(field.definitionId, value)}
+                  />
+                </div>
+              ))}
+            </div>
           </fieldset>
         ) : null;
       })}

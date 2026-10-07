@@ -191,6 +191,7 @@ export class StaffApiError extends Error {
     readonly code: string,
     readonly status: number,
     readonly requestId: string | null = null,
+    readonly validationMessage: string | null = null,
   ) {
     super(code);
     this.name = 'StaffApiError';
@@ -289,6 +290,7 @@ export class StaffApiClient {
           data?.error.code ?? 'DEPENDENCY_UNAVAILABLE',
           response.status,
           data?.error.requestId ?? null,
+          [400, 422].includes(response.status) ? (data?.error.message ?? null) : null,
         );
       }
       const result = schema.safeParse(response.status === 204 ? undefined : await response.json());
@@ -341,4 +343,10 @@ export class StaffApiClient {
     return uploadSchema.parse(await response.json());
   }
 }
-const errorSchema = z.object({ error: z.object({ code: z.string(), requestId: z.string() }) });
+const errorSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    requestId: z.string(),
+    message: z.string().min(1).max(1000).optional(),
+  }),
+});

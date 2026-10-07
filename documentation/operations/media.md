@@ -1,6 +1,6 @@
 # Media core operations
 
-Updated 2026-10-05. See [decision 007](../decisions/007-media-core.md), [OpenAPI](../api/openapi.json) and the dated B5 validation report. B5 code is present; a successful image/video/PDF → scanner → broker → Catalog acceptance run is still required before production.
+Updated 2026-10-07. See [decision 007](../decisions/007-media-core.md), [decision 012](../decisions/012-functional-integration.md), [OpenAPI](../api/openapi.json) and the dated validation reports. Actual local ClamAV/Sharp/FFmpeg/Poppler processing is now exercised with durable signed HTTP event relays. RabbitMQ/cloud/Linux isolation acceptance remains required before production.
 
 ## Database preparation
 
@@ -18,6 +18,8 @@ Production refuses filesystem storage and missing coordination credentials. Prod
 
 ## Process launch
 
+The named Windows development profile is prepared with `npm.cmd run media:tools` and `npm.cmd run media:setup`, then `npm.cmd start` launches the scanner, actual worker and both owning-service relays automatically. Tools are portable, pinned and hash-verified; signatures are real. `npm.cmd run doctor` reports dependency status. See [local development](local-development.md) for ports, configuration and tests. This profile is development-only, loopback-only and rejected in production. It uses durable outboxes and distinct signing secrets rather than RabbitMQ; a consumer response confirms application, not merely receipt. Existing production RabbitMQ behavior is unchanged.
+
 After build and migrations, run the five normal API processes using `npm.cmd run dev`. Start asynchronous roles separately:
 
 ```powershell
@@ -30,7 +32,7 @@ Supply owning runtime URLs, distinct event keys, private RabbitMQ URLs and scann
 
 ClamAV is mandatory. Configure updated signature databases, `StreamMaxLength` above the allowed 250 MiB input and appropriate `MaxScanSize`/`MaxFileSize`, resource bounds and private access to clamd. Upload initiation returns 503 when its PING prerequisite is unavailable. VERSION and INSTREAM results are bound to the sealed SHA-256; failed/unavailable scanning cannot yield READY. Clamd is an isolated security service, not an additional business microservice/database.
 
-Install supported FFmpeg/FFprobe and Poppler pdfinfo/pdftoppm binaries through pinned, reviewed operating-system packages. Capture their exact versions/build configuration and security-update policy in the deployment tool manifest. This host did not have them installed; no version is invented here. [The worker image template](../../infrastructure/containers/MediaWorker.Dockerfile) requires explicit package versions and a base digest. Test its codecs, sandbox and page rendering before deployment. Native versions are also recorded in processing evidence when executed.
+Install supported FFmpeg/FFprobe and Poppler pdfinfo/pdftoppm binaries through pinned, reviewed operating-system packages. The current local host has FFmpeg/FFprobe 9.0.2, Poppler 26.09.0 and ClamAV 1.5.4 in the private portable profile; native browser evidence records actual execution. Capture exact builds and a security-update policy for deployment. [The worker image template](../../infrastructure/containers/MediaWorker.Dockerfile) still requires explicit package versions and a base digest. Test its codecs, sandbox and page rendering before deployment.
 
 Defaults are operator-reducible, validated at startup: images 20 MiB/40 MP; video 250 MiB/600 seconds and bounded streams/frame counts; PDF 30 MiB/200 pages; 3 active sessions per Admin; 100 globally; 1 lane per kind; 1,000 pending jobs; 10 GiB initial storage reservations; 5 attempts; 60-minute upload expiry; authorization at most 300 seconds. Configured limits cannot exceed the implemented ceilings. Images keep their aspect ratio, normalize orientation/color, preserve transparency and strip derivative metadata. Video accepts the declared MP4/MOV H.264/HEVC with optional AAC/PCM profile, rejects audio-only/extra streams, normalizes rotation through FFmpeg and produces progressive H.264/AAC MP4 plus poster. This video/PDF profile still needs actual acceptance testing; it is not a claim of universal format compatibility. No adaptive streaming or arbitrary crop/filter commands are exposed.
 

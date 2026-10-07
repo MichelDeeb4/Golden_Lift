@@ -2,6 +2,10 @@
 
 Use Node 24 and the root npm workspace. Install/build using the existing backend and frontend guides. Staff views require actual Identity, Catalog, Media and Gateway services; public demo mode does not supply staff fixtures.
 
+## Daily startup
+
+After preparing the local databases, run `npm.cmd start` from the repository root. It starts the default project database, prepares local service secrets, builds the backend and launches all five services plus the website. Open `http://localhost:8081/admin/login`; Ctrl+C stops the application processes. The PostgreSQL server remains available. This local-only launcher supplies matching localhost browser origins by default, respects explicit environment overrides, and never applies database migrations. Backend credentials are removed from the frontend child environment.
+
 ## Database preparation
 
 For an existing database, follow reviewed Dynamic Catalog and B5 migration procedures first, with coordinated backups and a reviewed target. Then inspect the additive Admin upgrade:
@@ -23,8 +27,9 @@ Frontend public variables:
 
 | Variable | Default |
 | --- | --- |
-| `EXPO_PUBLIC_ADMIN_API_URL` | `http://localhost:3000` |
+| `EXPO_PUBLIC_API_URL` | `http://localhost:3000` (shared with visitors) |
 | `EXPO_PUBLIC_MEDIA_ORIGIN` | `http://localhost:3003` |
+| `EXPO_PUBLIC_APP_DATA_MODE` | `api` (public only; staff always uses real APIs) |
 
 Configure `MEDIA_PUBLIC_ORIGIN` consistently for returned binary/delivery URLs. Only public origins belong in bundled variables; service credentials belong exclusively in backend configuration. Rebuild/restart Metro after changing frontend configuration.
 

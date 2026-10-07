@@ -25,6 +25,9 @@ try {
       signingKey: process.env['CATALOG_EVENT_SECRET'] ?? '',
       verificationKey: process.env['MEDIA_EVENT_SECRET'] ?? '',
       signal: shutdown.signal,
+      ...(process.env['MEDIA_EVENT_TRANSPORT'] === 'local-http'
+        ? { localHttp: { listenPort: 3102, targetPort: 3103 } }
+        : {}),
       apply: (input) => registry.apply(mediaEvent(input)),
     });
   } finally {

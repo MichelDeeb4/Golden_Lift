@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { languageNames } from '@golden-lift/i18n';
 import type { ReactNode } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pageSchema } from '@golden-lift/api';
@@ -12,10 +13,44 @@ import {
   GLAlert,
   GLSpinner,
   GLToast,
+  GLTabs,
+  GLFormSection,
+  GLSkeleton,
+  GLEmptyState,
 } from '@golden-lift/ui';
 import type { UseFormReturn } from 'react-hook-form';
 import { useStaffApi, StaffError } from './context';
 import { useAdminTranslation } from './translations';
+import { usePublicCatalogInvalidation } from '../../providers/storefront';
+export function FocusedEditor({
+  open,
+  title,
+  children,
+  onClose,
+  dialog = false,
+}: {
+  open: boolean;
+  title: string;
+  children: ReactNode;
+  onClose: () => void;
+  dialog?: boolean;
+}) {
+  const id = useId();
+  if (dialog)
+    return (
+      <GLModal open={open} title={title} onClose={onClose}>
+        {children}
+      </GLModal>
+    );
+  return open ? (
+    <section className="gl-inline-editor" aria-labelledby={id}>
+      <GLHeading level={2} role="heading4" id={id}>
+        {title}
+      </GLHeading>
+      {children}
+    </section>
+  ) : null;
+}
 export const jsonResponse = z.unknown();
 export function useStaffOptions<T extends z.ZodTypeAny>(path: string, schema: T, enabled = true) {
   const api = useStaffApi();
@@ -58,6 +93,7 @@ export function MoreOptions({
   ) : null;
 }
 export function useAction() {
+  const invalidatePublic = usePublicCatalogInvalidation();
   const query = useQueryClient(),
     t = useAdminTranslation(),
     [saved, setSaved] = useState(false);
@@ -67,6 +103,7 @@ export function useAction() {
     onSuccess: async () => {
       setSaved(true);
       await query.invalidateQueries({ queryKey: ['staff'] });
+      await invalidatePublic?.();
     },
   });
   return { ...mutation, saved, setSaved, t };
@@ -165,28 +202,62 @@ export function translationDefaults(
   }
   return result;
 }
-export function TranslationFields({ form }: { form: UseFormReturn<TranslationForm> }) {
-  const t = useAdminTranslation();
+export function TranslationFields({
+  form,
+  labelsOnly = false,
+}: {
+  form: UseFormReturn<TranslationForm>;
+  labelsOnly?: boolean;
+}) {
+  const t = useAdminTranslation(),
+    [language, setLanguage] = useState<'ar' | 'en' | 'ckb'>('ar'),
+    prefix = useId();
+  const arabicError = form.formState.errors.names?.ar?.message;
+  useEffect(() => {
+    if (arabicError) setLanguage('ar');
+  }, [arabicError]);
   return (
-    <section>
-      <GLHeading level={2} role="heading5">
-        {t('translations')}
-      </GLHeading>
-      <p>{t('requiredArabic')}</p>
+    <GLFormSection
+      title={t('translations')}
+      description={t('requiredArabic')}
+      className="gl-translation-section"
+    >
+      <GLTabs
+        idPrefix={prefix}
+        value={language}
+        onChange={(value) => setLanguage(value as typeof language)}
+        tabs={(['ar', 'en', 'ckb'] as const).map((id) => ({ id, label: languageNames[id] }))}
+      />
       {(['ar', 'en', 'ckb'] as const).map((locale) => (
-        <div key={locale} dir={locale === 'en' ? 'ltr' : 'rtl'} className="gl-admin-grid">
+        <div
+          key={locale}
+          hidden={language !== locale}
+          role="tabpanel"
+          id={prefix + 'panel-' + locale}
+          aria-labelledby={prefix + 'tab-' + locale}
+          dir={locale === 'en' ? 'ltr' : 'rtl'}
+          className="gl-translation-panel"
+        >
           <GLInput
             label={`${t('name')} (${locale})`}
-            required={locale === 'ar'}
-            {...form.register(`names.${locale}`)}
+            required={locale === 'ar' && language === 'ar'}
+            error={form.formState.errors.names?.[locale]?.message}
+            {...form.register(
+              `names.${locale}`,
+              locale === 'ar'
+                ? { validate: (value) => value.trim().length > 0 || t('requiredArabic') }
+                : undefined,
+            )}
           />
-          <GLTextarea
-            label={`${t('description')} (${locale})`}
-            {...form.register(`descriptions.${locale}`)}
-          />
+          {!labelsOnly && (
+            <GLTextarea
+              label={`${t('description')} (${locale})`}
+              {...form.register(`descriptions.${locale}`)}
+            />
+          )}
         </div>
       ))}
-    </section>
+    </GLFormSection>
   );
 }
 export function TableState({
@@ -194,17 +265,43 @@ export function TableState({
   error,
   empty,
   children,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
+  presentation = 'table',
 }: {
   pending: boolean;
   error: unknown;
   empty: boolean;
   children: ReactNode;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: ReactNode;
+  presentation?: 'table' | 'content';
 }) {
   const t = useAdminTranslation();
-  if (pending) return <GLSpinner label={t('loading')} />;
+  if (pending)
+    return (
+      <div className="gl-admin-skeleton" role="status" aria-label={t('loading')}>
+        {[0, 1, 2].map((row) => (
+          <GLSkeleton key={row} className="gl-admin-skeleton-row" />
+        ))}
+      </div>
+    );
   if (error) return <StaffError error={error} />;
-  if (empty) return <GLAlert>{t('empty')}</GLAlert>;
-  return <div className="gl-admin-table">{children}</div>;
+  if (empty)
+    return (
+      <GLEmptyState
+        title={emptyTitle ?? t('empty')}
+        description={emptyDescription}
+        action={emptyAction}
+      />
+    );
+  return (
+    <div className={presentation === 'table' ? 'gl-admin-table' : 'gl-admin-content-state'}>
+      {children}
+    </div>
+  );
 }
 export function ApiCommand({
   path,

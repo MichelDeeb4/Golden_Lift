@@ -26,6 +26,7 @@ import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import { CONFIGURATION_READER } from './dynamic-configuration-controller.js';
 import { strictRecord } from './category-query.js';
 import { nullableText, precondition, translations, values } from './dynamic-input.js';
+import { publicProductQuery } from './public-product-query.js';
 export const READ_PRODUCTS = Symbol('ReadProducts'),
   CREATE_PRODUCT = Symbol('CreateProduct'),
   EDIT_PRODUCT = Symbol('EditProduct'),
@@ -34,6 +35,9 @@ export const READ_PRODUCTS = Symbol('ReadProducts'),
 @Controller('api/v1/products')
 export class PublicProductsController {
   constructor(@Inject(READ_PRODUCTS) private readonly read: ReadProducts) {}
+  @Get() list(@Query() value: unknown) {
+    return this.read.collection(publicProductQuery(value));
+  }
   @Get(':id') detail(@Param('id') id: string, @Query() value: unknown) {
     const q = strictRecord(value, ['locale']);
     return this.read.public(uuid(id), locale(q['locale']));

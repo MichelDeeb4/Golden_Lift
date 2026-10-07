@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ApiError } from '@golden-lift/api';
+import { ApiError, publicProductFilterSchema } from '@golden-lift/api';
+import type { PublicProductFilter } from '@golden-lift/api';
+import { DynamicFilters } from './filters';
 import {
   GLAlert,
   GLButton,
@@ -16,10 +18,13 @@ import {
   GLPagination,
   GLInput,
   GLSelect,
+  GLDrawer,
+  GLPageHeader,
   GLSkeleton,
   GLTabs,
 } from '@golden-lift/ui';
 import {
+  GLMediaImage,
   GLCategoryCard,
   GLProductCard,
   GLProductCardSkeleton,
@@ -68,7 +73,9 @@ function SectionHeading({
     <div className="gl-section-heading">
       <div>
         {overline && <div className="gl-overline">{overline}</div>}
-        <GLHeading level={level}>{title}</GLHeading>
+        <GLHeading fluid level={level}>
+          {title}
+        </GLHeading>
         {description && <p>{description}</p>}
       </div>
       {link && (
@@ -85,8 +92,8 @@ export function Values() {
     <GLSection className="gl-dark gl-values">
       <GLPageContainer>
         <div className="gl-values-header">
-          <div className="gl-overline">{t('values')}</div>
-          <GLHeading>{t('valueTitle')}</GLHeading>
+          <div className="gl-overline">03 / {t('values')}</div>
+          <GLHeading fluid>{t('valueTitle')}</GLHeading>
           <p>{t('valueBody')}</p>
         </div>
         <div className="gl-grid gl-grid-three">
@@ -94,10 +101,10 @@ export function Values() {
             { icon: Ruler, key: 'value1' },
             { icon: Layers, key: 'value2' },
             { icon: ShieldCheck, key: 'value3' },
-          ].map((v) => (
+          ].map((v, index) => (
             <div className="gl-value" key={v.key}>
-              <v.icon size={28} />
-              <GLHeading level={3} role="heading5">
+              <span className="gl-value-index">0{index + 1}</span>
+              <GLHeading fluid level={3} role="heading5">
                 {t(v.key)}
               </GLHeading>
               <p>{t(v.key + 'Body')}</p>
@@ -117,11 +124,10 @@ export function HomePage() {
   return (
     <>
       <section className="gl-hero">
-        <div className="gl-hero-illustration" role="img" aria-label={t('gallery')} />
-        <GLPageContainer>
+        <div className="gl-hero-layout">
           <div className="gl-hero-content">
-            <div className="gl-overline">{t('overline')}</div>
-            <GLHeading level={1} role="displayXL">
+            <div className="gl-overline">GOLDEN LIFT / {t('brand')}</div>
+            <GLHeading fluid level={1} role="displayXL">
               {t('heroTitle')}
             </GLHeading>
             <p>{t('heroBody')}</p>
@@ -134,20 +140,24 @@ export function HomePage() {
               </a>
             </div>
           </div>
+          <div className="gl-hero-illustration">
+            <img src="/demo/hero.svg" alt={t('gallery')} fetchPriority="high" />
+            <span className="gl-hero-image-label">GOLDEN LIFT / 01</span>
+          </div>
           <span className="gl-hero-number" aria-hidden="true">
             01 / GL
           </span>
-        </GLPageContainer>
+        </div>
       </section>
       <GLSection>
         <GLPageContainer>
           <SectionHeading
-            overline={t('collection')}
+            overline={'01 / ' + t('collection')}
             title={t('categoryTitle')}
             description={t('categoryBody')}
           />
           {categories.isPending ? (
-            <div className="gl-grid gl-grid-three">
+            <div className="gl-category-editorial">
               {[1, 2, 3].map((i) => (
                 <GLCategoryCardSkeleton key={i} />
               ))}
@@ -155,7 +165,7 @@ export function HomePage() {
           ) : categories.isError ? (
             <QueryError error={categories.error} retry={() => void categories.refetch()} />
           ) : categories.data.items.length ? (
-            <div className="gl-grid gl-grid-three">
+            <div className="gl-category-editorial">
               {categories.data.items.map((c) => (
                 <GLCategoryCard key={c.id} category={c} />
               ))}
@@ -165,19 +175,51 @@ export function HomePage() {
           )}
         </GLPageContainer>
       </GLSection>
-      <GLSection className="gl-featured">
+      <GLSection className="gl-featured-system">
         <GLPageContainer>
-          <SectionHeading title={t('featured')} description={t('featuredBody')} link />
+          <SectionHeading
+            overline={'02 / ' + t('featured')}
+            title={t('featured')}
+            description={t('featuredBody')}
+            link
+          />
           {products.isPending ? (
             <ProductSkeleton />
           ) : products.isError ? (
             <QueryError error={products.error} retry={() => void products.refetch()} />
           ) : products.data.items.length ? (
-            <div className="gl-grid">
-              {products.data.items.map((p) => (
-                <GLProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              <div className="gl-featured-stage">
+                <a className="gl-featured-visual" href={'/products/' + products.data.items[0]!.id}>
+                  <GLMediaImage
+                    reference={
+                      products.data.items[0]!.media.find((m) => m.kind === 'image') ?? null
+                    }
+                  />
+                </a>
+                <div className="gl-featured-copy">
+                  <span className="gl-overline">{products.data.items[0]!.categoryName}</span>
+                  <GLHeading fluid level={3}>
+                    {products.data.items[0]!.name}
+                  </GLHeading>
+                  <bdi>{products.data.items[0]!.model}</bdi>
+                  <GLSpecificationList
+                    attributes={products.data.items[0]!.attributes.slice(0, 2)}
+                  />
+                  <a
+                    href={'/products/' + products.data.items[0]!.id}
+                    className="gl-button gl-button-dark gl-button-lg"
+                  >
+                    {t('details')} ↗
+                  </a>
+                </div>
+              </div>
+              <div className="gl-supporting-products">
+                {products.data.items.slice(1, 4).map((p) => (
+                  <GLProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            </>
           ) : (
             <GLEmptyState title={t('emptyTitle')} />
           )}
@@ -187,7 +229,11 @@ export function HomePage() {
       {source.demo && products.data?.items.some((p) => p.documents.length > 0) && (
         <GLSection>
           <GLPageContainer>
-            <SectionHeading title={t('resources')} description={t('resourcesBody')} />
+            <SectionHeading
+              overline={'04 / ' + t('resources')}
+              title={t('resources')}
+              description={t('resourcesBody')}
+            />
             {products.data.items
               .flatMap((p) => p.documents)
               .map((d) => (
@@ -231,7 +277,7 @@ export function CategoriesPage() {
           <QueryError error={q.error} retry={() => void q.refetch()} />
         ) : q.data.items.length ? (
           <>
-            <div className="gl-grid gl-grid-three">
+            <div className="gl-category-editorial">
               {q.data.items.map((c) => (
                 <GLCategoryCard key={c.id} category={c} />
               ))}
@@ -271,7 +317,10 @@ export function CategoryPage() {
           { href: '/categories/' + id, label: category.data?.name ?? t('loading') },
         ]}
       />
-      <GLSection>
+      <GLSection className="gl-category-intro">
+        {category.data?.image && (
+          <GLMediaImage reference={category.data.image} className="gl-category-cover" priority />
+        )}
         {category.isPending ? (
           <GLSkeleton />
         ) : category.isError ? (
@@ -325,6 +374,7 @@ export function ListingPage({ search = false }: { search?: boolean }) {
       <GLSection>
         <SectionHeading
           level={1}
+          overline={t('collection')}
           title={t(search ? 'searchResults' : 'products')}
           description={t(search ? 'searchHelp' : 'featuredBody')}
         />
@@ -342,78 +392,191 @@ function ListingGrid({
   initialText?: string;
   search?: boolean;
 }) {
+  const params = useLocalSearchParams<{
+    category?: string;
+    sort?: string;
+    page?: string;
+    filters?: string;
+    q?: string;
+  }>();
+  const filterText = params.filters || '[]';
+  const queryText = params.q ?? initialText;
+  let dynamicFilters: readonly PublicProductFilter[] = [];
+  let invalidFilters = false;
+  try {
+    const parsed: unknown = JSON.parse(filterText);
+    const result = z.array(publicProductFilterSchema).max(10).safeParse(parsed);
+    if (result.success) dynamicFilters = result.data as readonly PublicProductFilter[];
+    else invalidFilters = true;
+  } catch {
+    invalidFilters = true;
+  }
   const { t } = useGLTranslation(),
     { locale } = useLocale(),
-    [text, setText] = useState(initialText),
-    [category, setCategory] = useState(categoryId ?? ''),
-    [sort, setSort] = useState<'featured' | 'name'>('featured'),
-    [page, setPage] = useState(1),
+    [text, setText] = useState(queryText),
+    [filtersOpen, setFiltersOpen] = useState(false),
+    [compact, setCompact] = useState(false),
+    category = categoryId ?? params.category ?? '',
+    sort: 'featured' | 'name' = params.sort === 'name' ? 'name' : 'featured',
+    page = /^[1-9][0-9]{0,3}$/.test(params.page ?? '') ? Number(params.page) : 1,
     categories = useCategories(),
-    products = useProducts({ text, categoryId: category || undefined, sort, page }),
+    products = useProducts({
+      text,
+      categoryId: category || undefined,
+      sort,
+      page,
+      filters: dynamicFilters,
+    }),
     router = useRouter();
+  const setPage = (value: number) => router.setParams({ page: String(value) });
+  const setCategory = (value: string) =>
+    router.setParams({ category: value, page: '1', filters: '' });
+  const setSort = (value: 'featured' | 'name') => router.setParams({ sort: value, page: '1' });
+  const filters = (
+    <DynamicFilters
+      definitions={products.data?.filters ?? []}
+      value={dynamicFilters}
+      onApply={(value) => {
+        router.setParams({ filters: JSON.stringify(value), page: '1' });
+        setFiltersOpen(false);
+      }}
+    />
+  );
   const form = useForm<{ text: string }>({
-    defaultValues: { text: initialText },
+    defaultValues: { text: queryText },
     resolver: zodResolver(searchSchema),
   });
   const resetSearch = form.reset;
   useEffect(() => {
-    setText(initialText);
-    resetSearch({ text: initialText });
-    setPage(1);
-  }, [initialText, resetSearch]);
+    setText(queryText);
+    resetSearch({ text: queryText });
+  }, [queryText, resetSearch]);
   useEffect(() => {
-    setPage(1);
-  }, [locale]);
+    const media = window.matchMedia('(max-width: 767px)');
+    const update = () => {
+      setCompact(media.matches);
+      setFiltersOpen(false);
+    };
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   return (
     <>
-      <form
-        className="gl-list-toolbar"
-        onSubmit={form.handleSubmit((v) => {
-          setText(v.text);
-          setPage(1);
-          if (search) router.setParams({ q: v.text });
-        })}
-      >
-        <GLInput
-          label={t('search')}
-          placeholder={t('searchPlaceholder')}
-          {...form.register('text')}
-          error={form.formState.errors.text ? t('searchTooLong') : undefined}
-        />
-        {!categoryId && (
+      {compact ? (
+        <>
+          <GLButton variant="secondary" onClick={() => setFiltersOpen(true)}>
+            {t('filter')} / {t('sort')}
+          </GLButton>
+          <GLDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t('filter')}>
+            {' '}
+            <form
+              className="gl-list-toolbar"
+              onSubmit={form.handleSubmit((v) => {
+                setText(v.text);
+                setPage(1);
+                router.setParams({ q: v.text });
+                setFiltersOpen(false);
+              })}
+            >
+              <GLInput
+                label={t('search')}
+                placeholder={t('searchPlaceholder')}
+                {...form.register('text')}
+                error={form.formState.errors.text ? t('searchTooLong') : undefined}
+              />
+              {!categoryId && (
+                <GLSelect
+                  label={t('filter')}
+                  value={category}
+                  onChange={(v) => {
+                    setCategory(v);
+                    setPage(1);
+                  }}
+                  options={[
+                    { value: '', label: t('allCategories') },
+                    ...(categories.data?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+                  ]}
+                />
+              )}
+              <GLSelect
+                label={t('sort')}
+                value={sort}
+                onChange={(v) => {
+                  setSort(v as typeof sort);
+                  setPage(1);
+                }}
+                options={[
+                  { value: 'featured', label: t('sortFeatured') },
+                  { value: 'name', label: t('sortName') },
+                ]}
+              />
+              <GLButton type="submit" variant="dark">
+                {t('submit')}
+              </GLButton>
+            </form>
+            {filters}
+          </GLDrawer>
+        </>
+      ) : (
+        <form
+          className="gl-list-toolbar"
+          onSubmit={form.handleSubmit((v) => {
+            setText(v.text);
+            setPage(1);
+            router.setParams({ q: v.text });
+            setFiltersOpen(false);
+          })}
+        >
+          <GLInput
+            label={t('search')}
+            placeholder={t('searchPlaceholder')}
+            {...form.register('text')}
+            error={form.formState.errors.text ? t('searchTooLong') : undefined}
+          />
+          {!categoryId && (
+            <GLSelect
+              label={t('filter')}
+              value={category}
+              onChange={(v) => {
+                setCategory(v);
+                setPage(1);
+              }}
+              options={[
+                { value: '', label: t('allCategories') },
+                ...(categories.data?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
+          )}
           <GLSelect
-            label={t('filter')}
-            value={category}
+            label={t('sort')}
+            value={sort}
             onChange={(v) => {
-              setCategory(v);
+              setSort(v as typeof sort);
               setPage(1);
             }}
             options={[
-              { value: '', label: t('allCategories') },
-              ...(categories.data?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
+              { value: 'featured', label: t('sortFeatured') },
+              { value: 'name', label: t('sortName') },
             ]}
           />
-        )}
-        <GLSelect
-          label={t('sort')}
-          value={sort}
-          onChange={(v) => {
-            setSort(v as typeof sort);
-            setPage(1);
-          }}
-          options={[
-            { value: 'featured', label: t('sortFeatured') },
-            { value: 'name', label: t('sortName') },
-          ]}
-        />
-        <GLButton type="submit" variant="dark">
-          {t('submit')}
-        </GLButton>
-      </form>
+          <GLButton type="submit" variant="dark">
+            {t('submit')}
+          </GLButton>
+        </form>
+      )}
+      {!compact && filters}
       {products.data?.total != null && (
         <p className="gl-result-count">{t('results', { count: products.data.total })}</p>
       )}
-      {products.isPending ? (
+      {invalidFilters ? (
+        <GLAlert tone="error">
+          {t('errorBody')}{' '}
+          <GLButton variant="text" onClick={() => router.setParams({ filters: '', page: '1' })}>
+            {t('clear')}
+          </GLButton>
+        </GLAlert>
+      ) : products.isPending ? (
         <ProductSkeleton />
       ) : products.isError ? (
         <QueryError error={products.error} retry={() => void products.refetch()} />
@@ -424,10 +587,14 @@ function ListingGrid({
               <GLProductCard key={p.id} product={p} />
             ))}
           </div>
-          {(products.data.total ?? 0) > 4 && (
+          {((products.data.total ?? 0) > 4 || page > 1 || products.data.nextCursor) && (
             <GLPagination
               page={page}
-              total={Math.ceil((products.data.total ?? 0) / 4)}
+              total={
+                products.data.total !== null
+                  ? Math.ceil(products.data.total / 4)
+                  : page + (products.data.nextCursor ? 1 : 0)
+              }
               onChange={setPage}
             />
           )}
@@ -444,7 +611,7 @@ function ListingGrid({
                 setCategory(categoryId ?? '');
                 form.reset({ text: '' });
                 setPage(1);
-                if (search) router.setParams({ q: '' });
+                router.setParams({ q: '' });
               }}
             >
               {t('clear')}
@@ -492,49 +659,78 @@ export function ProductPage() {
   return (
     <>
       <GLPageContainer>
-        <GLBreadcrumb
-          items={[
-            { href: '/', label: t('home') },
-            { href: '/products', label: t('products') },
-            { href: '/categories/' + p.categoryId, label: p.categoryName },
-            { href: '/products/' + p.id, label: p.name },
-          ]}
-        />
         <GLSection className="gl-product-detail">
           <div className="gl-product-columns">
             <GLProductGallery media={p.media} />
             <div className="gl-product-info">
-              <span className="gl-overline">{p.categoryName}</span>
-              <GLHeading level={1}>{p.name}</GLHeading>
-              {p.model && (
-                <GLText role="technicalLabel" className="gl-muted">
-                  {t('model')} / {p.model}
-                </GLText>
-              )}
-              <p>{p.description}</p>
-              <GLTabs
-                value={tab}
-                onChange={setTab}
-                tabs={[
-                  { id: 'overview', label: t('overview') },
-                  { id: 'specifications', label: t('specifications') },
+              <GLBreadcrumb
+                items={[
+                  { href: '/', label: t('home') },
+                  { href: '/products', label: t('products') },
+                  { href: '/categories/' + p.categoryId, label: p.categoryName },
+                  { href: '/products/' + p.id, label: p.name },
                 ]}
               />
-              <div role="tabpanel" id={'panel-' + tab} aria-labelledby={'tab-' + tab} tabIndex={0}>
-                {tab === 'overview' ? (
-                  <GLSpecificationList attributes={p.attributes.slice(0, 2)} />
-                ) : p.attributes.length ? (
-                  <GLSpecificationList attributes={p.attributes} />
-                ) : (
-                  <GLEmptyState title={t('placeholder')} />
+              <span className="gl-overline">{p.categoryName}</span>
+              {p.productTypeName && (
+                <GLText role="technicalLabel" className="gl-muted">
+                  {p.productTypeName}
+                </GLText>
+              )}
+              <GLHeading fluid level={1}>
+                {p.name}
+              </GLHeading>
+              {p.model && (
+                <GLText role="technicalLabel" className="gl-muted">
+                  {t('model')} / <bdi>{p.model}</bdi>
+                </GLText>
+              )}
+              <p className="gl-product-description">{p.description}</p>
+              <GLSpecificationList attributes={p.attributes.slice(0, 2)} />
+              <div className="gl-product-media-actions">
+                {p.documents.length > 0 && (
+                  <a href="#product-documents" className="gl-button gl-button-dark gl-button-md">
+                    {t('documents')} ↗
+                  </a>
+                )}
+                {p.media.some((m) => m.kind === 'video') && (
+                  <a href="#product-video" className="gl-button gl-button-secondary gl-button-md">
+                    {t('video')}
+                  </a>
                 )}
               </div>
             </div>
           </div>
         </GLSection>
+        <GLSection className="gl-product-dossier">
+          <div className="gl-dossier-heading">
+            <span className="gl-overline">01 / {t('overview')}</span>
+            <GLHeading fluid>{t('technical')}</GLHeading>
+          </div>
+          <div>
+            <GLTabs
+              value={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'overview', label: t('overview') },
+                { id: 'specifications', label: t('specifications') },
+              ]}
+            />
+            <div role="tabpanel" id={'panel-' + tab} aria-labelledby={'tab-' + tab} tabIndex={0}>
+              {tab === 'overview' ? (
+                <p className="gl-dossier-description">{p.description}</p>
+              ) : (
+                <>
+                  <span className="gl-overline">02 / {t('specifications')}</span>
+                  <GLSpecificationList attributes={p.attributes} />
+                </>
+              )}
+            </div>
+          </div>
+        </GLSection>
         {p.media.some((m) => m.kind === 'video') && (
-          <GLSection>
-            <SectionHeading title={t('video')} />
+          <GLSection id="product-video">
+            <SectionHeading overline={'03 / ' + t('video')} title={t('video')} />
             {p.media
               .filter((m) => m.kind === 'video')
               .map((m) => (
@@ -543,8 +739,8 @@ export function ProductPage() {
           </GLSection>
         )}
         {p.documents.length > 0 && (
-          <GLSection>
-            <SectionHeading title={t('documents')} />
+          <GLSection id="product-documents">
+            <SectionHeading overline={'04 / ' + t('documents')} title={t('documents')} />
             <div className="gl-grid gl-grid-two">
               {p.documents.map((d) => (
                 <GLTechnicalDocumentCard key={d.id} document={d} />
@@ -552,9 +748,9 @@ export function ProductPage() {
             </div>
           </GLSection>
         )}
-        {related.data && related.data.items.some((r) => r.id !== p.id) && (
+        {related.data?.items.some((r) => r.id !== p.id) && (
           <GLSection>
-            <SectionHeading title={t('related')} />
+            <SectionHeading overline={'05 / ' + t('related')} title={t('related')} />
             <div className="gl-grid">
               {related.data.items
                 .filter((r) => r.id !== p.id)
@@ -585,7 +781,9 @@ export function AboutPage() {
           <div className="gl-about-layout">
             <div>
               <div className="gl-overline">GOLDEN LIFT</div>
-              <GLHeading level={1}>{t('aboutTitle')}</GLHeading>
+              <GLHeading fluid level={1}>
+                {t('aboutTitle')}
+              </GLHeading>
               <p>{t('aboutBody')}</p>
               <GLAlert>{t('demoAbout')}</GLAlert>
             </div>

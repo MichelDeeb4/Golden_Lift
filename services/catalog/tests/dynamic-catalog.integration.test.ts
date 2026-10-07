@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
+import pg from 'pg';
 import { performance } from 'node:perf_hooks';
 import { after, before, test } from 'node:test';
 import { ApplicationError, uuid, version } from '@golden-lift/contracts';
@@ -32,6 +33,7 @@ import { ReadProducts } from '../src/application/use-cases/read-products.js';
 import { ManageProducts } from '../src/application/use-cases/manage-products.js';
 import { PrismaProductManagementUnitOfWork } from '../src/infrastructure/prisma/product-management.js';
 import { PrismaMediaRegistry } from '../src/infrastructure/prisma/media-registry.js';
+import { publicProductQuery } from '../src/presentation/http/public-product-query.js';
 import { ReadCatalogConfiguration } from '../src/application/use-cases/read-catalog-configuration.js';
 import { ChangeProductType } from '../src/application/use-cases/change-product-type.js';
 import { CreateCategory } from '../src/application/use-cases/create-category.js';
@@ -263,6 +265,128 @@ test('Admin management preserves versions, publication privacy, ordered media an
 function changes() {
   return new ChangeCatalogSchema(uow, ids, clock);
 }
+
+test('public collection searches and filters exact public values with bounded HTTP pagination and privacy', async () => {
+  const t = await type(),
+    number = await attribute('NUMBER'),
+    boolean = await attribute('BOOLEAN'),
+    secret = await attribute('TEXT', false);
+  await assign(t.id, number.id, true);
+  await assign(t.id, boolean.id);
+  await assign(t.id, secret.id, false, false);
+  const first = await product(t.id, [
+    { definitionId: number.id, value: { kind: 'NUMBER', number: '0.000001' } },
+    { definitionId: boolean.id, value: { kind: 'BOOLEAN', boolean: false } },
+    {
+      definitionId: secret.id,
+      value: {
+        kind: 'TEXT',
+        translations: [{ locale: 'ar', text: 'UnsearchablePrivateEvidence' }],
+      },
+    },
+  ]);
+  const second = await product(t.id, [
+    { definitionId: number.id, value: { kind: 'NUMBER', number: '99999999999999.999999' } },
+  ]);
+  const read = new ReadProducts(uow);
+  const input = publicProductQuery({ locale: 'en', productType: t.id, pageSize: '1' });
+  const page = await read.collection(input);
+  assert.equal(page.items.length, 1);
+  assert.equal(page.hasNextPage, true);
+  const next = await read.collection({ ...input, page: 2 });
+  assert.equal(next.items.length, 1);
+  assert.equal(next.hasNextPage, false);
+  assert.notEqual(page.items[0]!.id, next.items[0]!.id);
+  assert.equal(
+    page.filters.some((f) => f.id === secret.id),
+    false,
+  );
+  const exact = await read.collection({
+    ...input,
+    pageSize: 12,
+    filters: [
+      { definitionId: number.id, kind: 'NUMBER', minimum: '0.000001', maximum: '0.000001' },
+      { definitionId: boolean.id, kind: 'BOOLEAN', value: false },
+    ],
+  });
+  assert.deepEqual(
+    exact.items.map((p) => p.id),
+    [first.id],
+  );
+  assert.equal(
+    exact.items[0]!.attributes.some((a) => a.definitionId === secret.id),
+    false,
+  );
+  assert.equal(exact.items[0]!.media[0]!.assetId, first.coverAssetId);
+  assert.ok(exact.items[0]!.categoryName);
+  assert.ok(exact.items[0]!.productTypeName);
+  assert.equal(
+    (await read.collection({ ...input, search: 'UnsearchablePrivateEvidence' })).items.length,
+    0,
+  );
+  assert.equal(
+    (await read.collection({ ...input, search: first.modelCode! })).items[0]!.id,
+    first.id,
+  );
+  await assert.rejects(
+    read.collection({
+      ...input,
+      filters: [{ definitionId: secret.id, kind: 'TEXT', value: 'Evidence' }],
+    }),
+    isCode('VALIDATION_FAILED'),
+  );
+  const management = new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock);
+  await management.publication(
+    second.id,
+    second.version,
+    { active: false, featured: false, sortOrder: '0', featuredOrder: '0' },
+    actor,
+  );
+  assert.equal((await read.collection(input)).items.length, 1);
+  await new PrismaMediaRegistry(db, 300).apply({
+    schemaVersion: 1,
+    id: ids.newUuid(),
+    producer: 'media',
+    type: 'media.asset.security.v1',
+    assetId: first.coverAssetId,
+    kind: 'IMAGE',
+    sourceVersion: version('2'),
+    blocked: true,
+  });
+  await assert.rejects(read.public(first.id, 'en'), isCode('NOT_FOUND'));
+  assert.equal((await read.collection(input)).items.length, 0);
+  const config = { ...httpConfig('catalog'), port: 0 };
+  const catalog = await catalogApplication(config, new pg.Pool(fixture.pool.options));
+  await catalog.listen(0, '127.0.0.1');
+  const gateway = await gatewayApplication(
+    { ...httpConfig('gateway'), port: 0 },
+    {
+      catalog: await catalog.getUrl(),
+      identity: 'http://127.0.0.1:1',
+      media: 'http://127.0.0.1:1',
+      inquiries: 'http://127.0.0.1:1',
+    },
+  );
+  await gateway.listen(0, '127.0.0.1');
+  try {
+    const origin = await gateway.getUrl();
+    const response = await fetch(origin + '/api/v1/products?productType=' + t.id + '&locale=en');
+    assert.equal(response.status, 200);
+    assert.deepEqual(((await response.json()) as { items: unknown[] }).items, []);
+    for (const query of [
+      'page=0',
+      'pageSize=101',
+      'sort=sql',
+      'filters=%7B%7D',
+      'unknown=1',
+      'search=%20',
+    ])
+      assert.equal((await fetch(origin + '/api/v1/products?' + query)).status, 400, query);
+  } finally {
+    await gateway.close();
+    await catalog.close();
+  }
+});
 async function type() {
   const t = await new CreateProductType(uow, ids, clock).execute(
     { code: 'type-' + randomUUID(), translations },

@@ -1,17 +1,32 @@
 .gl-admin {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 256px minmax(0, 1fr);
-  grid-template-rows: 64px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: 68px 1fr;
+}
+.gl-admin-skeleton-row {
+  height: 48px;
+  margin-block: var(--space3);
+}
+.gl-operational-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space5);
+  background: var(--background-subtle);
+}
+.gl-operational-metric strong {
+  font-size: 36px;
 }
 .gl-admin-top {
-  grid-column: 1 / -1;
+  grid-column: 1/-1;
   display: flex;
   align-items: center;
   gap: var(--space4);
   padding-inline: var(--space6);
-  background: var(--background-dark);
-  color: var(--text-inverse);
+  background: var(--background-surface);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-default);
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
@@ -20,27 +35,45 @@
   margin-inline-start: auto;
 }
 .gl-admin-sidebar {
-  background: var(--background-surface);
-  border-inline-end: 1px solid var(--border-default);
-  padding: var(--space4);
+  background: var(--background-dark);
+  color: var(--text-inverse);
+  border-inline-end: 1px solid var(--dark-border);
+  padding: var(--space6) var(--space4);
 }
-.gl-admin nav {
+.gl-nav-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space2);
+  gap: var(--space1);
+  margin-bottom: var(--space6);
 }
-.gl-admin nav a {
+.gl-nav-group > p {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dark-muted);
+  padding-inline: var(--space3);
+  margin-bottom: var(--space2);
+}
+.gl-admin-sidebar nav a,
+.gl-drawer .gl-nav-group a {
   padding: var(--space3);
   min-height: 44px;
+  font-size: 14px;
 }
-.gl-admin nav a[aria-current='page'] {
-  background: var(--background-warm);
-  color: var(--text-gold);
+.gl-admin-sidebar nav a[aria-current='page'],
+.gl-drawer .gl-nav-group a[aria-current='page'] {
+  background: var(--background-deepDark);
+  color: var(--text-inverse);
   border-inline-start: 3px solid var(--border-gold);
 }
+.gl-admin .gl-page-heading .gl-breadcrumb {
+  padding-block: var(--space2);
+  margin-bottom: var(--space4);
+}
 .gl-admin-content {
-  padding: var(--space6);
+  padding: var(--space8);
   min-width: 0;
+  max-width: 1440px;
+  width: 100%;
 }
 .gl-admin-content > .gl-heading {
   margin-bottom: var(--space6);
@@ -48,9 +81,12 @@
 .gl-admin-login {
   max-width: 480px;
   margin: var(--space20) auto;
-  padding: var(--space6);
+  padding: var(--space8);
+  border-top: 3px solid var(--border-gold);
+  background: var(--background-surface);
 }
 .gl-admin form,
+.gl-admin-overlay form,
 .gl-admin-login form {
   display: flex;
   flex-direction: column;
@@ -66,20 +102,78 @@
 .gl-admin-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space6);
+  gap: var(--space5);
+  align-items: end;
 }
-.gl-admin section {
-  padding: var(--space5);
+.gl-field-wide {
+  grid-column: 1/-1;
+}
+.gl-admin section:not(.gl-form-section) {
+  padding-block: var(--space5);
   margin-block: var(--space5);
-  background: var(--background-surface);
-  border: 1px solid var(--border-default);
+  border-top: 1px solid var(--border-default);
 }
 .gl-admin section > .gl-heading {
   margin-bottom: var(--space4);
 }
+.gl-admin .gl-form-section {
+  padding: var(--space6) 0;
+  margin-block: var(--space3);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.gl-admin-overlay .gl-form-section {
+  margin-block: var(--space3);
+  padding-block: var(--space4);
+}
+.gl-admin-overlay .gl-breadcrumb {
+  padding-block: var(--space2);
+}
+.gl-media-filters {
+  margin-block: var(--space5);
+}
+.gl-admin .gl-form-section .gl-form-section {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.gl-translation-panel {
+  display: grid;
+  gap: var(--space4);
+  padding-top: var(--space5);
+}
+.gl-translation-panel[hidden] {
+  display: none;
+}
+.gl-translation-panel textarea {
+  min-height: 160px;
+}
+.gl-attribute-group {
+  border: 0;
+  padding: 0;
+  margin-block: var(--space5);
+}
+.gl-attribute-group legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding-block: var(--space3);
+  border-bottom: 1px solid var(--border-default);
+  width: 100%;
+  margin-bottom: var(--space4);
+}
+.gl-schema-subsection {
+  border-block: 1px solid var(--border-default);
+  padding-block: var(--space5);
+  margin-block: var(--space5);
+  display: grid;
+  gap: var(--space4);
+}
 .gl-admin-table {
   overflow: auto;
   margin-block: var(--space4);
+  border: 1px solid var(--border-default);
+  background: var(--background-surface);
 }
 .gl-admin-table table {
   width: 100%;
@@ -87,22 +181,185 @@
 }
 .gl-admin-table th,
 .gl-admin-table td {
-  padding: var(--space3);
+  padding: var(--space4);
   border-bottom: 1px solid var(--border-default);
   text-align: start;
+  vertical-align: middle;
+  font-size: 14px;
+}
+.gl-admin-table thead th {
+  font-weight: 600;
+  background: var(--background-metal);
+}
+.gl-admin-table td a {
+  font-weight: 600;
+}
+.gl-admin-table small {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-top: var(--space1);
+}
+.gl-table-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space3);
+  min-width: 220px;
+}
+.gl-collection-cover {
+  width: 64px;
+  min-width: 64px;
+  height: 56px;
+  background: var(--background-metal);
+  overflow: hidden;
+}
+.gl-collection-cover .gl-admin-preview img {
+  width: 64px;
+  height: 56px;
+  object-fit: contain;
+}
+.gl-collection-cover .gl-alert {
+  font-size: 10px;
+  padding: var(--space1);
+}
+.gl-status-dot:before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: var(--radiusPill);
+  margin-inline-end: var(--space2);
+}
+.gl-status-dot.is-active:before {
+  background: var(--state-success);
+}
+.gl-product-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space3);
+  padding-block: var(--space5);
+}
+.gl-product-filters .gl-field {
+  flex: 1 1 150px;
+  min-width: 150px;
+}
+.gl-product-filters .gl-field:first-of-type {
+  flex: 2 1 220px;
 }
 .gl-admin-menu {
   display: none;
 }
-.gl-admin-media {
+.gl-admin-media,
+.gl-media-tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space4);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space5);
+}
+.gl-admin-media section {
+  padding: var(--space4);
+  margin: 0;
+  background: var(--background-surface);
+  border: 1px solid var(--border-default);
 }
 .gl-admin-media img {
   width: 100%;
-  height: 160px;
+  height: 180px;
   object-fit: contain;
+}
+.gl-admin-preview {
+  min-width: 0;
+}
+.gl-cover-editor {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: var(--space6);
+  align-items: center;
+  margin-block: var(--space5);
+}
+.gl-cover-editor .gl-admin-preview {
+  background: var(--background-metal);
+}
+.gl-cover-editor img {
+  width: 100%;
+  height: 240px;
+  object-fit: contain;
+}
+.gl-cover-editor p {
+  margin-top: var(--space3);
+  font-size: 13px;
+}
+.gl-media-group {
+  border-top: 1px solid var(--border-default);
+  padding-top: var(--space5);
+  margin-top: var(--space6);
+}
+.gl-media-group-heading {
+  display: flex;
+  gap: var(--space3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space4);
+}
+.gl-media-tile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid var(--border-default);
+  margin: 0;
+  padding: var(--space3);
+  gap: var(--space3);
+}
+.gl-media-tile > .gl-admin-preview {
+  grid-column: 1/-1;
+  background: var(--background-metal);
+}
+.gl-media-tile .gl-admin-preview img,
+.gl-media-tile video {
+  width: 100%;
+  height: 176px;
+  object-fit: contain;
+}
+.gl-media-tile details {
+  grid-column: 1/-1;
+  font-size: 13px;
+}
+.gl-media-tile small {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: var(--space1);
+}
+.gl-document-rows {
+  display: grid;
+  gap: var(--space3);
+}
+.gl-document-rows .gl-media-tile {
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+}
+.gl-document-rows .gl-media-tile > .gl-admin-preview {
+  grid-column: auto;
+  grid-row: span 2;
+}
+.gl-document-rows .gl-media-tile .gl-admin-preview img {
+  height: 100px;
+}
+.gl-document-rows .gl-media-tile details {
+  grid-column: 2/-1;
+}
+.gl-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space5);
+  margin-block: var(--space6);
+}
+.gl-operation-grid a {
+  background: var(--background-surface);
+  border-top: 3px solid var(--border-gold);
+  padding: var(--space6);
+  font-weight: 600;
 }
 @media (max-width: 1099px) {
   .gl-admin {
@@ -114,19 +371,59 @@
   .gl-admin-menu {
     display: inline-flex;
   }
-  .gl-admin-grid {
-    grid-template-columns: 1fr;
+  .gl-admin-content {
+    padding: var(--space6);
+  }
+  .gl-product-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 @media (max-width: 767px) {
   .gl-admin-top {
     gap: var(--space2);
     padding-inline: var(--space3);
+    flex-wrap: wrap;
+    min-height: 64px;
+  }
+  .gl-admin-top > strong {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .gl-admin-top .gl-button {
+    padding-inline: var(--space2);
   }
   .gl-admin-top > span {
     display: none;
   }
   .gl-admin-content {
     padding: var(--space4);
+  }
+  .gl-admin-grid,
+  .gl-operation-grid {
+    grid-template-columns: 1fr;
+  }
+  .gl-product-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .gl-product-filters > :first-child {
+    grid-column: 1/-1;
+  }
+  .gl-admin .gl-form-section {
+    padding: var(--space4);
+  }
+  .gl-cover-editor {
+    grid-template-columns: 1fr;
+  }
+  .gl-cover-editor img {
+    height: 200px;
+  }
+  .gl-media-tiles {
+    grid-template-columns: 1fr;
+  }
+  .gl-document-rows .gl-media-tile {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .gl-document-rows .gl-media-tile details {
+    grid-column: 1/-1;
   }
 }

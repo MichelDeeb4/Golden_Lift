@@ -54,14 +54,22 @@ export function GLHeading({
   level = 2,
   role,
   className = '',
+  fluid = false,
   ...props
 }: {
   children?: ReactNode;
   level?: 1 | 2 | 3 | 4 | 5 | 6;
   role?: TypographyRole;
+  fluid?: boolean;
 } & HTMLAttributes<HTMLHeadingElement>) {
   const { locale } = useLocale();
   const r = typography[role ?? (`heading${level}` as TypographyRole)];
+  if (fluid)
+    return createElement(
+      'h' + level,
+      { ...props, className: 'gl-heading gl-heading-fluid ' + className },
+      children,
+    );
   return (
     <Text
       asChild
@@ -117,7 +125,12 @@ export function GLIconButton({
   ...props
 }: Omit<Parameters<typeof GLButton>[0], 'children'> & { label: string; children: ReactNode }) {
   return (
-    <GLButton {...props} className={'gl-icon-button ' + (props.className ?? '')} aria-label={label}>
+    <GLButton
+      {...props}
+      title={props.title ?? label}
+      className={'gl-icon-button ' + (props.className ?? '')}
+      aria-label={label}
+    >
       {children}
     </GLButton>
   );

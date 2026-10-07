@@ -8,18 +8,18 @@ import { ApiCatalogDataSource, ApiMediaResolver, PublicApiClient } from '@golden
 import type { CatalogDataSource, MediaResolver } from '@golden-lift/api';
 import { MediaProvider } from '@golden-lift/catalog-ui';
 import { DemoCatalogDataSource, DemoMediaResolver } from '../features/catalog/demo';
-const sourceMode = process.env.EXPO_PUBLIC_CATALOG_SOURCE ?? 'demo';
-if (!['demo', 'api'].includes(sourceMode))
-  throw new Error('EXPO_PUBLIC_CATALOG_SOURCE must be demo or api');
-const client =
-  sourceMode === 'api'
-    ? new PublicApiClient(process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000')
-    : null;
+import { frontendConfiguration } from '../configuration';
+const sourceMode = frontendConfiguration.dataMode;
+const client = sourceMode === 'api' ? new PublicApiClient(frontendConfiguration.apiOrigin) : null;
 const data: CatalogDataSource = client
   ? new ApiCatalogDataSource(client)
   : new DemoCatalogDataSource();
 const media: MediaResolver = client ? new ApiMediaResolver(client) : new DemoMediaResolver();
 const Context = createContext<CatalogDataSource>(data);
+const InvalidationContext = createContext<(() => Promise<void>) | null>(null);
+export function usePublicCatalogInvalidation() {
+  return useContext(InvalidationContext);
+}
 export function useCatalog() {
   return useContext(Context);
 }
@@ -28,7 +28,7 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 30000, gcTime: 300000, retry: 1, refetchOnWindowFocus: false },
+          queries: { staleTime: 30000, gcTime: 300000, retry: 1, refetchOnWindowFocus: true },
         },
       }),
   );
@@ -38,7 +38,11 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
         <GLTokenStyles />
         <QueryClientProvider client={query}>
           <Context.Provider value={data}>
-            <MediaProvider resolver={media}>{children}</MediaProvider>
+            <InvalidationContext.Provider
+              value={() => query.invalidateQueries({ queryKey: ['catalog'] })}
+            >
+              <MediaProvider resolver={media}>{children}</MediaProvider>
+            </InvalidationContext.Provider>
           </Context.Provider>
         </QueryClientProvider>
       </TamaguiProvider>

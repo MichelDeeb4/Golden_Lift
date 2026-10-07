@@ -1,11 +1,11 @@
 // Disposable browser fixtures. All staff requests use real Identity/Gateway/service HTTP.
 // Synthetic Media verification below exercises lifecycle/delivery, not external scanner/provider gates.
 import { randomBytes, randomUUID } from 'node:crypto';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { uuid, version } from '@golden-lift/contracts';
-import { httpConfig, IdentitySessionClient } from '@golden-lift/platform';
+import { uuid, version, mediaEvent } from '@golden-lift/contracts';
+import { httpConfig, IdentitySessionClient, runOutboxRelay } from '@golden-lift/platform';
 import { databaseFixture } from '../.local/test-build/packages/platform/tests/support/database-fixture.js';
 import { identityApplication } from '../services/identity/dist/composition/application.js';
 import { identityConfig } from '../services/identity/dist/infrastructure/config.js';
@@ -20,8 +20,20 @@ import { PrismaMediaUnitOfWork } from '../services/media/dist/infrastructure/pri
 import { PrismaMediaRegistry } from '../services/catalog/dist/infrastructure/prisma/media-registry.js';
 import { Uploads } from '../services/media/dist/application/use-cases/uploads.js';
 import { mediaIds, mediaClock } from '../services/media/dist/composition/dependencies.js';
+import { ClamAvScanner } from '../services/media/dist/infrastructure/scanning/clamav.js';
+import { SystemMediaProcessor } from '../services/media/dist/infrastructure/processes/pipeline.js';
+import { ProcessMedia } from '../services/media/dist/application/use-cases/process-media.js';
+import { MediaOutboxRelay } from '../services/media/dist/infrastructure/prisma/outbox-relay.js';
+import { CatalogMediaOutboxRelay } from '../services/catalog/dist/infrastructure/prisma/media-outbox-relay.js';
 
 export async function adminBrowserFixture() {
+  const native = process.env.GL_MEDIA_NATIVE_FIXTURE === 'true';
+  const nativeCommands = native
+    ? JSON.parse(await readFile('.local/tools/commands.json', 'utf8')).commands
+    : {};
+  const relaysStop = new AbortController();
+  const relays = [];
+  const serverPorts = new WeakMap();
   const fixtures = [],
     apps = [],
     messages = [],
@@ -43,6 +55,8 @@ export async function adminBrowserFixture() {
   async function dispose() {
     clearInterval(worker);
     await workerWork;
+    relaysStop.abort();
+    await Promise.all(relays);
     console.info('Admin fixture: closing disposable servers.');
     for (const app of apps) app.getHttpServer().closeAllConnections();
     for (const client of clients) await client.$disconnect();
@@ -116,6 +130,7 @@ export async function adminBrowserFixture() {
       MEDIA_PUBLIC_ORIGIN: 'http://localhost:3003',
       CATALOG_SERVICE_URL: catalogOrigin,
       MEDIA_CATALOG_TOKEN: mediaToken,
+      ...(native ? { ...nativeCommands, MEDIA_SCRATCH_ROOT: path.join(directory, 'scratch') } : {}),
     });
     // Explicit test-only prerequisite adapter; production composition still requires ClamAV.
     const media = await mediaApplication(
@@ -128,7 +143,9 @@ export async function adminBrowserFixture() {
         caller: 'media',
         credential: security.callers.media,
       }),
-      { ready: async () => true },
+      native
+        ? new ClamAvScanner(mediaSettings.scannerHost, mediaSettings.scannerPort)
+        : { ready: async () => true },
     );
     const mediaOrigin = await listen(media, 3003);
     const gateway = await gatewayApplication(config('gateway'), {
@@ -143,6 +160,48 @@ export async function adminBrowserFixture() {
     clients.push(mediaDb, catalogDb);
     const uow = new PrismaMediaUnitOfWork(mediaDb),
       registry = new PrismaMediaRegistry(catalogDb, 300);
+    const nativeWork = native
+      ? new ProcessMedia(
+          uow,
+          new SystemMediaProcessor(
+            storage,
+            new ClamAvScanner(mediaSettings.scannerHost, mediaSettings.scannerPort),
+            mediaSettings.scratch,
+            mediaSettings.policy,
+            mediaSettings.commands,
+          ),
+          mediaIds,
+          5,
+        )
+      : null;
+    if (native) {
+      const mediaKey = credential(),
+        catalogKey = credential();
+      relays.push(
+        runOutboxRelay({
+          url: '',
+          service: 'media',
+          store: new MediaOutboxRelay(mediaDb),
+          signingKey: mediaKey,
+          verificationKey: catalogKey,
+          signal: relaysStop.signal,
+          localHttp: { listenPort: 3103, targetPort: 3102 },
+          apply: (input) => uow.execute((r) => r.retire(mediaEvent(input))),
+        }),
+      );
+      relays.push(
+        runOutboxRelay({
+          url: '',
+          service: 'catalog',
+          store: new CatalogMediaOutboxRelay(catalogDb),
+          signingKey: catalogKey,
+          verificationKey: mediaKey,
+          signal: relaysStop.signal,
+          localHttp: { listenPort: 3102, targetPort: 3103 },
+          apply: (input) => registry.apply(mediaEvent(input)),
+        }),
+      );
+    }
     const image = await sharp({
       create: { width: 80, height: 80, channels: 3, background: '#b39455' },
     })
@@ -151,6 +210,17 @@ export async function adminBrowserFixture() {
     const webp = await sharp(image).webp().toBuffer();
     const actor = { id: invited.account.id, role: 'ADMIN', authVersion: version('1') };
     async function processKind(kind) {
+      if (nativeWork) {
+        const claim = await nativeWork.claim(kind);
+        if (!claim) return;
+        if (!(await nativeWork.execute(claim, new AbortController().signal)))
+          throw new Error('Native processing failed: ' + kind);
+        for (let count = 0; count < 100; count++) {
+          if ((await registry.registration(claim.asset.id)).registered) return;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error('Native READY event was not acknowledged by Catalog.');
+      }
       const claim = await uow.execute((r) => r.claim(kind, mediaIds.uuid(), 5));
       if (!claim) return;
       let playback;
@@ -245,9 +315,96 @@ export async function adminBrowserFixture() {
       assetId: upload.assetId,
       identity,
       dispose,
+      serviceAvailable: async (name, available) => {
+        const app = { identity: identity.app, catalog, media, gateway }[name];
+        if (!app) throw new Error('Unknown fixture service');
+        const server = app.getHttpServer();
+        if (!available) {
+          const address = server.address();
+          serverPorts.set(server, address.port);
+          server.closeAllConnections();
+          await new Promise((resolve, reject) =>
+            server.close((error) => (error ? reject(error) : resolve())),
+          );
+        } else
+          await new Promise((resolve, reject) => {
+            server.once('error', reject);
+            server.listen(serverPorts.get(server), '127.0.0.1', resolve);
+          });
+      },
+      technicalSource: async (productId, assetId, enabled) => {
+        const sheetId = randomUUID();
+        await catalogDb.$transaction(
+          async (tx) => {
+            await tx.technicalSheets.create({ data: { id: sheetId, sheet_key: sheetId } });
+            await tx.technicalSheetTranslations.create({
+              data: { sheet_id: sheetId, locale: 'ar', title: 'Browser permitted PDF' },
+            });
+            await tx.technicalSheetTranslations.create({
+              data: { sheet_id: sheetId, locale: 'en', title: 'Browser permitted PDF' },
+            });
+            await tx.technicalSheetSources.create({
+              data: {
+                sheet_id: sheetId,
+                asset_id: assetId,
+                source_label: 'Browser PDF',
+                page_from: 1,
+                page_to: 1,
+                download_enabled: enabled,
+              },
+            });
+            await tx.productTechnicalSheets.create({
+              data: { sheet_id: sheetId, product_id: productId },
+            });
+          },
+          { isolationLevel: 'Serializable' },
+        );
+        return sheetId;
+      },
       checkProcessing: () => {
         if (processingFailure) throw processingFailure;
       },
+      recordNativeEvidence: async () => {
+        if (!native) return;
+        const assets = await mediaDb.assets.findMany({
+          where: { status: 'READY' },
+          select: {
+            media_kind: true,
+            status: true,
+            security_state: true,
+            pipeline_version: true,
+            verification: true,
+            asset_variants: {
+              where: { deleted_at: null },
+              select: {
+                variant_key: true,
+                mime_type: true,
+                byte_size: true,
+                width_px: true,
+                height_px: true,
+                duration_ms: true,
+              },
+            },
+          },
+        });
+        await writeFile(
+          '.local/functional-native-evidence.json',
+          JSON.stringify(
+            { checkedAt: new Date().toISOString(), profile: 'native-local-http', assets },
+            (_key, value) => (typeof value === 'bigint' ? String(value) : value),
+            2,
+          ) + '\n',
+        );
+      },
+      persistence: async (id) => ({
+        product: await catalogDb.products.findUnique({ where: { id } }),
+        values: await catalogDb.productSpecificationValues.findMany({
+          where: { product_id: id, deleted_at: null },
+        }),
+        media: await catalogDb.productMedia.findMany({
+          where: { product_id: id, deleted_at: null },
+        }),
+      }),
     };
   } catch (error) {
     await dispose();

@@ -1,0 +1,113 @@
+{
+  "checkedAt": "2026-10-07T09:28:10.434Z",
+  "scope": "Attribute creation fix",
+  "checks": {
+    "projectCheck": "PASS",
+    "frontendUnit": {
+      "passed": 8
+    },
+    "backendUnit": {
+      "passed": 37
+    },
+    "storefrontBuild": "PASS",
+    "focusedBrowser": {
+      "stats": {
+        "startTime": "2026-10-07T09:26:14.349Z",
+        "duration": 27211.799,
+        "expected": 2,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "errors": []
+    },
+    "diffCheck": "PASS"
+  },
+  "runtime": {
+    "checkedAt": "2026-10-07T09:27:52.306Z",
+    "services": {
+      "catalog": {
+        "port": 3002,
+        "status": 200,
+        "ready": true
+      },
+      "identity": {
+        "port": 3001,
+        "status": 200,
+        "ready": true
+      },
+      "inquiries": {
+        "port": 3004,
+        "status": 200,
+        "ready": true
+      },
+      "media": {
+        "port": 3003,
+        "status": 200,
+        "ready": true
+      },
+      "gateway": {
+        "port": 3000,
+        "status": 200,
+        "ready": true
+      },
+      "frontend": {
+        "port": 8081,
+        "ready": true
+      }
+    },
+    "databases": {
+      "identity": {
+        "ready": true
+      },
+      "catalog": {
+        "ready": true
+      },
+      "media": {
+        "ready": true
+      },
+      "inquiries": {
+        "ready": true
+      }
+    },
+    "tools": {
+      "ffmpeg": {
+        "available": true,
+        "version": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+      },
+      "ffprobe": {
+        "available": true,
+        "version": "ffprobe version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers"
+      },
+      "pdfinfo": {
+        "available": true,
+        "version": "pdfinfo version 26.09.0"
+      },
+      "pdftoppm": {
+        "available": true,
+        "version": "pdftoppm version 26.09.0"
+      },
+      "clamd": {
+        "available": true,
+        "version": "ClamAV 1.5.4/28146/Wed Oct  7 09:24:18 2026"
+      }
+    },
+    "dependencies": {
+      "scanner": {
+        "ready": true
+      },
+      "rabbitmq": {
+        "reachable": false
+      },
+      "events": {
+        "profile": "native-local-http",
+        "catalogLocalListener": true,
+        "mediaLocalListener": true
+      }
+    }
+  },
+  "limitations": [
+    "Original rejected attribute inputs were unavailable; exact rejected field is not claimed.",
+    "Focused browser invocation had a nonzero PowerShell shell result with a native stderr warning; Playwright report records two passing tests and zero errors."
+  ]
+}

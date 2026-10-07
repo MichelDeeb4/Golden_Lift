@@ -1,0 +1,250 @@
+{
+  "phase": "UI/UX refinement",
+  "recordedAt": "2026-10-06T14:17:27.687Z",
+  "acceptance": "PASS",
+  "acceptanceScope": "Implemented presentation scope and preserved local workflows; contract and production-provider limitations remain explicit.",
+  "environment": {
+    "platform": "Windows",
+    "node": "v24.21.0",
+    "browser": "Microsoft Edge via Playwright",
+    "visitorSource": "Explicitly labeled demo",
+    "staffSource": "Real local service/Gateway HTTP and disposable PostgreSQL"
+  },
+  "backendChanges": "none",
+  "newDependencies": [],
+  "verification": [
+    {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "backendUnitTests": 36,
+      "architectureSourceFiles": 200,
+      "boundaryRegressionProbes": 14,
+      "prismaSchemas": 4,
+      "includes": [
+        "build",
+        "backend/frontend typecheck",
+        "format",
+        "architecture",
+        "Prisma schema validation"
+      ],
+      "log": ".local/refinement-check.log"
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "tests": 7,
+      "log": ".local/refinement-frontend-unit.log"
+    },
+    {
+      "command": "npm.cmd run storefront:build",
+      "status": "PASS",
+      "uncompressedJsBundle": "4.8 MB (Expo rounded)",
+      "cssBundles": 3,
+      "log": ".local/refinement-export.log"
+    },
+    {
+      "command": "npm.cmd run test:storefront",
+      "status": "PASS",
+      "tests": 5,
+      "stats": {
+        "startTime": "2026-10-06T14:11:07.281Z",
+        "duration": 19793.25,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "snapshots": 7,
+      "updateSnapshots": false,
+      "log": ".local/refinement-public-final.log"
+    },
+    {
+      "command": "npm.cmd run test:admin (disposable database profile)",
+      "status": "PASS",
+      "tests": 10,
+      "stats": {
+        "startTime": "2026-10-06T14:15:52.058Z",
+        "duration": 80261.504,
+        "expected": 10,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "snapshots": 7,
+      "updateSnapshots": false,
+      "log": ".local/refinement-admin-final.log"
+    },
+    {
+      "command": "npm.cmd run format:check",
+      "status": "PASS",
+      "log": ".local/refinement-format-final.log"
+    },
+    {
+      "command": "git diff --check",
+      "status": "PASS"
+    }
+  ],
+  "totalCurrentPassingTests": 58,
+  "visualReview": {
+    "locales": [
+      "en",
+      "ar",
+      "ckb"
+    ],
+    "layouts": [
+      "desktop",
+      "tablet",
+      "mobile"
+    ],
+    "publicWidthsChecked": [
+      390,
+      768,
+      1440,
+      1920
+    ],
+    "snapshotsUpdatedIntentionally": true,
+    "separateNoUpdateComparisonPassed": true,
+    "staffVolatileMasks": [
+      "asset ID text",
+      "timestamps",
+      "video pixels"
+    ]
+  },
+  "accessibility": {
+    "verified": [
+      "contrast/font unit checks",
+      "labels",
+      "select/tab keyboard interactions",
+      "modal/drawer Escape and focus restoration",
+      "overflow action Escape and trigger focus",
+      "earlier/later reorder alternatives",
+      "RTL",
+      "scroll/overflow checks"
+    ],
+    "target": "WCAG 2.2 AA",
+    "externalCertification": false
+  },
+  "preserved": [
+    "role/live-session authorization",
+    "mutation CSRF/Origin behavior",
+    "optimistic record/schema versions",
+    "reviewed type/schema changes",
+    "independent basics/Media/publication saves",
+    "decimal/bigint precision",
+    "soft deletion and retained media",
+    "upload resume and lost acknowledgement recovery"
+  ],
+  "limitations": [
+    "No separate short-description contract",
+    "Public specification group labels not projected",
+    "Global catalog dashboard totals unavailable",
+    "Full public collection/search API integration deferred",
+    "Original vector illustrations pending approved photography",
+    "Test-only scanner/processing adapters and local mail capture are not production provider verification",
+    "No new 91-test PostgreSQL integration-suite run, hosted CI, deployment, complete assistive-technology audit or device performance benchmark"
+  ],
+  "snapshots": [
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/category-ar-desktop-win32.png",
+      "bytes": 119434,
+      "sha256": "fe177d43ddb38c9f4cbf17fe799d6d0119b6fb578f4d553a4f8bf452ebd86b84"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-ar-mobile-win32.png",
+      "bytes": 286155,
+      "sha256": "53833e7f8dbe28ff9d0798776633a5571b79deaf26ea6968b623870e3b24c5f2"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-en-desktop-win32.png",
+      "bytes": 722445,
+      "sha256": "403d61ad1799ac60aab817196a55ecbae4efdaf4d4743aad867814dabd899517"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/listing-en-desktop-win32.png",
+      "bytes": 205936,
+      "sha256": "78d226708a9fe4d4b5d46f455fd3716ac096c2811bc8ef2b691b53ad47b908b3"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ar-mobile-win32.png",
+      "bytes": 159619,
+      "sha256": "0f5b709790ca13a25e71347a0a1dab287d6ab41462ed8e5070eee607a275625d"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ckb-tablet-win32.png",
+      "bytes": 255708,
+      "sha256": "73dffa2fc151b9cfa031fa45b5ce4b74c0740423d26bcc9daca9fac0d604da63"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-en-desktop-win32.png",
+      "bytes": 380441,
+      "sha256": "140b9b70e7f894983e15447598e8c93a335f0e484a79416baf0c88b23078a9b2"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-category-editor-win32.png",
+      "bytes": 70313,
+      "sha256": "1b7cb50ce9245e85d709309f149806350bf1e5f56d9cd64053463bd44300eaaa"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-media-library-win32.png",
+      "bytes": 61580,
+      "sha256": "5a38321457901f815b99b8a705273a8c796882f00683c6b7907a577aea1570bb"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ar-win32.png",
+      "bytes": 50759,
+      "sha256": "32438ed83b7f3bb132ca28daebbe1840ac1c9c0d1dc05c54ad4712441fbcfe15"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ckb-win32.png",
+      "bytes": 58671,
+      "sha256": "9f28eeab7f1a4ecce28729b9bb387645c38b3e4eca9fd6bb217c6d651b90f5bd"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-mobile-win32.png",
+      "bytes": 38683,
+      "sha256": "aeb72aa980d4cb145905d232b6b7e250f874b0753e0081383ad9fd915dd6c09a"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-win32.png",
+      "bytes": 76110,
+      "sha256": "3b0e2cd2802e07447d7e4fc96374f6d686b17d85b67cd4a5d02ff37fa66cfb13"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-list-win32.png",
+      "bytes": 76077,
+      "sha256": "e385742dcb430eef8d5c4508c1c6ad5e6132fd89dc6056bb7118d706bfa6915d"
+    }
+  ],
+  "localRuntime": {
+    "verifiedAt": "2026-10-06T14:18:38.474Z",
+    "disposableClusterCleanup": "PASS",
+    "command": "npm.cmd start",
+    "website": {
+      "url": "http://localhost:8081",
+      "status": 200
+    },
+    "serviceReadiness": [
+      {
+        "port": 3000,
+        "status": 200
+      },
+      {
+        "port": 3001,
+        "status": 200
+      },
+      {
+        "port": 3002,
+        "status": 200
+      },
+      {
+        "port": 3003,
+        "status": 200
+      },
+      {
+        "port": 3004,
+        "status": 200
+      }
+    ],
+    "existingAccountsPreserved": true
+  }
+}

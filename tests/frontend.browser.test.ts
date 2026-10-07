@@ -1,16 +1,24 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     if (!localStorage.getItem('gl.locale')) localStorage.setItem('gl.locale', 'en');
   });
 });
+async function openFilters(page: Page) {
+  if ((page.viewportSize()?.width ?? 1440) >= 768) return;
+  const trigger = page.getByRole('button', { name: 'Filter / Sort by', exact: true });
+  await expect(trigger).toBeVisible();
+  if (!(await page.getByRole('dialog').isVisible())) await trigger.click();
+}
 test('homepage, category/card data, history and scoped pages', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Engineering movement');
   await expect(page.locator('.gl-category-card')).toHaveCount(3);
-  await expect(page.locator('.gl-product-card')).toHaveCount(4);
+  await expect(page.locator('.gl-product-card')).toHaveCount(3);
+  await expect(page.locator('.gl-featured-stage')).toHaveCount(1);
   await page.mouse.wheel(0, 700);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -76,6 +84,11 @@ test('RTL language persistence, breadcrumbs, tabs, gallery and pagination', asyn
   );
   await page.getByRole('button', { name: 'View fullscreen' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.gl-gallery-thumbnails button').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await page.keyboard.press('Escape');
   await page.goto('/products');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
@@ -93,23 +106,31 @@ test('mobile RTL drawer, search empty state and all responsive viewports avoid o
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.locator('.gl-utility select').selectOption('en');
   await page.goto('/search');
+  await openFilters(page);
   await page.getByRole('textbox', { name: 'Search', exact: true }).fill('nothing-matches');
-  await page.locator('main form').getByRole('button', { name: 'Search', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'No products found' })).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await openFilters(page);
   await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue('');
+  await page.keyboard.press('Escape');
   await expect(page.locator('.gl-product-card')).toHaveCount(4);
   await page.goto('/search?q=Aurum');
   await expect(page.locator('.gl-product-card')).toHaveCount(1);
   await page.goto('/search?q=Linea');
+  await openFilters(page);
   await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue('Linea');
+  await page.keyboard.press('Escape');
   await page.goBack();
+  await openFilters(page);
   await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue('Aurum');
   await expect(page.locator('.gl-product-card')).toHaveCount(1);
+  await page.keyboard.press('Escape');
   for (const width of [390, 768, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
     for (const path of ['/', '/categories/cabins', '/products/aurum-01']) {
       await page.goto(path);
+      await expect(page.locator('.gl-header .gl-brand:visible')).toHaveCount(1);
       await expect(page.locator('main')).toBeVisible();
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -122,6 +143,9 @@ test('deterministic client review screenshots for Arabic/Sorani and desktop/tabl
 }) => {
   for (const scenario of [
     { locale: 'en', width: 1440, path: '/', name: 'home-en-desktop' },
+    { locale: 'en', width: 1440, path: '/products', name: 'listing-en-desktop' },
+    { locale: 'en', width: 1440, path: '/products/aurum-01', name: 'product-en-desktop' },
+    { locale: 'ar', width: 390, path: '/products/aurum-01', name: 'product-ar-mobile' },
     { locale: 'ar', width: 390, path: '/', name: 'home-ar-mobile' },
     { locale: 'ckb', width: 768, path: '/products/aurum-01', name: 'product-ckb-tablet' },
     { locale: 'ar', width: 1440, path: '/categories/cabins', name: 'category-ar-desktop' },
@@ -151,6 +175,14 @@ test('deterministic client review screenshots for Arabic/Sorani and desktop/tabl
       path: '.local/s1-screenshots/' + scenario.name + '.png',
       fullPage: true,
     });
+    if (process.env.GL_REDESIGN_CAPTURE) {
+      await page.screenshot({
+        path: `documentation/assets/major-redesign/${process.env.GL_REDESIGN_CAPTURE}/${scenario.name}.png`,
+        fullPage: true,
+        animations: 'disabled',
+      });
+      continue;
+    }
     await expect(page).toHaveScreenshot(scenario.name + '.png', {
       fullPage: true,
       animations: 'disabled',

@@ -1,4 +1,4 @@
-# Golden Lift design system — S1
+# Golden Lift design system
 
 Implemented 2026-10-05. The public web shell uses architectural charcoal, metallic neutrals, warm white and selective gold. The exact requested palette, semantic roles, spacing, typography, radii, shadows, motion and z-index values are exported by `@golden-lift/tokens`. Brand gold is #C9A15B; small gold-colored text uses the darker semantic `text.gold` to meet contrast requirements on white.
 
@@ -65,3 +65,23 @@ Pages consume CatalogDataSource through TanStack Query. UI cards accept typed Pr
 Media components resolve a MediaReference to a short-lived capability through MediaResolver. They never build bucket/object paths or persist signed URLs. API media resolution uses B5 public authorization and exact owner context. Capability refresh obtains a fresh decision, and failures show a safe fallback. Cards/thumbnails select derivatives; document opening requires the supplied public permission. Demo illustrations/PDFs resolve only within the local `/demo` namespace.
 
 Original architectural vector illustrations and the geometric wordmark are S1 demo assets pending approved brand photography/logo. Product specifications and documents are explicitly illustrative. Company history, certifications and contact details have not been invented.
+
+## Earlier UI/UX refinement — 2026-10-06 (historical composition)
+
+The palette and token architecture remain unchanged. Composition now provides a 45/55 desktop hero, an editorial category grid with a larger first item, image-led product cards, subtle technical dividers and an asymmetrical engineering statement. Mobile product detail puts the gallery first; mobile collection filters use a drawer. Public spacing remains generous while staff forms use compact sections and two-column grids.
+
+New shared exports are `GLPageHeader` (breadcrumbs, title, context and actions), `GLFormSection` (associated section heading), `GLActionBar` (persistent section actions) and `GLActionMenu` (secondary actions). The action group focuses its first enabled control, dismisses on outside interaction and restores its trigger on Escape. Shared overlays accept an optional `className` to preserve screen density through portals. `GLTabs` supports unique ID prefixes and uses non-submit buttons inside forms.
+
+Translation tabs keep hidden panels mounted and retain independent drafts. Arabic errors reopen the required Arabic panel. Arabic/Sorani fields retain RTL direction regardless of interface language. Dynamic fields follow backend group/order, with multiline text full width and short fields in two desktop columns. Tables emphasize primary identity, secondary model metadata and restrained context; the product collection uses viewport-triggered cover thumbnails and secondary action overflow.
+
+See [decision 010](decisions/010-ui-ux-refinement.md), the [current design guide](visitor-and-administration-design.md) and [refinement evidence](implementation/ui-ux-refinement-completed-work.md). Earlier S1 evidence remains historical.
+
+## Major visual redesign — current composition
+
+The palette, seven font assets and token ownership remain unchanged. Public composition uses an edge-bleeding 40/60 hero, indexed category mosaic, one featured system with supporting products, large minimally framed cards and a 60/40 product gallery/information split with a numbered dossier. Desktop display headings opt into `GLHeading fluid` so page CSS can set responsive editorial sizes without Tamagui atomic font-size precedence. Semantic heading levels and locale font inheritance remain.
+
+Staff uses a light 68px command bar, dark 240px sidebar and focused light canvas. New shared exports `GLWorkspace` and `GLWorkspacePanel` provide associated navigation/region IDs, a controlled section rail and read-only inspector. Hidden panels remain mounted. At <1300px the inspector becomes a drawer; at <1100px the sidebar becomes a drawer; at <768px the rail scrolls horizontally. App-specific density/layout CSS stays in `features/admin/workspace.css`.
+
+Shared overlays accept opt-in `keepMounted`, used by the upload drawer to retain transfer state while closed. Closed dialogs stay hidden. Gallery arrows work from keyboard/fullscreen in either direction without stealing native video/input keys; touch and earlier/later controls remain. Reduced motion also disables image hover transforms. New composition reuses existing controls, query caching, bounded pagination and private derivative grants; no new visual dependency is introduced.
+
+See [decision 011](decisions/011-major-visual-redesign.md), [illustrated guide](visitor-and-administration-design.md) and [current completion report](implementation/major-redesign-completed-work.md). Screenshot baselines update only after separate visual review; their equality does not measure design quality.

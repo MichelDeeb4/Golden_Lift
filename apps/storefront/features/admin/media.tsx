@@ -1,8 +1,18 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { mediaAssetSchema, uploadSchema } from '@golden-lift/api';
-import { GLAlert, GLButton, GLHeading, GLInput, GLModal, GLSelect } from '@golden-lift/ui';
+import {
+  GLAlert,
+  GLButton,
+  GLHeading,
+  GLInput,
+  GLModal,
+  GLSelect,
+  GLPageHeader,
+  GLDrawer,
+} from '@golden-lift/ui';
 import { StaffError, useStaffApi } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, Confirm, TableState, jsonResponse, useAction } from './common';
@@ -166,22 +176,53 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
     [progress, setProgress] = useState(0),
     abort = useRef<AbortController | null>(null);
   useEffect(() => () => abort.current?.abort(), []);
+  const capabilities = useQuery({
+    queryKey: ['staff', 'media-capabilities'],
+    queryFn: ({ signal }) =>
+      api.request(
+        '/admin/media/capabilities',
+        z.object({
+          scannerAvailable: z.boolean(),
+          mimeTypes: z.object({
+            IMAGE: z.array(z.string()),
+            VIDEO: z.array(z.string()),
+            PDF: z.array(z.string()),
+          }),
+          limits: z.object({
+            maxBytes: z.object({ IMAGE: z.number(), VIDEO: z.number(), PDF: z.number() }),
+          }),
+        }),
+        undefined,
+        'GET',
+        signal,
+      ),
+    refetchInterval: 10000,
+  });
+  const selectedKind =
+    file && capabilities.data
+      ? (['IMAGE', 'VIDEO', 'PDF'] as const).find((kind) =>
+          capabilities.data!.mimeTypes[kind].includes(file.type),
+        )
+      : undefined;
+  const fileProblem =
+    file && capabilities.data
+      ? !selectedKind || (allowedKind && selectedKind !== allowedKind)
+        ? t('unsupportedUpload')
+        : file.size > capabilities.data.limits.maxBytes[selectedKind]
+          ? t('uploadTooLarge')
+          : null
+      : null;
   async function send() {
     if (!file) return;
-    const kind = file.type.startsWith('image/')
-      ? 'IMAGE'
-      : file.type.startsWith('video/')
-        ? 'VIDEO'
-        : file.type === 'application/pdf'
-          ? 'PDF'
-          : null;
+    const kind = selectedKind;
     if (!kind) throw new Error('unsupported');
     if (allowedKind && kind !== allowedKind) throw new Error('unsupported');
-    const capabilities = await api.request(
+    const freshCapabilities = await api.request(
       '/admin/media/capabilities',
       z.object({ scannerAvailable: z.boolean() }),
     );
-    if (!capabilities.scannerAvailable) throw new Error('unavailable');
+    if (!freshCapabilities.scannerAvailable) throw new Error('unavailable');
+    if (fileProblem) throw new Error('invalid');
     abort.current = new AbortController();
     let current = session
       ? await api.request(`/admin/media/uploads/${session.id}/authorize`, uploadSchema, {}, 'POST')
@@ -243,14 +284,18 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
   });
   return (
     <section>
-      <GLHeading level={2} role="heading5">
-        {t('upload')}
-      </GLHeading>
       <p>{t('scanner')}</p>
       <GLInput
         label={t('selectFile')}
         type="file"
-        accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,application/pdf"
+        accept={
+          capabilities.data
+            ? (allowedKind
+                ? capabilities.data.mimeTypes[allowedKind]
+                : Object.values(capabilities.data.mimeTypes).flat()
+              ).join(',')
+            : ''
+        }
         disabled={action.isPending || !!session}
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
@@ -259,12 +304,30 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
           {file.name} · {file.size} {t('bytes')}
         </p>
       )}
-      <progress max={100} value={progress} aria-label={t('upload')} />
-      <p>{processing.data?.asset.status ?? session?.status ?? ''}</p>
+      {(file || session) && <progress max={100} value={progress} aria-label={t('upload')} />}
+      {(processing.data || session) && <p>{processing.data?.asset.status ?? session?.status}</p>}
+      {capabilities.error && (
+        <StaffError error={capabilities.error} reload={() => void capabilities.refetch()} />
+      )}
+      {capabilities.data && !capabilities.data.scannerAvailable && (
+        <GLAlert tone="error">{t('scannerUnavailable')}</GLAlert>
+      )}
+      {fileProblem && <GLAlert tone="error">{fileProblem}</GLAlert>}
+      {processing.error && (
+        <StaffError error={processing.error} reload={() => void processing.refetch()} />
+      )}
+      {processing.data?.asset.status === 'FAILED' && (
+        <GLAlert tone="error">{t('processingFailed')}</GLAlert>
+      )}
       <ActionFeedback action={action} />
       <div className="gl-admin-toolbar">
         <GLButton
-          disabled={!file || session?.status === 'COMPLETED'}
+          disabled={
+            !file ||
+            !!fileProblem ||
+            !capabilities.data?.scannerAvailable ||
+            session?.status === 'COMPLETED'
+          }
           loading={action.isPending}
           onClick={() => action.mutate(send)}
         >
@@ -321,12 +384,17 @@ export function MediaLibrary({
   id,
   onSelect,
   allowedKind,
+  inspecting = false,
 }: {
   id?: string;
   onSelect?: (asset: MediaAsset) => void;
   allowedKind?: MediaAsset['kind'];
+  inspecting?: boolean;
 }) {
-  const api = useStaffApi(),
+  const router = useRouter(),
+    [uploadOpen, setUploadOpen] = useState(false),
+    [search, setSearch] = useState(''),
+    api = useStaffApi(),
     t = useAdminTranslation(),
     [after, setAfter] = useState(''),
     [kind, setKind] = useState(allowedKind ?? ''),
@@ -373,135 +441,201 @@ export function MediaLibrary({
     enabled: !!id,
   });
   const assets = (id ? (detail.data ? [detail.data.asset] : []) : (list.data?.items ?? [])).filter(
-    (asset) => (!kind || asset.kind === kind) && (!status || asset.status === status),
+    (asset) =>
+      (!kind || asset.kind === kind) &&
+      (!status || asset.status === status) &&
+      (!search || (asset.name ?? '').toLocaleLowerCase().includes(search.toLocaleLowerCase())),
   );
+  if (id && !inspecting)
+    return (
+      <>
+        <MediaLibrary />
+        <GLDrawer
+          open
+          title={t('media')}
+          className="gl-admin-overlay gl-asset-inspector"
+          onClose={() => router.replace('/admin/media')}
+        >
+          <MediaLibrary id={id} inspecting />
+        </GLDrawer>
+      </>
+    );
   return (
     <>
-      <GLHeading level={1} role="heading3">
-        {t('media')}
-      </GLHeading>
-      <Upload allowedKind={allowedKind} />
-      <div className="gl-admin-toolbar">
-        <GLSelect
-          label={t('kind')}
-          disabled={!!allowedKind}
-          value={kind}
-          onChange={(value) => {
-            setKind(value);
-            setAfter('');
-          }}
-          options={[
-            { value: '', label: t('all') },
-            ...['IMAGE', 'VIDEO', 'PDF'].map((value) => ({ value, label: value })),
-          ]}
+      {!inspecting && (
+        <div className="gl-media-header">
+          <GLPageHeader title={t('media')} description={t('mediaHelp')} />
+          {!inspecting && (
+            <GLButton onClick={() => setUploadOpen(true)}>{t('uploadMedia')}</GLButton>
+          )}
+        </div>
+      )}
+      <GLDrawer
+        keepMounted
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title={t('upload')}
+        className="gl-admin-overlay"
+      >
+        <Upload allowedKind={allowedKind} />
+      </GLDrawer>
+      {!inspecting && (
+        <GLInput
+          label={t('searchLoadedMedia')}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
         />
-        <GLSelect
-          label={t('status')}
-          value={status}
-          onChange={(value) => {
-            setStatus(value);
-            setAfter('');
-          }}
-          options={[
-            { value: '', label: t('all') },
-            ...['READY', 'PROCESSING', 'FAILED'].map((value) => ({ value, label: value })),
-          ]}
-        />
-      </div>
+      )}
+      {!inspecting && (
+        <div className="gl-admin-grid gl-media-filters">
+          <GLSelect
+            label={t('kind')}
+            disabled={!!allowedKind}
+            value={kind}
+            onChange={(value) => {
+              setKind(value);
+              setAfter('');
+            }}
+            options={[
+              { value: '', label: t('all') },
+              ...['IMAGE', 'VIDEO', 'PDF'].map((value) => ({ value, label: value })),
+            ]}
+          />
+          <GLSelect
+            label={t('status')}
+            value={status}
+            onChange={(value) => {
+              setStatus(value);
+              setAfter('');
+            }}
+            options={[
+              { value: '', label: t('all') },
+              ...['READY', 'PROCESSING', 'FAILED'].map((value) => ({ value, label: value })),
+            ]}
+          />
+        </div>
+      )}
       <TableState
+        presentation="content"
         pending={id ? detail.isPending : list.isPending}
         error={id ? detail.error : list.error}
         empty={!assets.length}
       >
         <div className="gl-admin-media">
-          {assets.map((asset) => (
-            <section key={asset.id}>
-              <MediaPreview asset={asset} />
-              <p>
-                {asset.name} · {asset.kind} · {asset.status}
-              </p>
-              <p>
-                {asset.byteSize} {t('bytes')}
-              </p>
-              <p>
-                {asset.purpose ?? ''} ·{' '}
-                <time dateTime={asset.updatedAt}>{new Date(asset.updatedAt).toLocaleString()}</time>
-              </p>
-              <a href={'/admin/media/' + asset.id}>{t('open')}</a>
-              {onSelect ? (
-                <GLButton
-                  disabled={
-                    asset.status !== 'READY' || asset.security === 'BLOCKED' || asset.deleted
-                  }
-                  onClick={() => onSelect(asset)}
-                >
-                  {t('select')}
-                </GLButton>
-              ) : id ? (
-                <>
-                  <p>
-                    {asset.security} · {asset.deleted ? t('noRestore') : ''} · {asset.width ?? '—'}{' '}
-                    × {asset.height ?? '—'} · {asset.duration ?? '—'}
-                  </p>
-                  {asset.failureCode && (
-                    <GLAlert tone="error">
-                      {t('failed')}: {asset.failureCode}
-                    </GLAlert>
-                  )}
-                  <ul>
-                    {asset.variants.map((variant) => (
-                      <li key={variant.profile}>
-                        {variant.profile} · {variant.mime} · {variant.bytes} {t('bytes')} ·{' '}
-                        {variant.width ?? '—'} × {variant.height ?? '—'}
-                      </li>
-                    ))}
-                  </ul>
-                  {asset.kind === 'PDF' &&
-                    asset.status === 'READY' &&
-                    asset.security === 'VERIFIED' && <PdfDownload assetId={asset.id} />}
-                  <MediaPreview
-                    asset={asset}
-                    profile={
-                      asset.kind === 'VIDEO'
-                        ? 'playback'
-                        : asset.kind === 'IMAGE'
-                          ? 'detail'
-                          : 'preview'
+          {assets.map((asset) =>
+            !inspecting ? (
+              <section key={asset.id} className="gl-asset-card">
+                <a href={'/admin/media/' + asset.id} aria-label={asset.name}>
+                  <MediaPreview asset={asset} />
+                  <span className="gl-asset-kind">
+                    {asset.kind} / {asset.status}
+                  </span>
+                  <h2 className="gl-asset-name">{asset.name}</h2>
+                </a>
+                {onSelect && (
+                  <GLButton
+                    disabled={
+                      asset.status !== 'READY' || asset.security === 'BLOCKED' || asset.deleted
                     }
-                  />
-                  {(['retry', 'reprocess', 'retire', 'block'] as const)
-                    .filter(
-                      (operation) =>
-                        !asset.deleted &&
-                        (operation === 'retry'
-                          ? asset.status === 'FAILED'
-                          : operation === 'reprocess'
-                            ? asset.status === 'READY' && asset.security === 'VERIFIED'
-                            : operation === 'block'
-                              ? asset.security !== 'BLOCKED'
-                              : true),
-                    )
-                    .map((operation) => (
-                      <Confirm
-                        key={operation}
-                        title={operation === 'reprocess' ? t('retry') : t(operation)}
-                        work={() =>
-                          api.request(
-                            `/admin/media/assets/${id}/${operation}`,
-                            jsonResponse,
-                            {
-                              expectedVersion: asset.version,
-                              ...(operation === 'retire' ? { confirmed: true } : {}),
-                            },
-                            'POST',
-                          )
-                        }
-                      />
-                    ))}
-                </>
-              ) : null}
-            </section>
-          ))}
+                    onClick={() => onSelect(asset)}
+                  >
+                    {t('select')}
+                  </GLButton>
+                )}
+              </section>
+            ) : (
+              <section key={asset.id}>
+                <MediaPreview
+                  asset={asset}
+                  profile={
+                    asset.kind === 'VIDEO'
+                      ? 'playback'
+                      : asset.kind === 'IMAGE'
+                        ? 'detail'
+                        : 'preview'
+                  }
+                />
+                <p>
+                  {asset.name} · {asset.kind} · {asset.status}
+                </p>
+                <p>
+                  {asset.byteSize} {t('bytes')}
+                </p>
+                <p>
+                  {asset.purpose ?? ''} ·{' '}
+                  <time dateTime={asset.updatedAt}>
+                    {new Date(asset.updatedAt).toLocaleString()}
+                  </time>
+                </p>
+                {onSelect ? (
+                  <GLButton
+                    disabled={
+                      asset.status !== 'READY' || asset.security === 'BLOCKED' || asset.deleted
+                    }
+                    onClick={() => onSelect(asset)}
+                  >
+                    {t('select')}
+                  </GLButton>
+                ) : id ? (
+                  <>
+                    <p>
+                      {asset.security} · {asset.deleted ? t('noRestore') : ''} ·{' '}
+                      {asset.width ?? '—'} × {asset.height ?? '—'} · {asset.duration ?? '—'}
+                    </p>
+                    {asset.failureCode && (
+                      <GLAlert tone="error">
+                        {t('failed')}: {asset.failureCode}
+                      </GLAlert>
+                    )}
+                    <ul>
+                      {[...asset.variants]
+                        .sort((left, right) => left.profile.localeCompare(right.profile, 'en'))
+                        .map((variant) => (
+                          <li key={variant.profile}>
+                            {variant.profile} · {variant.mime} · {variant.bytes} {t('bytes')} ·{' '}
+                            {variant.width ?? '—'} × {variant.height ?? '—'}
+                          </li>
+                        ))}
+                    </ul>
+                    {asset.kind === 'PDF' &&
+                      asset.status === 'READY' &&
+                      asset.security === 'VERIFIED' && <PdfDownload assetId={asset.id} />}
+                    <div className="gl-admin-toolbar">
+                      {(['retry', 'reprocess', 'retire', 'block'] as const)
+                        .filter(
+                          (operation) =>
+                            !asset.deleted &&
+                            (operation === 'retry'
+                              ? asset.status === 'FAILED'
+                              : operation === 'reprocess'
+                                ? asset.status === 'READY' && asset.security === 'VERIFIED'
+                                : operation === 'block'
+                                  ? asset.security !== 'BLOCKED'
+                                  : true),
+                        )
+                        .map((operation) => (
+                          <Confirm
+                            key={operation}
+                            title={operation === 'reprocess' ? t('retry') : t(operation)}
+                            work={() =>
+                              api.request(
+                                `/admin/media/assets/${id}/${operation}`,
+                                jsonResponse,
+                                {
+                                  expectedVersion: asset.version,
+                                  ...(operation === 'retire' ? { confirmed: true } : {}),
+                                },
+                                'POST',
+                              )
+                            }
+                          />
+                        ))}
+                    </div>
+                  </>
+                ) : null}
+              </section>
+            ),
+          )}
         </div>
       </TableState>
       {id && usage.data != null && (
@@ -563,7 +697,7 @@ export function MediaPicker({
 }) {
   const t = useAdminTranslation();
   return (
-    <GLModal open={open} onClose={onClose} title={t('media')}>
+    <GLDrawer className="gl-admin-overlay" open={open} onClose={onClose} title={t('media')}>
       <MediaLibrary
         allowedKind={allowedKind}
         onSelect={(asset) => {
@@ -571,6 +705,6 @@ export function MediaPicker({
           onClose();
         }}
       />
-    </GLModal>
+    </GLDrawer>
   );
 }

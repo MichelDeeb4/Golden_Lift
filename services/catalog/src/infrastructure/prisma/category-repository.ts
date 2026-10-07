@@ -23,6 +23,7 @@ export function categoryDto(row: CategoryRow, locale: Locale): CategoryDto {
     resolvedNameLocale: requested?.name.replace(/^ +| +$/g, '') ? locale : 'ar',
     sortOrder: row.sort_order.toString(),
     version: version(row.version.toString()),
+    coverAssetId: row.cover_asset_id ? uuid(row.cover_asset_id) : null,
   };
 }
 const live = {
@@ -31,6 +32,7 @@ const live = {
 } satisfies Prisma.CategoriesWhereInput;
 const translations = (locale: Locale) => ({
   category_translations: { where: { deleted_at: null, locale: { in: ['ar', locale] } } },
+  media_asset_refs: true,
 });
 export class PrismaCategoryRepository implements CategoryRepository {
   constructor(private readonly database: Database) {}
@@ -43,7 +45,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
       where: { ...live, id },
       include: translations(locale),
     });
-    return row ? categoryDto(row, locale) : null;
+    return row ? this.publicDto(row, locale) : null;
   }
   async list(input: CategoryList): Promise<readonly CategoryDto[]> {
     const visible = await this.database.$queryRaw<
@@ -70,7 +72,26 @@ export class PrismaCategoryRepository implements CategoryRepository {
       orderBy: [{ sort_order: 'asc' }, { id: 'asc' }],
       take: input.limit,
     });
-    return rows.map((row) => categoryDto(row, input.locale));
+    return rows.map((row) => this.publicDto(row, input.locale));
+  }
+  private publicDto(
+    row: CategoryRow & {
+      media_asset_refs: {
+        ready_at: Date | null;
+        deleted_at: Date | null;
+        security_blocked: boolean;
+      } | null;
+    },
+    language: Locale,
+  ): CategoryDto {
+    const asset = row.media_asset_refs;
+    return {
+      ...categoryDto(row, language),
+      coverAssetId:
+        asset?.ready_at && !asset.deleted_at && !asset.security_blocked
+          ? uuid(row.cover_asset_id)
+          : null,
+    };
   }
   async hasProducts(id: Uuid): Promise<boolean> {
     return !!(await this.database.products.findFirst({

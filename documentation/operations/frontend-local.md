@@ -30,12 +30,12 @@ Copy values from `apps/storefront/.env.example` into an ignored app `.env.local`
 
 | Variable | Values |
 | --- | --- |
-| `EXPO_PUBLIC_CATALOG_SOURCE` | `demo` (default preview) or `api` |
+| `EXPO_PUBLIC_APP_DATA_MODE` | `api` (default) or explicitly `demo` |
 | `EXPO_PUBLIC_API_URL` | Explicit public Gateway origin; HTTPS outside localhost/127.0.0.1 |
 
 Demo mode is visibly labeled and runs without backend credentials. It supplies localized categories/products/specifications and original illustrations/PDF through a dedicated data source. No contact details or company facts are fabricated.
 
-API mode uses current category list/detail and product-detail endpoints with `locale` and cursor parameters. It never silently replaces failed API calls with fixtures. Category images are placeholders because the current public CategoryDto does not expose cover asset identity. Product list/search/filter APIs are not available yet, so those areas report unsupported content until S2/S4; individual known public product IDs can use the detail adapter.
+API mode uses live category covers, category/detail/children endpoints and the bounded public product collection/detail API. Search, sort, pagination and schema-derived public dynamic filters use PostgreSQL through Gateway and Catalog. It never replaces failed API calls with fixtures. Ordinary product PDF associations remain private; only permitted technical-source originals are projected for public download. See [local development](local-development.md) for the shared runtime configuration and native Media setup.
 
 For live API mode, configure the existing Gateway/Media approved web origins and a same-origin reverse proxy or reviewed CORS arrangement. Frontend public variables are bundled and must not contain runtime DB credentials, service tokens or signing secrets. B5 authorizes public media with exact context and fresh decisions; its private provider/scanner/broker acceptance gates remain unchanged.
 
@@ -58,6 +58,6 @@ npm.cmd run test:storefront
 
 This is a client-visible visual shell, not production readiness. It uses client-side SPA rendering; a deployed host needs route fallback, TLS/security headers and a reviewed caching policy. SSR/SEO and route-bundle optimization require deployment work. The exported JavaScript and font sizes are recorded in S1 validation; no Lighthouse performance score is claimed.
 
-There are no Android/iOS applications, full Admin application, commerce/customer routes or form-submission backend. Contact/About pages clearly identify pending approved content. Video components and expiring B5 media adapters exist, but S1 demo content does not claim verified production video playback or cloud delivery.
+Admin and Super Admin are implemented web workspaces backed by the owning services. Android/iOS applications, commerce/customer routes and inquiry submission remain outside this phase. Contact/About still require approved company content. Native local video/PDF processing is tested separately from explicit demo screenshots; cloud delivery remains a deployment gate.
 
 Expo may initialize caches outside the repository and download optional React Native DevTools. Restricted terminals may require permission. Its fallback DevTools warning does not imply failure of the web application; the actual development browser smoke determines application behavior.

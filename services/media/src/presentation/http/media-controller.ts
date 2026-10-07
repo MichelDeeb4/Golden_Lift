@@ -104,6 +104,11 @@ export class AdminMediaController {
         VIDEO: ['MP4/MOV with H.264/HEVC and optional AAC/PCM'],
         PDF: ['unencrypted PDF'],
       },
+      mimeTypes: {
+        IMAGE: ['image/jpeg', 'image/png', 'image/webp'],
+        VIDEO: ['video/mp4', 'video/quicktime'],
+        PDF: ['application/pdf'],
+      },
       purposes: ['CATALOG', 'TECHNICAL_SOURCE'],
       limits: this.options.policy,
       scannerAvailable: await this.security.ready(),

@@ -27,7 +27,7 @@ export function OptionEditor({
       <summary>
         {t('edit')} — {option.code}
       </summary>
-      <TranslationFields form={form} />
+      <TranslationFields form={form} labelsOnly />
       <GLInput label={t('order')} value={order} onChange={(e) => setOrder(e.target.value)} />
       <ReviewedChange
         path={`/admin/attribute-options/${option.id}`}
