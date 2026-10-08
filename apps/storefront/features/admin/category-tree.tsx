@@ -1,3 +1,4 @@
+import { ArrowUpDown } from '@golden-lift/icons';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, Dispatch, SetStateAction } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -205,6 +206,7 @@ export function CategoryTree(props: TreeProps) {
           <div role="alert">
             <p>{index.error.message}</p>
             <GLButton variant="text" onClick={() => void index.refetch()}>
+              <ArrowUpDown size={18} aria-hidden="true" />
               {t('retry')}
             </GLButton>
           </div>
@@ -288,6 +290,7 @@ function CategoryTreeBranch({
       <div role="alert" className="gl-category-branch-feedback">
         {t('childrenLoadFailed')}{' '}
         <GLButton variant="text" onClick={() => void rows.refetch()}>
+          <ArrowUpDown size={18} aria-hidden="true" />
           {t('retry')}
         </GLButton>
       </div>
@@ -298,6 +301,7 @@ function CategoryTreeBranch({
         <div role="alert" className="gl-category-branch-feedback">
           {t('childrenLoadFailed')}{' '}
           <GLButton variant="text" onClick={() => void rows.refetch()}>
+            <ArrowUpDown size={18} aria-hidden="true" />
             {t('retry')}
           </GLButton>
         </div>
@@ -409,11 +413,24 @@ function CategoryTreeNode({
           <GLActionMenu
             label={t('actions') + ' — ' + category.name}
             items={[
-              { label: t('addSubcategory'), onSelect: () => context.onAction?.(category, 'child') },
-              { label: t('edit'), onSelect: () => context.onAction?.(category, 'edit') },
-              { label: t('move'), onSelect: () => context.onAction?.(category, 'move') },
+              {
+                label: t('addSubcategory'),
+                icon: 'child',
+                onSelect: () => context.onAction?.(category, 'child'),
+              },
+              {
+                label: t('edit'),
+                icon: 'edit',
+                onSelect: () => context.onAction?.(category, 'edit'),
+              },
+              {
+                label: t('move'),
+                icon: 'move',
+                onSelect: () => context.onAction?.(category, 'move'),
+              },
               {
                 label: t('up'),
+                icon: 'reorder',
                 disabled: context.pending || !order.complete || order.index === 0,
                 onSelect: () =>
                   context.onReorder?.(
@@ -426,6 +443,7 @@ function CategoryTreeNode({
               },
               {
                 label: t('down'),
+                icon: 'reorder',
                 disabled:
                   context.pending || !order.complete || order.index === order.items.length - 1,
                 onSelect: () =>
@@ -439,6 +457,7 @@ function CategoryTreeNode({
               },
               {
                 label: t('remove'),
+                icon: 'delete',
                 destructive: true,
                 onSelect: () => context.onAction?.(category, 'delete'),
               },

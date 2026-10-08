@@ -4,6 +4,8 @@ See [completed work and current project status](documentation/project-progress.m
 
 The [visitor and administration design guide](documentation/visitor-and-administration-design.md) illustrates the current visual identity, page layouts, routes and workflows for visitors, Admins and Super Admins.
 
+Admin collection pages share server-backed pagination and preserve page/filter state in the URL. See [dashboard operations](documentation/admin-dashboard.md) and the [scrolling/pagination decision](documentation/decisions/018-admin-scroll-and-pagination.md).
+
 With the local databases prepared, run **`npm.cmd start`** to build and launch the backend and website together. Open **http://localhost:8081**, or **http://localhost:8081/admin/login** for staff. Prepare native uploads once with `npm.cmd run media:tools` and `npm.cmd run media:setup`; check startup with `npm.cmd run doctor`. See [local development](documentation/operations/local-development.md) for dependencies, ports and database preparation. Visitors and staff now use the real Gateway by default; demo mode is explicit.
 
 The standing instruction to follow engineering best practices and suitable design patterns is saved in [AGENTS.md](AGENTS.md). The [architecture guide](documentation/architecture.md) shows the actual layers, dependency rules and persistence choice.

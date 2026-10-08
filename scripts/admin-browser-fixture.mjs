@@ -332,6 +332,34 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
             server.listen(serverPorts.get(server), '127.0.0.1', resolve);
           });
       },
+      seedImages: async (count) => {
+        if (!Number.isInteger(count) || count < 1 || count > 100)
+          throw new Error('Invalid disposable image count');
+        for (let i = 0; i < count; i++) {
+          let item = await uploads.initiate(
+            {
+              kind: 'IMAGE',
+              name: 'Paged Media ' + i + '.png',
+              bytes: String(image.length),
+              purpose: 'CATALOG',
+              sha256: null,
+              idempotencyKey: credential(),
+            },
+            actor,
+          );
+          item = await uploads.part(item.id, 1, image, actor);
+          await uploads.complete(item.id, item.version, actor);
+        }
+        for (let i = 0; i < 200; i++) {
+          if (processingFailure) throw processingFailure;
+          const pending = await mediaDb.assets.count({
+            where: { status: { not: 'READY' }, deleted_at: null },
+          });
+          if (!pending) return;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error('Disposable images did not become ready');
+      },
       technicalSource: async (productId, assetId, enabled) => {
         const sheetId = randomUUID();
         await catalogDb.$transaction(

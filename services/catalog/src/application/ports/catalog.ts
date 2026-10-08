@@ -1,4 +1,5 @@
 import type { CategoryDto, EventEnvelope, Locale, Uuid, Version } from '@golden-lift/contracts';
+import type { ConfigurationCollectionReader } from './configuration-collection.js';
 import type { Translation } from '../../domain/category.js';
 import type { CategoryNavigation, CategoryTreeWriter } from './category-tree.js';
 import type { CategoryList } from './category-query.js';
@@ -29,6 +30,7 @@ export interface Outbox {
   append(event: EventEnvelope): Promise<void>;
 }
 export interface CatalogRepositories {
+  readonly configurationCollection: ConfigurationCollectionReader;
   readonly categorySchemas: CategorySchemaReader;
   readonly productTypes: ProductTypeRepository;
   readonly definitions: AttributeDefinitionRepository;

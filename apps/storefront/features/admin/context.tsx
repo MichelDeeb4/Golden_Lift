@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -19,9 +20,13 @@ import {
   GLLanguageSwitcher,
   GLSpinner,
   GLToast,
+  GLUnsavedChangesDialog,
 } from '@golden-lift/ui';
 import { Menu } from '@golden-lift/icons';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter, useNavigation } from 'expo-router';
+import type { Href } from 'expo-router';
+import { registerStaffBackGuard } from './router';
+import { guardStaffBrowserHistory } from './browser-navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +34,16 @@ import { useAdminTranslation } from './translations';
 import { frontendConfiguration } from '../../configuration';
 const Context = createContext<StaffApiClient | null>(null);
 const UnsavedContext = createContext<((id: symbol, dirty: boolean) => void) | null>(null);
+const DiscardContext = createContext<(() => Promise<boolean>) | null>(null);
+const DirtyContext = createContext(false);
+export function useHasUnsavedChanges() {
+  return useContext(DirtyContext);
+}
+export function useConfirmDiscard() {
+  const confirm = useContext(DiscardContext);
+  if (!confirm) throw new Error('Staff discard provider required');
+  return confirm;
+}
 const FeedbackContext = createContext<((message: string) => void) | null>(null);
 export function useStaffFeedback() {
   return useContext(FeedbackContext);
@@ -61,14 +76,44 @@ export function StaffProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
   const t = useAdminTranslation();
   const [dirtyEditors, setDirtyEditors] = useState<Set<symbol>>(() => new Set());
+  const dirtyRegistry = useRef(new Set<symbol>());
+  const [discardOpen, setDiscardOpen] = useState(false);
+  const discardResolver = useRef<((leave: boolean) => void) | null>(null);
+  const confirmDiscard = useCallback(
+    () =>
+      new Promise<boolean>((resolve) => {
+        // A second action while the dialog is open must not strand the first caller.
+        if (discardResolver.current) {
+          resolve(false);
+          return;
+        }
+        discardResolver.current = resolve;
+        setDiscardOpen(true);
+      }),
+    [],
+  );
+  useLayoutEffect(
+    () => guardStaffBrowserHistory(() => dirtyRegistry.current.size > 0, confirmDiscard),
+    [confirmDiscard],
+  );
+  const settleDiscard = (leave: boolean) => {
+    const resolve = discardResolver.current;
+    discardResolver.current = null;
+    setDiscardOpen(false);
+    resolve?.(leave);
+  };
+  useEffect(
+    () => () => {
+      discardResolver.current?.(false);
+    },
+    [],
+  );
   const registerDirty = useCallback((id: symbol, dirty: boolean) => {
-    setDirtyEditors((previous) => {
-      if (previous.has(id) === dirty) return previous;
-      const next = new Set(previous);
-      if (dirty) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+    const registry = dirtyRegistry.current;
+    if (registry.has(id) === dirty) return;
+    if (dirty) registry.add(id);
+    else registry.delete(id);
+    setDirtyEditors(new Set(registry));
   }, []);
   useEffect(() => {
     function unload(event: BeforeUnloadEvent) {
@@ -89,26 +134,35 @@ export function StaffProvider({ children }: { children: ReactNode }) {
       )
         return;
       const destination = new URL(link.href);
+      if (destination.origin !== location.origin) return;
       if (
         destination.origin === location.origin &&
         destination.pathname === location.pathname &&
         destination.search === location.search
       )
         return;
-      if (dirtyEditors.size && !window.confirm(t('unsaved'))) {
-        event.preventDefault();
-        return;
-      }
-      if (
+      const internal =
         destination.origin === location.origin &&
-        /^\/(admin|super-admin)(\/|$)/.test(destination.pathname)
-      ) {
-        event.preventDefault();
+        /^\/(admin|super-admin)(\/|$)/.test(destination.pathname);
+      const navigate = () => {
+        if (!internal) {
+          router.push((destination.pathname + destination.search + destination.hash) as Href);
+          return;
+        }
         const parts = destination.pathname.split('/').filter(Boolean);
         router.push({
           pathname: parts[0] === 'super-admin' ? '/super-admin/[...path]' : '/admin/[...path]',
           params: { ...Object.fromEntries(destination.searchParams), path: parts.slice(1) },
         });
+      };
+      if (dirtyEditors.size || internal) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (dirtyEditors.size)
+          void confirmDiscard().then((leave) => {
+            if (leave) navigate();
+          });
+        else navigate();
       }
     }
     window.addEventListener('beforeunload', unload);
@@ -117,7 +171,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('beforeunload', unload);
       document.removeEventListener('click', click, true);
     };
-  }, [dirtyEditors.size, t, router]);
+  }, [dirtyEditors.size, confirmDiscard, router]);
   const [client] = useState(
     () =>
       new QueryClient({
@@ -151,7 +205,20 @@ export function StaffProvider({ children }: { children: ReactNode }) {
     <QueryClientProvider client={client}>
       <Context.Provider value={api}>
         <FeedbackContext.Provider value={notify}>
-          <UnsavedContext.Provider value={registerDirty}>{children}</UnsavedContext.Provider>
+          <DiscardContext.Provider value={confirmDiscard}>
+            <DirtyContext.Provider value={dirtyEditors.size > 0}>
+              <UnsavedContext.Provider value={registerDirty}>{children}</UnsavedContext.Provider>
+            </DirtyContext.Provider>
+            <GLUnsavedChangesDialog
+              open={discardOpen}
+              title={t('unsavedTitle')}
+              description={t('unsavedDescription')}
+              stayLabel={t('stay')}
+              leaveLabel={t('leaveWithoutSaving')}
+              onStay={() => settleDiscard(false)}
+              onLeave={() => settleDiscard(true)}
+            />
+          </DiscardContext.Provider>
           <GLToast key={feedback?.id} message={feedback?.message ?? null} onClose={clearFeedback} />
         </FeedbackContext.Provider>
       </Context.Provider>
@@ -192,6 +259,28 @@ export function StaffError({ error, reload }: { error: unknown; reload?: () => v
 }
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1).max(512) });
 export function StaffShell({ children }: { children: ReactNode }) {
+  const dirty = useContext(DirtyContext);
+  const confirmDiscard = useConfirmDiscard();
+  const navigation = useNavigation();
+  const replayBack = useRef(false);
+  useEffect(
+    () =>
+      registerStaffBackGuard((action) => {
+        if (replayBack.current) {
+          replayBack.current = false;
+          return true;
+        }
+        if (!dirty) return true;
+        void confirmDiscard().then((leave) => {
+          if (leave) {
+            replayBack.current = true;
+            navigation.dispatch(action);
+          }
+        });
+        return false;
+      }),
+    [dirty, confirmDiscard, navigation],
+  );
   const api = useStaffApi(),
     session = useStaffSession(),
     pathname = usePathname(),
@@ -361,7 +450,7 @@ export function StaffShell({ children }: { children: ReactNode }) {
 export function useUnsaved(dirty: boolean) {
   const register = useContext(UnsavedContext);
   const [id] = useState(() => Symbol('staff editor'));
-  useEffect(() => {
+  useLayoutEffect(() => {
     register?.(id, dirty);
     return () => register?.(id, false);
   }, [dirty, id, register]);

@@ -63,10 +63,38 @@
   display: table-cell;
 }
 .gl-admin {
+  --admin-command-bar-height: 68px;
   min-height: 100vh;
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
-  grid-template-rows: 68px 1fr;
+  grid-template-rows: var(--admin-command-bar-height) 1fr;
+}
+.gl-admin-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.gl-configuration-collection {
+  display: grid;
+  gap: var(--space6);
+  min-width: 0;
+}
+.gl-configuration-table {
+  min-width: 0;
+}
+.gl-configuration-table table {
+  width: 100%;
+  min-width: 680px;
+}
+.gl-configuration-table th {
+  text-align: start;
+}
+.gl-configuration-table td:last-child {
+  width: 160px;
+  white-space: nowrap;
+}
+
+.gl-configuration-table .gl-admin-table {
+  min-height: 160px;
 }
 .gl-admin-skeleton-row {
   height: 48px;
@@ -490,4 +518,16 @@
   .gl-document-rows .gl-media-tile details {
     grid-column: 1/-1;
   }
+}
+
+.gl-media-filter-fields {
+  display: contents;
+}
+.gl-admin section.gl-filter-toolbar {
+  border: 0;
+  padding: 0;
+  margin-block: var(--space4);
+}
+.gl-configuration-table td:last-child {
+  width: 64px;
 }

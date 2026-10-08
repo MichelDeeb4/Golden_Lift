@@ -1,3 +1,5 @@
+import { ArrowUpDown, FolderPlus, X } from '@golden-lift/icons';
+import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -51,6 +53,7 @@ const breadcrumbPage = z.object({
   pathRevision: z.string(),
 });
 export function Categories({ id }: { id?: string }) {
+  const confirmDiscard = useConfirmDiscard();
   const router = useRouter(),
     api = useStaffApi(),
     query = useQueryClient(),
@@ -298,6 +301,7 @@ export function Categories({ id }: { id?: string }) {
             <GLAlert tone="error">
               {t('error')}
               <GLButton variant="text" onClick={() => void detail.refetch()}>
+                <ArrowUpDown size={18} aria-hidden="true" />
                 {t('retry')}
               </GLButton>
             </GLAlert>
@@ -342,27 +346,29 @@ export function Categories({ id }: { id?: string }) {
                 <GLAlert tone="error">
                   {t('error')}
                   <GLButton variant="text" onClick={() => void path.refetch()}>
+                    <ArrowUpDown size={18} aria-hidden="true" />
                     {t('retry')}
                   </GLButton>
                 </GLAlert>
               )}
               <div className="gl-category-detail-actions">
                 <GLButton disabled={action.isPending} onClick={() => create(detail.data!)}>
+                  <FolderPlus size={18} aria-hidden="true" />
                   {t('addSubcategory')}
-                </GLButton>
-                <GLButton
-                  variant="secondary"
-                  disabled={action.isPending}
-                  onClick={() => edit(detail.data!)}
-                >
-                  {t('edit')}
                 </GLButton>
                 <GLActionMenu
                   label={t('actions') + ' — ' + detail.data.name}
                   items={[
-                    { label: t('move'), onSelect: () => move(detail.data!) },
+                    {
+                      label: t('edit'),
+                      icon: 'edit',
+                      disabled: action.isPending,
+                      onSelect: () => edit(detail.data!),
+                    },
+                    { label: t('move'), icon: 'move', onSelect: () => move(detail.data!) },
                     {
                       label: t('remove'),
+                      icon: 'delete',
                       destructive: true,
                       onSelect: () => {
                         action.reset();
@@ -549,10 +555,11 @@ export function Categories({ id }: { id?: string }) {
             <GLButton
               variant="ghost"
               disabled={action.isPending}
-              onClick={() => {
-                if (!dirty || window.confirm(t('unsaved'))) setEditor(null);
+              onClick={async () => {
+                if (!dirty || (await confirmDiscard())) setEditor(null);
               }}
             >
+              <X size={18} aria-hidden="true" />
               {t('cancel')}
             </GLButton>
             <GLButton type="submit" loading={action.isPending}>
@@ -582,7 +589,10 @@ export function Categories({ id }: { id?: string }) {
           {t('products')}: <bdi>{blocked?.activeProductCount}</bdi>
         </p>
         <p>{t('leafRule')}</p>
-        <GLButton onClick={() => setBlocked(null)}>{t('close')}</GLButton>
+        <GLButton onClick={() => setBlocked(null)}>
+          <X size={18} aria-hidden="true" />
+          {t('close')}
+        </GLButton>
       </GLModal>
       <GLModal
         className="gl-admin-overlay"
@@ -601,6 +611,7 @@ export function Categories({ id }: { id?: string }) {
           <GLAlert tone="error">
             {t('error')}
             <GLButton variant="text" onClick={() => void preview.refetch()}>
+              <ArrowUpDown size={18} aria-hidden="true" />
               {t('retry')}
             </GLButton>
           </GLAlert>
@@ -612,6 +623,7 @@ export function Categories({ id }: { id?: string }) {
             disabled={action.isPending}
             onClick={() => setDeleteTarget(null)}
           >
+            <X size={18} aria-hidden="true" />
             {t('cancel')}
           </GLButton>
           <GLButton
@@ -748,6 +760,7 @@ export function Categories({ id }: { id?: string }) {
           <GLAlert tone="error">
             {t('error')}
             <GLButton variant="text" onClick={() => void destinations.refetch()}>
+              <ArrowUpDown size={18} aria-hidden="true" />
               {t('retry')}
             </GLButton>
           </GLAlert>
@@ -783,6 +796,7 @@ export function Categories({ id }: { id?: string }) {
         {reloadError != null && <StaffError error={reloadError} />}
         <GLActionBar>
           <GLButton variant="ghost" disabled={action.isPending} onClick={() => setMoveTarget(null)}>
+            <X size={18} aria-hidden="true" />
             {t('cancel')}
           </GLButton>
           <GLButton

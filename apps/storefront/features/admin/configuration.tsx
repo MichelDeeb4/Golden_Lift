@@ -1,3 +1,6 @@
+import { Plus } from '@golden-lift/icons';
+import { FilterX, X, Pencil, Save } from '@golden-lift/icons';
+import { useConfirmDiscard, useHasUnsavedChanges } from './context';
 import {
   AttributeKind,
   AttributeConstraints,
@@ -5,7 +8,7 @@ import {
 } from './attribute-definition-fields';
 import { ReviewedChange } from './reviewed-change';
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { z } from 'zod';
@@ -22,6 +25,8 @@ import {
   GLFormSection,
   GLActionBar,
   GLActionMenu,
+  GLFilterToolbar,
+  GLDrawer,
 } from '@golden-lift/ui';
 import { useStaffApi, useUnsaved, StaffError } from './context';
 import { useAdminTranslation } from './translations';
@@ -41,6 +46,7 @@ import {
 import type { TranslationForm } from './common';
 import { AssignmentEditor, OptionEditor, OrderEditor } from './configuration-editors';
 import { AddChoiceOption } from './choice-options';
+import { AdminPagination, useAdminPagination } from './pagination';
 export type ConfigurationResource = 'product-types' | 'attributes' | 'attribute-groups' | 'units';
 const optionSchema = namedSchema.extend({
   definitionId: z.string().uuid(),
@@ -71,8 +77,12 @@ export function Configuration({
   id?: string;
 }) {
   const [id, setId] = useState(initialId),
-    [editing, setEditing] = useState(false);
+    [editing, setEditing] = useState(false),
+    [inspecting, setInspecting] = useState(Boolean(initialId)),
+    [deleting, setDeleting] = useState(false),
+    [deprecating, setDeprecating] = useState(false);
   const queryClient = useQueryClient();
+  const hasUnsavedChanges = useHasUnsavedChanges();
   const [editPending, setEditPending] = useState(false);
   const [editPrecondition, setEditPrecondition] = useState<{
     version: string;
@@ -81,8 +91,8 @@ export function Configuration({
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
+    confirmDiscard = useConfirmDiscard(),
     action = useAction('configuration'),
-    [cursor, setCursor] = useState(''),
     [create, setCreate] = useState(false),
     [code, setCode] = useState(''),
     [kind, setKind] = useState('NUMBER'),
@@ -133,11 +143,19 @@ export function Configuration({
           : t('units');
   const response =
     resource === 'attributes' ? definitionSchema : resource === 'units' ? unitSchema : namedSchema;
+  const pagination = useAdminPagination('numbered');
+  const listSearch = new URLSearchParams({
+    page: String(pagination.page),
+    pageSize: String(pagination.pageSize),
+  });
+  for (const key of ['q', 'kind', 'visibility', 'state'] as const)
+    if (filters[key]) listSearch.set(key, filters[key]!);
   const list = useQuery({
-    queryKey: ['staff', 'configuration', resource, cursor],
+    placeholderData: keepPreviousData,
+    queryKey: ['staff', 'configuration', resource, listSearch.toString()],
     queryFn: ({ signal }) =>
       api.request(
-        `/admin/${resource}?limit=25${cursor ? '&cursor=' + encodeURIComponent(cursor) : ''}`,
+        `/admin/${resource}?${listSearch}`,
         pageSchema(response),
         undefined,
         'GET',
@@ -223,6 +241,13 @@ export function Configuration({
       }
     }
   }, [detail.data]);
+  useEffect(() => {
+    if (editing && detail.data && !editPrecondition)
+      setEditPrecondition({
+        version: detail.data.version,
+        schemaRevision: detail.data.schemaRevision ?? null,
+      });
+  }, [editing, detail.data, editPrecondition]);
   const changeKind =
     resource === 'product-types'
       ? 'type.metadata'
@@ -266,6 +291,37 @@ export function Configuration({
     />
   );
   const visibilityFields = <AttributeVisibility {...{ pub, filterable, setPub, setFilterable }} />;
+  const filtered = Boolean(filters.q || filters.kind || filters.visibility || filters.state);
+  const closeRecord = () => {
+    setEditing(false);
+    setEditPrecondition(null);
+    setInspecting(false);
+    setId(undefined);
+    form.reset(structuredClone(emptyTranslations));
+    setConstraintsBaseline(null);
+    setDefinitionId('');
+    setGroupId('');
+  };
+  const chooseRecord = async (nextId: string, edit = false) => {
+    if ((form.formState.isDirty || constraintsDirty) && !(await confirmDiscard())) return false;
+    if (id !== nextId) {
+      form.reset(structuredClone(emptyTranslations));
+      setConstraintsBaseline(null);
+      setEditPrecondition(null);
+    }
+    setId(nextId);
+    if (edit)
+      setEditPrecondition(
+        id === nextId && detail.data
+          ? { version: detail.data.version, schemaRevision: detail.data.schemaRevision ?? null }
+          : null,
+      );
+    if (edit) {
+      setInspecting(false);
+      setEditing(true);
+    } else setInspecting(true);
+    return true;
+  };
   return (
     <>
       <GLPageHeader
@@ -277,6 +333,7 @@ export function Configuration({
               setCreate(true);
             }}
           >
+            <Plus size={18} aria-hidden="true" />
             {t(
               resource === 'attributes'
                 ? 'createAttribute'
@@ -302,19 +359,19 @@ export function Configuration({
         }
       />
       <ActionFeedback action={action} reload={() => void detail.refetch()} />
-      <p className="gl-muted">{t('loadedPageFilters')}</p>
-      <div className="gl-admin-toolbar">
+
+      <GLFilterToolbar label={t('filters')} fields={resource === 'attributes' ? 3 : 1}>
         <GLInput
           label={t('search')}
           value={filters.q ?? ''}
-          onChange={(event) => router.setParams({ q: event.target.value })}
+          onChange={(event) => pagination.filters({ q: event.target.value })}
         />
         {resource === 'attributes' && (
           <>
             <GLSelect
               label={t('type')}
               value={filters.kind ?? ''}
-              onChange={(kind) => router.setParams({ kind })}
+              onChange={(kind) => pagination.filters({ kind })}
               options={[
                 { value: '', label: t('all') },
                 ...['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'].map((value) => ({
@@ -326,7 +383,7 @@ export function Configuration({
             <GLSelect
               label={t('visibility')}
               value={filters.visibility ?? ''}
-              onChange={(visibility) => router.setParams({ visibility })}
+              onChange={(visibility) => pagination.filters({ visibility })}
               options={[
                 { value: '', label: t('all') },
                 { value: 'public', label: t('public') },
@@ -338,7 +395,7 @@ export function Configuration({
         <GLSelect
           label={t('state')}
           value={filters.state ?? ''}
-          onChange={(state) => router.setParams({ state })}
+          onChange={(state) => pagination.filters({ state })}
           options={[
             { value: '', label: t('all') },
             { value: 'active', label: t('active') },
@@ -347,18 +404,41 @@ export function Configuration({
         />
         <GLButton
           variant="ghost"
-          onClick={() => router.setParams({ q: '', kind: '', visibility: '', state: '' })}
+          onClick={() => pagination.filters({ q: '', kind: '', visibility: '', state: '' })}
         >
+          <FilterX size={18} aria-hidden="true" />
           {t('clear')}
         </GLButton>
-      </div>
-      <div
-        className={
-          'gl-master-detail' + (resource === 'attributes' || !id ? ' gl-configuration-list' : '')
-        }
-      >
-        <aside className="gl-master-list" aria-label={title}>
-          <TableState pending={list.isPending} error={list.error} empty={!list.data?.items.length}>
+      </GLFilterToolbar>
+      <div className="gl-configuration-collection">
+        <div className="gl-configuration-table" aria-label={title}>
+          <TableState
+            pending={list.isPending}
+            error={list.error}
+            empty={!list.data?.items.length}
+            emptyTitle={filtered ? t('filteredEmpty') : t('empty')}
+            onRetry={() => void list.refetch()}
+            emptyAction={
+              <GLButton
+                variant="secondary"
+                onClick={() =>
+                  filtered
+                    ? pagination.filters({ q: '', kind: '', visibility: '', state: '' })
+                    : setCreate(true)
+                }
+              >
+                {filtered
+                  ? t('clear')
+                  : t(
+                      resource === 'attributes'
+                        ? 'createAttribute'
+                        : resource === 'units'
+                          ? 'createUnit'
+                          : 'createGroup',
+                    )}
+              </GLButton>
+            }
+          >
             <table>
               <thead>
                 <tr>
@@ -376,96 +456,269 @@ export function Configuration({
                 </tr>
               </thead>
               <tbody>
-                {list.data?.items
-                  .filter(
-                    (row) =>
-                      (!filters.q ||
-                        (row.code + ' ' + row.translations.map((value) => value.name).join(' '))
-                          .toLocaleLowerCase()
-                          .includes(filters.q.toLocaleLowerCase())) &&
-                      (!filters.kind || ('kind' in row && row.kind === filters.kind)) &&
-                      (!filters.visibility ||
-                        ('public' in row && row.public === (filters.visibility === 'public'))) &&
-                      (!filters.state || row.deprecated === (filters.state === 'deprecated')),
-                  )
-                  .map((row) => (
-                    <tr key={row.code} aria-selected={id === ('id' in row ? row.id : row.code)}>
-                      <td>
-                        <a
-                          aria-current={
-                            id === ('id' in row ? row.id : row.code) ? 'page' : undefined
-                          }
-                          href={`/admin/${resource}/${'id' in row ? row.id : row.code}`}
-                          data-local-selection
-                          onClick={(event) => {
-                            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
-                              return;
-                            event.preventDefault();
-                            if (
-                              !(form.formState.isDirty || constraintsDirty) ||
-                              window.confirm(t('unsaved'))
-                            ) {
-                              if (id !== ('id' in row ? row.id : row.code)) {
-                                form.reset(structuredClone(emptyTranslations));
-                                setConstraintsBaseline(null);
-                              }
-                              setId('id' in row ? row.id : row.code);
-                            }
-                          }}
-                        >
-                          {(
-                            row.translations.find((x) => x.locale === locale) ?? row.translations[0]
-                          )?.name ?? row.code}
-                        </a>
-                      </td>
-                      <td>{row.code}</td>
-                      {resource === 'attributes' && 'kind' in row && (
-                        <>
-                          <td>{row.kind}</td>
-                          <td>{row.unit?.symbol ?? '—'}</td>
-                          <td>{row.public ? t('public') : t('internal')}</td>
-                        </>
-                      )}
-                      <td>{row.deprecated ? t('deprecated') : t('active')}</td>
-                      <td>
-                        <GLActionMenu
-                          label={t('actions') + ' — ' + row.code}
-                          items={[
-                            {
-                              label: t('edit'),
-                              onSelect: () => {
-                                if (
-                                  !(form.formState.isDirty || constraintsDirty) ||
-                                  window.confirm(t('unsaved'))
-                                ) {
-                                  if (id !== ('id' in row ? row.id : row.code)) {
-                                    form.reset(structuredClone(emptyTranslations));
-                                    setConstraintsBaseline(null);
-                                    setEditPrecondition(null);
-                                  }
-                                  setId('id' in row ? row.id : row.code);
-                                  setEditing(true);
-                                }
-                              },
+                {list.data?.items.map((row) => (
+                  <tr key={row.code} aria-selected={id === ('id' in row ? row.id : row.code)}>
+                    <td>
+                      <a
+                        aria-current={id === ('id' in row ? row.id : row.code) ? 'page' : undefined}
+                        href={`/admin/${resource}/${'id' in row ? row.id : row.code}`}
+                        data-local-selection
+                        onClick={(event) => {
+                          if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)
+                            return;
+                          event.preventDefault();
+                          chooseRecord('id' in row ? row.id : row.code);
+                        }}
+                      >
+                        {(row.translations.find((x) => x.locale === locale) ?? row.translations[0])
+                          ?.name ?? row.code}
+                      </a>
+                    </td>
+                    <td>{row.code}</td>
+                    {resource === 'attributes' && 'kind' in row && (
+                      <>
+                        <td>{row.kind}</td>
+                        <td>{row.unit?.symbol ?? '—'}</td>
+                        <td>{row.public ? t('public') : t('internal')}</td>
+                      </>
+                    )}
+                    <td>{row.deprecated ? t('deprecated') : t('active')}</td>
+                    <td>
+                      <GLActionMenu
+                        label={t('actions') + ' — ' + row.code}
+                        items={[
+                          {
+                            label: t('edit'),
+                            icon: 'edit',
+                            onSelect: () => {
+                              chooseRecord('id' in row ? row.id : row.code, true);
                             },
-                          ]}
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                          },
+                          {
+                            label: t('view'),
+                            icon: 'view',
+                            onSelect: () => {
+                              void chooseRecord('id' in row ? row.id : row.code);
+                            },
+                          },
+                          ...(resource === 'attributes' && !row.deprecated
+                            ? [
+                                {
+                                  label: t('deprecated'),
+                                  icon: 'deprecate' as const,
+                                  tone: 'warning' as const,
+                                  onSelect: async () => {
+                                    if (
+                                      !(await chooseRecord('id' in row ? row.id : row.code, true))
+                                    )
+                                      return;
+                                    setEditing(false);
+                                    setDeprecating(true);
+                                  },
+                                },
+                              ]
+                            : []),
+                          {
+                            label: t('remove'),
+                            icon: 'delete',
+                            destructive: true,
+                            onSelect: async () => {
+                              if (!(await chooseRecord('id' in row ? row.id : row.code, true)))
+                                return;
+                              setEditing(false);
+                              setDeleting(true);
+                            },
+                          },
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </TableState>
-          {list.data?.nextCursor && (
-            <GLButton onClick={() => setCursor(list.data!.nextCursor!)}>{t('next')}</GLButton>
-          )}
-        </aside>
-        <div className="gl-detail-canvas">
-          {!id && !create && (
-            <p className="gl-muted">
-              {t('choose')} — {title}
-            </p>
-          )}
+          <AdminPagination
+            pagination={pagination}
+            data={list.data}
+            loading={list.isFetching}
+            placeholder={list.isPlaceholderData}
+          />
+        </div>
+        {id && detail.data && (
+          <>
+            {' '}
+            <FocusedEditor
+              dialog
+              open={editing}
+              pending={editPending}
+              dirty={form.formState.isDirty || constraintsDirty}
+              title={t('edit')}
+              onClose={closeRecord}
+            >
+              {detail.error && (
+                <StaffError error={detail.error} reload={() => void detail.refetch()} />
+              )}
+              <GLFormSection title={t('identity')}>
+                <div className="gl-admin-grid">
+                  <GLInput label={t('code')} value={detail.data.code} disabled />
+                  {resource === 'attributes' && typeField}
+                </div>
+              </GLFormSection>
+              <TranslationFields form={form} labelsOnly={resource === 'units'} />
+              {resource === 'units' && 'symbol' in detail.data && (
+                <>
+                  <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
+                  <GLInput label={t('dimension')} value={detail.data.dimension} disabled />
+                </>
+              )}
+              {resource === 'attributes' && (
+                <>
+                  {constraintsFields}
+                  {visibilityFields}
+                </>
+              )}
+              <GLActionBar>
+                <ReviewedChange
+                  onPending={setEditPending}
+                  path={`/admin/${resource}/${id}`}
+                  version={editPrecondition?.version ?? detail.data.version}
+                  schemaRevision={editPrecondition?.schemaRevision ?? null}
+                  change={
+                    resource === 'attributes'
+                      ? {
+                          kind: changeKind,
+                          definition: {
+                            ...definitionInput,
+                            translations: translationInput(form.watch()),
+                          },
+                        }
+                      : { kind: changeKind, translations: translationInput(form.watch()) }
+                  }
+                  label={t('save')}
+                  onSaved={() => {
+                    form.reset(form.getValues());
+                    setConstraintsBaseline(constraints);
+                    setEditing(false);
+                  }}
+                  reload={async () => {
+                    const latest = await detail.refetch();
+                    if (latest.data) {
+                      form.reset(translationDefaults(latest.data.translations));
+                      setEditPrecondition({
+                        version: latest.data.version,
+                        schemaRevision: latest.data.schemaRevision ?? null,
+                      });
+                      if ('kind' in latest.data) {
+                        const d = latest.data;
+                        setKind(d.kind);
+                        setUnit(d.unit?.code ?? '');
+                        setMinimum(d.minimum ?? '');
+                        setMaximum(d.maximum ?? '');
+                        setMultiple(d.allowMultiple);
+                        setPub(d.public);
+                        setFilterable(d.filterable);
+                        setMultiline(d.textMultiline);
+                        setMaxLength(String(d.textMaxLength));
+                        setConstraintsBaseline(
+                          JSON.stringify([
+                            d.kind,
+                            d.unit?.code ?? '',
+                            d.minimum ?? '',
+                            d.maximum ?? '',
+                            d.allowMultiple,
+                            d.public,
+                            d.filterable,
+                            d.textMultiline,
+                            String(d.textMaxLength),
+                          ]),
+                        );
+                      }
+                    }
+                  }}
+                />
+              </GLActionBar>
+              <GLButton
+                variant="secondary"
+                disabled={editPending}
+                onClick={async () => {
+                  if (!(form.formState.isDirty || constraintsDirty) || (await confirmDiscard()))
+                    closeRecord();
+                }}
+              >
+                <X size={18} aria-hidden="true" />
+                {t('cancel')}
+              </GLButton>
+            </FocusedEditor>
+          </>
+        )}
+        <ConfigurationCreate
+          resource={resource}
+          open={create}
+          onClose={() => setCreate(false)}
+          onCreated={(value) => {
+            const record = response.parse(value);
+            const key = 'id' in record ? record.id : record.code;
+            queryClient.setQueryData(['staff', 'configuration', resource, key], record);
+            if (!(form.formState.isDirty || constraintsDirty || definitionId || groupId)) {
+              form.reset(structuredClone(emptyTranslations));
+              setConstraintsBaseline(null);
+              setId(key);
+            }
+          }}
+        />
+        {(deleting || deprecating) && id && detail.data && (
+          <>
+            {' '}
+            <ReviewedChange
+              autoOpen
+              entityName={
+                detail.data.translations.find((x) => x.locale === locale)?.name ?? detail.data.code
+              }
+              onDismiss={() => {
+                setDeleting(false);
+                setDeprecating(false);
+              }}
+              path={`/admin/${resource}/${id}`}
+              version={detail.data.version}
+              schemaRevision={detail.data.schemaRevision ?? null}
+              change={{
+                kind: deprecating
+                  ? 'definition.deprecate'
+                  : resource === 'product-types'
+                    ? 'type.delete'
+                    : resource === 'attributes'
+                      ? 'definition.delete'
+                      : resource === 'units'
+                        ? 'unit.delete'
+                        : 'group.delete',
+              }}
+              label={t('remove')}
+              onCommitted={async () => {
+                if (deprecating) {
+                  setDeprecating(false);
+                  return;
+                }
+                const queryKey = ['staff', 'configuration', resource, id];
+                await queryClient.cancelQueries({ queryKey, exact: true });
+                queryClient.removeQueries({ queryKey, exact: true });
+                setDeleting(false);
+                setId(undefined);
+              }}
+              onSaved={() => {
+                if (deprecating) return;
+                form.reset(structuredClone(emptyTranslations));
+                setId(undefined);
+              }}
+            />
+          </>
+        )}
+        <GLDrawer
+          open={inspecting && Boolean(id)}
+          title={detail.data?.code ?? title}
+          onClose={async () => {
+            if (!hasUnsavedChanges || (await confirmDiscard())) closeRecord();
+          }}
+        >
           {id && detail.data && (
             <>
               <GLHeading level={2} role="heading4">
@@ -484,112 +737,10 @@ export function Configuration({
                   setEditing(true);
                 }}
               >
+                <Pencil size={18} aria-hidden="true" />
                 {t('edit')}
               </GLButton>
-              <FocusedEditor
-                dialog
-                open={editing}
-                pending={editPending}
-                dirty={form.formState.isDirty || constraintsDirty}
-                title={t('edit')}
-                onClose={() => setEditing(false)}
-              >
-                {detail.error && (
-                  <StaffError error={detail.error} reload={() => void detail.refetch()} />
-                )}
-                <GLFormSection title={t('identity')}>
-                  <div className="gl-admin-grid">
-                    <GLInput label={t('code')} value={detail.data.code} disabled />
-                    {resource === 'attributes' && typeField}
-                  </div>
-                </GLFormSection>
-                <TranslationFields form={form} labelsOnly={resource === 'units'} />
-                {resource === 'units' && 'symbol' in detail.data && (
-                  <>
-                    <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
-                    <GLInput label={t('dimension')} value={detail.data.dimension} disabled />
-                  </>
-                )}
-                {resource === 'attributes' && (
-                  <>
-                    {constraintsFields}
-                    {visibilityFields}
-                  </>
-                )}
-                <GLActionBar>
-                  <ReviewedChange
-                    onPending={setEditPending}
-                    path={`/admin/${resource}/${id}`}
-                    version={editPrecondition?.version ?? detail.data.version}
-                    schemaRevision={editPrecondition?.schemaRevision ?? null}
-                    change={
-                      resource === 'attributes'
-                        ? {
-                            kind: changeKind,
-                            definition: {
-                              ...definitionInput,
-                              translations: translationInput(form.watch()),
-                            },
-                          }
-                        : { kind: changeKind, translations: translationInput(form.watch()) }
-                    }
-                    label={t('save')}
-                    onSaved={() => {
-                      form.reset(form.getValues());
-                      setConstraintsBaseline(constraints);
-                      setEditing(false);
-                    }}
-                    reload={async () => {
-                      const latest = await detail.refetch();
-                      if (latest.data) {
-                        form.reset(translationDefaults(latest.data.translations));
-                        setEditPrecondition({
-                          version: latest.data.version,
-                          schemaRevision: latest.data.schemaRevision ?? null,
-                        });
-                        if ('kind' in latest.data) {
-                          const d = latest.data;
-                          setKind(d.kind);
-                          setUnit(d.unit?.code ?? '');
-                          setMinimum(d.minimum ?? '');
-                          setMaximum(d.maximum ?? '');
-                          setMultiple(d.allowMultiple);
-                          setPub(d.public);
-                          setFilterable(d.filterable);
-                          setMultiline(d.textMultiline);
-                          setMaxLength(String(d.textMaxLength));
-                          setConstraintsBaseline(
-                            JSON.stringify([
-                              d.kind,
-                              d.unit?.code ?? '',
-                              d.minimum ?? '',
-                              d.maximum ?? '',
-                              d.allowMultiple,
-                              d.public,
-                              d.filterable,
-                              d.textMultiline,
-                              String(d.textMaxLength),
-                            ]),
-                          );
-                        }
-                      }
-                    }}
-                  />
-                </GLActionBar>
-                <GLButton
-                  variant="secondary"
-                  disabled={editPending}
-                  onClick={() => {
-                    if (
-                      !(form.formState.isDirty || constraintsDirty) ||
-                      window.confirm(t('unsaved'))
-                    )
-                      setEditing(false);
-                  }}
-                >
-                  {t('cancel')}
-                </GLButton>
-              </FocusedEditor>
+
               {resource === 'attributes' &&
                 'options' in detail.data &&
                 detail.data.kind === 'CHOICE' && (
@@ -792,45 +943,10 @@ export function Configuration({
                     label={t('deprecated')}
                   />
                 )}
-                <ReviewedChange
-                  path={`/admin/${resource}/${id}`}
-                  version={detail.data.version}
-                  schemaRevision={detail.data.schemaRevision ?? null}
-                  change={{
-                    kind:
-                      resource === 'product-types'
-                        ? 'type.delete'
-                        : resource === 'attributes'
-                          ? 'definition.delete'
-                          : resource === 'units'
-                            ? 'unit.delete'
-                            : 'group.delete',
-                  }}
-                  label={t('remove')}
-                  onSaved={() => {
-                    form.reset(structuredClone(emptyTranslations));
-                    setId(undefined);
-                  }}
-                />
               </GLFormSection>
             </>
           )}
-          <ConfigurationCreate
-            resource={resource}
-            open={create}
-            onClose={() => setCreate(false)}
-            onCreated={(value) => {
-              const record = response.parse(value);
-              const key = 'id' in record ? record.id : record.code;
-              queryClient.setQueryData(['staff', 'configuration', resource, key], record);
-              if (!(form.formState.isDirty || constraintsDirty || definitionId || groupId)) {
-                form.reset(structuredClone(emptyTranslations));
-                setConstraintsBaseline(null);
-                setId(key);
-              }
-            }}
-          />
-        </div>
+        </GLDrawer>
       </div>
     </>
   );
@@ -849,6 +965,7 @@ function ConfigurationCreate({
 }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
+    confirmDiscard = useConfirmDiscard(),
     action = useAction('configuration');
   const form = useForm<TranslationForm>({ defaultValues: structuredClone(emptyTranslations) });
   const [code, setCode] = useState(''),
@@ -880,7 +997,23 @@ function ConfigurationCreate({
     ) ||
     kind !== 'NUMBER' ||
     maxLength !== '4000';
-  useUnsaved(dirty);
+  useUnsaved(open && dirty);
+  useEffect(() => {
+    if (open) return;
+    form.reset(structuredClone(emptyTranslations));
+    setCode('');
+    setKind('NUMBER');
+    setUnit('');
+    setMinimum('');
+    setMaximum('');
+    setPub(false);
+    setFilterable(false);
+    setMultiple(false);
+    setMultiline(false);
+    setMaxLength('4000');
+    setSymbol('');
+    setDimension('');
+  }, [open]);
   const definitionInput = {
     code,
     kind,
@@ -1004,15 +1137,17 @@ function ConfigurationCreate({
           <ActionFeedback action={action} />
           <GLActionBar>
             <GLButton type="submit" loading={action.isPending}>
+              <Save size={18} aria-hidden="true" />
               {t('save')}
             </GLButton>
             <GLButton
               variant="secondary"
               disabled={action.isPending}
-              onClick={() => {
-                if (!dirty || window.confirm(t('unsaved'))) onClose();
+              onClick={async () => {
+                if (!dirty || (await confirmDiscard())) onClose();
               }}
             >
+              <X size={18} aria-hidden="true" />
               {t('cancel')}
             </GLButton>
           </GLActionBar>

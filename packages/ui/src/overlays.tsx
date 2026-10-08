@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useGLTranslation } from '@golden-lift/i18n';
-import { GLHeading, GLIconButton } from './primitives';
+import { GLHeading, GLCloseButton } from './primitives';
 interface OverlayProps {
   open: boolean;
   onClose: () => void;
@@ -64,9 +64,7 @@ function Overlay({
         <GLHeading level={2} role="heading4" id={id}>
           {title}
         </GLHeading>
-        <GLIconButton variant="ghost" label={t('close')} onClick={onClose}>
-          ×
-        </GLIconButton>
+        <GLCloseButton label={t('close')} onClick={onClose} />
       </div>
       {children}
     </dialog>,
@@ -101,9 +99,7 @@ export function GLToast({ message, onClose }: { message: string | null; onClose:
   return message ? (
     <div role="status" className="gl-toast">
       {message}
-      <GLIconButton label={t('close')} variant="ghost" onClick={onClose}>
-        ×
-      </GLIconButton>
+      <GLCloseButton label={t('close')} onClick={onClose} />
     </div>
   ) : null;
 }

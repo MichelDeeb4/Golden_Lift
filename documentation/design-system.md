@@ -85,3 +85,13 @@ Staff uses a light 68px command bar, dark 240px sidebar and focused light canvas
 Shared overlays accept opt-in `keepMounted`, used by the upload drawer to retain transfer state while closed. Closed dialogs stay hidden. Gallery arrows work from keyboard/fullscreen in either direction without stealing native video/input keys; touch and earlier/later controls remain. Reduced motion also disables image hover transforms. New composition reuses existing controls, query caching, bounded pagination and private derivative grants; no new visual dependency is introduced.
 
 See [decision 011](decisions/011-major-visual-redesign.md), [illustrated guide](visitor-and-administration-design.md) and [current completion report](implementation/major-redesign-completed-work.md). Screenshot baselines update only after separate visual review; their equality does not measure design quality.
+
+## Admin interaction controls — 2026-10-08
+
+Use the exported GLActionMenu for a single 40px row trigger. Supply explicit icon metadata independent of translated labels; items expose menu/menuitem semantics, Arrow keys/Home/End/Escape, focus restoration and direction-aware positioning. Destructive items appear last with a divider.
+
+GLButton primary uses existing gold tokens for creation/saving; secondary/ghost are neutral management; success and warning use existing success/warning tokens for Enable and Disable/Deprecate; destructive uses existing error tokens. Pair text with the existing Lucide icon exports. GLCloseButton is a labeled 40px red X with soft-red hover/pressed and shared keyboard focus styles. All shared overlays and toast dismissals use it.
+
+GLFilterToolbar takes a label and count of intermediate fields (search and Clear are separate columns): desktop uses a wider search column and compact controls, tablet two columns, mobile one. Compose only supported filters. Existing GLDataPagination retains its inline desktop row-size control and mobile wrapping.
+
+GLConfirmDialog composes named entity/impact feedback with neutral Cancel and an explicit semantic confirmation. GLUnsavedChangesDialog makes Close/Escape equivalent to Stay. Its staff provider owns asynchronous continuation; it cannot approve mutations or bypass captured API preconditions. See [decision 019](decisions/019-admin-actions-dialogs-filters.md).

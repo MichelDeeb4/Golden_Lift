@@ -185,7 +185,13 @@ export const uploadSchema = z.object({
   }),
 });
 export const pageSchema = <T extends z.ZodTypeAny>(item: T) =>
-  z.object({ items: z.array(item), nextCursor: z.string().nullable() });
+  z.object({
+    items: z.array(item),
+    nextCursor: z.string().nullable(),
+    totalItems: z.number().int().nonnegative().optional(),
+    page: z.number().int().positive().optional(),
+    pageSize: z.number().int().positive().optional(),
+  });
 export class StaffApiError extends Error {
   constructor(
     readonly code: string,

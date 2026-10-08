@@ -1,4 +1,5 @@
-import { Slot } from 'expo-router';
+import { Navigator, Slot } from 'expo-router';
+import { StaffRouter } from '../features/admin/router';
 import { useFonts } from 'expo-font';
 import Manrope_400Regular from '@expo-google-fonts/manrope/400Regular/Manrope_400Regular.ttf';
 import Manrope_600SemiBold from '@expo-google-fonts/manrope/600SemiBold/Manrope_600SemiBold.ttf';
@@ -41,7 +42,9 @@ export default function Layout() {
         <StaffActionTokenProvider>
           <StaffProvider>
             <CategoryTreeStateProvider>
-              <Slot />
+              <Navigator router={StaffRouter} routerOptions={{ backBehavior: 'fullHistory' }}>
+                <Slot />
+              </Navigator>
             </CategoryTreeStateProvider>
           </StaffProvider>
         </StaffActionTokenProvider>

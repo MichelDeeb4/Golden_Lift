@@ -6,6 +6,8 @@ export default defineConfig({
     'frontend.admin-modal.test.ts',
     'frontend.category-tree.test.ts',
     'frontend.product-create.test.ts',
+    'frontend.admin-pagination.test.ts',
+    'frontend.admin-actions.test.ts',
   ],
   workers: 1,
   fullyParallel: false,

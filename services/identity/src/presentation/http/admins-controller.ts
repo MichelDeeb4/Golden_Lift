@@ -50,10 +50,11 @@ export class AdminsController {
         throw new ApplicationError('VALIDATION_FAILED', 'Invalid staff pagination cursor.');
       }
     }
-    const rows = await this.context.admins.list(limit + 1, cursor, actor),
+    const { rows, totalItems } = await this.context.admins.page(limit, cursor, actor),
       items = rows.slice(0, limit),
       last = items.at(-1);
     return {
+      totalItems,
       items,
       nextCursor:
         rows.length > limit && last

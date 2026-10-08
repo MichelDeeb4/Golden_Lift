@@ -217,23 +217,26 @@ export class AdminMediaController {
     @Query('limit') limit: string | undefined,
     @Query('kind') kind: string | undefined,
     @Query('status') status: string | undefined,
+    @Query('search') search: string | undefined,
     @Req() req: IncomingMessage,
   ) {
     if (
+      (search !== undefined && typeof search !== 'string') ||
       (kind !== undefined && !['IMAGE', 'VIDEO', 'PDF'].includes(kind)) ||
       (status !== undefined && !['UPLOADING', 'PROCESSING', 'READY', 'FAILED'].includes(status))
     )
       throw new ApplicationError('VALIDATION_FAILED', 'Invalid Media filter.');
-    const assets = await this.library.list(
+    const result = await this.library.page(
       after ? uuid(after) : null,
       Number(limit ?? 25),
       await this.auth.execute(staffRequest(req, false)),
       {
         ...(kind ? { kind: kind as MediaKind } : {}),
         ...(status ? { status: status as 'UPLOADING' | 'PROCESSING' | 'READY' | 'FAILED' } : {}),
+        ...(search ? { search } : {}),
       },
     );
-    return { items: assets.map(publicAsset), next: assets.at(-1)?.id ?? null };
+    return { ...result, items: result.items.map(publicAsset) };
   }
   @Get('assets/:id') async detail(@Param('id') id: string, @Req() req: IncomingMessage) {
     const result = await this.library.detail(

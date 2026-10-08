@@ -1,4 +1,6 @@
-import { useId, useState } from 'react';
+import { Plus, X } from '@golden-lift/icons';
+import { useConfirmDiscard } from './context';
+import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'expo-router';
@@ -26,6 +28,7 @@ const createdProduct = z.object({
 export function CreateProduct({ open, onClose }: { open: boolean; onClose: () => void }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
+    confirmDiscard = useConfirmDiscard(),
     router = useRouter(),
     action = useAction('products', false),
     notify = useStaffFeedback(),
@@ -39,7 +42,14 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
     arabicName = form.watch('names.ar');
   const eligible = !!category?.canAddProducts && category.id === categoryId && !!arabicName?.trim();
   const dirty = form.formState.isDirty;
-  useUnsaved(dirty);
+  useUnsaved(open && dirty);
+  useEffect(() => {
+    if (!open) {
+      form.reset(defaults);
+      setCategory(null);
+      setCategoryOpen(false);
+    }
+  }, [open]);
   return (
     <>
       <FocusedEditor
@@ -133,15 +143,17 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
               disabled={!eligible || action.isPending}
               aria-describedby={helpId}
             >
+              <Plus size={18} aria-hidden="true" />
               {t('createProduct')}
             </GLButton>
             <GLButton
               variant="secondary"
               disabled={action.isPending}
-              onClick={() => {
-                if (!dirty || window.confirm(t('unsaved'))) onClose();
+              onClick={async () => {
+                if (!dirty || (await confirmDiscard())) onClose();
               }}
             >
+              <X size={18} aria-hidden="true" />
               {t('cancel')}
             </GLButton>
           </GLActionBar>

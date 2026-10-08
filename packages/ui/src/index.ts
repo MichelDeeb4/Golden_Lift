@@ -5,4 +5,6 @@ export * from './overlays';
 export * from './navigation';
 export * from './composition';
 export * from './workspace';
+export * from './pagination';
+export * from './admin-controls';
 export { GLTokenStyles } from './styles';

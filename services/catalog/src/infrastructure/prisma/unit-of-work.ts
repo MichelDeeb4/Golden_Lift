@@ -13,6 +13,7 @@ import { PrismaUnitRepository } from './unit-repository.js';
 import { PrismaProductRepository } from './product-repository.js';
 import { PrismaSchemaChangeReader } from './schema-change-reader.js';
 import { PrismaCategorySchemaRepository } from './category-schema-repository.js';
+import { PrismaConfigurationCollection } from './configuration-collection.js';
 export function mapFailure(error: unknown): Error {
   if (error instanceof ApplicationError) return error;
   switch (sqlState(error)) {
@@ -61,6 +62,7 @@ export class PrismaCatalogUnitOfWork implements CatalogUnitOfWork {
                   );
               }
               return work({
+                configurationCollection: new PrismaConfigurationCollection(tx),
                 categorySchemas: new PrismaCategorySchemaRepository(tx),
                 productTypes: new PrismaProductTypeRepository(tx),
                 definitions: new PrismaAttributeDefinitionRepository(tx),

@@ -12,6 +12,29 @@ export class MediaLibrary {
     private readonly transactions: MediaUnitOfWork,
     private readonly catalog: CatalogMedia,
   ) {}
+  async page(
+    after: Uuid | null,
+    limit: number,
+    actor: AuthenticatedActor,
+    filters: Parameters<MediaRepository['list']>[2] = {},
+  ) {
+    requireAdmin(actor);
+    if (
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 100 ||
+      (filters?.search?.length ?? 0) > 120 ||
+      (filters?.kind && !['IMAGE', 'VIDEO', 'PDF'].includes(filters.kind)) ||
+      (filters?.status && !['UPLOADING', 'PROCESSING', 'READY', 'FAILED'].includes(filters.status))
+    )
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid Media pagination.');
+    return this.transactions.execute(async (r) => {
+      const totalItems = await r.count(filters),
+        rows = await r.list(after, limit + 1, filters),
+        items = rows.slice(0, limit);
+      return { items, totalItems, next: rows.length > limit ? items.at(-1)!.id : null };
+    });
+  }
   async list(
     after: Uuid | null,
     limit: number,

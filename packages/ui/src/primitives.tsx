@@ -1,3 +1,4 @@
+import { X } from '@golden-lift/icons';
 import { YStack as Stack, XStack, YStack, Text } from 'tamagui';
 import { useGLTranslation, useLocale } from '@golden-lift/i18n';
 import { typography } from '@golden-lift/tokens';
@@ -86,7 +87,15 @@ export function GLSeparator() {
   return <hr className="gl-separator" />;
 }
 export type ButtonVariant =
-  'primary' | 'secondary' | 'dark' | 'light' | 'ghost' | 'text' | 'destructive';
+  | 'primary'
+  | 'secondary'
+  | 'dark'
+  | 'light'
+  | 'ghost'
+  | 'text'
+  | 'destructive'
+  | 'success'
+  | 'warning';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export function GLButton({
   children,
@@ -251,5 +260,13 @@ export function GLTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+export function GLCloseButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <GLIconButton label={label} variant="ghost" className="gl-close-button" onClick={onClick}>
+      <X size={20} aria-hidden="true" />
+    </GLIconButton>
   );
 }

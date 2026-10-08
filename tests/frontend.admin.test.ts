@@ -1272,7 +1272,7 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
     await page
       .getByRole('row')
       .filter({ hasText: fixture.adminEmail })
-      .getByRole('button', { name: 'Disable', exact: true })
+      .getByRole('menuitem', { name: 'Disable', exact: true })
       .click();
     await page
       .getByRole('dialog')
@@ -1292,7 +1292,7 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
     await page
       .getByRole('row')
       .filter({ hasText: fixture.adminEmail })
-      .getByRole('button', { name: 'Enable', exact: true })
+      .getByRole('menuitem', { name: 'Enable', exact: true })
       .click();
     await page
       .getByRole('dialog')
@@ -1305,7 +1305,7 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
     await login(adminPage, fixture.adminEmail);
     const invited = page.getByRole('row').filter({ hasText: 'browser-invite@example.test' });
     await invited.getByRole('button', { name: 'Actions', exact: true }).click();
-    await invited.getByRole('button', { name: 'Resend invitation', exact: true }).click();
+    await invited.getByRole('menuitem', { name: 'Resend invitation', exact: true }).click();
     await page
       .getByRole('dialog')
       .last()
@@ -1313,7 +1313,7 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
       .click();
     await expect(page.getByRole('dialog').last()).not.toBeVisible();
     await invited.getByRole('button', { name: 'Actions', exact: true }).click();
-    await invited.getByRole('button', { name: 'Delete', exact: true }).click();
+    await invited.getByRole('menuitem', { name: 'Delete', exact: true }).click();
     await page
       .getByRole('dialog')
       .last()

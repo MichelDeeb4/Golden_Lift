@@ -1,23 +1,33 @@
+import { ArrowUpDown, Upload as UploadIcon, FilterX } from '@golden-lift/icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { mediaAssetSchema, uploadSchema } from '@golden-lift/api';
 import {
   GLAlert,
   GLButton,
+  GLFilterToolbar,
+  GLActionMenu,
   GLHeading,
   GLInput,
   GLModal,
   GLSelect,
   GLPageHeader,
   GLDrawer,
+  GLConfirmDialog,
 } from '@golden-lift/ui';
 import { StaffError, useStaffApi } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, Confirm, TableState, jsonResponse, useAction } from './common';
 export type MediaAsset = z.infer<typeof mediaAssetSchema>;
-const librarySchema = z.object({ items: z.array(mediaAssetSchema), next: z.string().nullable() });
+import { AdminPagination, useAdminPagination } from './pagination';
+import { useLocalSearchParams } from 'expo-router';
+const librarySchema = z.object({
+  items: z.array(mediaAssetSchema),
+  next: z.string().nullable(),
+  totalItems: z.number().int().nonnegative(),
+});
 const grantSchema = z.object({
   url: z
     .string()
@@ -141,6 +151,7 @@ export function MediaPreview({
               })
             }
           >
+            <ArrowUpDown size={18} aria-hidden="true" />
             {t('retry')}
           </GLButton>
         </GLAlert>
@@ -397,19 +408,37 @@ export function MediaLibrary({
 }) {
   const router = useRouter(),
     [uploadOpen, setUploadOpen] = useState(false),
-    [search, setSearch] = useState(''),
     api = useStaffApi(),
     t = useAdminTranslation(),
-    [after, setAfter] = useState(''),
-    [kind, setKind] = useState(allowedKind ?? ''),
-    [status, setStatus] = useState('');
-  const [usageAfter, setUsageAfter] = useState(0);
+    pagination = useAdminPagination('cursor', !!onSelect || inspecting),
+    params = useLocalSearchParams<{ search?: string; kind?: string; status?: string }>();
+  const [reviewedMedia, setReviewedMedia] = useState<{
+    asset: MediaAsset;
+    operation: 'reprocess' | 'retire';
+  } | null>(null);
+  const lifecycle = useAction('media');
+  const [pickerFilters, setPickerFilters] = useState({
+    search: '',
+    kind: allowedKind ?? '',
+    status: '',
+  });
+  const { search = '', kind = allowedKind ?? '', status = '' } = onSelect ? pickerFilters : params;
+  const filter = (patch: Partial<typeof pickerFilters>) => {
+    if (onSelect) setPickerFilters((previous) => ({ ...previous, ...patch }));
+    pagination.filters(patch);
+  };
+  const usagePagination = useAdminPagination('cursor', true),
+    usageAfter = Number(usagePagination.cursor || 0);
   const list = useQuery({
-    queryKey: ['staff', 'media', after, kind, status],
+    placeholderData: keepPreviousData,
+    enabled: !id,
+    queryKey: ['staff', 'media', pagination.cursor, pagination.pageSize, kind, status, search],
     queryFn: ({ signal }) =>
       api.request(
-        '/admin/media/assets?limit=25' +
-          (after ? '&after=' + after : '') +
+        '/admin/media/assets?limit=' +
+          pagination.pageSize +
+          (pagination.cursor ? '&after=' + encodeURIComponent(pagination.cursor) : '') +
+          (search ? '&search=' + encodeURIComponent(search) : '') +
           (kind ? '&kind=' + kind : '') +
           (status ? '&status=' + status : ''),
         librarySchema,
@@ -433,10 +462,16 @@ export function MediaLibrary({
     refetchInterval: 10000,
   });
   const usage = useQuery({
-    queryKey: ['staff', 'media-usage', id, usageAfter],
+    placeholderData: keepPreviousData,
+    queryKey: ['staff', 'media-usage', id, usageAfter, usagePagination.pageSize],
     queryFn: ({ signal }) =>
       api.request(
-        '/admin/media/assets/' + id + '/usage?limit=25&after=' + usageAfter,
+        '/admin/media/assets/' +
+          id +
+          '/usage?limit=' +
+          usagePagination.pageSize +
+          '&after=' +
+          usageAfter,
         z.array(z.object({ ownerType: z.string(), ownerId: z.string().uuid().nullable() })),
         undefined,
         'GET',
@@ -444,12 +479,7 @@ export function MediaLibrary({
       ),
     enabled: !!id,
   });
-  const assets = (id ? (detail.data ? [detail.data.asset] : []) : (list.data?.items ?? [])).filter(
-    (asset) =>
-      (!kind || asset.kind === kind) &&
-      (!status || asset.status === status) &&
-      (!search || (asset.name ?? '').toLocaleLowerCase().includes(search.toLocaleLowerCase())),
-  );
+  const assets = id ? (detail.data ? [detail.data.asset] : []) : (list.data?.items ?? []);
   if (id && !inspecting)
     return (
       <>
@@ -458,7 +488,9 @@ export function MediaLibrary({
           open
           title={t('media')}
           className="gl-admin-overlay gl-asset-inspector"
-          onClose={() => router.replace('/admin/media')}
+          onClose={() =>
+            router.replace(('/admin/media' + window.location.search) as '/admin/media')
+          }
         >
           <MediaLibrary id={id} inspecting />
         </GLDrawer>
@@ -466,11 +498,51 @@ export function MediaLibrary({
     );
   return (
     <>
+      <GLConfirmDialog
+        open={Boolean(reviewedMedia)}
+        title={reviewedMedia?.operation === 'retire' ? t('retire') : t('retry')}
+        variant={reviewedMedia?.operation === 'retire' ? 'destructive' : 'secondary'}
+        icon={
+          reviewedMedia?.operation === 'reprocess' ? (
+            <ArrowUpDown size={18} aria-hidden="true" />
+          ) : undefined
+        }
+        pending={lifecycle.isPending}
+        cancelLabel={t('cancel')}
+        confirmLabel={t('confirm')}
+        onClose={() => setReviewedMedia(null)}
+        onConfirm={() => {
+          if (!reviewedMedia) return;
+          const { asset, operation } = reviewedMedia;
+          lifecycle.mutate(
+            () =>
+              api.request(
+                `/admin/media/assets/${asset.id}/${operation}`,
+                jsonResponse,
+                {
+                  expectedVersion: asset.version,
+                  ...(operation === 'retire' ? { confirmed: true } : {}),
+                },
+                'POST',
+              ),
+            { onSuccess: () => setReviewedMedia(null) },
+          );
+        }}
+      >
+        <p>
+          <strong>{reviewedMedia?.asset.name ?? reviewedMedia?.asset.id}</strong>
+        </p>
+        <p>{t('confirmAction')}</p>
+        <ActionFeedback action={lifecycle} />
+      </GLConfirmDialog>
       {!inspecting && (
         <div className="gl-media-header">
           <GLPageHeader title={t('media')} description={t('mediaHelp')} />
           {!inspecting && (
-            <GLButton onClick={() => setUploadOpen(true)}>{t('uploadMedia')}</GLButton>
+            <GLButton onClick={() => setUploadOpen(true)}>
+              <UploadIcon size={18} aria-hidden="true" />
+              {t('uploadMedia')}
+            </GLButton>
           )}
         </div>
       )}
@@ -484,58 +556,105 @@ export function MediaLibrary({
         <Upload allowedKind={allowedKind} />
       </GLDrawer>
       {!inspecting && (
-        <GLInput
-          label={t('searchLoadedMedia')}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      )}
-      {!inspecting && (
-        <div className="gl-admin-grid gl-media-filters">
-          <GLSelect
-            label={t('kind')}
-            disabled={!!allowedKind}
-            value={kind}
-            onChange={(value) => {
-              setKind(value);
-              setAfter('');
-            }}
-            options={[
-              { value: '', label: t('all') },
-              ...['IMAGE', 'VIDEO', 'PDF'].map((value) => ({ value, label: value })),
-            ]}
+        <GLFilterToolbar label={t('filters')} fields={2}>
+          <GLInput
+            label={t('search')}
+            value={search}
+            onChange={(event) => filter({ search: event.target.value })}
           />
-          <GLSelect
-            label={t('status')}
-            value={status}
-            onChange={(value) => {
-              setStatus(value);
-              setAfter('');
-            }}
-            options={[
-              { value: '', label: t('all') },
-              ...['READY', 'PROCESSING', 'FAILED'].map((value) => ({ value, label: value })),
-            ]}
-          />
-        </div>
+          <div className="gl-media-filter-fields">
+            <GLSelect
+              label={t('kind')}
+              disabled={!!allowedKind}
+              value={kind}
+              onChange={(value) => {
+                filter({ kind: value });
+              }}
+              options={[
+                { value: '', label: t('all') },
+                ...['IMAGE', 'VIDEO', 'PDF'].map((value) => ({ value, label: value })),
+              ]}
+            />
+            <GLSelect
+              label={t('status')}
+              value={status}
+              onChange={(value) => {
+                filter({ status: value });
+              }}
+              options={[
+                { value: '', label: t('all') },
+                ...['READY', 'PROCESSING', 'FAILED'].map((value) => ({ value, label: value })),
+              ]}
+            />
+          </div>
+          <GLButton
+            variant="ghost"
+            onClick={() => filter({ search: '', kind: allowedKind ?? '', status: '' })}
+          >
+            <FilterX size={18} aria-hidden="true" />
+            {t('clear')}
+          </GLButton>
+        </GLFilterToolbar>
       )}
       <TableState
         presentation="content"
         pending={id ? detail.isPending : list.isPending}
         error={id ? detail.error : list.error}
         empty={!assets.length}
+        onRetry={() => void (id ? detail.refetch() : list.refetch())}
       >
         <div className="gl-admin-media">
           {assets.map((asset) =>
             !inspecting ? (
               <section key={asset.id} className="gl-asset-card">
-                <a href={'/admin/media/' + asset.id} aria-label={asset.name}>
+                <a
+                  href={'/admin/media/' + asset.id + window.location.search}
+                  aria-label={asset.name}
+                >
                   <MediaPreview asset={asset} />
                   <span className="gl-asset-kind">
                     {asset.kind} / {asset.status}
                   </span>
                   <h2 className="gl-asset-name">{asset.name}</h2>
                 </a>
+                {!onSelect && (
+                  <GLActionMenu
+                    label={t('actions') + ' — ' + asset.name}
+                    items={[
+                      {
+                        label: t('view'),
+                        icon: 'view',
+                        href: '/admin/media/' + asset.id + window.location.search,
+                      },
+                      {
+                        label: t('usage'),
+                        icon: 'link',
+                        href: '/admin/media/' + asset.id + window.location.search,
+                      },
+                      ...(!asset.deleted &&
+                      asset.status === 'READY' &&
+                      asset.security === 'VERIFIED'
+                        ? [
+                            {
+                              label: t('retry'),
+                              icon: 'reorder' as const,
+                              onSelect: () => setReviewedMedia({ asset, operation: 'reprocess' }),
+                            },
+                          ]
+                        : []),
+                      ...(!asset.deleted
+                        ? [
+                            {
+                              label: t('retire'),
+                              icon: 'delete' as const,
+                              destructive: true,
+                              onSelect: () => setReviewedMedia({ asset, operation: 'retire' }),
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
+                )}
                 {onSelect && (
                   <GLButton
                     disabled={
@@ -620,6 +739,19 @@ export function MediaLibrary({
                         .map((operation) => (
                           <Confirm
                             scope="media"
+                            entityName={asset.name ?? asset.id}
+                            variant={
+                              operation === 'retry' || operation === 'reprocess'
+                                ? 'secondary'
+                                : operation === 'block'
+                                  ? 'warning'
+                                  : 'destructive'
+                            }
+                            icon={
+                              operation === 'retry' || operation === 'reprocess' ? (
+                                <ArrowUpDown size={18} aria-hidden="true" />
+                              ) : undefined
+                            }
                             key={operation}
                             title={operation === 'reprocess' ? t('retry') : t(operation)}
                             work={() =>
@@ -666,25 +798,27 @@ export function MediaLibrary({
               </li>
             ))}
           </ul>
-          {usageAfter > 0 && (
-            <GLButton
-              variant="secondary"
-              onClick={() => setUsageAfter(Math.max(0, usageAfter - 25))}
-            >
-              {t('previous')}
-            </GLButton>
-          )}
-          {usage.data.length === 25 && (
-            <GLButton variant="secondary" onClick={() => setUsageAfter(usageAfter + 25)}>
-              {t('next')}
-            </GLButton>
-          )}
+          <AdminPagination
+            pagination={usagePagination}
+            data={{
+              items: usage.data,
+              nextCursor:
+                usage.data.length === usagePagination.pageSize
+                  ? String(usageAfter + usagePagination.pageSize)
+                  : null,
+            }}
+            loading={usage.isFetching}
+            placeholder={usage.isPlaceholderData}
+          />
         </section>
       )}
-      {!id && list.data?.next && (
-        <GLButton variant="secondary" onClick={() => setAfter(list.data!.next!)}>
-          {t('next')}
-        </GLButton>
+      {!id && (
+        <AdminPagination
+          pagination={pagination}
+          data={list.data}
+          loading={list.isFetching}
+          placeholder={list.isPlaceholderData}
+        />
       )}
     </>
   );

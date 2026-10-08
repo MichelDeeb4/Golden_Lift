@@ -50,6 +50,16 @@ export class ManageAdmins {
     requireSuperAdmin(actor);
     return (await this.repository.listAdmins(limit, cursor)).map(accountDto);
   }
+  async page(limit: number, cursor: DirectoryCursor | null, actor: AuthenticatedActor) {
+    requireSuperAdmin(actor);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid staff page size.');
+    return this.transactions.execute(async (repository) => {
+      const totalItems = await repository.countAdmins(),
+        rows = await repository.listAdmins(limit + 1, cursor);
+      return { totalItems, rows: rows.map(accountDto) };
+    }, true);
+  }
   async invite(
     email: unknown,
     name: unknown,

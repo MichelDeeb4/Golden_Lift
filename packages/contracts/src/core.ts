@@ -98,6 +98,7 @@ export interface CategoryDto {
   readonly coverAssetId?: Uuid | null;
 }
 export interface Page<T> {
+  readonly totalItems?: number;
   readonly items: readonly T[];
   readonly nextCursor: string | null;
 }

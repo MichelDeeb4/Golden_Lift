@@ -3,7 +3,9 @@
 The 2026-10-07 [Product Create fix](implementation/fix-product-create-disabled.md) removes Product Type, Media and specification prerequisites from initial creation. Leaf category plus Arabic name creates an inactive PostgreSQL draft and opens the category-derived editor through SPA navigation. The normal Catalog cutover was applied after full backup/restore parity and restored-copy rehearsal. Category/group relationship editing and porting historical Type-specific regression suites remain separate work. Current evidence belongs to the dated fix report.
 
 
-Updated: 2026-10-07. Earlier dated milestone evidence below remains historical.
+Updated: 2026-10-08. Earlier dated milestone evidence below remains historical.
+
+The [Admin action/dialog/filter phase](implementation/admin-actions-dialogs-filters-completed-work.md) standardizes icon overflow menus, semantic actions, red Close controls, branded unsaved decisions and responsive filters. Configuration details use explicit overlays; staff account editing preserves version conflicts through the existing Identity API. Current local acceptance passed 79 distinct tests and seven unchanged visitor visual comparisons, plus build/types/format/architecture/Prisma checks. The normal project is running; earlier pagination work and historical reports remain separate.
 
 The [Category tree workspace](implementation/category-tree-completed-work.md) now replaces the flat Admin category table with recursive disclosure, ancestor search, compact ordering/actions, fixed-parent subcategory creation and mobile/RTL navigation. The persistent staff layout retains branch state and query cache across routes. Catalog creation appends siblings transactionally instead of leaving UUID-dependent order-zero ties. This task does not activate the pending category attribute-group model.
 

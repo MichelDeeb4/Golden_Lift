@@ -1,3 +1,4 @@
+import { Plus } from '@golden-lift/icons';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -61,7 +62,10 @@ function Dashboard() {
       <div className="gl-launchpad">
         <div>
           <h2 className="gl-launchpad-title">{t('createProductHelp')}</h2>
-          <GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>
+          <GLButton onClick={() => setCreating(true)}>
+            <Plus size={18} aria-hidden="true" />
+            {t('createProduct')}
+          </GLButton>
         </div>
         <div className="gl-launchpad-links">
           <a href="/admin/products">

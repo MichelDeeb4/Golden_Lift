@@ -1,3 +1,5 @@
+import { X, ArrowUpDown, Trash2 } from '@golden-lift/icons';
+import { useConfirmDiscard } from './context';
 import { useEffect, useId, useState } from 'react';
 import { languageNames } from '@golden-lift/i18n';
 import type { ReactNode } from 'react';
@@ -40,6 +42,7 @@ export function FocusedEditor({
 }) {
   const id = useId();
   const t = useAdminTranslation();
+  const confirmDiscard = useConfirmDiscard();
   if (dialog)
     return (
       <GLModal
@@ -47,8 +50,8 @@ export function FocusedEditor({
         keepMounted
         className="gl-admin-modal"
         title={title}
-        onClose={() => {
-          if (!pending && (!dirty || window.confirm(t('unsaved')))) onClose();
+        onClose={async () => {
+          if (!pending && (!dirty || (await confirmDiscard()))) onClose();
         }}
       >
         <div className="gl-admin-modal-body">{children}</div>
@@ -94,6 +97,7 @@ export function MoreOptions({
   label: string;
 }) {
   const t = useAdminTranslation();
+
   return query.hasNextPage ? (
     <GLButton
       variant="secondary"
@@ -195,6 +199,9 @@ export function Confirm({
   label,
   disabled = false,
   scope = 'account',
+  variant = 'destructive',
+  icon,
+  entityName,
 }: {
   title: string;
   work: () => Promise<unknown>;
@@ -202,6 +209,9 @@ export function Confirm({
   label?: string;
   disabled?: boolean;
   scope?: string;
+  variant?: 'destructive' | 'secondary' | 'warning';
+  icon?: ReactNode;
+  entityName?: string;
 }) {
   const [open, setOpen] = useState(false),
     [reviewedWork, setReviewedWork] = useState<(() => Promise<unknown>) | null>(null),
@@ -210,13 +220,14 @@ export function Confirm({
   return (
     <>
       <GLButton
-        variant="destructive"
+        variant={variant}
         disabled={disabled}
         onClick={() => {
           setReviewedWork(() => work);
           setOpen(true);
         }}
       >
+        {icon ?? <Trash2 size={18} aria-hidden="true" />}
         {label ?? title}
       </GLButton>
       <GLModal
@@ -226,16 +237,23 @@ export function Confirm({
         }}
         title={title}
       >
+        {entityName && (
+          <p>
+            <strong>{entityName}</strong>
+          </p>
+        )}
         <p>{children ?? t('confirmAction')}</p>
         <ActionFeedback action={action} />
         <GLButton
-          variant="destructive"
+          variant={variant}
           loading={action.isPending}
           onClick={() => action.mutate(reviewedWork!, { onSuccess: () => setOpen(false) })}
         >
+          {icon ?? <Trash2 size={18} aria-hidden="true" />}
           {t('confirm')}
         </GLButton>
         <GLButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
+          <X size={18} aria-hidden="true" />
           {t('cancel')}
         </GLButton>
       </GLModal>
@@ -338,6 +356,7 @@ export function TableState({
   emptyDescription,
   emptyAction,
   presentation = 'table',
+  onRetry,
 }: {
   pending: boolean;
   error: unknown;
@@ -347,8 +366,10 @@ export function TableState({
   emptyDescription?: string;
   emptyAction?: ReactNode;
   presentation?: 'table' | 'content';
+  onRetry?: () => void;
 }) {
   const t = useAdminTranslation();
+
   if (pending)
     return (
       <div className="gl-admin-skeleton" role="status" aria-label={t('loading')}>
@@ -357,7 +378,18 @@ export function TableState({
         ))}
       </div>
     );
-  if (error) return <StaffError error={error} />;
+  if (error)
+    return (
+      <>
+        <StaffError error={error} />
+        {onRetry && (
+          <GLButton variant="secondary" onClick={onRetry}>
+            <ArrowUpDown size={18} aria-hidden="true" />
+            {t('retry')}
+          </GLButton>
+        )}
+      </>
+    );
   if (empty)
     return (
       <GLEmptyState
@@ -368,7 +400,13 @@ export function TableState({
     );
   return (
     <div className={presentation === 'table' ? 'gl-admin-table' : 'gl-admin-content-state'}>
-      {children}
+      {presentation === 'table' ? (
+        <div className="gl-admin-table-scroll" tabIndex={0}>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }

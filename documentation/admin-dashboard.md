@@ -36,6 +36,16 @@ Existing Identity, B4, Dynamic Catalog and B5 contracts remain authoritative. Op
 
 `database/sql/21_catalog_product_management.sql` is the reviewed additive upgrade. `25_category_catalog_fresh.sql` composes the current fresh category-based Catalog schema; SQL 22 is the historical pre-cutover composition. It preserves existing product activation and separately filters public asset usage. No live database migration is implied by checking out the code. See [local operations](operations/admin-local.md) and [decision 009](decisions/009-admin-dashboard.md).
 
+## Collection scrolling and pagination
+
+Attributes, Attribute Groups and Units use numbered server pages, stable code ordering and filtered totals. Search matches code or translated name/label; Attributes also filter kind, visibility and deprecation. Groups/Units have no deprecation lifecycle. Products retain their ID/manual-order keysets, Media its ID cursor (with server filename/kind/status filters), and Super Admin accounts their created-at/ID cursor. All use the shared Previous/Next, range/count and 10/25/50/100 row controls, defaulting to 25. Cursor lists show the current page and total pages without inventing direct jumps to unseen boundaries.
+
+Page, size, filters, sorting and visited cursor boundaries are URL state. Back/refresh restores them; changing filters/size starts at page one. Mutations refresh queries without reloading the document. Numbered out-of-range requests clamp to the last valid page; empty cursor pages step back. Loading retains previous rows while navigation controls are disabled. Media picker/usage controls retain local navigation; usage shows no fabricated total. Categories keep recursive branch loading rather than flat pagination.
+
+The document scrolls vertically on ordinary collection pages. Wide tables scroll horizontally; Attributes/Groups tables and their optional details are in normal flow, with no floating empty “Choose” panel. Existing command bar, sidebar, editor rails and overlay focus/scroll behavior remain scoped. See [decision 018](decisions/018-admin-scroll-and-pagination.md) and the [baseline audit](implementation/admin-scroll-pagination-baseline.md).
+
+Collection errors offer Retry, which refetches the current request without reloading the document. Short visited cursor histories travel in the URL; larger histories use tab-scoped session storage with an opaque URL key. Same-tab Back/refresh retains those larger histories; a copied long-history link in another tab starts at page one. The cache contains no credentials.
+
 ## Editing and Media
 
 Arabic is required; English and Sorani are independent optional translations. There is no automatic translation. Dynamic forms use the current backend groups, order, requiredness, unit, bounds, precision and choice options. Decimal and bigint values remain strings. Existing deprecated selections remain readable; the backend rejects new deprecated use. Version/schema conflicts preserve local input, require review and never silently retry a write.
@@ -71,3 +81,11 @@ Category navigation uses the main master/detail canvas; creation and metadata ed
 Super Admin shares the shell and uses a focused invitation section plus overflow lifecycle actions with captured-account/version confirmation. Role separation, CSRF/Origin checks, live sessions, safe capabilities and retained deletion remain unchanged. No backend, SQL or OpenAPI changes accompany this phase.
 
 See [decision 011](decisions/011-major-visual-redesign.md) and [major redesign completion](implementation/major-redesign-completed-work.md) for current execution evidence. Earlier milestone reports remain dated historical evidence.
+
+## Admin action, dialog and filter consistency — 2026-10-08
+
+Rows use one labeled overflow menu with icon actions; configuration and staff directory rows no longer show a separate Edit control. Configuration Edit opens its reviewed-change modal; View details opens an inspector with CHOICE option workflows. Selected records do not create a second block below pagination. Delete obtains the existing owning-service impact/version before confirmation and commit.
+
+Modals/drawers share a red Close X. Dirty closes, Cancel and internal staff navigation use a branded Stay / Leave without saving decision. Browser Back within the mounted staff history is guarded before Expo restores the root. Actual document reload/close retains the browser's unload warning. Toolbar filters use existing server contracts, with compact desktop columns and stacked mobile fields. Accounts show supported counts rather than adding unavailable search/status APIs.
+
+See [decision 019](decisions/019-admin-actions-dialogs-filters.md), [baseline](implementation/admin-actions-dialogs-filters-baseline.md) and [completion report](implementation/admin-actions-dialogs-filters-completed-work.md) for current verification and limitations.

@@ -1,5 +1,16 @@
 import { useLocale } from '@golden-lift/i18n';
 const en = {
+  filters: 'Filters',
+  view: 'View details',
+  unsavedTitle: 'Unsaved changes',
+  unsavedDescription: 'Your changes will be lost if you leave without saving.',
+  stay: 'Stay',
+  leaveWithoutSaving: 'Leave without saving',
+  pagination: 'Pagination',
+  rowsPerPage: 'Rows per page',
+  showing: 'Showing',
+  of: 'of',
+  filteredEmpty: 'No records match these filters.',
   categoryGone: 'This category no longer exists. Choose another leaf category.',
   modelCodeTaken: 'This model code is already in use. Choose another code or leave it empty.',
   retiredProductTypes:
@@ -235,6 +246,17 @@ const en = {
 };
 type Key = keyof typeof en;
 const ar: Record<Key, string> = {
+  filters: 'الفلاتر',
+  view: 'عرض التفاصيل',
+  unsavedTitle: 'تغييرات غير محفوظة',
+  unsavedDescription: 'ستفقد تغييراتك إذا غادرت دون حفظ.',
+  stay: 'البقاء',
+  leaveWithoutSaving: 'المغادرة دون حفظ',
+  pagination: 'ترقيم الصفحات',
+  rowsPerPage: 'صفوف لكل صفحة',
+  showing: 'عرض',
+  of: 'من',
+  filteredEmpty: 'لا توجد سجلات تطابق هذه المرشحات.',
   categoryGone: 'هذه الفئة لم تعد موجودة. اختر فئة نهائية أخرى.',
   modelCodeTaken: 'رمز الموديل مستخدم بالفعل. اختر رمزًا آخر أو اتركه فارغًا.',
   retiredProductTypes:
@@ -461,6 +483,17 @@ const ar: Record<Key, string> = {
   dimension: 'البعد',
 };
 const ckb: Record<Key, string> = {
+  filters: 'پاڵاوتن',
+  view: 'بینینی وردەکاری',
+  unsavedTitle: 'گۆڕانکاری پاشەکەوت نەکراو',
+  unsavedDescription: 'ئەگەر بەبێ پاشەکەوت دەرچیت گۆڕانکارییەکان لەدەست دەدەیت.',
+  stay: 'مانەوە',
+  leaveWithoutSaving: 'دەرچوون بەبێ پاشەکەوت',
+  pagination: 'پەڕەکان',
+  rowsPerPage: 'ڕیز لە هەر پەڕە',
+  showing: 'پیشاندان',
+  of: 'لە',
+  filteredEmpty: 'هیچ تۆمارێک لەگەڵ ئەم پاڵاوتنانە ناگونجێت.',
   categoryGone: 'ئەم پۆلە چیتر بوونی نییە. پۆلێکی کۆتایی تر هەڵبژێرە.',
   modelCodeTaken: 'ئەم کۆدی مۆدێلە پێشتر بەکارهاتووە. کۆدێکی تر هەڵبژێرە یان بەتاڵی بهێڵە.',
   retiredProductTypes:

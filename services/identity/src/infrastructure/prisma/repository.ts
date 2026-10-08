@@ -101,6 +101,9 @@ export class PrismaIdentityRepository implements IdentityRepository {
       return row ? [row] : [];
     });
   }
+  countAdmins() {
+    return this.database.staffAccounts.count({ where: { role: 'ADMIN', deleted_at: null } });
+  }
   async insertAccount(
     id: Uuid,
     email: string,

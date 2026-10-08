@@ -1,3 +1,4 @@
+import { Save, X } from '@golden-lift/icons';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { StaffApiError } from '@golden-lift/api';
@@ -103,9 +104,11 @@ export function AddChoiceOption({
             <ActionFeedback action={action} />
           )}
           <GLButton type="submit" loading={action.isPending}>
+            <Save size={18} aria-hidden="true" />
             {t('save')}
           </GLButton>
           <GLButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
+            <X size={18} aria-hidden="true" />
             {t('cancel')}
           </GLButton>
         </form>

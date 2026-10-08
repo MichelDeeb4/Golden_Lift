@@ -91,8 +91,17 @@ export interface MediaRepository {
   list(
     after: Uuid | null,
     limit: number,
-    filters?: { readonly kind?: MediaKind; readonly status?: MediaAsset['status'] },
+    filters?: {
+      readonly kind?: MediaKind;
+      readonly status?: MediaAsset['status'];
+      readonly search?: string;
+    },
   ): Promise<readonly MediaAsset[]>;
+  count(filters?: {
+    readonly kind?: MediaKind;
+    readonly status?: MediaAsset['status'];
+    readonly search?: string;
+  }): Promise<number>;
   claim(kind: MediaKind, token: Uuid, maxAttempts: number): Promise<ProcessingClaim | null>;
   renew(job: Uuid, token: Uuid): Promise<boolean>;
   ready(claim: ProcessingClaim, result: ProcessingResult): Promise<boolean>;

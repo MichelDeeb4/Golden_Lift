@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Save, Trash2, Archive, X } from '@golden-lift/icons';
 import { z } from 'zod';
 import { GLButton, GLModal } from '@golden-lift/ui';
 import { useStaffApi, useStaffFeedback } from './context';
@@ -19,6 +20,10 @@ export function ReviewedChange({
   onSaved,
   reload,
   onPending,
+  onCommitted,
+  entityName,
+  autoOpen = false,
+  onDismiss,
 }: {
   path: string;
   version: string;
@@ -28,6 +33,10 @@ export function ReviewedChange({
   onSaved?: () => void;
   reload?: () => void;
   onPending?: (pending: boolean) => void;
+  onCommitted?: () => Promise<void> | void;
+  entityName?: string;
+  autoOpen?: boolean;
+  onDismiss?: () => void;
 }) {
   const api = useStaffApi(),
     t = useAdminTranslation(),
@@ -40,6 +49,36 @@ export function ReviewedChange({
       schemaRevision: string | null;
     } | null>(null);
   const notify = useStaffFeedback();
+  const kind =
+    typeof change === 'object' && change !== null && 'kind' in change ? String(change.kind) : '';
+  const destructive = kind.endsWith('.delete') || kind.endsWith('.remove');
+  const warning = kind.endsWith('.deprecate');
+  const Icon = destructive ? Trash2 : warning ? Archive : Save;
+  const preview = () =>
+    action.mutate(
+      () =>
+        api.request(
+          path + '/changes/preview',
+          impactSchema,
+          { change, expectedVersion: version, expectedSchemaRevision: schemaRevision },
+          'POST',
+        ),
+      {
+        onSuccess: (value) => {
+          action.setSaved(false);
+          setImpact(value as z.infer<typeof impactSchema>);
+          setReviewed({ change, version, schemaRevision });
+          setOpen(true);
+        },
+      },
+    );
+  const started = useRef(false);
+  useEffect(() => {
+    if (autoOpen && !started.current) {
+      started.current = true;
+      preview();
+    }
+  }, [autoOpen, preview]);
   const reloadLatest = reload
     ? () => {
         setOpen(false);
@@ -54,39 +93,35 @@ export function ReviewedChange({
   }, [action.isPending, onPending]);
   return (
     <>
-      <GLButton
-        variant="secondary"
-        loading={action.isPending}
-        onClick={() =>
-          action.mutate(
-            () =>
-              api.request(
-                path + '/changes/preview',
-                impactSchema,
-                { change, expectedVersion: version, expectedSchemaRevision: schemaRevision },
-                'POST',
-              ),
-            {
-              onSuccess: (value) => {
-                action.setSaved(false);
-                setImpact(value as z.infer<typeof impactSchema>);
-                setReviewed({ change, version, schemaRevision });
-                setOpen(true);
-              },
-            },
-          )
-        }
-      >
-        {label}
-      </GLButton>
+      {!autoOpen && (
+        <>
+          <GLButton
+            variant={destructive ? 'destructive' : warning ? 'warning' : 'primary'}
+            loading={action.isPending}
+            onClick={preview}
+          >
+            <Icon size={18} aria-hidden="true" />
+            {label}
+          </GLButton>
+        </>
+      )}
       {!open && <ActionFeedback action={action} reload={reloadLatest} />}
       <GLModal
         open={open}
         onClose={() => {
-          if (!action.isPending) setOpen(false);
+          if (!action.isPending) {
+            setOpen(false);
+            onDismiss?.();
+          }
         }}
         title={t('impact')}
       >
+        {entityName && (
+          <p>
+            <strong>{entityName}</strong>
+          </p>
+        )}
+        {destructive && <p>{t('noRestore')}</p>}
         <p>
           {t('products')}: {impact?.affectedProductCount} · {t('status')}:{' '}
           {impact?.invalidProductCount}
@@ -94,12 +129,13 @@ export function ReviewedChange({
         {impact?.blockers.length ? <p role="alert">{t('error')}</p> : null}
         <ActionFeedback action={action} reload={reloadLatest} />
         <GLButton
+          variant={destructive ? 'destructive' : warning ? 'warning' : 'primary'}
           disabled={!impact || !!impact.blockers.length}
           loading={action.isPending}
           onClick={() =>
             action.mutate(
-              () =>
-                api.request(
+              async () => {
+                const result = await api.request(
                   path + '/changes',
                   jsonResponse,
                   {
@@ -110,7 +146,10 @@ export function ReviewedChange({
                     confirm: true,
                   },
                   'POST',
-                ),
+                );
+                await onCommitted?.();
+                return result;
+              },
               {
                 onSuccess: () => {
                   notify?.(t('saved'));
@@ -121,7 +160,19 @@ export function ReviewedChange({
             )
           }
         >
+          <Icon size={18} aria-hidden="true" />
           {t('apply')}
+        </GLButton>
+        <GLButton
+          variant="secondary"
+          disabled={action.isPending}
+          onClick={() => {
+            setOpen(false);
+            onDismiss?.();
+          }}
+        >
+          <X size={18} aria-hidden="true" />
+          {t('cancel')}
         </GLButton>
       </GLModal>
     </>

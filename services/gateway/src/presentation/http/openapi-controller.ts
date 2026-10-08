@@ -4029,7 +4029,7 @@ const document = {
         summary: 'List attributes',
         tags: ['Dynamic Catalog Core'],
         description:
-          'Immutable UUID/code keyset pagination; cursor bound to resource. Concurrent changes do not provide a historical snapshot. ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Legacy limit/cursor requests retain keyset paging for selectors. For collection pages, use page/pageSize (default 1/25); do not mix modes. Numbered results include the filtered total and clamp out-of-range pages to the last valid page. Ordering is code ascending, then ID ascending when present. Soft-deleted records are excluded. Filters require numbered mode.',
         security: [
           {
             staffSession: [],
@@ -4054,6 +4054,65 @@ const document = {
             in: 'query',
             schema: {
               type: 'string',
+            },
+          },
+          {
+            in: 'query',
+            name: 'page',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100000,
+              default: 1,
+            },
+          },
+          {
+            in: 'query',
+            name: 'pageSize',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+          {
+            in: 'query',
+            name: 'q',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 120,
+            },
+            description: 'Case-insensitive code or translated name/label search.',
+          },
+          {
+            in: 'query',
+            name: 'kind',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'],
+            },
+          },
+          {
+            in: 'query',
+            name: 'visibility',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['public', 'internal'],
+            },
+          },
+          {
+            in: 'query',
+            name: 'state',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['active', 'deprecated'],
             },
           },
         ],
@@ -4334,7 +4393,7 @@ const document = {
         summary: 'List attribute-groups',
         tags: ['Dynamic Catalog Core'],
         description:
-          'Immutable UUID/code keyset pagination; cursor bound to resource. Concurrent changes do not provide a historical snapshot. ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Legacy limit/cursor requests retain keyset paging for selectors. For collection pages, use page/pageSize (default 1/25); do not mix modes. Numbered results include the filtered total and clamp out-of-range pages to the last valid page. Ordering is code ascending, then ID ascending when present. Soft-deleted records are excluded. Filters require numbered mode.',
         security: [
           {
             staffSession: [],
@@ -4360,6 +4419,49 @@ const document = {
             schema: {
               type: 'string',
             },
+          },
+          {
+            in: 'query',
+            name: 'page',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100000,
+              default: 1,
+            },
+          },
+          {
+            in: 'query',
+            name: 'pageSize',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+          {
+            in: 'query',
+            name: 'q',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 120,
+            },
+            description: 'Case-insensitive code or translated name/label search.',
+          },
+          {
+            in: 'query',
+            name: 'state',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['active', 'deprecated'],
+            },
+            description:
+              'Groups and units have no deprecation lifecycle; deprecated returns an empty collection.',
           },
         ],
         responses: {
@@ -4639,7 +4741,7 @@ const document = {
         summary: 'List units',
         tags: ['Dynamic Catalog Core'],
         description:
-          'Immutable UUID/code keyset pagination; cursor bound to resource. Concurrent changes do not provide a historical snapshot. ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Legacy limit/cursor requests retain keyset paging for selectors. For collection pages, use page/pageSize (default 1/25); do not mix modes. Numbered results include the filtered total and clamp out-of-range pages to the last valid page. Ordering is code ascending, then ID ascending when present. Soft-deleted records are excluded. Filters require numbered mode.',
         security: [
           {
             staffSession: [],
@@ -4665,6 +4767,49 @@ const document = {
             schema: {
               type: 'string',
             },
+          },
+          {
+            in: 'query',
+            name: 'page',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100000,
+              default: 1,
+            },
+          },
+          {
+            in: 'query',
+            name: 'pageSize',
+            required: false,
+            schema: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 25,
+            },
+          },
+          {
+            in: 'query',
+            name: 'q',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 120,
+            },
+            description: 'Case-insensitive code or translated name/label search.',
+          },
+          {
+            in: 'query',
+            name: 'state',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['active', 'deprecated'],
+            },
+            description:
+              'Groups and units have no deprecation lifecycle; deprecated returns an empty collection.',
           },
         ],
         responses: {
@@ -8352,7 +8497,8 @@ const document = {
     '/api/v1/admin/media/assets': {
       get: {
         operationId: 'mediaLibrary',
-        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
+        description:
+          'ID keyset pagination; totalItems applies kind/status/search filters before the cursor. next is null on the final page, determined with one-row lookahead. Count and page share a service-owned transaction snapshot.',
         security: [
           {
             staffSession: [],
@@ -8398,6 +8544,16 @@ const document = {
               enum: ['UPLOADING', 'PROCESSING', 'READY', 'FAILED'],
             },
           },
+          {
+            in: 'query',
+            name: 'search',
+            required: false,
+            schema: {
+              type: 'string',
+              maxLength: 120,
+            },
+            description: 'Case-insensitive original filename search applied before paging.',
+          },
         ],
         responses: {
           '200': {
@@ -8425,8 +8581,12 @@ const document = {
                         },
                       ],
                     },
+                    totalItems: {
+                      type: 'integer',
+                      minimum: 0,
+                    },
                   },
-                  required: ['items', 'next'],
+                  required: ['items', 'next', 'totalItems'],
                 },
               },
             },
@@ -11125,7 +11285,7 @@ const document = {
       AdminPage: {
         type: 'object',
         additionalProperties: false,
-        required: ['items', 'nextCursor'],
+        required: ['items', 'nextCursor', 'totalItems'],
         properties: {
           items: {
             type: 'array',
@@ -11135,6 +11295,11 @@ const document = {
           },
           nextCursor: {
             type: ['string', 'null'],
+          },
+          totalItems: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Total matching nondeleted records before applying the cursor.',
           },
         },
       },
@@ -13859,6 +14024,20 @@ const document = {
               },
             ],
           },
+          totalItems: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Present for numbered mode, before pagination and after filtering.',
+          },
+          page: {
+            type: 'integer',
+            minimum: 1,
+          },
+          pageSize: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+          },
         },
       },
       AttributeGroupPage: {
@@ -13883,6 +14062,20 @@ const document = {
               },
             ],
           },
+          totalItems: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Present for numbered mode, before pagination and after filtering.',
+          },
+          page: {
+            type: 'integer',
+            minimum: 1,
+          },
+          pageSize: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+          },
         },
       },
       CanonicalUnitPage: {
@@ -13906,6 +14099,20 @@ const document = {
                 type: 'null',
               },
             ],
+          },
+          totalItems: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Present for numbered mode, before pagination and after filtering.',
+          },
+          page: {
+            type: 'integer',
+            minimum: 1,
+          },
+          pageSize: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
           },
         },
       },
@@ -14499,7 +14706,7 @@ const document = {
       ProductManagementPage: {
         type: 'object',
         additionalProperties: false,
-        required: ['items', 'nextCursor'],
+        required: ['items', 'nextCursor', 'totalItems'],
         properties: {
           items: {
             type: 'array',
@@ -14509,6 +14716,11 @@ const document = {
           },
           nextCursor: {
             type: ['string', 'null'],
+          },
+          totalItems: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Total matching nondeleted records before applying the cursor.',
           },
         },
       },

@@ -14,7 +14,10 @@ function mapFailure(error: unknown): Error {
 }
 export class PrismaIdentityUnitOfWork implements IdentityUnitOfWork {
   constructor(private readonly database: PrismaClient) {}
-  async execute<T>(work: (repository: IdentityRepository) => Promise<T>): Promise<T> {
+  async execute<T>(
+    work: (repository: IdentityRepository) => Promise<T>,
+    consistentSnapshot = false,
+  ): Promise<T> {
     try {
       return await retryTransaction(() =>
         this.database.$transaction(
@@ -23,7 +26,11 @@ export class PrismaIdentityUnitOfWork implements IdentityUnitOfWork {
             await tx.$executeRaw`SET LOCAL statement_timeout='5s'`;
             return work(new PrismaIdentityRepository(tx));
           },
-          { isolationLevel: 'ReadCommitted', maxWait: 3000, timeout: 10000 },
+          {
+            isolationLevel: consistentSnapshot ? 'RepeatableRead' : 'ReadCommitted',
+            maxWait: 3000,
+            timeout: 10000,
+          },
         ),
       );
     } catch (error) {

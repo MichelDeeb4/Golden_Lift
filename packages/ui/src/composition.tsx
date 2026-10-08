@@ -3,6 +3,46 @@ import type { ReactNode } from 'react';
 import { GLButton, GLHeading } from './primitives';
 import { GLBreadcrumb } from './navigation';
 import type { NavLink } from './navigation';
+import {
+  Pencil,
+  Eye,
+  Link,
+  Move,
+  ArrowUpDown,
+  CircleCheck,
+  CircleOff,
+  Trash2,
+  Archive,
+  Plus,
+  Save,
+  X,
+  Search,
+  FilterX,
+  Upload,
+  Download,
+  FolderPlus,
+  MoreHorizontal,
+} from '@golden-lift/icons';
+const actionIcons = {
+  edit: Pencil,
+  view: Eye,
+  link: Link,
+  move: Move,
+  reorder: ArrowUpDown,
+  enable: CircleCheck,
+  disable: CircleOff,
+  delete: Trash2,
+  deprecate: Archive,
+  create: Plus,
+  save: Save,
+  cancel: X,
+  search: Search,
+  clear: FilterX,
+  upload: Upload,
+  download: Download,
+  child: FolderPlus,
+  more: MoreHorizontal,
+};
 
 export function GLPageHeader({
   title,
@@ -68,6 +108,8 @@ export interface GLMenuAction {
   onSelect?: () => void;
   disabled?: boolean;
   destructive?: boolean;
+  icon?: keyof typeof actionIcons;
+  tone?: 'success' | 'warning';
 }
 export function GLActionMenu({ label, items }: { label: string; items: readonly GLMenuAction[] }) {
   const [open, setOpen] = useState(false),
@@ -95,6 +137,10 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
         if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
       }}
       onKeyDown={(event) => {
+        if (!open && event.key === 'ArrowDown') {
+          event.preventDefault();
+          setOpen(true);
+        }
         if (open && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
           event.preventDefault();
           const actions = Array.from(
@@ -122,19 +168,21 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
       <button
         ref={trigger}
         type="button"
-        className="gl-button gl-button-ghost gl-button-md"
+        className="gl-button gl-button-ghost gl-button-md gl-action-menu-trigger"
+        title={label}
+        aria-haspopup="menu"
         aria-label={label}
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen(!open)}
       >
-        ⋯
+        <MoreHorizontal size={20} aria-hidden="true" />
       </button>
       {open && (
         <div
           id={id}
           className="gl-action-menu-panel"
-          role="group"
+          role="menu"
           aria-label={label}
           style={{
             top: Math.max(
@@ -147,26 +195,39 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
             left: Math.max(
               8,
               Math.min(
-                (trigger.current?.getBoundingClientRect().right ?? 220) - 220,
+                trigger.current && getComputedStyle(trigger.current).direction === 'rtl'
+                  ? trigger.current.getBoundingClientRect().left
+                  : (trigger.current?.getBoundingClientRect().right ?? 220) - 220,
                 window.innerWidth - 228,
               ),
             ),
           }}
         >
-          {items.map((item, index) =>
-            item.href ? (
+          {items.map((item, index) => {
+            const Icon = actionIcons[item.icon ?? (item.destructive ? 'delete' : 'more')];
+            const content = (
+              <>
+                <Icon size={18} aria-hidden="true" />
+                {item.label}
+              </>
+            );
+            const separated = item.destructive && !items[index - 1]?.destructive;
+            return item.href ? (
               <a
                 key={index}
                 href={item.href}
+                role="menuitem"
                 className="gl-button gl-button-ghost gl-button-md"
                 onClick={() => setOpen(false)}
               >
-                {item.label}
+                {content}
               </a>
             ) : (
               <GLButton
                 key={index}
-                variant={item.destructive ? 'destructive' : 'ghost'}
+                role="menuitem"
+                className={separated ? 'gl-menu-destructive' : undefined}
+                variant={item.destructive ? 'destructive' : (item.tone ?? 'ghost')}
                 disabled={item.disabled}
                 onClick={() => {
                   item.onSelect?.();
@@ -174,10 +235,10 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
                   trigger.current?.focus();
                 }}
               >
-                {item.label}
+                {content}
               </GLButton>
-            ),
-          )}
+            );
+          })}
         </div>
       )}
     </div>

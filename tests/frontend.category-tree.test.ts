@@ -95,7 +95,11 @@ test('four-level tree separates selection from disclosure, preserves drafts/expa
   await expect(node(page, 'Tree Level 3')).toHaveAttribute('aria-level', '4');
   await link(page, 'Tree Level 3').click();
   await expect(page.getByRole('heading', { name: 'Tree Level 3', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: /^Actions/ })
+    .click();
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Edit', exact: true }).click();
   let dialog = page.getByRole('dialog');
   await names(dialog, 'Tree Deep Edited');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
@@ -103,7 +107,11 @@ test('four-level tree separates selection from disclosure, preserves drafts/expa
   await expect(link(page, 'Tree Deep Edited')).toBeVisible();
   for (const name of ['Tree Root', 'Tree Level 1', 'Tree Level 2'])
     await expect(node(page, name)).toHaveAttribute('aria-expanded', 'true');
-  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: /^Actions/ })
+    .click();
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Edit', exact: true }).click();
   dialog = page.getByRole('dialog');
   await names(dialog, 'Local category draft');
   const latest = await request(page, '/admin/categories/' + leaf.id + '?locale=en');
@@ -187,8 +195,8 @@ test('subcategories use the selected parent, update immediately and sibling orde
     .getByRole('button', { name: 'Actions — Sibling C', exact: true })
     .click();
   await page
-    .getByRole('group', { name: 'Actions — Sibling C', exact: true })
-    .getByRole('button', { name: 'Move earlier', exact: true })
+    .getByRole('menu', { name: 'Actions — Sibling C', exact: true })
+    .getByRole('menuitem', { name: 'Move earlier', exact: true })
     .click();
   await expect
     .poll(() =>
@@ -201,8 +209,8 @@ test('subcategories use the selected parent, update immediately and sibling orde
     .click();
   await expect(
     page
-      .getByRole('group', { name: 'Actions — Sibling A', exact: true })
-      .getByRole('button', { name: 'Move earlier', exact: true }),
+      .getByRole('menu', { name: 'Actions — Sibling A', exact: true })
+      .getByRole('menuitem', { name: 'Move earlier', exact: true }),
   ).toBeDisabled();
   await page.keyboard.press('Escape');
   await intact(page, token);
@@ -227,7 +235,7 @@ test('move keeps selection/path, excludes cycles, recovers a branch outage and c
     .click();
   await page
     .locator('.gl-category-detail')
-    .getByRole('button', { name: 'Move', exact: true })
+    .getByRole('menuitem', { name: 'Move', exact: true })
     .click();
   const dialog = page.getByRole('dialog', { name: 'Move Category', exact: true });
   await dialog.getByRole('button', { name: 'Tree Destination', exact: true }).click();
@@ -265,7 +273,7 @@ test('move keeps selection/path, excludes cycles, recovers a branch outage and c
     .click();
   await page
     .locator('.gl-category-detail')
-    .getByRole('button', { name: 'Delete', exact: true })
+    .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(link(page, 'Tree Level 2')).toHaveCount(0);

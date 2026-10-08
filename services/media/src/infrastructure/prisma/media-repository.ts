@@ -327,6 +327,9 @@ class PrismaMediaRepository implements MediaRepository {
           ...(after ? { id: { gt: after } } : {}),
           ...(filters?.kind ? { media_kind: filters.kind } : {}),
           ...(filters?.status ? { status: filters.status } : {}),
+          ...(filters?.search
+            ? { original_name: { contains: filters.search, mode: 'insensitive' } }
+            : {}),
         },
         orderBy: { id: 'asc' },
         take: limit,
@@ -340,6 +343,20 @@ class PrismaMediaRepository implements MediaRepository {
         },
       })
     ).map(asset);
+  }
+  count(
+    filters: Parameters<import('../../application/ports/media.js').MediaRepository['list']>[2] = {},
+  ) {
+    return this.db.assets.count({
+      where: {
+        deleted_at: null,
+        ...(filters?.kind ? { media_kind: filters.kind } : {}),
+        ...(filters?.status ? { status: filters.status } : {}),
+        ...(filters?.search
+          ? { original_name: { contains: filters.search, mode: 'insensitive' } }
+          : {}),
+      },
+    });
   }
   async claim(kind: MediaKind, token: Uuid, maxAttempts: number): Promise<ProcessingClaim | null> {
     const rows = await this.db.$queryRaw<{ id: string; asset_id: string; attempts: number }[]>`

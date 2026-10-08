@@ -8,6 +8,7 @@ import type {
   PublicationWrite,
 } from '../../application/ports/product-management.js';
 import type { Database, PrismaClient } from './client.js';
+import type { Prisma } from './generated/client.js';
 import { PrismaProductRepository } from './product-repository.js';
 import { mapFailure } from './unit-of-work.js';
 import { PrismaOutbox } from './outbox.js';
@@ -18,9 +19,32 @@ class Repository implements ProductManagementRepository {
     return new PrismaOutbox(this.tx).append(event);
   }
   async list(input: ProductListInput) {
+    const where: Prisma.ProductsWhereInput = {
+      deleted_at: null,
+      ...(input.categoryId ? { category_id: input.categoryId } : {}),
+      ...(input.productTypeId ? { product_type_id: input.productTypeId } : {}),
+      ...(input.active !== undefined ? { is_active: input.active } : {}),
+      ...(input.featured !== undefined ? { is_featured: input.featured } : {}),
+      ...(input.text
+        ? {
+            OR: [
+              {
+                product_translations: {
+                  some: { deleted_at: null, name: { contains: input.text, mode: 'insensitive' } },
+                },
+              },
+              {
+                product_code_reservations_products_id_current_model_code_idToproduct_code_reservations:
+                  { code: { contains: input.text, mode: 'insensitive' } },
+              },
+            ],
+          }
+        : {}),
+    };
+    const totalItems = await this.tx.products.count({ where });
     const rows = await this.tx.products.findMany({
       where: {
-        deleted_at: null,
+        ...where,
         ...(input.afterId
           ? input.sort === 'manual'
             ? {
@@ -35,25 +59,6 @@ class Repository implements ProductManagementRepository {
               }
             : { id: { gt: input.afterId } }
           : {}),
-        ...(input.categoryId ? { category_id: input.categoryId } : {}),
-        ...(input.productTypeId ? { product_type_id: input.productTypeId } : {}),
-        ...(input.active !== undefined ? { is_active: input.active } : {}),
-        ...(input.featured !== undefined ? { is_featured: input.featured } : {}),
-        ...(input.text
-          ? {
-              OR: [
-                {
-                  product_translations: {
-                    some: { deleted_at: null, name: { contains: input.text, mode: 'insensitive' } },
-                  },
-                },
-                {
-                  product_code_reservations_products_id_current_model_code_idToproduct_code_reservations:
-                    { code: { contains: input.text, mode: 'insensitive' } },
-                },
-              ],
-            }
-          : {}),
       },
       orderBy: input.sort === 'manual' ? [{ sort_order: 'asc' }, { id: 'asc' }] : { id: 'asc' },
       take: input.limit + 1,
@@ -66,6 +71,7 @@ class Repository implements ProductManagementRepository {
     });
     const page = rows.slice(0, input.limit);
     return {
+      totalItems,
       items: page.map((p) => ({
         id: uuid(p.id),
         name:

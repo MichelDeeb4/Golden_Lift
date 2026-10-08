@@ -68,13 +68,55 @@ export class DynamicConfigurationController {
   ) {
     const actor = await this.authentication.authenticate(staffRequest(req, false)),
       r = resource(name),
-      q = strictRecord(value, ['limit', 'cursor']),
+      q = strictRecord(value, [
+        'limit',
+        'cursor',
+        'page',
+        'pageSize',
+        'q',
+        'kind',
+        'visibility',
+        'state',
+      ]),
       limit = pageSize(q['limit']),
       cursor = decodeCursor(q['cursor']);
     if (r === 'options')
       throw new ApplicationError(
         'VALIDATION_FAILED',
         'Options are listed within their owning attribute definition.',
+      );
+    if (q['page'] !== undefined || q['pageSize'] !== undefined) {
+      if (
+        r === 'types' ||
+        q['cursor'] !== undefined ||
+        q['limit'] !== undefined ||
+        (q['kind'] !== undefined &&
+          !['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'].includes(String(q['kind']))) ||
+        (q['visibility'] !== undefined &&
+          !['public', 'internal'].includes(String(q['visibility']))) ||
+        (q['state'] !== undefined && !['active', 'deprecated'].includes(String(q['state']))) ||
+        !/^[1-9][0-9]{0,5}$/.test(String(q['page'] ?? '1'))
+      )
+        throw new ApplicationError('VALIDATION_FAILED', 'Invalid configuration pagination.');
+      return this.read.page(
+        {
+          resource: r,
+          page: Number(q['page'] ?? 1),
+          pageSize: pageSize(q['pageSize'] ?? '25'),
+          ...(q['q'] !== undefined ? { search: text(q['q'], 120) } : {}),
+          ...(q['kind'] !== undefined
+            ? { kind: q['kind'] as 'NUMBER' | 'BOOLEAN' | 'TEXT' | 'CHOICE' }
+            : {}),
+          ...(q['visibility'] !== undefined ? { public: q['visibility'] === 'public' } : {}),
+          ...(q['state'] !== undefined ? { deprecated: q['state'] === 'deprecated' } : {}),
+        },
+        actor,
+      );
+    }
+    if (['q', 'kind', 'visibility', 'state'].some((k) => q[k] !== undefined))
+      throw new ApplicationError(
+        'VALIDATION_FAILED',
+        'Filtered configuration queries require numbered pagination.',
       );
     if (
       cursor &&

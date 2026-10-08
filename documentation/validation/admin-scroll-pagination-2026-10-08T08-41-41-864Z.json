@@ -1,0 +1,290 @@
+{
+  "checkedAt": "2026-10-08T08:41:41.864Z",
+  "scope": "Admin scroll contexts, shared owning-service pagination, URL history and interaction states",
+  "acceptance": "PASS",
+  "sourceBase": "7a29f79",
+  "uncommittedTaskChanges": true,
+  "checks": {
+    "build": "PASS",
+    "types": "PASS",
+    "format": "PASS",
+    "architecture": {
+      "status": "PASS",
+      "sourceFiles": 221,
+      "enforcementProbes": 14
+    },
+    "prisma": {
+      "status": "PASS",
+      "services": [
+        "identity",
+        "catalog",
+        "media",
+        "inquiries"
+      ]
+    },
+    "diff": "PASS",
+    "storefrontExports": {
+      "api": "PASS",
+      "explicitDemo": "PASS"
+    }
+  },
+  "tests": {
+    "backendUnit": 37,
+    "frontendUnit": 9,
+    "browser": {
+      "pagination": {
+        "startTime": "2026-10-08T08:28:01.128Z",
+        "duration": 60484.088,
+        "expected": 9,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "titles": [
+          "owning APIs validate bounds, filtered totals, stable ordering and role separation",
+          "63 attributes use bounded server pages, URL history, page size and normalized out-of-range pages",
+          "slow collection requests retain rows and disabled controls; a real outage retries without losing URL state",
+          "number filter applies before paging; reviewed edit preserves page/filter and updates the row without reload",
+          "deleting the only group on page two returns to page one without losing filters or reloading",
+          "Attributes and Groups scroll in document flow without crossing rows, at desktop/tablet and 125% CSS zoom",
+          "Units and Products share row sizes and Previous/Next; cursor URL survives refresh and filters reset it",
+          "Arabic/Sorani mobile pagination is keyboard usable, bounded horizontally and leaves the category tree unchanged",
+          "Media final-page detection and server filename filter; Super Admin directory uses the same controls"
+        ]
+      },
+      "workflow": {
+        "startTime": "2026-10-08T08:29:46.189Z",
+        "duration": 44220.096,
+        "expected": 11,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "titles": [
+          "Super Admin invitation, disable/enable, session revocation and retained deletion",
+          "four-level tree separates selection from disclosure, preserves drafts/expansion and searches with ancestry",
+          "subcategories use the selected parent, update immediately and sibling order persists",
+          "move keeps selection/path, excludes cycles, recovers a branch outage and confirms deletion",
+          "product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani tree remain usable",
+          "minimal creation enables from watched fields, rejects parent selection and navigates without reload",
+          "live Identity requires a session, mutation CSRF and the approved Origin",
+          "a leaf that gained children is rejected with useful feedback while preserving the draft",
+          "network failure clears pending state, preserves input and permits a successful retry",
+          "ar mobile modal and keyboard leaf selection create a draft",
+          "ckb mobile modal and keyboard leaf selection create a draft"
+        ]
+      },
+      "public": {
+        "startTime": "2026-10-08T08:32:38.809Z",
+        "duration": 23967.934999999998,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "titles": [
+          "homepage, category/card data, history and scoped pages",
+          "button width/loading, fields/select and modal keyboard focus/restore",
+          "RTL language persistence, breadcrumbs, tabs, gallery and pagination",
+          "mobile RTL drawer, search empty state and all responsive viewports avoid overflow",
+          "deterministic client review screenshots for Arabic/Sorani and desktop/tablet/mobile"
+        ]
+      },
+      "capture": {
+        "startTime": "2026-10-08T08:37:23.469Z",
+        "duration": 30257.286999999997,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0,
+        "titles": [
+          "Attributes and Groups scroll in document flow without crossing rows, at desktop/tablet and 125% CSS zoom"
+        ]
+      }
+    },
+    "distinctPassingTotal": 71,
+    "focusedCaptureRepeatNotAddedToTotal": 1,
+    "publicVisualComparisonsWithoutBaselineUpdates": 7
+  },
+  "visualReview": {
+    "baselineStyleEvidence": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+    "beforeScreenshots": 6,
+    "afterScreenshots": 18,
+    "review": "Contact sheet and full-size representative screens; no floating Choose canvas or crossing separator",
+    "scrollCapture": "Instant test-only scrolling; top captures assert scrollY === 0",
+    "viewports": [
+      1440,
+      1024,
+      390
+    ],
+    "cssZoom": [
+      1,
+      1.25
+    ],
+    "nativeBrowserZoomCertified": false,
+    "screenshots": [
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attribute-groups-bottom.png",
+        "bytes": 88134,
+        "sha256": "1587355f51dd586c1db5e62f86f29c415962a87489d1143dae9f286de5a703fe"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attribute-groups-mid.png",
+        "bytes": 85961,
+        "sha256": "b2a2c9074956f7d403824cc37fcd5c98fa2f9960255cb749c8cbedfe678eca54"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attribute-groups-top.png",
+        "bytes": 79604,
+        "sha256": "1c8ee760b39ec7c3955efb3d3cee4fbf7d67792cdfb8d518681b551813927037"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attributes-bottom.png",
+        "bytes": 104255,
+        "sha256": "d1e850e745c97f5f5a4518a8f7bc31c621d4a1303fe9bbb7f9ba8ec6145a2072"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attributes-mid.png",
+        "bytes": 104351,
+        "sha256": "32a64c4af66ace00e0c26c88c4bef3377319c1e41280922b55a00a9e2c2d45a1"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/before/attributes-top.png",
+        "bytes": 76967,
+        "sha256": "e81be589b7960d08e75e76e59111aa5643634161aa123bbe96a97085ed7d342d"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/accounts-pagination.png",
+        "bytes": 51672,
+        "sha256": "f18f61ae90461e8460fa42b96ee5ad9ec3924fe831795ee5f53cf69d0f6dbc73"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/ar-attributes-mobile.png",
+        "bytes": 35713,
+        "sha256": "6061fd5376d38138e5fb852447d0dc912011b5fc57717d696e62ce761305fe2d"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-1024-100-mid.png",
+        "bytes": 69594,
+        "sha256": "2d10e15b980f4d94073dc8ac11975af1e14bdb3f72d478d3861452579e746f84"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-1024-125-mid.png",
+        "bytes": 69832,
+        "sha256": "274d1093ac25de22035ffee10e2865b83d8625ae60ea9d294d2628d0e95e9479"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-1440-125-mid.png",
+        "bytes": 90863,
+        "sha256": "70a3ce6ca81f0576edb0f248e7341f7c8bfbc1018211bc19db45eebc7b9a78c3"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-bottom.png",
+        "bytes": 86738,
+        "sha256": "f7ecd3e27b6699ad895ba6e89de4cf410bd2717c31b6798c63e5ac6d3056693a"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-mid.png",
+        "bytes": 87968,
+        "sha256": "dace8805c3c72e7752c81326037d9cc2e6b00eb8839afe3c6203fd94f2dadd0f"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attribute-groups-top.png",
+        "bytes": 75350,
+        "sha256": "cd355fc193b476e69ff062e7b0e17d7af86f1858026af3a6fa1d6b96a64eb5ce"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-1024-100-mid.png",
+        "bytes": 85190,
+        "sha256": "07892d49d98a581accacd3c3df090a7315e0786ed392fc6f77cfe6158d5a8661"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-1024-125-mid.png",
+        "bytes": 82006,
+        "sha256": "a37a95479effc66dc69587ed9b4c1a47cb357d947ba667ff83ac6b402c353bf6"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-1440-125-mid.png",
+        "bytes": 101828,
+        "sha256": "d766b77e01298aeeb3f24303f57657b309ac0182931c0cfa289ad7f19071b65b"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-bottom.png",
+        "bytes": 98832,
+        "sha256": "fceb54ad86369b876d567f181c0baf890c9fcd34dac82cf2b2f066300048b823"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-mid.png",
+        "bytes": 102018,
+        "sha256": "713dcd67e9a3044cea8cb8918a0c9ae978215755bd71ab6238dddd0800669e47"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/attributes-top.png",
+        "bytes": 71197,
+        "sha256": "0117a8d5667ad354116e16446f5c85d1f52cd7d8be7ad43801dbe89ed902bdd1"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/ckb-attribute-groups-mobile.png",
+        "bytes": 31412,
+        "sha256": "96e4f00b5169317a7cc9717e9ee6e2a3a017a8a677349b7498e18d58adcc7c7b"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/media-pagination.png",
+        "bytes": 57668,
+        "sha256": "aab13835aac397baf4d59c02a8ebd89b8c82b399e382d86ce445c724298d11e5"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/products-pagination.png",
+        "bytes": 81803,
+        "sha256": "2ab133a2d1b36c562ba1732089f861d59e57f677c04726044a9cd14099a6f068"
+      },
+      {
+        "path": "documentation/assets/admin-scroll-pagination/after/units-pagination.png",
+        "bytes": 58490,
+        "sha256": "f5c5cb39c17f7882781dd5f4db351831a6d0be12bef748d65b6fec4d54d65661"
+      }
+    ]
+  },
+  "console": {
+    "unexpectedAuthenticatedScreenErrors": 0,
+    "expectedErrors": "Anonymous login session probes (401), deliberate Catalog outage (503), and rejected HTTP requests are asserted in their respective scenarios."
+  },
+  "runtime": {
+    "checkedAt": "2026-10-08T08:40:28.497Z",
+    "results": [
+      {
+        "url": "http://localhost:8081",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3000/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3004/health/ready",
+        "status": 200
+      }
+    ],
+    "command": "npm.cmd start",
+    "existingNormalDataRetained": true,
+    "ownedDisposableClustersRemoved": true,
+    "fixtureCleanup": "All fixture services/databases disposed; normal accounts and catalog configuration untouched."
+  },
+  "limits": [
+    "Cursor navigation retains Previous/Next; unvisited page jumps are not fabricated.",
+    "Large cursor histories are tab-scoped; copied long-history links in another tab normalize to page one.",
+    "Media usage has no exposed total; it retains bounded offset probes.",
+    "CSS zoom is simulated; native cross-browser zoom/accessibility certification is not claimed.",
+    "Test-only processing/mail adapters do not certify production providers or deployment.",
+    "Historical full Admin suites with retired Product Type workflows were not ported or rerun."
+  ]
+}

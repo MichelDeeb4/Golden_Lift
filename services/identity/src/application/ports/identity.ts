@@ -57,6 +57,7 @@ export interface IdentityRepository {
   findByEmail(email: string): Promise<StaffAccount | null>;
   findAccount(id: Uuid, lock?: boolean): Promise<StaffAccount | null>;
   listAdmins(limit: number, after: DirectoryCursor | null): Promise<readonly StaffAccount[]>;
+  countAdmins(): Promise<number>;
   insertAccount(
     id: Uuid,
     email: string,
@@ -84,7 +85,10 @@ export interface IdentityRepository {
   appendEvent(event: EventEnvelope): Promise<void>;
 }
 export interface IdentityUnitOfWork {
-  execute<T>(work: (repository: IdentityRepository) => Promise<T>): Promise<T>;
+  execute<T>(
+    work: (repository: IdentityRepository) => Promise<T>,
+    consistentSnapshot?: boolean,
+  ): Promise<T>;
 }
 export interface LoginResult {
   readonly token: string;

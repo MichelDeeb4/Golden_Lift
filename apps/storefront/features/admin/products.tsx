@@ -1,5 +1,7 @@
+import { Plus, FilterX, Save, Search } from '@golden-lift/icons';
+import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { z } from 'zod';
@@ -24,7 +26,9 @@ import {
   GLFormSection,
   GLActionBar,
   GLActionMenu,
+  GLFilterToolbar,
   GLDrawer,
+  GLConfirmDialog,
   GLWorkspace,
   GLWorkspacePanel,
 } from '@golden-lift/ui';
@@ -44,6 +48,7 @@ import {
 import type { TranslationForm } from './common';
 import { CategoryPicker } from './categories';
 import { CreateProduct } from './create-product';
+import { AdminPagination, useAdminPagination } from './pagination';
 import { MediaPicker, MediaPreview, PdfDownload } from './media';
 import {
   DynamicAttributeField,
@@ -55,6 +60,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
+    confirmDiscard = useConfirmDiscard(),
     router = useRouter(),
     params = useLocalSearchParams<{
       text?: string;
@@ -68,26 +74,26 @@ export function Products({ create = false }: { create?: boolean } = {}) {
     [text, setText] = useState(params.text ?? '');
   const [categoryFilter, setCategoryFilter] = useState(false);
   const [creating, setCreating] = useState(create);
+  const [deleteTarget, setDeleteTarget] = useState<z.infer<typeof productRowSchema> | null>(null);
+  const deleteAction = useAction('products');
+  useEffect(() => setText(params.text ?? ''), [params.text]);
+  const pagination = useAdminPagination('cursor');
   const search = new URLSearchParams({
     locale,
-    limit: '25',
+    limit: String(pagination.pageSize),
+    ...(pagination.cursor ? { cursor: pagination.cursor } : {}),
     ...Object.fromEntries(
       Object.entries(params).filter(
         ([key, value]) =>
-          ['text', 'active', 'productTypeId', 'categoryId', 'cursor', 'sort', 'featured'].includes(
-            key,
-          ) &&
+          ['text', 'active', 'categoryId', 'sort', 'featured'].includes(key) &&
           typeof value === 'string' &&
           value.length > 0,
       ),
     ),
   });
-  const returnTo =
-    '/admin/products?' +
-    new URLSearchParams(
-      [...search.entries()].filter(([key]) => key !== 'locale' && key !== 'limit'),
-    ).toString();
+  const returnTo = window.location.pathname + window.location.search;
   const rows = useQuery({
+    placeholderData: keepPreviousData,
     queryKey: ['staff', 'products', locale, params],
     queryFn: ({ signal }) =>
       api.request(
@@ -107,20 +113,30 @@ export function Products({ create = false }: { create?: boolean } = {}) {
           { label: t('dashboard'), href: '/admin' },
           { label: t('products'), href: '/admin/products' },
         ]}
-        actions={<GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>}
+        actions={
+          <GLButton onClick={() => setCreating(true)}>
+            <Plus size={18} aria-hidden="true" />
+            {t('createProduct')}
+          </GLButton>
+        }
       />
-      <div className="gl-admin-toolbar gl-product-filters">
-        <GLInput
-          label={t('search')}
-          value={text}
-          maxLength={120}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <GLButton onClick={() => router.setParams({ text, cursor: '' })}>{t('search')}</GLButton>
+      <GLFilterToolbar label={t('filters')} fields={params.categoryId ? 5 : 4}>
+        <div className="gl-filter-search">
+          <GLInput
+            label={t('search')}
+            value={text}
+            maxLength={120}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <GLButton onClick={() => pagination.filters({ text, cursor: '' })}>
+            <Search size={18} aria-hidden="true" />
+            {t('search')}
+          </GLButton>
+        </div>
         <GLSelect
           label={t('status')}
           value={params.active ?? ''}
-          onChange={(active) => router.setParams({ active, cursor: '' })}
+          onChange={(active) => pagination.filters({ active, cursor: '' })}
           options={[
             { value: '', label: t('all') },
             { value: 'true', label: t('active') },
@@ -130,7 +146,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         <GLSelect
           label={t('featured')}
           value={params.featured ?? ''}
-          onChange={(featured) => router.setParams({ featured, cursor: '' })}
+          onChange={(featured) => pagination.filters({ featured, cursor: '' })}
           options={[
             { value: '', label: t('all') },
             { value: 'true', label: t('featured') },
@@ -140,7 +156,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         <GLSelect
           label={t('order')}
           value={params.sort ?? 'id'}
-          onChange={(sort) => router.setParams({ sort, cursor: '' })}
+          onChange={(sort) => pagination.filters({ sort, cursor: '' })}
           options={[
             { value: 'id', label: t('defaultOrder') },
             { value: 'manual', label: t('order') },
@@ -152,7 +168,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         {params.categoryId && (
           <GLButton
             variant="ghost"
-            onClick={() => router.setParams({ categoryId: '', cursor: '' })}
+            onClick={() => pagination.filters({ categoryId: '', cursor: '' })}
           >
             {t('all')} — {t('categories')}
           </GLButton>
@@ -161,7 +177,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
           variant="ghost"
           onClick={() => {
             setText('');
-            router.setParams({
+            pagination.filters({
               text: '',
               active: '',
               featured: '',
@@ -172,16 +188,23 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             });
           }}
         >
+          <FilterX size={18} aria-hidden="true" />
           {t('clear')}
         </GLButton>
-      </div>
+      </GLFilterToolbar>
       <TableState
         pending={rows.isPending}
         error={rows.error}
         empty={!rows.data?.items.length}
+        onRetry={() => void rows.refetch()}
         emptyTitle={t('emptyProducts')}
         emptyDescription={t('createProductHelp')}
-        emptyAction={<GLButton onClick={() => setCreating(true)}>{t('createProduct')}</GLButton>}
+        emptyAction={
+          <GLButton onClick={() => setCreating(true)}>
+            <Plus size={18} aria-hidden="true" />
+            {t('createProduct')}
+          </GLButton>
+        }
       >
         <GLTable
           columns={[t('name'), t('catalog'), t('status'), t('updated'), t('actions')]}
@@ -218,27 +241,58 @@ export function Products({ create = false }: { create?: boolean } = {}) {
               items={[
                 {
                   label: t('edit'),
+                  icon: 'edit',
                   href: '/admin/products/' + row.id + '?returnTo=' + encodeURIComponent(returnTo),
                 },
-                { label: t('category'), href: '/admin/categories/' + row.categoryId },
+                { label: t('category'), icon: 'view', href: '/admin/categories/' + row.categoryId },
+                ...(row.active
+                  ? [{ label: t('view'), icon: 'view' as const, href: '/products/' + row.id }]
+                  : []),
+                {
+                  label: t('remove'),
+                  icon: 'delete',
+                  destructive: true,
+                  onSelect: () => setDeleteTarget(row),
+                },
               ]}
             />,
           ])}
         />
       </TableState>
-      {rows.data?.nextCursor && (
-        <GLButton
-          variant="secondary"
-          onClick={() => router.setParams({ cursor: rows.data!.nextCursor! })}
-        >
-          {t('next')}
-        </GLButton>
-      )}
-      {params.cursor && (
-        <GLButton variant="secondary" onClick={() => router.setParams({ cursor: '' })}>
-          {t('root')}
-        </GLButton>
-      )}
+      <GLConfirmDialog
+        open={Boolean(deleteTarget)}
+        title={t('remove')}
+        onClose={() => setDeleteTarget(null)}
+        pending={deleteAction.isPending}
+        cancelLabel={t('cancel')}
+        confirmLabel={t('remove')}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const target = deleteTarget;
+          deleteAction.mutate(
+            () =>
+              api.request(
+                '/admin/products/' + target.id,
+                z.undefined(),
+                { expectedVersion: target.version, confirmed: true },
+                'DELETE',
+              ),
+            { onSuccess: () => setDeleteTarget(null) },
+          );
+        }}
+      >
+        <p>
+          <strong>{deleteTarget?.name}</strong>
+        </p>
+        <p>{t('noRestore')}</p>
+        <ActionFeedback action={deleteAction} />
+      </GLConfirmDialog>
+      <AdminPagination
+        pagination={pagination}
+        data={rows.data}
+        loading={rows.isFetching}
+        placeholder={rows.isPlaceholderData}
+      />
       <GLDrawer
         open={categoryFilter}
         onClose={() => setCategoryFilter(false)}
@@ -247,7 +301,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         <CategoryPicker
           leaf
           onSelect={(category) => {
-            router.setParams({ categoryId: category?.id ?? '', cursor: '' });
+            pagination.filters({ categoryId: category?.id ?? '', cursor: '' });
             setCategoryFilter(false);
           }}
         />
@@ -269,6 +323,7 @@ export function ProductEditor({ id }: { id: string }) {
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
+    confirmDiscard = useConfirmDiscard(),
     router = useRouter(),
     action = useAction('products'),
     [section, setSection] = useState('overview'),
@@ -470,8 +525,8 @@ export function ProductEditor({ id }: { id: string }) {
       />
       <ActionFeedback
         action={action}
-        reload={() => {
-          if (!(dirty || form.formState.isDirty) || window.confirm(t('unsaved')))
+        reload={async () => {
+          if (!(dirty || form.formState.isDirty) || (await confirmDiscard()))
             void refresh().then(() => schema.refetch());
         }}
       />
@@ -625,6 +680,7 @@ export function ProductEditor({ id }: { id: string }) {
                   loading={action.isPending}
                   disabled={!schema.data || action.isPending}
                 >
+                  <Save size={18} aria-hidden="true" />
                   {t('save')}
                 </GLButton>
               </GLActionBar>
@@ -779,21 +835,25 @@ export function ProductEditor({ id }: { id: string }) {
                                 items={[
                                   {
                                     label: t('up'),
+                                    icon: 'reorder',
                                     disabled: index === 0,
                                     onSelect: () => shift(index, -1),
                                   },
                                   {
                                     label: t('down'),
+                                    icon: 'reorder',
                                     disabled: index === media.length - 1,
                                     onSelect: () => shift(index, 1),
                                   },
                                   {
                                     label: t('cover'),
+                                    icon: 'view',
                                     disabled: item.kind !== 'IMAGE',
                                     onSelect: () => setCover(item.assetId),
                                   },
                                   {
                                     label: t('detach'),
+                                    icon: 'delete',
                                     disabled: item.assetId === cover,
                                     destructive: true,
                                     onSelect: () =>
@@ -878,6 +938,11 @@ export function ProductEditor({ id }: { id: string }) {
                     {' '}
                     <Confirm
                       scope="products"
+                      entityName={
+                        loaded.translations.find((row) => row.locale === locale)?.name ??
+                        loaded.modelCode ??
+                        loaded.id
+                      }
                       title={t('remove')}
                       work={() =>
                         api
@@ -958,10 +1023,10 @@ export function ProductEditor({ id }: { id: string }) {
       <GLModal open={categoryOpen} onClose={() => setCategoryOpen(false)} title={t('category')}>
         <CategoryPicker
           leaf
-          onSelect={(selected) => {
+          onSelect={async (selected) => {
             if (!selected) return;
             if (id && loaded) {
-              if ((dirty || form.formState.isDirty) && !window.confirm(t('unsaved'))) return;
+              if ((dirty || form.formState.isDirty) && !(await confirmDiscard())) return;
               action.mutate(() =>
                 api
                   .request(

@@ -1,0 +1,480 @@
+{
+  "phase": "Admin actions, dialogs and filter composition",
+  "checkedAt": "2026-10-08T10:26:32.687Z",
+  "acceptance": "PASS",
+  "counts": {
+    "backendUnit": 37,
+    "frontendUnit": 9,
+    "adminBrowserDistinct": 28,
+    "visitorBrowser": 5,
+    "totalDistinct": 79,
+    "unchangedVisitorVisualComparisons": 7
+  },
+  "checks": {
+    "build": true,
+    "types": true,
+    "format": true,
+    "architecture": true,
+    "architectureProbes": 14,
+    "prismaSchemas": 4,
+    "apiModeExport": true
+  },
+  "commands": [
+    "npm.cmd run check",
+    "npm.cmd run test:frontend",
+    "npm.cmd run typecheck",
+    "npm.cmd run format:check",
+    "npm.cmd run lint (format, boundary checks/probes, Prisma validation)",
+    "npm.cmd run orm:check",
+    "API-mode storefront export",
+    "Playwright Admin actions and pagination (17 tests)",
+    "Playwright category/product-create/Identity workflows (11 tests)",
+    "Playwright visitor regression (5 tests, 7 unchanged comparisons)",
+    "Playwright final category regression (4 repeated tests)",
+    "git diff --check"
+  ],
+  "browser": {
+    "and-pagination": {
+      "stats": {
+        "startTime": "2026-10-08T10:13:38.045Z",
+        "duration": 77854.96,
+        "expected": 17,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "tests": [
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "Groups have one icon overflow, compact desktop filters, modal edit and no orphan controls"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "dirty modal Close, Cancel and Escape use branded Stay/Leave and preserve drafts"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "dirty sidebar navigation and browser Back wait for the application decision"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "Delete opens named red/trash confirmation and preserves pagination after commit"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "responsive filters and RTL menus retain keyboard focus and bounded pagination"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "Attributes, Units, Products and Media share actions and branded overlays"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "Super Admin overflow includes edit, semantic disable/enable and named deletion"
+        },
+        {
+          "file": "frontend.admin-actions.test.ts",
+          "title": "CHOICE options remain operational in the inspector and stale modal saves preserve input"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "owning APIs validate bounds, filtered totals, stable ordering and role separation"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "63 attributes use bounded server pages, URL history, page size and normalized out-of-range pages"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "slow collection requests retain rows and disabled controls; a real outage retries without losing URL state"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "number filter applies before paging; reviewed edit preserves page/filter and updates the row without reload"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "deleting the only group on page two returns to page one without losing filters or reloading"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "Attributes and Groups scroll in document flow without crossing rows, at desktop/tablet and 125% CSS zoom"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "Units and Products share row sizes and Previous/Next; cursor URL survives refresh and filters reset it"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "Arabic/Sorani mobile pagination is keyboard usable, bounded horizontally and leaves the category tree unchanged"
+        },
+        {
+          "file": "frontend.admin-pagination.test.ts",
+          "title": "Media final-page detection and server filename filter; Super Admin directory uses the same controls"
+        }
+      ]
+    },
+    "workflow": {
+      "stats": {
+        "startTime": "2026-10-08T09:57:17.627Z",
+        "duration": 61484.391,
+        "expected": 11,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "tests": [
+        {
+          "file": "frontend.admin.test.ts",
+          "title": "Super Admin invitation, disable/enable, session revocation and retained deletion"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "four-level tree separates selection from disclosure, preserves drafts/expansion and searches with ancestry"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "subcategories use the selected parent, update immediately and sibling order persists"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "move keeps selection/path, excludes cycles, recovers a branch outage and confirms deletion"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani tree remain usable"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "minimal creation enables from watched fields, rejects parent selection and navigates without reload"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "live Identity requires a session, mutation CSRF and the approved Origin"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "a leaf that gained children is rejected with useful feedback while preserving the draft"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "network failure clears pending state, preserves input and permits a successful retry"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "ar mobile modal and keyboard leaf selection create a draft"
+        },
+        {
+          "file": "frontend.product-create.test.ts",
+          "title": "ckb mobile modal and keyboard leaf selection create a draft"
+        }
+      ]
+    },
+    "public": {
+      "stats": {
+        "startTime": "2026-10-08T09:59:45.709Z",
+        "duration": 22294.271,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "tests": [
+        {
+          "file": "frontend.browser.test.ts",
+          "title": "homepage, category/card data, history and scoped pages"
+        },
+        {
+          "file": "frontend.browser.test.ts",
+          "title": "button width/loading, fields/select and modal keyboard focus/restore"
+        },
+        {
+          "file": "frontend.browser.test.ts",
+          "title": "RTL language persistence, breadcrumbs, tabs, gallery and pagination"
+        },
+        {
+          "file": "frontend.browser.test.ts",
+          "title": "mobile RTL drawer, search empty state and all responsive viewports avoid overflow"
+        },
+        {
+          "file": "frontend.browser.test.ts",
+          "title": "deterministic client review screenshots for Arabic/Sorani and desktop/tablet/mobile"
+        }
+      ]
+    },
+    "category": {
+      "stats": {
+        "startTime": "2026-10-08T10:20:52.712Z",
+        "duration": 24344.922000000002,
+        "expected": 4,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "tests": [
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "four-level tree separates selection from disclosure, preserves drafts/expansion and searches with ancestry"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "subcategories use the selected parent, update immediately and sibling order persists"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "move keeps selection/path, excludes cycles, recovers a branch outage and confirms deletion"
+        },
+        {
+          "file": "frontend.category-tree.test.ts",
+          "title": "product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani tree remain usable"
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "javascriptBytes": 4915459,
+    "cssBytes": 61056,
+    "cssFiles": 5
+  },
+  "screenshots": [
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/accounts-desktop.png",
+      "sha256": "8b7021194348b50077334888396e83f796b72bf3408d1c34330aa4776e70e8a4"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/attributes-ar-mobile.png",
+      "sha256": "3db67bfe56e4ec2aa362260a128feec64970630fc510488299a9997241069786"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/attributes-ckb-mobile.png",
+      "sha256": "6870427dd3f4735a66756b4745536e19abe42ee83ad87b738c78007f796af106"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/attributes-desktop.png",
+      "sha256": "9da150d564af5d8613ccb91defaa057c8da55b82c9fa870bb4cf22763118e566"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/delete-dialog.png",
+      "sha256": "dbd01f0a23b6e015980bd3e93bd094b61721a5c803e0035ba4fe9aecff4c923e"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/group-menu.png",
+      "sha256": "7204c731f9e402bf881a78e09105c0dfa407ff71cbaa0346b9724c137283336d"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/groups-desktop.png",
+      "sha256": "20f18d7a2eb16fead846798aebfde966732608c538461df4847bb1fe74bcf0d2"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/media-desktop.png",
+      "sha256": "7072066452c8c2d3a8a17c7d3f612054e9867769346ccf46bd12d7fd8770da25"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/products-desktop.png",
+      "sha256": "c490b7ab360baf88cbf301608c033ce3b92322eff5a9315c21b187e24f01b2e8"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/units-desktop.png",
+      "sha256": "a7d22b5b9b41263217634611cd4fb56ca5aa867998253d9b858c432c0289e866"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/after/unsaved-dialog.png",
+      "sha256": "73c7e8e7b8922a05c1bf88a4d6aa7ae2eba4bb05419bffd9320e31f66bc2513d"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attribute-groups-bottom.png",
+      "sha256": "fd3bb3f01451590b40b81d659e23ae97a3040fb7c3ea25b0faf7a531279b8209"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attribute-groups-mid.png",
+      "sha256": "fd3bb3f01451590b40b81d659e23ae97a3040fb7c3ea25b0faf7a531279b8209"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attribute-groups-top.png",
+      "sha256": "b96b36c396963e13b4c0637196b6ae860f9ee04733a1865fc10c954b64d77a57"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attributes-bottom.png",
+      "sha256": "e8403c60378fab396d3d2f60f5ee6222d0b8a64f9b69a9a68f0f158901154e42"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attributes-mid.png",
+      "sha256": "e8403c60378fab396d3d2f60f5ee6222d0b8a64f9b69a9a68f0f158901154e42"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/before/attributes-top.png",
+      "sha256": "f59d18bd6051840d4a7b79006a31ec1ca9521ba07e7aa221cc676f201cb878d1"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/accounts-pagination.png",
+      "sha256": "62def907dc68abb7e88dca32a0c5c70e471108efdea703d84b8f1ebe71fc703e"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/ar-attributes-mobile.png",
+      "sha256": "2a186d349004b047b870fac90037bd5efe81958ae9d678b6793345b8da0ba70d"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-1024-100-mid.png",
+      "sha256": "285a29ea7d802dda62bea6f7f64011ac78f506f9779a72209a475158a17715a3"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-1024-125-mid.png",
+      "sha256": "7609e20650ba8d1d04f21050e5279c2f329629fc78a807a6d5f5d149e88d7dbc"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-1440-125-mid.png",
+      "sha256": "7a844be30056da0afde40c3630ec131c369122d801961b0ecff8e078d876429f"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-bottom.png",
+      "sha256": "8a58512bcffd4207c32d254ae753eb6aed1576e702c003ce1d87e95713a57495"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-mid.png",
+      "sha256": "df91d15c8f7eb230bb29fda30d031d12febe9c4e8515065d95bd927e7f9a7047"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attribute-groups-top.png",
+      "sha256": "b46f80456a56d0ada1faeb3ba8d2a4900ac742d2ed1fcdad3668a304d77c9fa7"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-1024-100-mid.png",
+      "sha256": "c2f45dbee4a9ba5fb57443d0a86b71cc6155d9182fd691a1696966ae709a7415"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-1024-125-mid.png",
+      "sha256": "7a9c9b83cfcfa9f15dec8b214c2bd658a669a41fac62dd82cf5bf75b779f8dab"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-1440-125-mid.png",
+      "sha256": "be709d487513f40ce89b86896e9f4f1b2af4682c9fa31feeefe706462eb4592f"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-bottom.png",
+      "sha256": "3daefb0766b288689558a87d0fbccac5350fb72cf9421485beea689527f8525f"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-mid.png",
+      "sha256": "91bfe6f9f492c45418d8df916e84fb84c8f745b27e92545e910e6bdcab8d0cdc"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/attributes-top.png",
+      "sha256": "90e0a450035700b395db34ce2dc679eda167f2b65cb22cb30e5b05d81d2a29ef"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/ckb-attribute-groups-mobile.png",
+      "sha256": "cb9d8389b95b271cd01bcacc8051b31b3f240d90a50372cb51dd970d1a18ba04"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/media-pagination.png",
+      "sha256": "093e4f778997725fb19594ebcdb71d265d6aa761557afd11197b2b1241ce0232"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/products-pagination.png",
+      "sha256": "3f67f5c0468c78efd2197040043dd14fda40b2c15e3ee34d5f2c7c0f05d7803f"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/pagination-regression/units-pagination.png",
+      "sha256": "1f297e8ba33feaba571f6da5cb91c08e14163f69dbf471ae3a3fbd80664220c9"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/category-tree-detail-mobile.png",
+      "sha256": "4435fe990655fea58bd336df093d7f54ded08f500132fe4913afa63b6e919d04"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/category-tree-tree-desktop.png",
+      "sha256": "7efcb537adb2a3d3c651851bd18ba6adddb2f330231c761634cc88234d7891a4"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/category-tree-tree-mobile-ar.png",
+      "sha256": "c66016721a754766d36a1acec8e3978c6b0f3f74a2f2861ccde2a2b58908506d"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/category-tree-tree-mobile-ckb.png",
+      "sha256": "51dc47015ad44c9a6cbd50487540a67a75f495bb12da700542c43bf3ecd7d73c"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/category-tree-workspace-desktop.png",
+      "sha256": "c2e3b3d11145b2f4c3c8f0b74422b0a48e07db9ad21aa6bf80e6f57518922704"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/detail-mobile.png",
+      "sha256": "6e20d874fa1726fab88d4c917bcaf7291b4fd9fbf57b55efc50f526bef88e8e7"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/product-create-create-ar-mobile.png",
+      "sha256": "66cf46d7090043016a1aa7c0fc6fcda90c7dbf9929dfcb14849cf8da82858771"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/product-create-create-ckb-mobile.png",
+      "sha256": "1e645a423db3a7134e108aaa2f725a4599566b42fd2fc523d35fc9f6029ea4af"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/product-create-create-en.png",
+      "sha256": "89903c387b8677c0045c9cba74fb105f2a2ab779fb6c548cdd31e81623a2d873"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/product-create-draft-editor.png",
+      "sha256": "80b835b060c03bd83958446dcd99e5779ed557e53c8be7d541811ab02055160c"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/tree-desktop.png",
+      "sha256": "7efcb537adb2a3d3c651851bd18ba6adddb2f330231c761634cc88234d7891a4"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/tree-mobile-ar.png",
+      "sha256": "3365a5d1ec605e3a6f436e5e700b6b90e0096b72fde5d632d0a5c882cf5e6981"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/tree-mobile-ckb.png",
+      "sha256": "51dc47015ad44c9a6cbd50487540a67a75f495bb12da700542c43bf3ecd7d73c"
+    },
+    {
+      "path": "documentation/assets/admin-actions-dialogs-filters/workflows/workspace-desktop.png",
+      "sha256": "a85a2c0b7f54e8966d8c8702f18d6d7e5bb77c35b97b736a40658783f85ceb7a"
+    }
+  ],
+  "normalProject": {
+    "checkedAt": "2026-10-08T10:26:32.687Z",
+    "results": [
+      {
+        "url": "http://localhost:8081",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3000/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/health/ready",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3004/health/ready",
+        "status": 200
+      }
+    ],
+    "accountsAndCatalogRetained": true,
+    "disposableClusterRemoved": true
+  },
+  "scope": {
+    "backendChangesThisPhase": false,
+    "newDependencies": false,
+    "previousUncommittedPaginationWorkRetained": true
+  },
+  "limitations": [
+    "Manual staff visual review; no new staff baseline comparisons claimed.",
+    "Scoped staff history guard; actual document departures retain native beforeunload.",
+    "No account search/status contract or configuration usage directory invented.",
+    "Historical Product Type suites are outside the category-authority cutover.",
+    "No fresh full PostgreSQL integration suite, hosted CI/deployment or production-provider acceptance claimed."
+  ]
+}
