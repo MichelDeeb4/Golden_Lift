@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.target.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/foundation.tsx"]
+}

@@ -1,0 +1,149 @@
+{
+  "checkedAt": "2026-10-10T14:13:44.669Z",
+  "phase": 1,
+  "gate": "BLOCKED",
+  "architectureRevision": "target-specification-2026-10-10-v1",
+  "ownerApproval": null,
+  "counts": {
+    "requirements": 23,
+    "scenarios": 23,
+    "modes": ["pooled", "dedicated"],
+    "designTests": 9,
+    "legacyBackendUnits": 43,
+    "legacyFrontendUnits": 10
+  },
+  "commands": [
+    {
+      "command": "npm.cmd ci --offline --ignore-scripts --no-audit --no-fund",
+      "cwd": ".local/target-phase-01/source-snapshot",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "1019 packages installed in isolated source snapshot"
+    },
+    {
+      "command": "npm.cmd run check",
+      "cwd": ".",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "Legacy build cannot resolve contracts; workspace junction targets missing former Golden_Lift path"
+    },
+    {
+      "command": "npm.cmd run check",
+      "cwd": ".local/target-phase-01/source-snapshot",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "Backend build and shared/backend types PASS; fresh storefront typecheck fails five TS2882 CSS side-effect-import declarations"
+    },
+    {
+      "command": "npm.cmd run lint",
+      "cwd": ".local/target-phase-01/source-snapshot",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "Formatting, legacy boundaries 245 sources / 14 probes and four Prisma validates"
+    },
+    {
+      "command": "node scripts/test.mjs unit",
+      "cwd": ".local/target-phase-01/source-snapshot",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "43 tests"
+    },
+    {
+      "command": "npm.cmd run test:frontend",
+      "cwd": ".local/target-phase-01/source-snapshot",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "10 tests"
+    },
+    {
+      "command": "npm.cmd run doctor",
+      "cwd": ".",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "Legacy services/database/native tool/provider dependencies not ready"
+    },
+    {
+      "command": "node --test tests/architecture/phase-01-specification.test.mjs",
+      "cwd": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "9 executable specification checks, no skipped cases"
+    },
+    {
+      "command": "node tests/architecture/verify-phase-01.mjs specification",
+      "cwd": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "23 traceable requirements/scenarios in both storage modes"
+    },
+    {
+      "command": "node tests/architecture/verify-phase-01.mjs gate",
+      "cwd": ".",
+      "status": "BLOCKED",
+      "exitCode": 2,
+      "summary": "Owner sign-off and open decisions/numeric targets"
+    },
+    {
+      "command": "node tests/architecture/verify-phase-01.mjs runtime",
+      "cwd": ".",
+      "status": "BLOCKED",
+      "exitCode": 2,
+      "summary": "Actual release-bound runtime receipts absent"
+    },
+    {
+      "command": "node tests/tenant-isolation/hybrid-rls.acceptance.mjs",
+      "cwd": ".",
+      "status": "BLOCKED",
+      "exitCode": 2,
+      "summary": "Actual disposable target PostgreSQL fixture absent; SQL probes not executed"
+    },
+    {
+      "command": "prettier --check (Phase 01 documents, evidence, tests and authority indexes)",
+      "cwd": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "All matched files use Prettier code style"
+    }
+  ],
+  "notRun": [
+    {
+      "kind": "target database/API/worker/browser/security/load/provider/recovery",
+      "status": "NOT STARTED",
+      "reason": "Phase 01 only; target foundation is not implemented and owner approval gate is pending"
+    },
+    {
+      "kind": "legacy integration/process smoke/installed DB parity/browser E2E",
+      "status": "BLOCKED",
+      "reason": "Doctor shows required databases/services/native dependencies unavailable; no valuable data restart/migration attempted"
+    },
+    {
+      "kind": "hosted CI/container/provider/deployment acceptance",
+      "status": "BLOCKED",
+      "reason": "Authorized selected target environment and provider configuration not available"
+    }
+  ],
+  "preservation": {
+    "result": "PASS",
+    "baselineFileCount": 948,
+    "existingFilesChanged": ["docs/architecture/README.md", "documentation/architecture.md"],
+    "missing": [],
+    "unexpected": [],
+    "sourceSnapshot": ".local/target-phase-01/source-snapshot",
+    "note": "Source snapshot only, not database/object backups; pre-existing modifications preserved."
+  },
+  "links": {
+    "result": "PASS",
+    "checked": 108,
+    "files": 19
+  },
+  "sourceHashes": {
+    "plan.md": "6a6ac502998d467c679ed5b4fff9e4cbd82c682c4000bf456ff8a9827f6d9fb6",
+    "implementation-prompt.md": "69c84dc04d13cec00518a1850e59ad625072e1f7112634a466cfef6f06693a4f",
+    "docs/architecture/system-architecture.md": "ae726ae3678f8c337b96cb0dcd6f3ca395407b56fcbc076e28f9fb3cd882e73e",
+    "docs/architecture/tenancy-architecture.md": "2fa5dccfbbc5af25489c0090b70d64de427b691e6a3ed347e33865f83720c42f",
+    "docs/architecture/erp-domain-model.md": "4963f90dc3a223bf5d9169c8da36808f6bab6301b42de79cccaef37c33cdebe9",
+    "docs/architecture/transaction-design.md": "ae179d347efcad4af0f951f04a066e0e3143b5faccb39d1264fc6060863b523a",
+    "docs/architecture/security-architecture.md": "b235d338b565198ac6ba630ff56fe4b9fa898fd7f930c4bc8bf5e16763850e3e",
+    "docs/architecture/engineering-standards.md": "58e7b5efe06b13353463919395d9dcf77b4370b436fbdeda89d7b699ec1a5f87"
+  }
+}

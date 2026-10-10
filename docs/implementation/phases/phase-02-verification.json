@@ -1,0 +1,1078 @@
+{
+  "phase": 2,
+  "status": "BLOCKED",
+  "checkedAt": "2026-10-10T15:40:23.712Z",
+  "architectureRevision": "target-specification-2026-10-10-v1",
+  "sourceCommit": "54778083efea968eeedf162cab0541f84b4dbb41",
+  "ownerApproval": {
+    "approvedBy": "Repository owner (user)",
+    "approvedAt": "2026-10-10T14:35:10.637Z",
+    "architectureRevision": "target-specification-2026-10-10-v1",
+    "sourceCommit": "54778083efea968eeedf162cab0541f84b4dbb41",
+    "sourceMessage": "I approve architecture revision target-specification-2026-10-10-v1, ADRs 030–035, and the proposed bounded deferrals under OWNER-ARCH, OWNER-SCOPE, OWNER-SCALE, OWNER-RECOVERY, OWNER-HOSTING, OWNER-DATA, and OWNER-FINANCE. Phase 02 implementation is authorized. Do not begin Phase 03 until Phase 02 passes all acceptance criteria."
+  },
+  "phase03": "NOT STARTED",
+  "snapshot": {
+    "files": 974,
+    "sha256Verified": true,
+    "historyBundleVerified": true,
+    "sourceOnly": true
+  },
+  "preservedLegacy": true,
+  "apiParity": true,
+  "tests": {
+    "unitArchitecture": 29,
+    "httpProcessTracingLauncher": 6,
+    "browser": 2,
+    "browserChannel": "msedge",
+    "skips": 0,
+    "databasePassed": 2,
+    "linuxUnitArchitectureHttp": 35
+  },
+  "changedFiles": [
+    {
+      "path": "apps/erp-api/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-api/src/main.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-api/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/app/api/health/route.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/app/error.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/app/layout.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/app/not-found.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/app/page.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/next-env.d.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/next.config.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/erp-web/tsconfig.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/app/api/health/route.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/app/error.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/app/layout.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/app/not-found.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/app/page.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/next-env.d.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/next.config.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-admin/tsconfig.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-api/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-api/src/main.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/platform-api/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/worker/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/worker/src/main.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "apps/worker/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "docs/architecture/README.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/engineering-standards.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/erp-domain-model.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/security-architecture.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/system-architecture.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/tenancy-architecture.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/architecture/transaction-design.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/implementation/phases/phase-01.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/implementation/phases/phase-02.md",
+      "kind": "ADDED"
+    },
+    {
+      "path": "docs/operations/phase-02-development.md",
+      "kind": "ADDED"
+    },
+    {
+      "path": "docs/specifications/openapi/erp-api.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "docs/specifications/openapi/platform-api.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "docs/specifications/phase-01-decisions.json",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/specifications/phase-01-owner-decisions.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/specifications/phase-02-acceptance.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "documentation/decisions/030-greenfield-target-authority.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "documentation/decisions/031-hybrid-isolation-routing.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "documentation/decisions/032-erp-ownership-and-transactions.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "documentation/decisions/033-oidc-and-company-authorization.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "documentation/decisions/034-persistence-and-schema-fleet.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "documentation/decisions/035-delivery-recovery-and-capacity.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "infrastructure/database/README.md",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/database/fixtures.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/database/migration-manifest.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/deployment/Dockerfile",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/deployment/compose.yml",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/deployment/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/deployment/src/index.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/deployment/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/observability/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/observability/src/index.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/observability/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/security/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/security/src/index.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "infrastructure/security/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/contracts/src/foundation.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/contracts/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/shared-kernel/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/shared-kernel/src/index.ts",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/shared-kernel/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/boundaries.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/container-start.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/docker-check.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/openapi.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/package.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/phase-02-gate.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/run.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/start.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/tooling/web-start.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/ui/src/foundation.css",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/ui/src/foundation.tsx",
+      "kind": "ADDED"
+    },
+    {
+      "path": "packages/ui/tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/architecture/phase-01-contract.mjs",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "tests/architecture/phase-01-specification.test.mjs",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "tests/architecture/target-boundaries.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/architecture/verify-phase-01.mjs",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "tests/database-migrations/fixture-lifecycle.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/end-to-end/foundation-http.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/end-to-end/foundation.browser.spec.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/end-to-end/launcher.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/end-to-end/playwright.config.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/engineering/config.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/engineering/migration-manifest.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tests/engineering/phase-02-gate.test.mjs",
+      "kind": "ADDED"
+    },
+    {
+      "path": "tsconfig.target.json",
+      "kind": "ADDED"
+    },
+    {
+      "path": ".dockerignore",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": ".env.example",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": ".github/workflows/backend.yml",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": ".gitignore",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": ".prettierignore",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "AGENTS.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "README.md",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "package-lock.json",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "package.json",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "packages/contracts/package.json",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "packages/ui/package.json",
+      "kind": "MODIFIED"
+    },
+    {
+      "path": "docs/implementation/phases/phase-02-verification.json",
+      "kind": "ADDED"
+    }
+  ],
+  "commands": [
+    {
+      "id": "INSTALL",
+      "command": "npm.cmd ci --offline --ignore-scripts --no-audit --no-fund",
+      "location": ".local/phase-02-clean",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T14:50:27.073Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/clean-install.log",
+        "sha256": "efef0bc0016f040bc7e31d78dbac90c8e9b25981e4e35256ff5e9e4deb3ef3ca"
+      }
+    },
+    {
+      "id": "CHECK",
+      "command": "npm.cmd run check",
+      "location": ".local/phase-02-clean",
+      "browserChannel": "msedge",
+      "exitCode": 0,
+      "status": "PASS",
+      "checkedAt": "2026-10-10T15:02:55.024Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-check.log",
+        "sha256": "61172b1e7fba28e139063305b14db4451af79c7f32d3b5d2f6bcf25c8073bbef"
+      }
+    },
+    {
+      "id": "OPENAPI",
+      "command": "npm.cmd run api:generate",
+      "location": ".local/phase-02-clean",
+      "exitCode": 0,
+      "status": "PASS",
+      "checkedAt": "2026-10-10T15:02:56.638Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-openapi.log",
+        "sha256": "2f35e888d65feba9d98abe8efcde6cc2132b5e9fec2558be744e11c30eb8b09a"
+      }
+    },
+    {
+      "id": "SECURITY-ATTEMPT-1",
+      "command": "npm.cmd run security:scan",
+      "location": ".local/phase-02-clean",
+      "exitCode": 1,
+      "status": "FAIL",
+      "checkedAt": "2026-10-10T15:03:01.542Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-security.log",
+        "sha256": "28bc046933be6231a281645be8563c1b10dbeda3cddc8870fb10b276eb4e878a"
+      }
+    },
+    {
+      "id": "DOCKER",
+      "command": "npm.cmd run test:docker",
+      "location": "root",
+      "exitCode": 2,
+      "status": "BLOCKED",
+      "checkedAt": "2026-10-10T15:03:01.926Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-docker.log",
+        "sha256": "cb6da53a67757f3fc83a84d3c4c0902d1f4cf441625a47fe18cbd7a43b2a1a42"
+      }
+    },
+    {
+      "id": "DATABASE-HARNESS",
+      "command": "npm.cmd run test:database",
+      "location": "root",
+      "exitCode": 1,
+      "status": "BLOCKED",
+      "checkedAt": "2026-10-10T15:03:02.443Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-database-harness.log",
+        "sha256": "7706d5297b9eaaee5e5e8984e80ff1be85eed786c8ccb7d70177b00cd27de1b9"
+      }
+    },
+    {
+      "id": "APPROVAL-PHASE-02",
+      "command": "node tests/architecture/verify-phase-01.mjs gate 2",
+      "location": "root",
+      "exitCode": 0,
+      "status": "PASS",
+      "checkedAt": "2026-10-10T15:03:02.528Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-approval-phase-02.log",
+        "sha256": "cd32b8837d60756e5065fef47493f2e69976ed11ccc2997fa7cd564d65a8184a"
+      }
+    },
+    {
+      "id": "DEADLINES-PHASE-03",
+      "command": "node tests/architecture/verify-phase-01.mjs gate 3",
+      "location": "root",
+      "exitCode": 2,
+      "status": "BLOCKED",
+      "checkedAt": "2026-10-10T15:03:02.608Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-deadlines-phase-03.log",
+        "sha256": "4bddbbcf0fb0f139e0024c1860d015931175ff60bb66cab92c989401f2860e79"
+      }
+    },
+    {
+      "id": "SECURITY",
+      "command": "npm.cmd run security:scan",
+      "location": ".local/phase-02-clean",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:03:56.176Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/final-security-retry.log",
+        "sha256": "61f4d5c8d5ee4627f829f2c632c5747e63273fbcebbf8dd0d8c185dfba1f78f6"
+      }
+    },
+    {
+      "id": "CI",
+      "command": "GitHub Actions .github/workflows/backend.yml",
+      "location": "hosted",
+      "status": "BLOCKED",
+      "exitCode": null,
+      "checkedAt": "2026-10-10T15:05:57.676Z",
+      "artifact": {
+        "path": ".local/phase-02-baseline/ci-unavailable.log",
+        "sha256": "c0f012aac9654bc53f1d7c9e1a8796fc50e426e6431b1132636af48cb5856c07"
+      }
+    },
+    {
+      "id": "CONT-INSTALL",
+      "command": "npm.cmd ci --offline --ignore-scripts --no-audit --no-fund",
+      "location": ".local/phase-02-continuation/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:32:07.540Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-install.log",
+        "sha256": "192917bd1ecfb9218d1beccd5dc1bc387387aa6fd69fa0f4ba42f0058eeb2e9b"
+      }
+    },
+    {
+      "id": "CONT-CHECK",
+      "command": "npm.cmd run check",
+      "location": ".local/phase-02-continuation/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:33:58.253Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-check.log",
+        "sha256": "79058bcedca3d7c1a17d53f080996cd3413f83b9c028f32357827ccbd71b4c8b"
+      }
+    },
+    {
+      "id": "CONT-OPENAPI",
+      "command": "npm.cmd run api:generate",
+      "location": ".local/phase-02-continuation/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:33:59.865Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-openapi.log",
+        "sha256": "2f35e888d65feba9d98abe8efcde6cc2132b5e9fec2558be744e11c30eb8b09a"
+      }
+    },
+    {
+      "id": "CONT-DATABASE-HARNESS",
+      "command": "npm.cmd run test:database",
+      "location": "root",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:34:06.578Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-database-harness.log",
+        "sha256": "ae435170294f3187e1c6a63ff18498a2a3c80dc80ede1db3be4a4fa99ed65f9d"
+      }
+    },
+    {
+      "id": "CONT-DOCKER",
+      "command": "npm.cmd run test:docker",
+      "location": "root",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:37:34.931Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-docker.log",
+        "sha256": "1f71778cfcb94ff9ba7be6917d686a85dcd64b3c634af81d8dc78145854b1d55"
+      }
+    },
+    {
+      "id": "CONT-SECURITY",
+      "command": "npm.cmd run security:scan",
+      "location": ".local/phase-02-continuation/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:37:37.235Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-security.log",
+        "sha256": "61f4d5c8d5ee4627f829f2c632c5747e63273fbcebbf8dd0d8c185dfba1f78f6"
+      }
+    },
+    {
+      "id": "CONT-CLEANUP",
+      "command": "docker compose -f infrastructure/deployment/compose.yml down",
+      "location": "root",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:37:38.615Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/verified-cleanup.log",
+        "sha256": "0b5bcdeec1ec86c15414c80b57de8f41ed26b7df0d3421fe865344ce3e0fb841"
+      }
+    },
+    {
+      "id": "CONT-DATABASE-INITIAL",
+      "command": "npm.cmd run test:database",
+      "location": "root",
+      "status": "FAIL",
+      "exitCode": 1,
+      "checkedAt": "2026-10-10T15:25:38.565Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/database-initial.log",
+        "sha256": "baa0da484506ce55aeeb3bed79bd38905915f31af2dd30f5e9c795f007cb18df"
+      }
+    },
+    {
+      "id": "CONT-DATABASE-DIAGNOSTIC",
+      "command": "npm.cmd run test:database",
+      "location": "root",
+      "status": "FAIL",
+      "exitCode": 1,
+      "checkedAt": "2026-10-10T15:27:16.052Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/database-diagnostic.log",
+        "sha256": "c6413aa0521c41ccef8f5f7bf236962e38c1d6a0549205445816fc03fd00e51c"
+      }
+    },
+    {
+      "id": "CONT-LINUX-TESTS",
+      "command": "docker run --rm --name bp-phase02-linux-tests --label business-platform.disposable=true business-platform-target-foundation-erp-api node --test --test-concurrency=1 tests/architecture/target-boundaries.test.mjs tests/architecture/phase-01-specification.test.mjs tests/engineering/config.test.mjs tests/engineering/migration-manifest.test.mjs tests/engineering/phase-02-gate.test.mjs tests/end-to-end/foundation-http.test.mjs tests/end-to-end/launcher.test.mjs",
+      "location": "root",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T15:29:24.129Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/linux-tests.log",
+        "sha256": "7d0476790d772f97edb9d18cb9b6c3e99ae2f4de88b8e874a028700111088ff5"
+      }
+    },
+    {
+      "id": "CONT-CI",
+      "command": "GitHub Actions foundation job (NOT EXECUTED)",
+      "location": "root",
+      "status": "BLOCKED",
+      "exitCode": null,
+      "checkedAt": "2026-10-10T15:39:39.807Z",
+      "artifact": {
+        "path": ".local/phase-02-continuation/hosted-ci-blocker.log",
+        "sha256": "e9950accd23d882405a69351e5332e47196843575d65a204c64d1aa9f8ffced0"
+      }
+    },
+    {
+      "id": "CONT-FINAL-LINT",
+      "command": "npm.cmd run lint",
+      "location": "root",
+      "checkedAt": "2026-10-10T15:40:23.445Z",
+      "status": "PASS",
+      "exitCode": 0,
+      "artifact": {
+        "path": ".local/phase-02-continuation/cont-final-lint.log",
+        "sha256": "358f044d5af9302607f45e6317ef20f432383d4fd9a61ce870148ea34255b263"
+      }
+    },
+    {
+      "id": "CONT-GATE-REGRESSION",
+      "command": "node --test tests/engineering/phase-02-gate.test.mjs",
+      "location": "root",
+      "checkedAt": "2026-10-10T15:40:23.608Z",
+      "status": "PASS",
+      "exitCode": 0,
+      "artifact": {
+        "path": ".local/phase-02-continuation/cont-gate-regression.log",
+        "sha256": "40ee796cd0d33f2c26e0d58da40c2f273950433595df4c233ada74865913e50e"
+      }
+    },
+    {
+      "id": "CONT-FINAL-GATE",
+      "command": "node packages/tooling/phase-02-gate.mjs",
+      "location": "root",
+      "checkedAt": "2026-10-10T15:40:23.689Z",
+      "status": "BLOCKED",
+      "exitCode": 2,
+      "artifact": {
+        "path": ".local/phase-02-continuation/cont-final-gate.log",
+        "sha256": "ecab4709ce3202e807b1eb9a1a295262f85fd4da348fe2e389df4d7eef2bc284"
+      }
+    }
+  ],
+  "unverified": [
+    "Hosted GitHub Actions foundation job for the exact verified source commit; Linux Chromium hosted browser execution."
+  ],
+  "sourceManifest": [
+    {
+      "path": "package.json",
+      "sha256": "841941cffe9bf457f01160ae4467f4edabbfeee6c9a400fd9ace87a284b9e2ac"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "1dc150e15b2a89cf2f124379b5fac46cae13fdd4e64dea000fb837f4c8770a32"
+    },
+    {
+      "path": "tsconfig.target.json",
+      "sha256": "1cf402fa9c700e65d8f59664a954bb063a4cf5fbf6592fcd7465d97e9168d8a9"
+    },
+    {
+      "path": "apps/erp-api/package.json",
+      "sha256": "869bf47c6c752112796e66a8fb8f43a6297fcf197adc38f9ad3ff94abfb618d9"
+    },
+    {
+      "path": "apps/erp-api/src/main.ts",
+      "sha256": "3e691d647476a8bf81afba0266264e7afcf59a7ebad82136201daea28da14a1f"
+    },
+    {
+      "path": "apps/erp-api/tsconfig.target.json",
+      "sha256": "f818b7be660fc006a5c7f3ed4c1519a45983a231d1f2d17118b173ef43325198"
+    },
+    {
+      "path": "apps/erp-web/app/api/health/route.ts",
+      "sha256": "e11aafb11575d6cf2667b9e0fe791bfbde20785e58bffa024517d900a63ffb8c"
+    },
+    {
+      "path": "apps/erp-web/app/error.tsx",
+      "sha256": "59956dbba148a659cc1db2ef6c06897200d2dfb381146584bd791fba9798fb81"
+    },
+    {
+      "path": "apps/erp-web/app/layout.tsx",
+      "sha256": "4a9a8e5dc06aa4b18294489175cdc97fd64c4bc201d62dfa63b6c5db843c6402"
+    },
+    {
+      "path": "apps/erp-web/app/not-found.tsx",
+      "sha256": "75cc9dd834161b26788117ecdd170d72baa13f1333b02997afbd9a053fcc8f93"
+    },
+    {
+      "path": "apps/erp-web/app/page.tsx",
+      "sha256": "3aaf3cbfe7ec2f14d37560e184fd41d3ae2a0ea4910b6bb393f870dc24d44876"
+    },
+    {
+      "path": "apps/erp-web/next-env.d.ts",
+      "sha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b"
+    },
+    {
+      "path": "apps/erp-web/next.config.mjs",
+      "sha256": "9f016e5e4d2891a4f5c87c97633bbe516001d2eae2166750fd8dba7a3cfb3370"
+    },
+    {
+      "path": "apps/erp-web/package.json",
+      "sha256": "1166ff0f7a72b729f9b465699f956b6ef77b2663ff3b371efc4364068e1edc31"
+    },
+    {
+      "path": "apps/erp-web/tsconfig.json",
+      "sha256": "8a9e05707302d1e71637a463639ef9b7361a0d4967b2a70f1dc1971b0639bcd9"
+    },
+    {
+      "path": "apps/platform-admin/app/api/health/route.ts",
+      "sha256": "75740960cf1e0b64dc932b92e73b4b0a5fd062d20fb686c7c13bada7ec8abdc4"
+    },
+    {
+      "path": "apps/platform-admin/app/error.tsx",
+      "sha256": "59956dbba148a659cc1db2ef6c06897200d2dfb381146584bd791fba9798fb81"
+    },
+    {
+      "path": "apps/platform-admin/app/layout.tsx",
+      "sha256": "64f07b551aa0e9644a75867d5504867b2b4dce842370835a88a672a3d49c2066"
+    },
+    {
+      "path": "apps/platform-admin/app/not-found.tsx",
+      "sha256": "75cc9dd834161b26788117ecdd170d72baa13f1333b02997afbd9a053fcc8f93"
+    },
+    {
+      "path": "apps/platform-admin/app/page.tsx",
+      "sha256": "f5c36a39a4e65fb5dcb61baf8d873ef16e0668c06cfcb3ad6af7d9a2adb3fd8d"
+    },
+    {
+      "path": "apps/platform-admin/next-env.d.ts",
+      "sha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b"
+    },
+    {
+      "path": "apps/platform-admin/next.config.mjs",
+      "sha256": "9f016e5e4d2891a4f5c87c97633bbe516001d2eae2166750fd8dba7a3cfb3370"
+    },
+    {
+      "path": "apps/platform-admin/package.json",
+      "sha256": "ba1aabaf7e72a817000e947bd7c2fab6b6fba4299f1468c2972325741dd7d03d"
+    },
+    {
+      "path": "apps/platform-admin/tsconfig.json",
+      "sha256": "8a9e05707302d1e71637a463639ef9b7361a0d4967b2a70f1dc1971b0639bcd9"
+    },
+    {
+      "path": "apps/platform-api/package.json",
+      "sha256": "663953c0fefef770ffe32a5b7840a95367f172c8f6d8bc9fa720cc45d7d3fb93"
+    },
+    {
+      "path": "apps/platform-api/src/main.ts",
+      "sha256": "f9ffe8ccccefbe7b7e02f9144f9eaf548bf033a743b2b5ed0c924ddf42caa95c"
+    },
+    {
+      "path": "apps/platform-api/tsconfig.target.json",
+      "sha256": "f818b7be660fc006a5c7f3ed4c1519a45983a231d1f2d17118b173ef43325198"
+    },
+    {
+      "path": "apps/worker/package.json",
+      "sha256": "bbf779747101ddcedef8782bf50dcaa96c645362f29ce70ce79cba4946105155"
+    },
+    {
+      "path": "apps/worker/src/main.ts",
+      "sha256": "ce8dedc68051840d28d1cdfd060b1a6bdd5037d1f2bab5483bb244301f8cb6a3"
+    },
+    {
+      "path": "apps/worker/tsconfig.target.json",
+      "sha256": "f818b7be660fc006a5c7f3ed4c1519a45983a231d1f2d17118b173ef43325198"
+    },
+    {
+      "path": "infrastructure/database/README.md",
+      "sha256": "d0e63defc824046f0b27806f2a7dab7410e8cbe375e3fa1c104ad49d192fb364"
+    },
+    {
+      "path": "infrastructure/database/fixtures.mjs",
+      "sha256": "b7aa1d4493d7b05d7dbf3cc95cdc07c825682fda26b13e07fe677cdca6d8e059"
+    },
+    {
+      "path": "infrastructure/database/migration-manifest.mjs",
+      "sha256": "581d4e3fae3e96de79c08b1030db33ca13ec730623d7b594c0a6904058cda901"
+    },
+    {
+      "path": "infrastructure/deployment/Dockerfile",
+      "sha256": "edcbb032a792bdd1eaad43da986c451cb34e4a0083db3ac79118b782646bf872"
+    },
+    {
+      "path": "infrastructure/deployment/compose.yml",
+      "sha256": "58323c7368039c6ce5984623d2caf9283c91085dc41215f83b3bc3a290915b67"
+    },
+    {
+      "path": "infrastructure/deployment/package.json",
+      "sha256": "4b424079ca0381b5761ab69189bc88a9c838f64eddf2ed49108583a24df95b97"
+    },
+    {
+      "path": "infrastructure/deployment/src/index.ts",
+      "sha256": "fdebaa71916b2eecc281d11eb021270a7e7e2f53e91f72c62a34e4b958afad2a"
+    },
+    {
+      "path": "infrastructure/deployment/tsconfig.target.json",
+      "sha256": "019119aff4d7b448f4919def2fba1266c51ce41e8359ff8eeffefd6378ff94b1"
+    },
+    {
+      "path": "infrastructure/observability/package.json",
+      "sha256": "177fd1bdd4943b29680eb064a55bf578e069865f390a71cc60ab81a0b9b36758"
+    },
+    {
+      "path": "infrastructure/observability/src/index.ts",
+      "sha256": "b047b73e96b38f32b818a65e6ddde7ae1054ed1601e5a11b4ad22f4aeee98173"
+    },
+    {
+      "path": "infrastructure/observability/tsconfig.target.json",
+      "sha256": "019119aff4d7b448f4919def2fba1266c51ce41e8359ff8eeffefd6378ff94b1"
+    },
+    {
+      "path": "infrastructure/security/package.json",
+      "sha256": "fcd588a63e0ed0119df30636d4e03d6b7699ce158215e4ef94af1f85336d3c4d"
+    },
+    {
+      "path": "infrastructure/security/src/index.ts",
+      "sha256": "b4c5d7546507b7d8e2d5e6e8847f75e1985f2e8d611cc20913610d09f50676dc"
+    },
+    {
+      "path": "infrastructure/security/tsconfig.target.json",
+      "sha256": "019119aff4d7b448f4919def2fba1266c51ce41e8359ff8eeffefd6378ff94b1"
+    },
+    {
+      "path": "packages/contracts/src/foundation.ts",
+      "sha256": "af90029f5e5a351c49cbfef4a75e02e1158e76e7c02faf9371e374ae69a91c57"
+    },
+    {
+      "path": "packages/contracts/tsconfig.target.json",
+      "sha256": "1261baefa64bcde98b3525eeaaf48ac0c0ca99f649c9dd4142366e8e6bd9b5bb"
+    },
+    {
+      "path": "packages/shared-kernel/package.json",
+      "sha256": "6f34b3bce047f6a4f519e9d04bc743fea7f3a3734282691253cc243d62ad7c3e"
+    },
+    {
+      "path": "packages/shared-kernel/src/index.ts",
+      "sha256": "dc77e0ef08f139a08ccf5551dc44e3446dd69401358f832dc3cc3c7c814f08df"
+    },
+    {
+      "path": "packages/shared-kernel/tsconfig.target.json",
+      "sha256": "019119aff4d7b448f4919def2fba1266c51ce41e8359ff8eeffefd6378ff94b1"
+    },
+    {
+      "path": "packages/tooling/boundaries.mjs",
+      "sha256": "01dbc2e799682e960a4f7b2f85e87979452e4990ab8c1fa67fcac7c3138f70d1"
+    },
+    {
+      "path": "packages/tooling/container-start.mjs",
+      "sha256": "4877f06d276c68bad9f471994dd765f22cf4cf701a817585f780b8aaed43fa27"
+    },
+    {
+      "path": "packages/tooling/docker-check.mjs",
+      "sha256": "13ae9647e1ccc844d713cce27b93235502cd95b7f2986e1b79b592019d1c8089"
+    },
+    {
+      "path": "packages/tooling/openapi.mjs",
+      "sha256": "83276b1728dda71fd93fe5c667396470d20529258cda85785b8786f226fd964a"
+    },
+    {
+      "path": "packages/tooling/package.json",
+      "sha256": "27543a67d9b8b04c01f3501c35bd77352f72a5e6fe50f86afe8cfde00d161bca"
+    },
+    {
+      "path": "packages/tooling/phase-02-gate.mjs",
+      "sha256": "8683c4dfd5e8a49442f241fa9402fc35e04a85e80adb78633b9a79988b3cd744"
+    },
+    {
+      "path": "packages/tooling/run.mjs",
+      "sha256": "e0dd7aae28634ed34ccbea1378b394f639874c54bf4ef2df538ea4cee0ba2554"
+    },
+    {
+      "path": "packages/tooling/start.mjs",
+      "sha256": "8d288269666a1337731e935d8e6b6ef48185aec63d7c80c5785d65844b979596"
+    },
+    {
+      "path": "packages/tooling/web-start.mjs",
+      "sha256": "7017aabbb7a7140f12edbf98d955721875acb341181334dc400711bef663eac2"
+    },
+    {
+      "path": "packages/ui/src/foundation.css",
+      "sha256": "27a934519f2ab702bfa0052237c19306810bc2440a48f9d4db851d7b651f00e4"
+    },
+    {
+      "path": "packages/ui/src/foundation.tsx",
+      "sha256": "9b79801284b8af055a3db8c661b2384bdb54d2d295f9a14d273978906aed07de"
+    },
+    {
+      "path": "packages/ui/tsconfig.target.json",
+      "sha256": "e30a21a5ad63d14c4eef09cffb7035158fea0fdf56c797455c966569f5b360df"
+    },
+    {
+      "path": "tests/architecture/phase-01-contract.mjs",
+      "sha256": "ca1367345b9d931c7b491624820160bc6212bf221534eb910a91639f1fe861d7"
+    },
+    {
+      "path": "tests/architecture/phase-01-specification.test.mjs",
+      "sha256": "7814da30d7684c1d19a3dd007a287776894d999ada895cb3733f2755d672921a"
+    },
+    {
+      "path": "tests/architecture/target-boundaries.test.mjs",
+      "sha256": "7fcb6ce2a2b46521f1d80136a793b610b5036ab6574cf9fcc7f4342832a7d6b3"
+    },
+    {
+      "path": "tests/architecture/verify-phase-01.mjs",
+      "sha256": "33592e4d0757da1be1bbd108bf15de956cc1c6c5313b2ef7ef6abd0a4abdb1ce"
+    },
+    {
+      "path": "tests/database-migrations/fixture-lifecycle.test.mjs",
+      "sha256": "35abd5c12b0ab57dff881912baf8fe05606973eb5fa2ef91e6234861267ae833"
+    },
+    {
+      "path": "tests/end-to-end/foundation-http.test.mjs",
+      "sha256": "ad358934fcfdcf95cde97b00b7ca276de80033d0e29e1e91345f748667f97a8e"
+    },
+    {
+      "path": "tests/end-to-end/foundation.browser.spec.mjs",
+      "sha256": "b88152259535c03d6b0bdc0558ec67ff79bd7c1551aa2b5879082331aeae22e9"
+    },
+    {
+      "path": "tests/end-to-end/launcher.test.mjs",
+      "sha256": "628050578cf3cad512bbd08a1fe17c79c91ab8411a4bc7205e84abb0904dadc1"
+    },
+    {
+      "path": "tests/end-to-end/playwright.config.mjs",
+      "sha256": "ca770977d67bf8200d63b6da0e415cfd0e7f5f614a884f72c4c95d1efacc9bd7"
+    },
+    {
+      "path": "tests/engineering/config.test.mjs",
+      "sha256": "11500244b1fdb05eabe464a7592a58157b94412ad4480b097f599b84122b3711"
+    },
+    {
+      "path": "tests/engineering/migration-manifest.test.mjs",
+      "sha256": "ae2f2d0c5706d50d5a15a51df5af8e007ee0b807c78febbdee774d24f93ab523"
+    },
+    {
+      "path": "tests/engineering/phase-02-gate.test.mjs",
+      "sha256": "09f75dcd1c134f73c8ec252d60c14720d7706f787498e8a25325d34e7a64f160"
+    },
+    {
+      "path": ".github/workflows/backend.yml",
+      "sha256": "e5f3c68e9f1b6a46e1137763cec12f4d4b44521cc34134d0503ee17e919b3fc7"
+    },
+    {
+      "path": "packages/contracts/package.json",
+      "sha256": "b94475d42d1c1ad5c55f0a0d41c4590cab7d478d4286799b77291ce3c67ae65d"
+    },
+    {
+      "path": "packages/ui/package.json",
+      "sha256": "8529e9d136f600a939825e5a726f51aa36cdb364d6a9395001c21538a82e7602"
+    }
+  ],
+  "finalSourceManifestRecordedAt": "2026-10-10T15:39:39.836Z",
+  "continuation": {
+    "date": "2026-10-10",
+    "sourceChanges": [
+      "infrastructure/database/fixtures.mjs",
+      "tests/database-migrations/fixture-lifecycle.test.mjs"
+    ],
+    "dockerDesktop": "4.94.0",
+    "dockerEngine": "29.8.2",
+    "context": "desktop-linux",
+    "postgres": "18.6",
+    "containersCleaned": true,
+    "hostedCi": "BLOCKED",
+    "phase03": "NOT STARTED",
+    "notes": "Linux 35-test run preceded database harness fixes; final Docker build and PostgreSQL reruns include fixes. Local Edge browser results do not prove hosted Chromium behavior.",
+    "openapiParity": [
+      {
+        "path": "docs/specifications/openapi/erp-api.json",
+        "sha256": "6f2f041045ab0ff149ccff7a2586990c972f9181b42d266ed5e460b4533ae45b",
+        "matchesFresh": true
+      },
+      {
+        "path": "docs/specifications/openapi/platform-api.json",
+        "sha256": "f014c51201410bb2b142e8f8045eaef69220298ebbd1d389ef69059124c4665d",
+        "matchesFresh": true
+      }
+    ]
+  }
+}

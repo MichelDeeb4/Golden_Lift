@@ -1,13 +1,13 @@
-name: Backend checks
+name: Target engineering foundation
 on: [push, pull_request]
 permissions:
   contents: read
 jobs:
   foundation:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
-      PG_BIN: /usr/lib/postgresql/18/bin
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -17,25 +17,21 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm run auth:setup
+      - run: npx playwright install --with-deps chromium
       - run: npm run check
-      - name: Install PostgreSQL 18
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get update
-          sudo apt-get install -y postgresql-18
-      - name: Initialize isolated CI databases
-        run: |
-          node database/scripts/db.mjs init
-          node database/scripts/db.mjs setup
-          node database/scripts/db.mjs seed
-      - run: node database/scripts/db.mjs test
-      - run: node scripts/verify-orm.mjs
-      - run: npm run test:integration
-      - run: node scripts/smoke.mjs
-      - run: node scripts/identity-smoke.mjs
-      - name: Stop project database
+      - run: npm run api:generate
+      - run: git diff --exit-code -- docs/specifications/openapi
+      - run: npm run test:database
+      - run: npm run test:docker
+      - run: npm run security:scan
+      - name: Stop test-owned engineering containers
         if: always()
-        run: node database/scripts/db.mjs stop
+        run: docker compose -f infrastructure/deployment/compose.yml down
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase-02-evidence
+          path: |
+            .local/phase-02-browser.json
+            test-results

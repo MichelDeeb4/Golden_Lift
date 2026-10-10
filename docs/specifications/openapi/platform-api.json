@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/health/live": {
+      "get": {
+        "operationId": "RuntimeController_live",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "summary": "Process liveness",
+        "tags": ["Runtime"]
+      }
+    },
+    "/api/v1/health/ready": {
+      "get": {
+        "operationId": "RuntimeController_ready",
+        "parameters": [],
+        "responses": { "200": { "description": "" } },
+        "summary": "Engineering runtime readiness, not business readiness",
+        "tags": ["Runtime"]
+      }
+    },
+    "/api/v1/status": {
+      "get": {
+        "operationId": "RuntimeController_status",
+        "parameters": [
+          {
+            "name": "detail",
+            "required": false,
+            "in": "query",
+            "schema": { "enum": ["summary", "detail"], "type": "string" }
+          }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["Runtime"]
+      }
+    }
+  },
+  "info": {
+    "title": "platform-api",
+    "description": "Phase 02 runtime endpoints only; no tenant or business admission routes.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": { "schemas": {} }
+}

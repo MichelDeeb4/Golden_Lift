@@ -1,6 +1,8 @@
+> Target authority: [plan.md](../plan.md) and the [new Phase 01 specifications](../docs/architecture/README.md) govern the greenfield system. The service/Prisma/Expo boundaries below describe legacy implementation evidence. See [ADR 030](decisions/030-greenfield-target-authority.md) for the target supersession map.
+
 # Business Platform architecture and engineering standards
 
-Updated 2026-10-08. The user's standing instruction to follow best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). This guide describes the actual implementation, dependency rules and patterns.
+Updated 2026-10-10. The user's standing instruction to follow best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). This guide describes the actual implementation, dependency rules and patterns. The [current ERP architecture baseline](../docs/architecture/README.md) separates observed implementation from tenant/company and future module proposals.
 
 Catalog classification now belongs to leaf Categories and their ordered Attribute Groups. Both directions of Group/Attribute editing use the same Catalog-owned memberships, reviewed use case and Prisma unit of work; product forms consume the service's deduplicated category schema. Product Type runtime classification has been retired with retained migration evidence. See [decision 020](decisions/020-final-category-relationships.md) and the [retirement procedure](operations/product-type-migration.md).
 
@@ -90,16 +92,16 @@ Identity reads depend on focused StaffAuthenticationReader, AdminDirectoryReader
 
 ## Patterns used
 
-| Pattern/principle         | Concrete use                                      | Purpose                                                                |
-| ------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------- |
-| Repository                | Service-owned ports and PostgreSQL adapters       | Keep SQL outside use cases and use domain-specific operations          |
-| Unit of Work              | CatalogUnitOfWork and IdentityUnitOfWork          | Commit business changes and applicable events together                 |
-| Constructor injection     | Composition connects use cases/adapters/ports     | Explicit, replaceable dependencies                                     |
-| Adapter                   | SMTP/mailbox, Argon2id, HTTP session verification | Isolate external protocols and implementations                         |
-| Transactional outbox      | ops.outbox_events in business transactions        | Retain event intent atomically; publishing is a later milestone        |
-| Interface segregation     | Focused read/query ports                          | Avoid unrelated mutation capabilities in read dependencies             |
-| Shared retry and shutdown | retryTransaction and closePersistence in platform | Reuse bounded retries, safe failure mapping and shutdown               |
-| Bounded retry             | 40001/40P01 retry the complete local callback     | Handle contention without retrying arbitrary failures/external effects |
+| Pattern/principle         | Concrete use                                      | Purpose                                                                   |
+| ------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| Repository                | Service-owned ports and PostgreSQL adapters       | Keep SQL outside use cases and use domain-specific operations             |
+| Unit of Work              | CatalogUnitOfWork and IdentityUnitOfWork          | Commit business changes and applicable events together                    |
+| Constructor injection     | Composition connects use cases/adapters/ports     | Explicit, replaceable dependencies                                        |
+| Adapter                   | SMTP/mailbox, Argon2id, HTTP session verification | Isolate external protocols and implementations                            |
+| Transactional outbox      | ops.outbox_events in business transactions        | Retain event intent atomically; Catalog/Media relays publish after commit |
+| Interface segregation     | Focused read/query ports                          | Avoid unrelated mutation capabilities in read dependencies                |
+| Shared retry and shutdown | retryTransaction and closePersistence in platform | Reuse bounded retries, safe failure mapping and shutdown                  |
+| Bounded retry             | 40001/40P01 retry the complete local callback     | Handle contention without retrying arbitrary failures/external effects    |
 
 Prisma interactive transactions own connection acquisition, COMMIT and rollback. Services choose isolation, inject the transaction client into their repositories/outbox and map structured database errors. Catalog stays SERIALIZABLE with its private write gate; Identity stays READ COMMITTED with account/token locking. Platform retries complete transactions for serialization/deadlock failures, including failures at COMMIT. External mail/HTTP/file effects stay outside retries.
 
@@ -117,15 +119,15 @@ Live Identity checks and owning-service permissions enforce non-hierarchical sta
 
 npm run check builds the code, runs strict types, checks format/architecture and executes unit tests. The architecture checker uses TypeScript module resolution and inspects imports, re-exports and inline import types. It rejects reversed layers, service implementation imports, shared-package escapes/internal subpaths, CommonJS/dynamic import bypasses, explicit any and cycles.
 
-Eleven probes exercise forbidden framework/service dependencies, cycles, inline infrastructure/external types, import-equals, contract-to-platform escape and shared internal subpaths, plus an allowed contract import. Architecture checks complement behavior tests; they do not prove every business rule or deployment property.
+Fourteen probes exercise forbidden framework/service dependencies, cycles, inline infrastructure/external types, import-equals, contract-to-platform escape and shared internal subpaths, plus an allowed contract import. Architecture checks complement behavior tests; they do not prove every business rule or deployment property.
 
 For a change: read the owning code/design, choose the smallest suitable pattern, implement through its ports/adapters, update relevant contracts/operations/decisions and run meaningful checks. Persistence/security changes require real PostgreSQL/API/process regressions and disposable fixture cleanup. Keep historical validation dated and add new evidence separately.
 
 ## Scope and decisions
 
-B1/B2 foundation and B3 Identity are implemented, including public category reads and protected category create/edit. Media/Inquiries currently provide health/staff-access checks. B4 category administration now adds focused navigation/move/reorder/preview/deletion use cases and Prisma navigation/tree adapters. See [decision 005](decisions/005-category-administration.md), [Catalog operations](operations/catalog.md) and [B4 validation](validation/b4-2026-10-04T09-14-07-069Z.json). Media processing, products, inquiries and application interfaces remain later milestones.
+Current implementation includes global staff Identity, category-derived products/configuration/publication, real public collection/search/filters, Media uploads/processing/delivery and reviewed permanent deletion, plus Admin/Super Admin web workflows. Inquiries has persistence, health and staff access only; its business workflows remain pending. Tenant/company organization and ERP modules are not implemented. See the [current inventory](../docs/architecture/service-inventory.md), [checks and risks](../docs/architecture/phase-01-report.md) and [Catalog operations](operations/catalog.md). Earlier B milestone reports remain historical evidence.
 
-The current persistence package adds Prisma schemas/clients, native interactive transactions, exact data mappings and stronger validation. See [decision 003](decisions/003-engineering-standards.md), [current ORM validation](orm-validation.json), [Identity milestone evidence](identity-validation.json) and [the backend sequence](backend-implementation-plan.md). Hosted CI/Docker/production providers/TLS/load checks require deployment environments.
+The current persistence package adds Prisma schemas/clients, native interactive transactions, exact data mappings and stronger validation. See [decision 003](decisions/003-engineering-standards.md), [earlier ORM adoption validation](orm-validation.json), [Identity milestone evidence](identity-validation.json) and [the backend sequence](backend-implementation-plan.md). Hosted CI/Docker/production providers/TLS/load checks require deployment environments.
 
 ## Dynamic Catalog Core
 
@@ -135,10 +137,10 @@ The current persistence package adds Prisma schemas/clients, native interactive 
 
 Media adds pure policies in domain; storage/repository/processing/Catalog ports and uploads/library/delivery/processing/reconciliation use cases in application; private filesystem/S3, ClamAV, isolated native processors and transaction-scoped Prisma adapters in infrastructure; staff/control/binary/delivery controllers in presentation; API, per-kind worker and event-relay entrypoints in composition. Catalog adds an authenticated coordination controller, application policies, a Prisma registration/usage adapter and its own relay. Platform shares only technical broker/signature/relay mechanics. [Decision 007](decisions/007-media-core.md) documents sealing, readiness, reference and revocation boundaries. [Media operations](operations/media.md) records the available profiles and external acceptance gates.
 
-The application uses Repository/Unit of Work, validator strategies, a shared effective-schema resolver, explicit projections, bounded whole-transaction retries and an atomic transactional outbox. Reviewed SQL final-state guards enforce type eligibility and privacy; migration tools stay outside business application layers. Public product reads are independent of Identity; every Admin read/write uses live ADMIN verification. Earlier API 0.4.0 and B4 descriptions above preserve milestone context; current OpenAPI 0.6.0 includes staff product management. Technical-sheet UX, commerce, Inquiry workflows and native applications remain separate scope.
+The application uses Repository/Unit of Work, validator strategies, a shared effective-schema resolver, explicit projections, bounded whole-transaction retries and an atomic transactional outbox. Reviewed SQL final-state guards enforce type eligibility and privacy; migration tools stay outside business application layers. Public product reads are independent of Identity; every Admin read/write uses live ADMIN verification. Earlier API/B milestone descriptions preserve context; current OpenAPI 0.9.0 includes category-derived Catalog, public collections/filters and permanent-deletion workflows. Technical-sheet UX, commerce, Inquiry workflows and native applications remain separate scope.
 
 ## Admin dashboard
 
 `apps/storefront/features/admin` owns staff presentation and composes the shared UI/i18n/API packages through Expo Router `/admin` and `/super-admin` entries. `packages/api/src/staff.ts` validates owning-service DTOs, keeps CSRF in memory, bounds requests and invalidates staff caches on session failure. Staff queries use a dedicated QueryClient; public demo fixtures are never used here.
 
-Catalog adds `application/ports/product-management.ts`, `application/use-cases/manage-products.ts`, `infrastructure/prisma/product-management.ts` and `presentation/http/product-management-controller.ts`. Constructor composition injects the focused Unit of Work and live authorization. Publication, media association updates and soft deletion remain Catalog-owned serializable transactions with outbox events. Exact bigint manual-order cursors bind to the current filter scope. SQL 21/22 add activation while preserving active staff usage and filtering inactive owners from public delivery. Media exposes safe metadata and bounded library filters; Gateway retains an explicit staff route allowlist. See [decision 009](decisions/009-admin-dashboard.md) and [dashboard scope](admin-dashboard.md).
+Catalog adds `application/ports/product-management.ts`, `application/use-cases/manage-products.ts`, `infrastructure/prisma/product-management.ts` and `presentation/http/product-management-controller.ts`. Constructor composition injects the focused Unit of Work and live authorization. Publication, media association updates and reviewed permanent deletion remain Catalog-owned serializable transactions with outbox events; retained evidence follows the deletion compatibility policy. Exact bigint manual-order cursors bind to the current filter scope. SQL 21/22 add activation while preserving active staff usage and filtering inactive owners from public delivery. Media exposes safe metadata and bounded library filters; Gateway retains an explicit staff route allowlist. See [decision 009](decisions/009-admin-dashboard.md) and [dashboard scope](admin-dashboard.md).

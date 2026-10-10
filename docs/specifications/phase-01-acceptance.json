@@ -1,0 +1,722 @@
+{
+  "version": 1,
+  "architectureDate": "2026-10-10",
+  "phase": 1,
+  "scope": "Executable design specification; target runtime evidence is NOT STARTED",
+  "requiredDocuments": [
+    "docs/architecture/system-architecture.md",
+    "docs/architecture/tenancy-architecture.md",
+    "docs/architecture/erp-domain-model.md",
+    "docs/architecture/transaction-design.md",
+    "docs/architecture/security-architecture.md",
+    "docs/architecture/engineering-standards.md"
+  ],
+  "fixtures": {
+    "A": {
+      "mode": "pooled",
+      "companies": ["A1", "A2"]
+    },
+    "B": {
+      "mode": "pooled",
+      "companies": ["B1", "B2"]
+    },
+    "C": {
+      "mode": "dedicated",
+      "companies": ["C1", "C2"]
+    }
+  },
+  "requirements": [
+    {
+      "id": "ARCH",
+      "phase": 2,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/system-architecture.md",
+      "category": "architecture",
+      "requirement": "Target boundaries reject framework/domain and sibling-internal imports; fresh install/start is reproducible",
+      "planSection": "plan.md Phase 02"
+    },
+    {
+      "id": "DB-SCHEMA",
+      "phase": 3,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "migrations",
+      "requirement": "Canonical ERP schema and migration parity in both modes",
+      "planSection": "plan.md Phase 03"
+    },
+    {
+      "id": "DB-POOL",
+      "phase": 3,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "capacity",
+      "requirement": "Pools and transaction context are bounded under route churn",
+      "planSection": "plan.md Phase 03"
+    },
+    {
+      "id": "ISO-RLS",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "rls",
+      "requirement": "Database denies cross-tenant read and write with missing/untrusted context",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "ISO-ROLES",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/security-architecture.md",
+      "category": "roles",
+      "requirement": "Owners/BYPASSRLS/superusers/functions/views cannot silently invalidate the runtime isolation proof",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "ISO-CONTEXT",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "context",
+      "requirement": "Concurrent API/worker/raw SQL connections retain transaction-local scope",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "ISO-QUERY",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/security-architecture.md",
+      "category": "raw-bulk-export",
+      "requirement": "Raw/bulk/join/export/error paths cannot leak ownership or inference",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "ROUTE-FENCE",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "routing",
+      "requirement": "Trusted generation/lifecycle admission and local gates reject stale work",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "TRANSFER",
+      "phase": 4,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "transfer",
+      "requirement": "Pooled-to-dedicated transfer preserves full graph and bytes with safe rollback",
+      "planSection": "plan.md Phase 04"
+    },
+    {
+      "id": "AUTH-IDENTITY",
+      "phase": 5,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/security-architecture.md",
+      "category": "oidc",
+      "requirement": "OIDC cannot be forged or substituted for membership",
+      "planSection": "plan.md Phase 05"
+    },
+    {
+      "id": "AUTH-COMPANY",
+      "phase": 5,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/erp-domain-model.md",
+      "category": "company",
+      "requirement": "Tenant membership is distinct from company permission",
+      "planSection": "plan.md Phase 05"
+    },
+    {
+      "id": "AUTH-REVOKE",
+      "phase": 5,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/security-architecture.md",
+      "category": "revocation",
+      "requirement": "Revocation, suspension and dependency outage deny new operations",
+      "planSection": "plan.md Phase 05"
+    },
+    {
+      "id": "ORG",
+      "phase": 6,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/erp-domain-model.md",
+      "category": "organization",
+      "requirement": "Organization and Inventory ownership/sharing keys cannot collapse scopes",
+      "planSection": "plan.md Phase 06"
+    },
+    {
+      "id": "WORKER",
+      "phase": 7,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/transaction-design.md",
+      "category": "outbox-idempotency",
+      "requirement": "Durable tenant-aware outbox/inbox/jobs tolerate duplicates and failures",
+      "planSection": "plan.md Phase 07"
+    },
+    {
+      "id": "CHANNELS",
+      "phase": 7,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/security-architecture.md",
+      "category": "channels",
+      "requirement": "Files/cache/search/report/export/notifications/audit/support tools enforce ownership",
+      "planSection": "plan.md Phase 07"
+    },
+    {
+      "id": "RECOVERY",
+      "phase": 7,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/tenancy-architecture.md",
+      "category": "recovery",
+      "requirement": "Dedicated and isolated pooled tenant restores meet approved recovery objectives",
+      "planSection": "plan.md Phase 07"
+    },
+    {
+      "id": "OPS",
+      "phase": 7,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/architecture/engineering-standards.md",
+      "category": "operations",
+      "requirement": "Entitlements/localization/secrets/audit/telemetry/deployment are operationally controlled",
+      "planSection": "plan.md Phase 07"
+    },
+    {
+      "id": "PERF",
+      "phase": 8,
+      "source": "implementation-prompt.md",
+      "section": "E / G",
+      "document": "docs/specifications/phase-01-capacity.md",
+      "category": "performance",
+      "requirement": "Foundation certification measures connection/latency/fairness/recovery against approved targets",
+      "planSection": "plan.md Phase 08"
+    },
+    {
+      "id": "MASTER",
+      "phase": 9,
+      "source": "implementation-prompt.md",
+      "section": "F / G",
+      "document": "docs/architecture/erp-domain-model.md",
+      "category": "master-data",
+      "requirement": "Shared ERP masters preserve applicability, precision and authorization",
+      "planSection": "plan.md Phase 09"
+    },
+    {
+      "id": "LEDGER",
+      "phase": 10,
+      "source": "implementation-prompt.md",
+      "section": "F / G",
+      "document": "docs/architecture/transaction-design.md",
+      "category": "accounting",
+      "requirement": "Journals are balanced, immutable and correctly reversed",
+      "planSection": "plan.md Phase 10"
+    },
+    {
+      "id": "STOCK",
+      "phase": 10,
+      "source": "implementation-prompt.md",
+      "section": "F / G",
+      "document": "docs/architecture/transaction-design.md",
+      "category": "inventory",
+      "requirement": "Stock movements/reservations/valuation reconcile under races",
+      "planSection": "plan.md Phase 10"
+    },
+    {
+      "id": "TX-ATOMIC",
+      "phase": 11,
+      "source": "implementation-prompt.md",
+      "section": "F / G",
+      "document": "docs/architecture/transaction-design.md",
+      "category": "transaction-integrity",
+      "requirement": "Complete order-to-cash/procure-to-pay/payments flows are ACID and recoverable",
+      "planSection": "plan.md Phase 11"
+    },
+    {
+      "id": "RELEASE",
+      "phase": 12,
+      "source": "implementation-prompt.md",
+      "section": "F / G",
+      "document": "docs/architecture/system-architecture.md",
+      "category": "release",
+      "requirement": "Reporting and release acceptance work across modes and company permissions",
+      "planSection": "plan.md Phase 12"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ARCH-01",
+      "requirementIds": ["ARCH"],
+      "phase": 2,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Fresh clean target checkout and disposable configuration",
+      "actions": [
+        "Build every app and run AST dependency negative probes for aliases/reexports/dynamic imports and cycles"
+      ],
+      "assertions": [
+        "Valid exports build; all forbidden probes fail; readiness exposes no secrets"
+      ],
+      "negative": true,
+      "fault": "Inject forbidden module import",
+      "cleanup": "Remove probe files only",
+      "evidenceKind": "fresh-build",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "DB-SCHEMA-01",
+      "requirementIds": ["DB-SCHEMA"],
+      "phase": 3,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Empty pooled and dedicated disposable databases",
+      "actions": [
+        "Apply canonical migrations twice, upgrade prior supported release and compare catalog/checksums"
+      ],
+      "assertions": [
+        "Equivalent schema/constraints/RLS/grants and version; rerun unchanged; drift quarantined"
+      ],
+      "negative": true,
+      "fault": "Interrupt migration; alter a checksum",
+      "cleanup": "Restore disposable fixture only",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "DB-POOL-01",
+      "requirementIds": ["DB-POOL"],
+      "phase": 3,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "A/B pooled, C dedicated; selected driver with approved or synthetic test connection budget",
+      "actions": [
+        "Run concurrent transaction/raw/model/outbox operations, timeout/rollback/retry, route churn and credential rotation; measure backend PID and total connections"
+      ],
+      "assertions": [
+        "Same PID/context per transaction; no leaks, bounded connections/queues; safe overload; leased pool not evicted"
+      ],
+      "negative": true,
+      "fault": "Exhaust pools and kill a connection mid-transaction",
+      "cleanup": "Close test clients",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ISO-RLS-01",
+      "requirementIds": ["ISO-RLS"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "A/B in pooled tables; C dedicated; restricted runtime role and seeded marker rows",
+      "actions": [
+        "Read/count/join, insert/update/delete under A/B/C and absent/malformed context; attempt tenant rewrite and dedicated wrong-tenant context"
+      ],
+      "assertions": [
+        "Only owned rows visible; wrong writes rejected/zero affected; WITH CHECK enforced; dedicated rejects A/B"
+      ],
+      "negative": true,
+      "fault": "Reuse connection after aborted transaction",
+      "cleanup": "Rollback writes",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ISO-ROLES-01",
+      "requirementIds": ["ISO-ROLES"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual target role hierarchy/catalog",
+      "actions": [
+        "Inspect rol attributes/table owners/FORCE RLS/policies/default grants; test runtime SET ROLE/TRUNCATE/DDL/definer/view access"
+      ],
+      "assertions": [
+        "Runtime cannot elevate or mutate policies; invoker views isolate; reviewed definer cannot cross tenant; test refuses privileged runtime"
+      ],
+      "negative": true,
+      "fault": "Introduce an unsafe view/role grant in disposable copy",
+      "cleanup": "Drop unsafe test copy only",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ISO-CONTEXT-01",
+      "requirementIds": ["ISO-CONTEXT"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Two pooled tenants and dedicated C with reused bounded pools",
+      "actions": [
+        "Alternate requests and workers across tenants; commit/rollback/timeout/retry; run queries outside admitted transaction"
+      ],
+      "assertions": [
+        "Scope never carries over; no root query authorizes tenant data; missing context fails closed"
+      ],
+      "negative": true,
+      "fault": "Cancel requests after acquisition and before scope initialization",
+      "cleanup": "Release acquired clients",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ISO-QUERY-01",
+      "requirementIds": ["ISO-QUERY"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Seed equal business codes in A/B and two companies",
+      "actions": [
+        "Attempt cross-scope FK, uniqueness conflicts, bulk updates, joins/counts/export and injection payloads"
+      ],
+      "assertions": [
+        "Same-tenant/company keys hold; safe errors hide unauthorized existence; no parameter interpolation"
+      ],
+      "negative": true,
+      "fault": "Partial bulk failure rolls back",
+      "cleanup": "Rollback test writes",
+      "evidenceKind": "postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ROUTE-FENCE-01",
+      "requirementIds": ["ROUTE-FENCE"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Live control plane and local per-tenant gates",
+      "actions": [
+        "Spoof route hint/DB URL; suspend/freeze tenant while admitted requests and worker leases are active; outage registry"
+      ],
+      "assertions": [
+        "Client cannot select DB; stale generations cannot commit; freeze drains old writers; new admission fails closed"
+      ],
+      "negative": true,
+      "fault": "Crash between registry intent and local fence",
+      "cleanup": "Reconcile disposable workflows",
+      "evidenceKind": "api-postgres-worker",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "TRANSFER-01",
+      "requirementIds": ["TRANSFER"],
+      "phase": 4,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "A/B pooled plus C dedicated, destination matching lineage and object manifests",
+      "actions": [
+        "Freeze A, transfer/checksum/cutover; replay every step; inject crashes at each checkpoint; test rollback before and after destination writes"
+      ],
+      "assertions": [
+        "A IDs/company links/rows/bytes/jobs/receipts preserved; B unchanged; no stale writes; postwrite rollback reverse-transfers; source retained"
+      ],
+      "negative": true,
+      "fault": "Crash after CAS before activation; fail object copy",
+      "cleanup": "Retain source; dispose only marked test cluster after evidence",
+      "evidenceKind": "postgres-worker-storage",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "AUTH-IDENTITY-01",
+      "requirementIds": ["AUTH-IDENTITY"],
+      "phase": 5,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Real test OIDC issuer and browser/BFF sessions",
+      "actions": [
+        "Use wrong signature/issuer/audience, expired token, replayed code/state, denied MFA and membership-free subject"
+      ],
+      "assertions": [
+        "All invalid admission denied; valid principal limited to granted tenant; platform admin gains no content access"
+      ],
+      "negative": true,
+      "fault": "OIDC/JWKS unavailable",
+      "cleanup": "Revoke test sessions",
+      "evidenceKind": "oidc-api-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "AUTH-COMPANY-01",
+      "requirementIds": ["AUTH-COMPANY"],
+      "phase": 5,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "A1/A2 and C1/C2 with distinct users/roles",
+      "actions": [
+        "Read/write/report company 2 as company 1 user; forge ownership; switch browser company with pending mutations"
+      ],
+      "assertions": [
+        "No unauthorized reads/writes/counts/draft results; authorized dual-company actions work"
+      ],
+      "negative": true,
+      "fault": "Revoke permission during switch",
+      "cleanup": "Clear scoped client state",
+      "evidenceKind": "api-postgres-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "AUTH-REVOKE-01",
+      "requirementIds": ["AUTH-REVOKE"],
+      "phase": 5,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Real authoritative memberships and bounded sessions",
+      "actions": [
+        "Revoke membership/session, reorder old grant events, suspend tenant and stop control plane; probe cached routes"
+      ],
+      "assertions": [
+        "New operations denied; old events cannot restore grants; documented bounded in-flight behavior; no cache fallback admission"
+      ],
+      "negative": true,
+      "fault": "Race grant updates and in-flight requests",
+      "cleanup": "Restore test control-plane service",
+      "evidenceKind": "api-postgres-worker",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "ORG-01",
+      "requirementIds": ["ORG"],
+      "phase": 6,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Two companies per tenant with shared party/product applicability fixtures when available",
+      "actions": [
+        "Create cross-tenant branches/cost centers and cross-company invalid associations; deactivate company with dependencies"
+      ],
+      "assertions": [
+        "Invalid graph rejected; grants reconcile fail closed; shared masters do not share balances/stock/prices"
+      ],
+      "negative": true,
+      "fault": "Company deactivation fails midway",
+      "cleanup": "Rollback fixture operations",
+      "evidenceKind": "api-postgres",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "WORKER-01",
+      "requirementIds": ["WORKER"],
+      "phase": 7,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual broker/worker and ERP outbox/inbox fixtures",
+      "actions": [
+        "Duplicate/reorder events; crash before/after commit/ack; retry/DLQ/replay and stale leases"
+      ],
+      "assertions": [
+        "One business effect, no silent job loss/cross-scope payload; bounded retries; DLQ visible"
+      ],
+      "negative": true,
+      "fault": "Broker outage after business commit",
+      "cleanup": "Drain scoped test jobs",
+      "evidenceKind": "postgres-worker-broker",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "CHANNELS-01",
+      "requirementIds": ["CHANNELS"],
+      "phase": 7,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Real private object provider plus cache/index and authorized user fixtures",
+      "actions": [
+        "Attempt foreign keys/prefixes/grants/recipients/export URLs/support views; switch tenant with delayed result; revoke link scope"
+      ],
+      "assertions": [
+        "No unauthorized bytes/results/recipients; byte integrity retained; residual signed TTL documented and measured"
+      ],
+      "negative": true,
+      "fault": "Late file publisher after freeze/deletion",
+      "cleanup": "Remove only test object prefixes",
+      "evidenceKind": "api-browser-storage-worker",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "RECOVERY-01",
+      "requirementIds": ["RECOVERY"],
+      "phase": 7,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Marked disposable full backup + objects + provider side-effect receipts",
+      "actions": [
+        "Restore C; restore whole pooled backup to isolated staging then extract A only; compare graph/bytes; reconcile external effects"
+      ],
+      "assertions": [
+        "B unchanged; source retained; accepted RPO/RTO measured; outbox/payment effects not blindly repeated"
+      ],
+      "negative": true,
+      "fault": "Corrupt backup/object or fail cutover",
+      "cleanup": "Keep recovery artifacts until review",
+      "evidenceKind": "postgres-storage-recovery",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "OPS-01",
+      "requirementIds": ["OPS"],
+      "phase": 7,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual containers and selected staging providers",
+      "actions": [
+        "Disable capability, rotate secrets, inject telemetry failure, exercise MFA recovery audit, verify locale/RTL/timezone and runbooks"
+      ],
+      "assertions": [
+        "Use cases deny disabled capability with recovery permitted; no secrets/PII in logs; readiness detects incompatible schema"
+      ],
+      "negative": true,
+      "fault": "Provider timeout and expired credential",
+      "cleanup": "Reset disposable provider configuration",
+      "evidenceKind": "provider-api-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "PERF-01",
+      "requirementIds": ["PERF"],
+      "phase": 8,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Approved owner values and representative A/B/C workloads",
+      "actions": [
+        "Run concurrency/load/fault/browser/worker/transfer/DR rehearsals at approved envelope"
+      ],
+      "assertions": [
+        "Both modes and company scopes pass; measured percentiles, connections, loss/downtime within approved budgets"
+      ],
+      "negative": true,
+      "fault": "Noisy A tenant and provider failure under load",
+      "cleanup": "Export sanitized benchmark artifacts",
+      "evidenceKind": "load-recovery",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "MASTER-01",
+      "requirementIds": ["MASTER"],
+      "phase": 9,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Real partner/product/variant/unit/tax/price/numbering UI and API in both modes",
+      "actions": [
+        "Create and edit shared identity and company profiles; test scope, conversions, precision, tax and numbering collisions"
+      ],
+      "assertions": [
+        "Exact approved precision, no invalid scope/state or duplicate number, matching UI/API persistence"
+      ],
+      "negative": true,
+      "fault": "Concurrent same-code/number allocation",
+      "cleanup": "Retain fixture audit",
+      "evidenceKind": "api-postgres-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "LEDGER-01",
+      "requirementIds": ["LEDGER"],
+      "phase": 10,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual company ledgers/accounts/periods/currency rules",
+      "actions": [
+        "Post imbalance/cross-company entry, modify posted rows, reverse, close period concurrently and duplicate source"
+      ],
+      "assertions": [
+        "Invalid posts rejected; valid ledger balances; reversal links preserved; exactly one source posting"
+      ],
+      "negative": true,
+      "fault": "Crash before/after final posting validation",
+      "cleanup": "Keep immutable fixture journals",
+      "evidenceKind": "api-postgres-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "STOCK-01",
+      "requirementIds": ["STOCK"],
+      "phase": 10,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual warehouses/locations/products and approved valuation/negative policy",
+      "actions": [
+        "Race reservations/issues/transfers/counts; test backdating/returns/unit rounding and cross-company locations"
+      ],
+      "assertions": [
+        "Conservation/ownership hold; immutable movements and approved valuation/journal reconcile; no duplicate issue"
+      ],
+      "negative": true,
+      "fault": "Parallel issue over availability",
+      "cleanup": "Keep fixture movement history",
+      "evidenceKind": "api-postgres-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "TX-ATOMIC-01",
+      "requirementIds": ["TX-ATOMIC"],
+      "phase": 11,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Actual approved sales/purchase/payment contracts and test bank adapter/provider",
+      "actions": [
+        "Execute receipt/fulfillment/invoice/return/credit/refund/payment; inject failure after each module write and uncertain provider commit"
+      ],
+      "assertions": [
+        "All local effects rollback or commit together; duplicate retry one result; bank UNKNOWN reconciles before repeat; ledger/stock consistent"
+      ],
+      "negative": true,
+      "fault": "Network loss at provider confirmation and DB commit",
+      "cleanup": "Reconcile provider test intents",
+      "evidenceKind": "api-postgres-worker-browser",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    },
+    {
+      "id": "RELEASE-01",
+      "requirementIds": ["RELEASE"],
+      "phase": 12,
+      "modes": ["pooled", "dedicated"],
+      "tenants": ["A", "B", "C"],
+      "setup": "Release images, approved staging integrations and complete ERP fixtures",
+      "actions": [
+        "Run authorized reports/exports, deployment rollback, lifecycle/security/load/DR and full browser workflows"
+      ],
+      "assertions": [
+        "No cross-company totals or tenant leaks; release meets signed scope/SLO and provider acceptance; rollback rehearsed"
+      ],
+      "negative": true,
+      "fault": "Rollback incompatible deployment safely",
+      "cleanup": "Preserve signed release evidence",
+      "evidenceKind": "provider-end-to-end",
+      "status": "NOT STARTED",
+      "runtimeCommandRequired": true
+    }
+  ]
+}

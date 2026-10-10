@@ -1,3 +1,13 @@
+# Approved greenfield implementation authority
+
+The owner approved target-specification-2026-10-10-v1, ADRs 030–035 and bounded decision deferrals on 2026-10-10. Follow root plan.md, implementation-prompt.md, accepted target ADRs and the latest docs/implementation/phases report. The target uses a NestJS modular ERP monolith, separate SaaS control plane, mandatory hybrid pooled/dedicated tenancy, and distinct tenant/company ownership.
+
+Use the active root workspace graph and target build/typecheck/lint/architecture/runtime/browser commands. Do not start Phase 03 until all Phase 02 criteria pass; enforce deferred owner decisions before their dependent phases. Preserve recoverable source and valuable data; production resources and destructive legacy data changes require separate authorization.
+
+The older service-topology, per-service Prisma and Expo rules below describe the preserved legacy project and are superseded where they conflict with the approved target. General quality/safety rules remain applicable. No business-module or hybrid-storage implementation is authorized before its phase gate.
+
+## Preserved legacy rules
+
 # Business Platform project rules
 
 These standing rules were requested by the user on 2026-10-04. Apply them to every future change in this repository: follow established engineering best practices and choose appropriate design patterns, with clear reasons and verified behavior. The user reinforced this requirement on 2026-10-04: use durable, maintainable solutions; do not take shortcuts or apply ad hoc workarounds. This rule persists across future tasks.

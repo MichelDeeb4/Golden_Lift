@@ -1,8 +1,15 @@
+node_modules
 .git
 .local
-node_modules
 **/dist
+**/.next
+**/node_modules
 .env
 .env.*
+!.env.example
+services
+apps/storefront
+apps/native
 database/source-package
-
+test-results
+playwright-report

@@ -1,0 +1,1342 @@
+{
+  "task": "Phase 01 repository normalization and architecture baseline",
+  "date": "2026-10-10",
+  "baselineCommit": "5477808",
+  "initialWorkingTree": "clean",
+  "implemented": "Architecture documentation and current summaries only; existing rename verified",
+  "proposedOnly": [
+    "tenant isolation/RLS",
+    "tenant and legal company organization",
+    "module map",
+    "dedicated routing"
+  ],
+  "baselineChecks": [
+    {
+      "label": "doctor",
+      "command": "node scripts/doctor.mjs",
+      "startedAt": "2026-10-10T12:03:35.546Z",
+      "endedAt": "2026-10-10T12:03:36.209Z",
+      "exitCode": 0
+    },
+    {
+      "label": "db-status",
+      "command": "node database/scripts/db.mjs status",
+      "startedAt": "2026-10-10T12:03:35.552Z",
+      "endedAt": "2026-10-10T12:03:36.102Z",
+      "exitCode": 0
+    },
+    {
+      "label": "dependencies-corrected",
+      "command": "node C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js install --offline --ignore-scripts --no-audit --no-fund",
+      "startedAt": "2026-10-10T12:04:00.139Z",
+      "endedAt": "2026-10-10T12:04:10.680Z",
+      "exitCode": 0
+    },
+    {
+      "label": "build",
+      "command": "node scripts/build.mjs",
+      "startedAt": "2026-10-10T12:04:00.152Z",
+      "endedAt": "2026-10-10T12:04:35.091Z",
+      "exitCode": 0
+    },
+    {
+      "label": "typecheck",
+      "command": "node C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js run typecheck",
+      "startedAt": "2026-10-10T12:04:00.158Z",
+      "endedAt": "2026-10-10T12:04:21.114Z",
+      "exitCode": 0
+    },
+    {
+      "label": "lint",
+      "command": "node C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js run lint",
+      "startedAt": "2026-10-10T12:04:00.164Z",
+      "endedAt": "2026-10-10T12:04:32.272Z",
+      "exitCode": 0
+    },
+    {
+      "label": "database-security",
+      "command": "node .local/phase-01-baseline/inspect-database.mjs",
+      "startedAt": "2026-10-10T12:06:41.730Z",
+      "endedAt": "2026-10-10T12:06:43.342Z",
+      "exitCode": 0
+    },
+    {
+      "label": "web-build",
+      "command": "node C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js run storefront:build",
+      "startedAt": "2026-10-10T12:07:37.198Z",
+      "endedAt": "2026-10-10T12:08:21.948Z",
+      "exitCode": 0
+    },
+    {
+      "label": "migration-plan",
+      "command": "node --test database/tests/category-catalog-plan.test.mjs",
+      "startedAt": "2026-10-10T12:07:37.203Z",
+      "endedAt": "2026-10-10T12:07:37.377Z",
+      "exitCode": 0
+    }
+  ],
+  "additionalBaselineChecks": [
+    {
+      "command": "node scripts/test.mjs unit",
+      "exitCode": 0,
+      "tests": 43
+    },
+    {
+      "command": "npm run test:frontend",
+      "exitCode": 0,
+      "tests": 10
+    },
+    {
+      "command": "node scripts/test.mjs integration",
+      "exitCode": 0,
+      "tests": 105
+    },
+    {
+      "command": "node scripts/verify-orm.mjs",
+      "exitCode": 0,
+      "models": 71,
+      "columns": 714,
+      "foreignKeys": 76
+    },
+    {
+      "command": "node scripts/smoke.mjs",
+      "exitCode": 0,
+      "serviceProcesses": 5
+    },
+    {
+      "command": "node scripts/identity-smoke.mjs",
+      "exitCode": 1,
+      "existingIssue": "line 353 retired deletion-preview returns 404 instead of 200"
+    }
+  ],
+  "liveSecurityInspection": [
+    {
+      "service": "identity",
+      "rls": 0,
+      "policies": 0,
+      "runtime": {
+        "superuser": false,
+        "bypassRls": false,
+        "createDb": false,
+        "createRole": false
+      },
+      "ownsBusinessTables": 0,
+      "ownsDatabase": false
+    },
+    {
+      "service": "catalog",
+      "rls": 0,
+      "policies": 0,
+      "runtime": {
+        "superuser": false,
+        "bypassRls": false,
+        "createDb": false,
+        "createRole": false
+      },
+      "ownsBusinessTables": 0,
+      "ownsDatabase": false
+    },
+    {
+      "service": "media",
+      "rls": 0,
+      "policies": 0,
+      "runtime": {
+        "superuser": false,
+        "bypassRls": false,
+        "createDb": false,
+        "createRole": false
+      },
+      "ownsBusinessTables": 0,
+      "ownsDatabase": false
+    },
+    {
+      "service": "inquiries",
+      "rls": 0,
+      "policies": 0,
+      "runtime": {
+        "superuser": false,
+        "bypassRls": false,
+        "createDb": false,
+        "createRole": false
+      },
+      "ownsBusinessTables": 0,
+      "ownsDatabase": false
+    }
+  ],
+  "naming": {
+    "scan": "925 tracked files; two prior audit JSON inventories excluded; binaries ignored; before document changes",
+    "matchingLines": 146,
+    "classCounts": {
+      "A": 0,
+      "B": 124,
+      "C": 15,
+      "D": 7,
+      "E": 0
+    },
+    "AReason": "Active naming was already normalized; no identity replacement required",
+    "matches": [
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 3,
+        "tokens": ["Golden_Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 11,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 38,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 39,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 40,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 41,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 42,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 43,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 44,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 45,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 169,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 226,
+        "tokens": ["gl_"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 355,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 356,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 357,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 358,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 360,
+        "tokens": ["goldenlift", "goldenlift", "goldenlift", "goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 362,
+        "tokens": ["goldenlift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "GOLDEN_LIFT_HOSTING_ASSESSMENT.md",
+        "line": 480,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "apps/storefront/features/catalog/demo.ts",
+        "line": 74,
+        "tokens": ["GL–"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "apps/storefront/features/catalog/demo.ts",
+        "line": 100,
+        "tokens": ["GL–"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "apps/storefront/features/catalog/demo.ts",
+        "line": 124,
+        "tokens": ["GL–"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "apps/storefront/features/catalog/demo.ts",
+        "line": 149,
+        "tokens": ["GL–"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "apps/storefront/features/catalog/demo.ts",
+        "line": 173,
+        "tokens": ["GL–"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 15,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 634,
+        "tokens": ["golden_lift", "golden_lift", "golden_lift", "golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 1010,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 1108,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 1702,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/design-v1.1.md",
+        "line": 1841,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/model-dictionary-v1.2.md",
+        "line": 52,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/model-dictionary-v1.2.md",
+        "line": 159,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/model-dictionary-v1.2.md",
+        "line": 1176,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/docs/model-dictionary-v1.2.md",
+        "line": 1318,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/scripts/db.mjs",
+        "line": 90,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical installed schema marker acceptance"
+      },
+      {
+        "path": "database/scripts/dynamic-catalog.mjs",
+        "line": 155,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "immutable migration UUID namespace"
+      },
+      {
+        "path": "database/sql/01_identity.sql",
+        "line": 2,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/sql/02_catalog.sql",
+        "line": 2,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/sql/03_media.sql",
+        "line": 2,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/sql/04_inquiries.sql",
+        "line": 2,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/sql/07_permissions_template.sql",
+        "line": 3,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/sql/07_permissions_template.sql",
+        "line": 4,
+        "tokens": ["golden_lift", "golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "database/tests/fixtures/v1.0/02_catalog.sql",
+        "line": 2,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/01-current-architecture-audit.md",
+        "line": 15,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/01-current-architecture-audit.md",
+        "line": 49,
+        "tokens": ["gl_"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/01-current-architecture-audit.md",
+        "line": 73,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/01-current-architecture-audit.md",
+        "line": 81,
+        "tokens": ["gl."],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/01-current-architecture-audit.md",
+        "line": 83,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/02-multi-tenancy-impact-analysis.md",
+        "line": 134,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/03-proposed-target-architecture.md",
+        "line": 56,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/03-proposed-target-architecture.md",
+        "line": 93,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/04-implementation-roadmap.md",
+        "line": 130,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "docs/architecture/multi-tenancy/05-risks-and-open-decisions.md",
+        "line": 36,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/b5-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/decisions/011-major-visual-redesign.md",
+        "line": 11,
+        "tokens": ["GLW", "GLW"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/decisions/011-major-visual-redesign.md",
+        "line": 17,
+        "tokens": ["GLH"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/decisions/018-admin-scroll-and-pagination.md",
+        "line": 11,
+        "tokens": ["GLD", "GLP"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/01-business-platform-rename.md",
+        "line": 61,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/01-business-platform-rename.md",
+        "line": 69,
+        "tokens": ["golden-lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/01-business-platform-rename.md",
+        "line": 107,
+        "tokens": ["Golden_Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/01-business-platform-rename.md",
+        "line": 109,
+        "tokens": ["Golden_Lift", "Golden_Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-actions-dialogs-filters-baseline.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-actions-dialogs-filters-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-actions-dialogs-filters-completed-work.md",
+        "line": 5,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-actions-dialogs-filters-completed-work.md",
+        "line": 44,
+        "tokens": ["GLF"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-actions-dialogs-filters-completed-work.md",
+        "line": 50,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-crud-modal-fix-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-scroll-pagination-baseline.md",
+        "line": 7,
+        "tokens": ["gl-", "gl-", "gl-", "gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-scroll-pagination-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-scroll-pagination-completed-work.md",
+        "line": 31,
+        "tokens": ["GLD", "GLP"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-ui-baseline.md",
+        "line": 7,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-ui-baseline.md",
+        "line": 9,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-ui-redesign-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/admin-ui-redesign-completed-work.md",
+        "line": 7,
+        "tokens": ["GLB"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/catalog-model-and-ux-fix-baseline.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/catalog-model-and-ux-fix-completed-work.md",
+        "line": 5,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/category-tree-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/final-catalog-admin-visitor-baseline.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/final-catalog-admin-visitor-baseline.md",
+        "line": 9,
+        "tokens": ["GOLDEN_LIFT"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/final-catalog-admin-visitor-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/fix-product-create-disabled.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/functional-integration-baseline.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/functional-integration-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/functional-integration-completed-work.md",
+        "line": 109,
+        "tokens": ["GL_"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/major-redesign-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/major-redesign-completed-work.md",
+        "line": 5,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/major-redesign-completed-work.md",
+        "line": 51,
+        "tokens": ["GLW", "GLW", "GLH"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/s1-frontend-baseline.md",
+        "line": 17,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/ui-ux-refinement-completed-work.md",
+        "line": 1,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/ui-ux-refinement-completed-work.md",
+        "line": 7,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/implementation/ui-ux-refinement-completed-work.md",
+        "line": 56,
+        "tokens": ["GLP", "GLF", "GLA", "GLA"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 39,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 55,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 66,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 71,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 82,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 87,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 98,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 103,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 114,
+        "tokens": ["gl-", "gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 119,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 130,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 135,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 151,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 162,
+        "tokens": ["gl-", "gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 167,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 178,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 219,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 235,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 246,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 251,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 262,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 267,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 278,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 283,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 294,
+        "tokens": ["gl-", "gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 299,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 310,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 315,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 331,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 342,
+        "tokens": ["gl-", "gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 347,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-scroll-pagination-baseline-2026-10-08.json",
+        "line": 358,
+        "tokens": ["gl-"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/admin-ui-2026-10-10T10-07-33-389Z.json",
+        "line": 6,
+        "tokens": ["GLB"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/business-platform-rename-2026-10-10.json",
+        "line": 132,
+        "tokens": ["Golden_Lift"],
+        "category": "B",
+        "reason": "Dated manual-action evidence; configured remote is now neutral"
+      },
+      {
+        "path": "documentation/validation/catalog-model-and-ux-fix-2026-10-07T14-00-48-319Z.json",
+        "line": 93,
+        "tokens": ["golden_lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "documentation/validation/public-selected-products-2026-10-10T08-26-10-718Z.json",
+        "line": 6,
+        "tokens": ["Golden Lift"],
+        "category": "B",
+        "reason": "historical record / rename evidence"
+      },
+      {
+        "path": "packages/platform/src/rabbitmq.ts",
+        "line": 8,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "packages/platform/src/rabbitmq.ts",
+        "line": 9,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "packages/platform/src/rabbitmq.ts",
+        "line": 10,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "packages/platform/tests/rabbit-identity.unit.test.ts",
+        "line": 37,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "packages/platform/tests/rabbit-identity.unit.test.ts",
+        "line": 38,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "packages/platform/tests/rabbit-identity.unit.test.ts",
+        "line": 39,
+        "tokens": ["golden-lift"],
+        "category": "D",
+        "reason": "legacy broker migration guard"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 70,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 88,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 105,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 123,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 141,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 156,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 171,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 187,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 203,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/demo-catalog-data.mjs",
+        "line": 219,
+        "tokens": ["GL-"],
+        "category": "C",
+        "reason": "retained example model/product code"
+      },
+      {
+        "path": "scripts/rename-platform-database.mjs",
+        "line": 37,
+        "tokens": ["golden_lift"],
+        "category": "D",
+        "reason": "checked old infrastructure source allowlist"
+      }
+    ]
+  },
+  "notExecuted": [
+    "hosted CI/deployment",
+    "container builds",
+    "provider S3/SMTP/RabbitMQ acceptance",
+    "production Linux worker isolation",
+    "current 1.5 complete fresh/upgrade installer rehearsal",
+    "browser/E2E suites",
+    "native/mobile",
+    "load"
+  ],
+  "documents": [
+    "README.md",
+    "documentation/architecture.md",
+    "docs/architecture/README.md",
+    "docs/architecture/current-state.md",
+    "docs/architecture/service-inventory.md",
+    "docs/architecture/dependency-map.md",
+    "docs/architecture/target-architecture.md",
+    "docs/architecture/multi-tenancy.md",
+    "docs/architecture/organizational-model.md",
+    "docs/architecture/module-boundaries.md",
+    "docs/architecture/data-ownership.md",
+    "docs/architecture/security-principles.md",
+    "docs/architecture/migration-strategy.md",
+    "docs/architecture/technical-debt.md",
+    "docs/architecture/roadmap.md",
+    "docs/architecture/phase-01-report.md",
+    "docs/architecture/adr/README.md",
+    "documentation/decisions/025-tenant-isolation-storage.md",
+    "documentation/decisions/026-tenant-legal-company-separation.md",
+    "documentation/decisions/027-service-module-direction.md",
+    "documentation/decisions/028-database-ownership-integration.md",
+    "documentation/decisions/029-security-authorization-foundations.md"
+  ],
+  "postChangeChecks": [
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "scope": [
+        "backend build/four Prisma clients",
+        "backend/storefront typecheck",
+        "format/boundaries/four Prisma validations",
+        "43 backend units"
+      ]
+    },
+    {
+      "command": "npm run test:frontend",
+      "exitCode": 0,
+      "tests": 10
+    },
+    {
+      "command": "node scripts/test.mjs integration",
+      "exitCode": 0,
+      "tests": 105
+    },
+    {
+      "command": "node scripts/verify-orm.mjs",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T12:24:24.622Z",
+      "endedAt": "2026-10-10T12:24:25.191Z"
+    },
+    {
+      "command": "node scripts/doctor.mjs",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T12:24:24.628Z",
+      "endedAt": "2026-10-10T12:24:25.537Z"
+    },
+    {
+      "command": "node scripts/smoke.mjs",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T12:24:24.634Z",
+      "endedAt": "2026-10-10T12:24:29.089Z"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    },
+    {
+      "command": "local Markdown link validation",
+      "missing": 0,
+      "checked": 158
+    },
+    {
+      "command": "Prisma register extraction",
+      "models": 71
+    },
+    {
+      "command": "node read-only runtime ownership/RLS inspection",
+      "exitCode": 0
+    }
+  ],
+  "preservation": {
+    "baselineFiles": 925,
+    "changedExistingFiles": ["README.md", "documentation/architecture.md"],
+    "unexpected": [],
+    "sqlAndRuntimeSourceUnchanged": true
+  },
+  "localLinks": {
+    "checked": 158,
+    "missing": []
+  },
+  "migrationState": {
+    "catalog": {
+      "categoryIntegrity": true,
+      "retainedBindings": true,
+      "deletionOperations": true,
+      "exclusiveMediaOwners": true,
+      "legacyProductTypeColumn": false
+    },
+    "media": {
+      "deletionOperations": true,
+      "uploads": true
+    }
+  },
+  "toolInvocationIssues": [
+    "Incorrect repository npm CLI path corrected to installed npm CLI",
+    "Restricted Node userInfo blocked tsx; existing npm frontend command passed in unrestricted Windows shell",
+    "Quoted read-only SQL helper corrected before successful inspection",
+    "Prettier cannot be imported in restricted Node runtime; existing CLI used"
+  ],
+  "workspaceIdentity": {
+    "root": "business-platform",
+    "scope": "@business-platform",
+    "workspaces": 14,
+    "oldActivePackageNamespace": 0,
+    "configuredOrigin": "https://github.com/MichelDeeb4/business-platform.git",
+    "remoteNetworkNotVerified": true
+  },
+  "result": {
+    "documentationAndSafeNormalization": "verified",
+    "overallBaseline": "partial: existing Identity smoke failure",
+    "erpAndTenancyImplementation": "not started",
+    "hostedAcceptance": "not executed",
+    "phase2": "not started"
+  },
+  "finishedAt": "2026-10-10T12:28:32.637Z",
+  "documentFormatting": {
+    "command": "Prettier --check on all 23 delivered/updated files",
+    "exitCode": 0
+  }
+}

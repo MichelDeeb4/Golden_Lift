@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "phase": 1,
+  "ownerApproval": {
+    "approvedBy": "Repository owner (user)",
+    "approvedAt": "2026-10-10T14:35:10.637Z",
+    "architectureRevision": "target-specification-2026-10-10-v1",
+    "sourceCommit": "54778083efea968eeedf162cab0541f84b4dbb41",
+    "sourceMessage": "I approve architecture revision target-specification-2026-10-10-v1, ADRs 030–035, and the proposed bounded deferrals under OWNER-ARCH, OWNER-SCOPE, OWNER-SCALE, OWNER-RECOVERY, OWNER-HOSTING, OWNER-DATA, and OWNER-FINANCE. Phase 02 implementation is authorized. Do not begin Phase 03 until Phase 02 passes all acceptance criteria."
+  },
+  "architectureApprovedByPrompt": true,
+  "detailStatus": "ACCEPTED",
+  "decisions": [
+    {
+      "id": "OWNER-ARCH",
+      "status": "APPROVED",
+      "value": "Six specifications and ADRs 030–035 accepted",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": []
+    },
+    {
+      "id": "OWNER-SCOPE",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 7,
+          "subject": "Languages/timezones and localization scope"
+        },
+        {
+          "beforePhase": 9,
+          "subject": "Launch jurisdictions/currencies/workflows and integrations before dependent business work"
+        }
+      ]
+    },
+    {
+      "id": "OWNER-SCALE",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 3,
+          "subject": "Connection and capacity budgets"
+        },
+        {
+          "beforePhase": 8,
+          "subject": "Representative workload and measurable latency/scale targets"
+        }
+      ]
+    },
+    {
+      "id": "OWNER-RECOVERY",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 4,
+          "subject": "Transfer freeze limits"
+        },
+        {
+          "beforePhase": 7,
+          "subject": "Availability/RPO/RTO/backup cadence/source retention"
+        }
+      ]
+    },
+    {
+      "id": "OWNER-HOSTING",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 3,
+          "subject": "Hosting/region/budget/failure-domain decisions"
+        },
+        {
+          "beforePhase": 5,
+          "subject": "OIDC/MFA provider"
+        },
+        {
+          "beforePhase": 7,
+          "subject": "Object storage and broker providers"
+        }
+      ]
+    },
+    {
+      "id": "OWNER-DATA",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 4,
+          "subject": "Any retention-aware deletion; real data handling requires prior residency approval"
+        },
+        {
+          "beforePhase": 5,
+          "subject": "Support access policy"
+        },
+        {
+          "beforePhase": 7,
+          "subject": "Retention/deletion/recovery policies"
+        }
+      ]
+    },
+    {
+      "id": "OWNER-FINANCE",
+      "status": "DEFERRED",
+      "value": "Owner-approved bounded deferral; no numerical or business value inferred",
+      "approvedBy": "Repository owner (user)",
+      "approvedAt": "2026-10-10T14:35:10.637Z",
+      "deadlines": [
+        {
+          "beforePhase": 9,
+          "subject": "Fiscal/FX/tax/numbering/approval policies before dependent implementation"
+        },
+        {
+          "beforePhase": 10,
+          "subject": "Valuation/negative-stock/backdating/intercompany rules"
+        }
+      ]
+    }
+  ],
+  "targets": {
+    "tenants": null,
+    "concurrentUsers": null,
+    "peakTransactionsPerSecond": null,
+    "p95Ms": null,
+    "p99Ms": null,
+    "availabilityPercent": null,
+    "rpoSeconds": null,
+    "rtoSeconds": null,
+    "maintenanceSeconds": null,
+    "maxDatabaseConnections": null
+  },
+  "phaseStatus": [
+    {
+      "phase": 1,
+      "status": "PASS",
+      "reason": "Owner accepted architecture and explicitly approved bounded deferrals"
+    },
+    {
+      "phase": 2,
+      "status": "BLOCKED",
+      "reason": "Authorized; implementation begins after recoverable snapshot"
+    },
+    {
+      "phase": 3,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 4,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 5,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 6,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 7,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 8,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 9,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 10,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 11,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    },
+    {
+      "phase": 12,
+      "status": "NOT STARTED",
+      "reason": "Previous gate has not passed"
+    }
+  ],
+  "targetDeadlines": {
+    "maxDatabaseConnections": 3,
+    "maintenanceSeconds": 4,
+    "availabilityPercent": 7,
+    "rpoSeconds": 7,
+    "rtoSeconds": 7,
+    "tenants": 8,
+    "concurrentUsers": 8,
+    "peakTransactionsPerSecond": 8,
+    "p95Ms": 8,
+    "p99Ms": 8
+  }
+}

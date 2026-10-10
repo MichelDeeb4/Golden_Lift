@@ -1,0 +1,94 @@
+﻿:root {
+  color-scheme: light;
+  --ink: #17252b;
+  --surface: #fff;
+  --canvas: #f4f6f7;
+  --accent: #145a64;
+  --line: #cbd5da;
+  --space: 1rem;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+a {
+  color: var(--accent);
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space);
+  padding: 1.25rem 2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  font-weight: 750;
+  text-decoration: none;
+}
+main {
+  max-width: 70rem;
+  margin: auto;
+  padding: clamp(1.25rem, 5vw, 4rem);
+}
+h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.2;
+}
+.eyebrow {
+  color: var(--accent);
+  font-weight: 650;
+}
+form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+select,
+button {
+  font: inherit;
+  padding: 0.65rem 1rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--line);
+}
+button {
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+footer {
+  padding: 2rem;
+  text-align: center;
+}
+.skip {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -4rem;
+}
+.skip:focus {
+  top: 1rem;
+  background: white;
+  padding: 0.5rem;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}

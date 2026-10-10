@@ -17,3 +17,5 @@ playwright-report/
 
 # Reproducible service-owned Prisma clients
 services/*/src/infrastructure/prisma/generated/
+
+.next/

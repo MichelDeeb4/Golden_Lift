@@ -1,0 +1,62 @@
+name: business-platform-target-foundation
+x-runtime: &runtime
+  build:
+    context: ../..
+    dockerfile: infrastructure/deployment/Dockerfile
+  init: true
+  restart: 'no'
+  environment: &env
+    NODE_ENV: production
+    HOST: 0.0.0.0
+    PORT: '4100'
+  healthcheck: &health
+    test:
+      [
+        'CMD',
+        'node',
+        '-e',
+        "fetch('http://127.0.0.1:4100/api/v1/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+      ]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 30s
+services:
+  erp-api:
+    <<: *runtime
+    environment: { <<: *env, TARGET_APP: erp-api }
+    ports: ['127.0.0.1:4100:4100']
+  platform-api:
+    <<: *runtime
+    environment: { <<: *env, TARGET_APP: platform-api }
+    ports: ['127.0.0.1:4101:4100']
+  worker:
+    <<: *runtime
+    environment: { <<: *env, TARGET_APP: worker }
+    ports: ['127.0.0.1:4102:4100']
+  erp-web:
+    <<: *runtime
+    environment: { <<: *env, TARGET_APP: erp-web }
+    ports: ['127.0.0.1:4200:4100']
+    healthcheck:
+      <<: *health
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4100/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+  platform-admin:
+    <<: *runtime
+    environment: { <<: *env, TARGET_APP: platform-admin }
+    ports: ['127.0.0.1:4201:4100']
+    healthcheck:
+      <<: *health
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4100/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
