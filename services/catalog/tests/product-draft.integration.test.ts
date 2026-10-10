@@ -90,7 +90,7 @@ test('minimal category and Arabic name persist an inactive draft with no type, c
   assert.equal('productTypeId' in p, false);
   assert.match(p.version, /^[1-9]\d*$/);
   const row = await db.products.findUniqueOrThrow({ where: { id: p.id } });
-  assert.equal(row.product_type_id, null);
+  assert.equal('product_type_id' in row, false);
   assert.equal(row.cover_media_id, null);
   assert.equal(row.is_active, false);
   const response = await call('GET', '/admin/products/' + p.id + '/management');

@@ -12,11 +12,10 @@ export interface NamedConfiguration {
   readonly translations: readonly CatalogTranslation[];
   readonly missingTranslationLocales: readonly Locale[];
 }
-export interface ProductTypeDto extends NamedConfiguration {
-  readonly schemaRevision: Version;
-  readonly deprecated: boolean;
+export interface AttributeGroupDto extends NamedConfiguration {
+  readonly attributeCount?: string;
+  readonly categoryCount?: string;
 }
-export type AttributeGroupDto = NamedConfiguration;
 export interface UnitDto {
   readonly code: string;
   readonly symbol: string;
@@ -31,6 +30,7 @@ export interface AttributeOptionDto extends NamedConfiguration {
   readonly deprecated: boolean;
 }
 export interface AttributeDefinitionDto extends NamedConfiguration {
+  readonly groups?: readonly AttributeGroupDto[];
   readonly kind: AttributeKind;
   readonly unit: UnitDto | null;
   readonly minimum: string | null;
@@ -49,11 +49,11 @@ export interface SchemaGroupDto {
   readonly sortOrder: string;
   readonly version: Version;
 }
-export type TypeGroupDto = SchemaGroupDto;
 export interface EffectiveAttributeDto {
   readonly id: Uuid;
   readonly definition: AttributeDefinitionDto;
   readonly groupPlacementId: Uuid | null;
+  readonly groupPlacementIds?: readonly Uuid[];
   readonly sortOrder: string;
   readonly version: Version;
   readonly required: boolean;
@@ -62,7 +62,6 @@ export interface EffectiveAttributeDto {
   readonly filterable: boolean;
   readonly comparable: boolean;
 }
-export type TypeAttributeDto = EffectiveAttributeDto;
 export interface EffectiveCategorySchema {
   readonly categoryId: Uuid;
   readonly categoryVersion: Version;
@@ -70,11 +69,6 @@ export interface EffectiveCategorySchema {
   readonly leaf: boolean;
   readonly groups: readonly SchemaGroupDto[];
   readonly attributes: readonly EffectiveAttributeDto[];
-}
-export interface EffectiveTypeSchema {
-  readonly type: ProductTypeDto;
-  readonly groups: readonly TypeGroupDto[];
-  readonly attributes: readonly TypeAttributeDto[];
 }
 export type AttributeValue =
   | { readonly kind: 'NUMBER'; readonly number: string }
@@ -115,6 +109,7 @@ export interface FormField {
   readonly control: 'number' | 'checkbox' | 'text' | 'textarea' | 'select' | 'multiselect';
   readonly required: boolean;
   readonly groupPlacementId: Uuid | null;
+  readonly groupPlacementIds?: readonly Uuid[];
   readonly sortOrder: string;
   readonly unit: { readonly code: string; readonly symbol: string; readonly label: string } | null;
   readonly minimum: string | null;
@@ -130,20 +125,15 @@ export interface FormField {
   readonly savedTranslations: readonly CatalogTranslation[];
   readonly missingTranslationLocales: readonly Locale[];
 }
-export interface ProductFormSchema {
-  readonly productTypeId: Uuid;
+export interface CategoryFormSchema {
+  readonly nonApplicableValues?: readonly { readonly definitionId: Uuid; readonly label: string }[];
+  readonly categoryId: Uuid;
   readonly schemaRevision: Version;
   readonly groups: readonly {
     readonly id: Uuid;
     readonly label: string;
     readonly sortOrder: string;
   }[];
-  readonly fields: readonly FormField[];
-}
-export interface CategoryFormSchema {
-  readonly categoryId: Uuid;
-  readonly schemaRevision: Version;
-  readonly groups: ProductFormSchema['groups'];
   readonly fields: readonly FormField[];
 }
 export interface CategorySchemaResponse {
@@ -159,6 +149,7 @@ export interface SchemaChangeImpact {
   readonly fileContentsRedacted: false;
 }
 export interface PublicProductDto {
+  readonly navigation?: ProductNavigation;
   readonly id: Uuid;
   readonly categoryId: Uuid;
   readonly name: string;
@@ -179,6 +170,11 @@ export interface PublicProductDto {
     readonly unitSymbol: string | null;
     readonly value: PublicAttributeValue;
   }[];
+}
+export interface ProductNavigation {
+  readonly breadcrumbs: readonly { readonly id: Uuid; readonly name: string }[];
+  readonly previous: { readonly id: Uuid; readonly name: string } | null;
+  readonly next: { readonly id: Uuid; readonly name: string } | null;
 }
 export interface PublicProductMedia {
   readonly assetId: Uuid;
@@ -210,7 +206,6 @@ export interface PublicProductQuery {
   readonly page: number;
   readonly pageSize: number;
   readonly categoryId?: Uuid;
-  readonly productTypeId?: Uuid;
   readonly search?: string;
   readonly sort: 'featured' | 'name';
   readonly filters: readonly PublicProductFilter[];

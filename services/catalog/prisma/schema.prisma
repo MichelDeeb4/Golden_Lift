@@ -12,22 +12,24 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model Categories {
-  schema_revision BigInt @default(1)
-  id                        String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  parent_id                 String?                   @db.Uuid
-  cover_asset_id            String?                   @db.Uuid
-  sort_order                BigInt                    @default(1024)
-  created_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at                DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at                DateTime?                 @db.Timestamptz(6)
-  version                   BigInt                    @default(1)
-  media_asset_refs          MediaAssetRefs?           @relation(fields: [cover_asset_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  categories                Categories?               @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  other_categories          Categories[]              @relation("categoriesTocategories")
-  category_specifications   CategorySpecifications[]
-  category_technical_sheets CategoryTechnicalSheets[]
-  category_translations     CategoryTranslations[]
-  products                  Products[]
+  back_CategoryAttributeGroups_1 CategoryAttributeGroups[] @relation("SQL_CategoryAttributeGroups_1")
+  deletion_pending               Boolean                   @default(false)
+  schema_revision                BigInt                    @default(1)
+  id                             String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id                      String?                   @db.Uuid
+  cover_asset_id                 String?                   @db.Uuid
+  sort_order                     BigInt                    @default(1024)
+  created_at                     DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                     DateTime                  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                     DateTime?                 @db.Timestamptz(6)
+  version                        BigInt                    @default(1)
+  media_asset_refs               MediaAssetRefs?           @relation(fields: [cover_asset_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  categories                     Categories?               @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  other_categories               Categories[]              @relation("categoriesTocategories")
+  category_specifications        CategorySpecifications[]
+  category_technical_sheets      CategoryTechnicalSheets[]
+  category_translations          CategoryTranslations[]
+  products                       Products[]
 
   // SQL-managed partial index: @@index([parent_id, sort_order, id], map: "categories_children_live_idx", where: raw("(deleted_at IS NULL)"))
   // SQL-managed partial index: @@index([cover_asset_id], map: "categories_cover_live_idx", where: raw("((deleted_at IS NULL) AND (cover_asset_id IS NOT NULL))"))
@@ -130,7 +132,8 @@ model FaqTranslations {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model MediaAssetRefs {
-  security_blocked Boolean @default(false)
+  deletion_pending        Boolean                 @default(false)
+  security_blocked        Boolean                 @default(false)
   id                      String                  @id @db.Uuid
   media_kind              String
   source_version          BigInt
@@ -376,10 +379,11 @@ model ProductTranslations {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model has constraints using non-default deferring rules and requires additional setup for migrations. Visit https://pris.ly/d/constraint-deferring for more info.
 model Products {
-  is_active Boolean @default(true)
+  deletion_pending                                                                       Boolean                      @default(false)
+  is_active                                                                              Boolean                      @default(false)
   id                                                                                     String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   category_id                                                                            String                       @db.Uuid
-  cover_media_id                                                                         String?                       @db.Uuid
+  cover_media_id                                                                         String?                      @db.Uuid
   current_model_code_id                                                                  String?                      @db.Uuid
   sort_order                                                                             BigInt                       @default(1024)
   is_featured                                                                            Boolean                      @default(false)
@@ -388,7 +392,6 @@ model Products {
   updated_at                                                                             DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
   deleted_at                                                                             DateTime?                    @db.Timestamptz(6)
   version                                                                                BigInt                       @default(1)
-  product_type_id                                                                        String?                      @db.Uuid
   product_code_reservations_product_code_reservations_product_idToproducts               ProductCodeReservations[]    @relation("product_code_reservations_product_idToproducts")
   product_media_product_media_product_idToproducts                                       ProductMedia[]               @relation("product_media_product_idToproducts")
   product_specification_values                                                           ProductSpecificationValues[]
@@ -396,12 +399,10 @@ model Products {
   product_translations                                                                   ProductTranslations[]
   categories                                                                             Categories                   @relation(fields: [category_id], references: [id], onUpdate: NoAction)
   product_code_reservations_products_id_current_model_code_idToproduct_code_reservations ProductCodeReservations?     @relation("products_id_current_model_code_idToproduct_code_reservations", fields: [id, current_model_code_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_code_fk")
-  product_media_products_id_cover_media_idToproduct_media                                ProductMedia?                 @relation("products_id_cover_media_idToproduct_media", fields: [id, cover_media_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_cover_fk")
-  product_types                                                                          ProductTypes?                @relation(fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  product_media_products_id_cover_media_idToproduct_media                                ProductMedia?                @relation("products_id_cover_media_idToproduct_media", fields: [id, cover_media_id], references: [product_id, id], onDelete: NoAction, onUpdate: NoAction, map: "products_own_cover_fk")
 
   // SQL-managed partial index: @@index([category_id, sort_order, id], map: "products_category_live_idx", where: raw("(deleted_at IS NULL)"))
   // SQL-managed partial index: @@index([featured_order, id], map: "products_featured_live_idx", where: raw("((deleted_at IS NULL) AND is_featured)"))
-  // SQL-managed partial index: @@index([product_type_id, id], map: "products_type_live_idx", where: raw("(deleted_at IS NULL)"))
   @@map("products")
   @@schema("catalog")
 }
@@ -463,29 +464,30 @@ model SocialLinks {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model SpecificationDefinitions {
-  id                           String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                         String                       @unique
-  value_type                   String
-  unit_code                    String?
-  minimum_value                Decimal?                     @db.Decimal(20, 6)
-  maximum_value                Decimal?                     @db.Decimal(20, 6)
-  allow_multiple               Boolean                      @default(false)
-  is_filterable                Boolean                      @default(false)
-  created_at                   DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at                   DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at                   DateTime?                    @db.Timestamptz(6)
-  version                      BigInt                       @default(1)
-  is_public                    Boolean                      @default(false)
-  deprecated_at                DateTime?                    @db.Timestamptz(6)
-  text_multiline               Boolean                      @default(false)
-  text_max_length              Int                          @default(4000)
-  category_specifications      CategorySpecifications[]
-  product_specification_values ProductSpecificationValues[]
-  product_type_specifications  ProductTypeSpecifications[]
-  units                        Units?                       @relation(fields: [unit_code], references: [code], onDelete: Restrict, onUpdate: NoAction)
-  specification_options        SpecificationOptions[]
-  specification_translations   SpecificationTranslations[]
-  technical_measurements       TechnicalMeasurements[]
+  back_AttributeGroupAttributes_1  AttributeGroupAttributes[]   @relation("SQL_AttributeGroupAttributes_1")
+  back_ProductTypeSpecifications_1 ProductTypeSpecifications[]  @relation("SQL_ProductTypeSpecifications_1") @ignore
+  id                               String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                             String                       @unique
+  value_type                       String
+  unit_code                        String?
+  minimum_value                    Decimal?                     @db.Decimal(20, 6)
+  maximum_value                    Decimal?                     @db.Decimal(20, 6)
+  allow_multiple                   Boolean                      @default(false)
+  is_filterable                    Boolean                      @default(false)
+  created_at                       DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                    @db.Timestamptz(6)
+  version                          BigInt                       @default(1)
+  is_public                        Boolean                      @default(false)
+  deprecated_at                    DateTime?                    @db.Timestamptz(6)
+  text_multiline                   Boolean                      @default(false)
+  text_max_length                  Int                          @default(4000)
+  category_specifications          CategorySpecifications[]
+  product_specification_values     ProductSpecificationValues[]
+  units                            Units?                       @relation(fields: [unit_code], references: [code], onDelete: Restrict, onUpdate: NoAction)
+  specification_options            SpecificationOptions[]
+  specification_translations       SpecificationTranslations[]
+  technical_measurements           TechnicalMeasurements[]
 
   @@unique([id, value_type])
   @@map("specification_definitions")
@@ -905,90 +907,12 @@ model OutboxEvents {
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ProductTypeGroups {
-  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  product_type_id             String                      @db.Uuid
-  group_id                    String                      @db.Uuid
-  sort_order                  BigInt                      @default(1024)
-  created_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at                  DateTime?                   @db.Timestamptz(6)
-  version                     BigInt                      @default(1)
-  specification_groups        SpecificationGroups         @relation(fields: [group_id], references: [id], onUpdate: NoAction)
-  product_types               ProductTypes                @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
-  product_type_specifications ProductTypeSpecifications[]
-
-  // SQL-managed partial index: @@unique([product_type_id, group_id], map: "product_type_group_live_uq", where: raw("(deleted_at IS NULL)"))
-  @@unique([product_type_id, id])
-  // SQL-managed partial index: @@index([product_type_id, sort_order, id], map: "product_type_group_order_live_idx", where: raw("(deleted_at IS NULL)"))
-  // SQL-managed partial index: @@index([group_id, product_type_id], map: "product_type_group_usage_live_idx", where: raw("(deleted_at IS NULL)"))
-  @@map("product_type_groups")
-  @@schema("catalog")
-}
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ProductTypeSpecifications {
-  id                        String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  product_type_id           String                   @db.Uuid
-  definition_id             String                   @db.Uuid
-  type_group_id             String?                  @db.Uuid
-  sort_order                BigInt                   @default(1024)
-  is_required               Boolean                  @default(false)
-  is_public                 Boolean                  @default(false)
-  is_searchable             Boolean                  @default(false)
-  is_filterable             Boolean                  @default(false)
-  is_comparable             Boolean                  @default(false)
-  created_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at                DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at                DateTime?                @db.Timestamptz(6)
-  version                   BigInt                   @default(1)
-  specification_definitions SpecificationDefinitions @relation(fields: [definition_id], references: [id], onUpdate: NoAction)
-  product_types             ProductTypes             @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
-  product_type_groups       ProductTypeGroups?       @relation(fields: [product_type_id, type_group_id], references: [product_type_id, id], onUpdate: NoAction)
-
-  // SQL-managed partial index: @@unique([product_type_id, definition_id], map: "product_type_specification_live_uq", where: raw("(deleted_at IS NULL)"))
-  // SQL-managed partial index: @@index([product_type_id, type_group_id, sort_order, id], map: "product_type_specification_order_live_idx", where: raw("(deleted_at IS NULL)"))
-  // SQL-managed partial index: @@index([definition_id, product_type_id], map: "product_type_specification_usage_live_idx", where: raw("(deleted_at IS NULL)"))
-  @@map("product_type_specifications")
-  @@schema("catalog")
-}
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ProductTypeTranslations {
-  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  product_type_id String       @db.Uuid
-  locale          String
-  name            String
-  description     String?
-  created_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at      DateTime?    @db.Timestamptz(6)
-  version         BigInt       @default(1)
-  product_types   ProductTypes @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
-
-  // SQL-managed partial index: @@unique([product_type_id, locale], map: "product_type_translation_live_uq", where: raw("(deleted_at IS NULL)"))
-  @@map("product_type_translations")
-  @@schema("catalog")
-}
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model ProductTypes {
-  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code                        String                      @unique
-  schema_revision             BigInt                      @default(1)
-  deprecated_at               DateTime?                   @db.Timestamptz(6)
-  created_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  updated_at                  DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
-  deleted_at                  DateTime?                   @db.Timestamptz(6)
-  version                     BigInt                      @default(1)
-  product_type_groups         ProductTypeGroups[]
-  product_type_specifications ProductTypeSpecifications[]
-  product_type_translations   ProductTypeTranslations[]
-  products                    Products[]
-
-  @@map("product_types")
-  @@schema("catalog")
-}
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model SpecificationGroupTranslations {
@@ -1010,13 +934,15 @@ model SpecificationGroupTranslations {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model SpecificationGroups {
+  back_AttributeGroupAttributes_2  AttributeGroupAttributes[]       @relation("SQL_AttributeGroupAttributes_2")
+  back_CategoryAttributeGroups_2   CategoryAttributeGroups[]        @relation("SQL_CategoryAttributeGroups_2")
+  back_ProductTypeGroups_1         ProductTypeGroups[]              @relation("SQL_ProductTypeGroups_1") @ignore
   id                               String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code                             String                           @unique
   created_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
   updated_at                       DateTime                         @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
   deleted_at                       DateTime?                        @db.Timestamptz(6)
   version                          BigInt                           @default(1)
-  product_type_groups              ProductTypeGroups[]
   specification_group_translations SpecificationGroupTranslations[]
 
   @@map("specification_groups")
@@ -1047,6 +973,156 @@ model WriteGate {
   validated_revision BigInt @default(0)
 
   @@map("write_gate")
+  @@ignore
+  @@schema("catalog")
+}
+
+model DeletionOperations {
+  id           String    @id @db.Uuid
+  entity_type  String
+  entity_id    String
+  requested_by String    @db.Uuid
+  requested_at DateTime  @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  status       String
+  failure_code String?
+  retry_count  Int       @default(0)
+  completed_at DateTime? @db.Timestamptz(6)
+  asset_ids    String[]  @default([]) @db.Uuid
+  owner_ids    String[]  @default([]) @db.Uuid
+
+  @@map("deletion_operations")
+  @@schema("ops")
+}
+
+/// Reviewed SQL binding.
+model AttributeGroupAttributes {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  group_id      String                   @db.Uuid
+  definition_id String                   @db.Uuid
+  sort_order    BigInt                   @default(1024)
+  is_required   Boolean                  @default(false)
+  is_public     Boolean                  @default(true)
+  is_searchable Boolean                  @default(false)
+  is_filterable Boolean                  @default(false)
+  is_comparable Boolean                  @default(false)
+  created_at    DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at    DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at    DateTime?                @db.Timestamptz(6)
+  version       BigInt                   @default(1)
+  relation_1    SpecificationDefinitions @relation("SQL_AttributeGroupAttributes_1", fields: [definition_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  relation_2    SpecificationGroups      @relation("SQL_AttributeGroupAttributes_2", fields: [group_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@map("attribute_group_attributes")
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding.
+model CategoryAttributeGroups {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id String              @db.Uuid
+  group_id    String              @db.Uuid
+  sort_order  BigInt              @default(1024)
+  created_at  DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at  DateTime            @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at  DateTime?           @db.Timestamptz(6)
+  version     BigInt              @default(1)
+  relation_1  Categories          @relation("SQL_CategoryAttributeGroups_1", fields: [category_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  relation_2  SpecificationGroups @relation("SQL_CategoryAttributeGroups_2", fields: [group_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@map("category_attribute_groups")
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding; retained migration evidence has no Prisma runtime API.
+model ProductTypeGroups {
+  back_ProductTypeSpecifications_3 ProductTypeSpecifications[] @relation("SQL_ProductTypeSpecifications_3") @ignore
+  id                               String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id                  String                      @db.Uuid
+  group_id                         String                      @db.Uuid
+  sort_order                       BigInt                      @default(1024)
+  created_at                       DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                   @db.Timestamptz(6)
+  version                          BigInt                      @default(1)
+  relation_1                       SpecificationGroups         @relation("SQL_ProductTypeGroups_1", fields: [group_id], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+  relation_2                       ProductTypes                @relation("SQL_ProductTypeGroups_2", fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+
+  @@unique([product_type_id, id])
+  @@map("product_type_groups")
+  @@ignore
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding; retained migration evidence has no Prisma runtime API.
+model ProductTypeSpecifications {
+  id              String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id String                   @db.Uuid
+  definition_id   String                   @db.Uuid
+  type_group_id   String?                  @db.Uuid
+  sort_order      BigInt                   @default(1024)
+  is_required     Boolean                  @default(false)
+  is_public       Boolean                  @default(false)
+  is_searchable   Boolean                  @default(false)
+  is_filterable   Boolean                  @default(false)
+  is_comparable   Boolean                  @default(false)
+  created_at      DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at      DateTime                 @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at      DateTime?                @db.Timestamptz(6)
+  version         BigInt                   @default(1)
+  relation_1      SpecificationDefinitions @relation("SQL_ProductTypeSpecifications_1", fields: [definition_id], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+  relation_2      ProductTypes             @relation("SQL_ProductTypeSpecifications_2", fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+  relation_3      ProductTypeGroups?       @relation("SQL_ProductTypeSpecifications_3", fields: [product_type_id, type_group_id], references: [product_type_id, id], onDelete: Restrict, onUpdate: NoAction) @ignore
+
+  @@map("product_type_specifications")
+  @@ignore
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding; retained migration evidence has no Prisma runtime API.
+model ProductTypeTranslations {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_type_id String       @db.Uuid
+  locale          String
+  name            String
+  description     String?
+  created_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at      DateTime     @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at      DateTime?    @db.Timestamptz(6)
+  version         BigInt       @default(1)
+  relation_1      ProductTypes @relation("SQL_ProductTypeTranslations_1", fields: [product_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction) @ignore
+
+  @@map("product_type_translations")
+  @@ignore
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding; retained migration evidence has no Prisma runtime API.
+model ProductTypes {
+  back_ProductTypeGroups_2         ProductTypeGroups[]         @relation("SQL_ProductTypeGroups_2") @ignore
+  back_ProductTypeSpecifications_2 ProductTypeSpecifications[] @relation("SQL_ProductTypeSpecifications_2") @ignore
+  back_ProductTypeTranslations_1   ProductTypeTranslations[]   @relation("SQL_ProductTypeTranslations_1") @ignore
+  id                               String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                             String
+  schema_revision                  BigInt                      @default(1)
+  deprecated_at                    DateTime?                   @db.Timestamptz(6)
+  created_at                       DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  updated_at                       DateTime                    @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+  deleted_at                       DateTime?                   @db.Timestamptz(6)
+  version                          BigInt                      @default(1)
+
+  @@unique([code])
+  @@map("product_types")
+  @@ignore
+  @@schema("catalog")
+}
+
+/// Reviewed SQL binding; retained migration evidence has no Prisma runtime API.
+model RetiredProductBindings {
+  product_id     String   @id @db.Uuid
+  legacy_type_id String?  @db.Uuid
+  archived_at    DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(6)
+
+  @@map("retired_product_bindings")
   @@ignore
   @@schema("catalog")
 }

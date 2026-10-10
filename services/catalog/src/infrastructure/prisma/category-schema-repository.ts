@@ -1,6 +1,7 @@
 import { ApplicationError, uuid, version } from '@golden-lift/contracts';
 import type { EffectiveCategorySchema, Uuid } from '@golden-lift/contracts';
 import type { CategorySchemaReader } from '../../application/ports/category-schema.js';
+import type { RelationshipTarget } from '../../application/ports/catalog-relationships.js';
 import type { Database } from './client.js';
 import {
   definitionDto,
@@ -26,10 +27,14 @@ interface AttributeRow {
   is_searchable: boolean;
   is_filterable: boolean;
   is_comparable: boolean;
+  group_id?: string;
 }
 export class PrismaCategorySchemaRepository implements CategorySchemaReader {
   constructor(private readonly tx: Database) {}
-  async schema(categoryId: Uuid): Promise<EffectiveCategorySchema> {
+  async schema(
+    categoryId: Uuid,
+    replacement?: { target: RelationshipTarget; orderedIds: readonly Uuid[] },
+  ): Promise<EffectiveCategorySchema> {
     const tx = this.tx;
     const [stage] = await tx.$queryRaw<
       { ready: boolean }[]
@@ -46,16 +51,103 @@ export class PrismaCategorySchemaRepository implements CategorySchemaReader {
             NOT EXISTS(SELECT 1 FROM catalog.categories child WHERE child.parent_id=c.id AND child.deleted_at IS NULL) AS leaf
           FROM catalog.categories c WHERE c.id=${categoryId}::uuid AND c.deleted_at IS NULL`;
     if (!category) throw new ApplicationError('NOT_FOUND', 'Category not found.');
-    const placements = await tx.$queryRaw<PlacementRow[]>`
+    let placements = await tx.$queryRaw<PlacementRow[]>`
           SELECT id::text,group_id::text,sort_order::text,version::text
           FROM catalog.category_attribute_groups WHERE category_id=${categoryId}::uuid AND deleted_at IS NULL
           ORDER BY sort_order,id LIMIT 501`;
-    const attributes = await tx.$queryRaw<AttributeRow[]>`
-          SELECT a.id::text,a.definition_id::text,a.category_group_id::text,a.sort_order::text,a.version::text,
-            a.is_required,a.is_public,a.is_searchable,a.is_filterable,a.is_comparable
-          FROM catalog.category_effective_attributes a
-          JOIN catalog.category_attribute_groups c ON c.id=a.category_group_id
-          WHERE a.category_id=${categoryId}::uuid ORDER BY c.sort_order,c.id,a.sort_order,a.id LIMIT 501`;
+    if (replacement?.target.resource === 'categories' && replacement.target.id === categoryId)
+      placements = replacement.orderedIds.map((id, i) => ({
+        ...placements.find((p) => p.group_id === id),
+        id: placements.find((p) => p.group_id === id)?.id ?? id,
+        group_id: id,
+        sort_order: String((i + 1) * 1024),
+        version: placements.find((p) => p.group_id === id)?.version ?? '1',
+      }));
+    let members = await tx.$queryRaw<(AttributeRow & { group_id: string })[]>`
+      SELECT a.id::text,a.definition_id::text,a.group_id::text,a.sort_order::text,a.version::text,
+        a.is_required,a.is_public,a.is_searchable,a.is_filterable,a.is_comparable
+      FROM catalog.attribute_group_attributes a WHERE a.group_id=ANY(${placements.map((p) => p.group_id)}::uuid[]) AND a.deleted_at IS NULL ORDER BY a.sort_order,a.id LIMIT 100001`;
+    if (members.length > 100000)
+      throw new ApplicationError('INVALID_STATE', 'Schema membership review exceeds bounds.');
+    if (replacement && replacement.target.resource !== 'categories') {
+      const { target, orderedIds } = replacement;
+      if (target.resource === 'groups') {
+        const existing = members.filter((a) => a.group_id === target.id);
+        members = [
+          ...members.filter((a) => a.group_id !== target.id),
+          ...orderedIds.map((id, i) => ({
+            ...existing.find((a) => a.definition_id === id),
+            id: existing.find((a) => a.definition_id === id)?.id ?? id,
+            definition_id: id,
+            group_id: target.id,
+            category_group_id: '',
+            sort_order: String((i + 1) * 1024),
+            version: existing.find((a) => a.definition_id === id)?.version ?? '1',
+            is_required: existing.find((a) => a.definition_id === id)?.is_required ?? false,
+            is_public: existing.find((a) => a.definition_id === id)?.is_public ?? true,
+            is_searchable: existing.find((a) => a.definition_id === id)?.is_searchable ?? false,
+            is_filterable: existing.find((a) => a.definition_id === id)?.is_filterable ?? true,
+            is_comparable: existing.find((a) => a.definition_id === id)?.is_comparable ?? false,
+          })),
+        ];
+      } else {
+        members = members.filter(
+          (a) => a.definition_id !== target.id || orderedIds.includes(uuid(a.group_id)),
+        );
+        for (const g of placements)
+          if (
+            orderedIds.includes(uuid(g.group_id)) &&
+            !members.some((a) => a.group_id === g.group_id && a.definition_id === target.id)
+          )
+            members.push({
+              id: target.id,
+              definition_id: target.id,
+              group_id: g.group_id,
+              category_group_id: '',
+              sort_order: String(
+                members
+                  .filter((a) => a.group_id === g.group_id)
+                  .reduce(
+                    (max, a) => (BigInt(a.sort_order) > max ? BigInt(a.sort_order) : max),
+                    0n,
+                  ) + 1024n,
+              ),
+              version: '1',
+              is_required: false,
+              is_public: true,
+              is_searchable: false,
+              is_filterable: true,
+              is_comparable: false,
+            });
+      }
+    }
+    const attributes: AttributeRow[] = [];
+    for (const g of placements)
+      for (const a of members
+        .filter((a) => a.group_id === g.group_id)
+        .sort((a, b) =>
+          BigInt(a.sort_order) < BigInt(b.sort_order)
+            ? -1
+            : BigInt(a.sort_order) > BigInt(b.sort_order)
+              ? 1
+              : a.id.localeCompare(b.id),
+        )) {
+        const first = attributes.find((b) => b.definition_id === a.definition_id);
+        if (first) {
+          first.is_required ||= a.is_required;
+          first.is_public &&= a.is_public;
+          first.is_searchable &&= a.is_searchable && a.is_public;
+          first.is_filterable &&= a.is_filterable && a.is_public;
+          first.is_comparable &&= a.is_comparable && a.is_public;
+        } else
+          attributes.push({
+            ...a,
+            category_group_id: g.id,
+            is_searchable: a.is_searchable && a.is_public,
+            is_filterable: a.is_filterable && a.is_public,
+            is_comparable: a.is_comparable && a.is_public,
+          });
+      }
     if (placements.length > 500 || attributes.length > 500)
       throw new ApplicationError(
         'INVALID_STATE',
@@ -98,13 +190,20 @@ export class PrismaCategorySchemaRepository implements CategorySchemaReader {
           id: uuid(row.id),
           definition,
           groupPlacementId: uuid(row.category_group_id),
+          groupPlacementIds: placements
+            .filter((g) =>
+              members.some(
+                (a) => a.group_id === g.group_id && a.definition_id === row.definition_id,
+              ),
+            )
+            .map((g) => uuid(g.id)),
           sortOrder: row.sort_order,
           version: version(row.version),
           required: row.is_required,
-          public: row.is_public,
-          searchable: row.is_searchable,
-          filterable: row.is_filterable,
-          comparable: row.is_comparable,
+          public: row.is_public && definition.public,
+          searchable: row.is_searchable && definition.public,
+          filterable: row.is_filterable && definition.public && definition.filterable,
+          comparable: row.is_comparable && definition.public,
         };
       }),
     };

@@ -31,6 +31,7 @@ interface Counts {
   id: string;
   child_count: string;
   product_count: string;
+  group_count: string;
 }
 export class PrismaCategoryNavigation implements CategoryNavigation {
   constructor(private readonly database: Database) {}
@@ -64,7 +65,7 @@ export class PrismaCategoryNavigation implements CategoryNavigation {
         ),
         activeChildCount: counts.child_count,
         activeProductCount: counts.product_count,
-        canAddChildren: counts.product_count === '0',
+        canAddChildren: counts.product_count === '0' && counts.group_count === '0',
         canAddProducts: counts.child_count === '0',
       };
     });
@@ -72,7 +73,8 @@ export class PrismaCategoryNavigation implements CategoryNavigation {
   async detail(id: Uuid, language: Locale): Promise<AdminCategoryDto | null> {
     const rows = await this.database.$queryRaw<Counts[]>`SELECT c.id,
       (SELECT count(*)::text FROM catalog.categories x WHERE x.parent_id=c.id AND x.deleted_at IS NULL) child_count,
-      (SELECT count(*)::text FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL) product_count
+      (SELECT count(*)::text FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL) product_count,
+      (SELECT count(*)::text FROM catalog.category_attribute_groups g WHERE g.category_id=c.id AND g.deleted_at IS NULL) group_count
       FROM catalog.live_categories c WHERE c.id=${id}::uuid`;
     return (await this.readRows(rows, language))[0] ?? null;
   }
@@ -88,10 +90,11 @@ export class PrismaCategoryNavigation implements CategoryNavigation {
       UNION ALL SELECT c.id FROM catalog.categories c JOIN excluded e ON c.parent_id=e.id WHERE c.deleted_at IS NULL)
       SELECT c.id,
       (SELECT count(*)::text FROM catalog.categories x WHERE x.parent_id=c.id AND x.deleted_at IS NULL) child_count,
-      (SELECT count(*)::text FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL) product_count
+      (SELECT count(*)::text FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL) product_count,
+      (SELECT count(*)::text FROM catalog.category_attribute_groups g WHERE g.category_id=c.id AND g.deleted_at IS NULL) group_count
       FROM catalog.live_categories c WHERE c.parent_id IS NOT DISTINCT FROM ${parentId}::uuid
       AND (${after?.id ?? null}::uuid IS NULL OR (c.sort_order,c.id)>(${after?.sortOrder ?? '0'}::bigint,${after?.id ?? null}::uuid))
-      AND (${movingId}::uuid IS NULL OR (NOT EXISTS(SELECT 1 FROM excluded e WHERE e.id=c.id) AND NOT EXISTS(SELECT 1 FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL)))
+      AND (${movingId}::uuid IS NULL OR (NOT EXISTS(SELECT 1 FROM excluded e WHERE e.id=c.id) AND NOT EXISTS(SELECT 1 FROM catalog.products p WHERE p.category_id=c.id AND p.deleted_at IS NULL) AND NOT EXISTS(SELECT 1 FROM catalog.category_attribute_groups g WHERE g.category_id=c.id AND g.deleted_at IS NULL)))
       ORDER BY c.sort_order,c.id LIMIT ${limit}`;
     return this.readRows(rows, language);
   }
@@ -258,20 +261,14 @@ export class PrismaCategoryNavigation implements CategoryNavigation {
     };
     const [stage] = await this.database.$queryRaw<
       { expanded: boolean; categoryAuthority: boolean }[]
-    >`SELECT to_regclass('catalog.product_types') IS NOT NULL expanded, to_regprocedure('catalog.assert_valid_category_catalog()') IS NOT NULL AS "categoryAuthority"`;
-    let typeState = '';
+    >`SELECT to_regprocedure('catalog.assert_valid_category_catalog()') IS NOT NULL AS "categoryAuthority"`;
+    let schemaState = '';
     if (stage?.categoryAuthority) {
       const [dependencies] = await this.database.$queryRaw<{ state: string }[]>`
         WITH RECURSIVE branch AS(SELECT id,schema_revision FROM catalog.categories WHERE id=${id}::uuid AND deleted_at IS NULL UNION ALL SELECT c.id,c.schema_revision FROM catalog.categories c JOIN branch b ON c.parent_id=b.id WHERE c.deleted_at IS NULL)
         SELECT coalesce(string_agg(id::text||':'||schema_revision::text,',' ORDER BY id),'') state FROM branch`;
-      typeState = '\n' + (dependencies?.state ?? '');
-    } else if (stage?.expanded) {
-      const [dependencies] = await this.database.$queryRaw<
-        { state: string }[]
-      >`WITH RECURSIVE branch AS(SELECT id FROM catalog.categories WHERE id=${id}::uuid AND deleted_at IS NULL UNION ALL SELECT c.id FROM catalog.categories c JOIN branch b ON c.parent_id=b.id WHERE c.deleted_at IS NULL)
-        SELECT coalesce(string_agg(t.id::text||':'||t.schema_revision::text,',' ORDER BY t.id),'') state FROM catalog.product_types t WHERE t.id IN(SELECT p.product_type_id FROM catalog.products p JOIN branch b ON b.id=p.category_id WHERE p.deleted_at IS NULL)`;
-      typeState = dependencies?.state ? '\n' + dependencies.state : '';
+      schemaState = '\n' + (dependencies?.state ?? '');
     }
-    return { impact, precondition: fingerprint('b', id, row.state + typeState) };
+    return { impact, precondition: fingerprint('b', id, row.state + schemaState) };
   }
 }

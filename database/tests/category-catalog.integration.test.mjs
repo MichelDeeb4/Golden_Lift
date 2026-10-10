@@ -24,7 +24,7 @@ const mappingFile = path.join(privateDirectory, 'mapping.json');
 fs.writeFileSync(privateProfile, JSON.stringify(profile), { mode: 0o600 });
 function command(operation, mapping) {
   if (mapping) fs.writeFileSync(mappingFile, JSON.stringify(mapping), { mode: 0o600 });
-  return spawnSync(process.execPath, ['database/scripts/category-catalog.mjs', operation, '--mapping', mappingFile, '--confirm-database', name],
+  return spawnSync(process.execPath, ['database/scripts/category-catalog.mjs', operation, '--mapping', mappingFile, '--confirm-database', name, ...(operation === 'retire-binding' ? ['--output', path.join(privateDirectory, 'retirement.json')] : [])],
     { env: { ...process.env, GL_DATABASE_CONFIG_FILE: privateProfile }, encoding: 'utf8', windowsHide: true });
 }
 let admin, client;
@@ -310,4 +310,30 @@ test('Gateway HTTP returns the authoritative deduplicated category form with loc
     if (gateway) await gateway.close();
     await catalog.close();
   }
+});
+
+test('physical binding retirement archives deleted products immutably, retains exact content and view identity, and denies runtime archive access', async () => {
+  await transaction(() => client.query('UPDATE catalog.products SET is_active=false,deleted_at=clock_timestamp() WHERE id=$1', [ids.product]));
+  const before = await inventoryCatalog(client);
+  const bindings = (await client.query('SELECT id::text product_id,product_type_id::text legacy_type_id FROM catalog.products ORDER BY id')).rows;
+  const view = (await client.query("SELECT 'catalog.live_products'::regclass::oid::text oid")).rows[0].oid;
+  const products = (await client.query("SELECT to_jsonb(p)-'product_type_id' content FROM catalog.products p ORDER BY id")).rows;
+  const retire = command('retire-binding');
+  assert.equal(retire.status, 0, retire.stderr);
+  assert.equal((await client.query("SELECT count(*)::text n FROM information_schema.columns WHERE table_schema='catalog' AND table_name='products' AND column_name='product_type_id'")).rows[0].n, '0');
+  assert.deepEqual((await client.query('SELECT product_id::text,legacy_type_id::text FROM catalog.retired_product_bindings ORDER BY product_id')).rows, bindings);
+  assert.deepEqual((await client.query('SELECT to_jsonb(p) content FROM catalog.products p ORDER BY id')).rows, products);
+  assert.equal((await client.query("SELECT 'catalog.live_products'::regclass::oid::text oid")).rows[0].oid, view);
+  const after = await inventoryCatalog(client);
+  assert.deepEqual(after.valueParity, before.valueParity);
+  assert.equal(after.inventoryHash, before.inventoryHash);
+  assert.equal((await client.query('SELECT count(*)::text n FROM catalog.live_products WHERE product_type_id IS NOT NULL')).rows[0].n, '0');
+  for (const sql of ['DELETE FROM catalog.retired_product_bindings', 'UPDATE catalog.retired_product_bindings SET legacy_type_id=NULL'])
+    await assert.rejects(transaction(() => client.query(sql)), (error) => error.code === '23514');
+  const runtime = new pg.Client({ host: '127.0.0.1', port: cfg.port, database: name, user: service.user, password: service.password });
+  await runtime.connect();
+  try {
+    await assert.rejects(runtime.query('SELECT * FROM catalog.retired_product_bindings'), (error) => error.code === '42501');
+    assert.equal((await runtime.query('SELECT count(*)::text n FROM catalog.products')).rows[0].n, String(bindings.length));
+  } finally { await runtime.end(); }
 });

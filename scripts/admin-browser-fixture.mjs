@@ -4,7 +4,14 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { uuid, version, mediaEvent } from '@golden-lift/contracts';
+import {
+  uuid,
+  version,
+  mediaEvent,
+  record,
+  deletionEvent,
+  directMediaDeletionRequest,
+} from '@golden-lift/contracts';
 import { httpConfig, IdentitySessionClient, runOutboxRelay } from '@golden-lift/platform';
 import { databaseFixture } from '../.local/test-build/packages/platform/tests/support/database-fixture.js';
 import { identityApplication } from '../services/identity/dist/composition/application.js';
@@ -18,6 +25,12 @@ import { orm as mediaOrm } from '../services/media/dist/infrastructure/prisma/cl
 import { orm as catalogOrm } from '../services/catalog/dist/infrastructure/prisma/client.js';
 import { PrismaMediaUnitOfWork } from '../services/media/dist/infrastructure/prisma/media-repository.js';
 import { PrismaMediaRegistry } from '../services/catalog/dist/infrastructure/prisma/media-registry.js';
+import { FencedStorage } from '../services/media/dist/infrastructure/storage/fenced.js';
+import { OwnedMediaDeletionFiles } from '../services/media/dist/infrastructure/storage/deletion.js';
+import { PrismaMediaDeletionStore } from '../services/media/dist/infrastructure/prisma/deletion.js';
+import { CompleteMediaDeletion } from '../services/media/dist/application/use-cases/complete-media-deletion.js';
+import { PrismaCatalogDeletionUnitOfWork } from '../services/catalog/dist/infrastructure/prisma/deletion.js';
+import { AcceptMediaDeletion } from '../services/catalog/dist/application/use-cases/accept-media-deletion.js';
 import { Uploads } from '../services/media/dist/application/use-cases/uploads.js';
 import { mediaIds, mediaClock } from '../services/media/dist/composition/dependencies.js';
 import { ClamAvScanner } from '../services/media/dist/infrastructure/scanning/clamav.js';
@@ -26,7 +39,10 @@ import { ProcessMedia } from '../services/media/dist/application/use-cases/proce
 import { MediaOutboxRelay } from '../services/media/dist/infrastructure/prisma/outbox-relay.js';
 import { CatalogMediaOutboxRelay } from '../services/catalog/dist/infrastructure/prisma/media-outbox-relay.js';
 
-export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) {
+export async function adminBrowserFixture({
+  catalogProfile = 'category',
+  ports = { gateway: 3000, media: 3003, catalogEvents: 3102, mediaEvents: 3103 },
+} = {}) {
   const native = process.env.GL_MEDIA_NATIVE_FIXTURE === 'true';
   const nativeCommands = native
     ? JSON.parse(await readFile('.local/tools/commands.json', 'utf8')).commands
@@ -125,9 +141,10 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
     );
     const catalogOrigin = await listen(catalog);
     const mediaFixture = await fixture('media');
-    const storage = await FilesystemStorage.create(path.join(directory, 'objects'));
+    const physicalStorage = await FilesystemStorage.create(path.join(directory, 'objects'));
+    const storage = new FencedStorage(physicalStorage, mediaFixture.pool);
     const mediaSettings = mediaConfig({
-      MEDIA_PUBLIC_ORIGIN: 'http://localhost:3003',
+      MEDIA_PUBLIC_ORIGIN: 'http://localhost:' + ports.media,
       CATALOG_SERVICE_URL: catalogOrigin,
       MEDIA_CATALOG_TOKEN: mediaToken,
       ...(native ? { ...nativeCommands, MEDIA_SCRATCH_ROOT: path.join(directory, 'scratch') } : {}),
@@ -147,14 +164,14 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
         ? new ClamAvScanner(mediaSettings.scannerHost, mediaSettings.scannerPort)
         : { ready: async () => true },
     );
-    const mediaOrigin = await listen(media, 3003);
+    const mediaOrigin = await listen(media, ports.media);
     const gateway = await gatewayApplication(config('gateway'), {
       identity: identityOrigin,
       catalog: catalogOrigin,
       media: mediaOrigin,
       inquiries: identityOrigin,
     });
-    await listen(gateway, 3000);
+    await listen(gateway, ports.gateway);
     const mediaDb = mediaOrm(mediaFixture.pool),
       catalogDb = catalogOrm(catalogFixture.pool);
     clients.push(mediaDb, catalogDb);
@@ -174,7 +191,12 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
           5,
         )
       : null;
-    if (native) {
+    {
+      const cleanup = new CompleteMediaDeletion(
+        new PrismaMediaDeletionStore(mediaDb),
+        new OwnedMediaDeletionFiles(storage),
+      );
+      const deletions = new PrismaCatalogDeletionUnitOfWork(catalogDb);
       const mediaKey = credential(),
         catalogKey = credential();
       relays.push(
@@ -185,8 +207,15 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
           signingKey: mediaKey,
           verificationKey: catalogKey,
           signal: relaysStop.signal,
-          localHttp: { listenPort: 3103, targetPort: 3102 },
-          apply: (input) => uow.execute((r) => r.retire(mediaEvent(input))),
+          localHttp: { listenPort: ports.mediaEvents, targetPort: ports.catalogEvents },
+          apply: async (input) => {
+            const type = record(input).type;
+            if (type === 'catalog.media.delete.requested.v1')
+              return cleanup.execute(deletionEvent(input));
+            if (type === 'catalog.media.delete.rejected.v1')
+              return new PrismaMediaDeletionStore(mediaDb).reject(deletionEvent(input));
+            return uow.execute((r) => r.retire(mediaEvent(input)));
+          },
         }),
       );
       relays.push(
@@ -197,8 +226,15 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
           signingKey: catalogKey,
           verificationKey: mediaKey,
           signal: relaysStop.signal,
-          localHttp: { listenPort: 3102, targetPort: 3103 },
-          apply: (input) => registry.apply(mediaEvent(input)),
+          localHttp: { listenPort: ports.catalogEvents, targetPort: ports.mediaEvents },
+          apply: async (input) => {
+            const type = record(input).type;
+            if (type === 'media.deletion.requested.v1')
+              return new AcceptMediaDeletion(deletions).execute(directMediaDeletionRequest(input));
+            if (String(type).startsWith('media.delete.'))
+              return deletions.execute((r) => r.complete(deletionEvent(input)));
+            return registry.apply(mediaEvent(input));
+          },
         }),
       );
     }
@@ -307,12 +343,46 @@ export async function adminBrowserFixture({ catalogProfile = 'category' } = {}) 
       })();
     }, 500);
     return {
+      gatewayOrigin: 'http://localhost:' + ports.gateway,
       password,
       superEmail: superAccount.email,
       adminEmail: invited.account.email,
       messages,
       image,
       assetId: upload.assetId,
+      newReadyImage: async () => {
+        let item = await uploads.initiate(
+          {
+            kind: 'IMAGE',
+            name: 'Independent deletion image.png',
+            bytes: String(image.length),
+            purpose: 'CATALOG',
+            sha256: null,
+            idempotencyKey: credential(),
+          },
+          actor,
+        );
+        item = await uploads.part(item.id, 1, image, actor);
+        await uploads.complete(item.id, item.version, actor);
+        for (let attempt = 0; attempt < 100; attempt++) {
+          if ((await registry.registration(item.assetId)).registered) return item.assetId;
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error('Disposable image readiness timed out.');
+      },
+      deletionEvidence: async (assetId, productId) => ({
+        assetExists: !!(await mediaDb.assets.findUnique({ where: { id: assetId } })),
+        objects: [
+          ...(await physicalStorage.inventory(`originals/${assetId}`)),
+          ...(await physicalStorage.inventory(`outputs/${assetId}`)),
+        ],
+        productExists: productId
+          ? !!(await catalogDb.products.findUnique({ where: { id: productId } }))
+          : null,
+        registrationExists: !!(await catalogDb.mediaAssetRefs.findUnique({
+          where: { id: assetId },
+        })),
+      }),
       identity,
       dispose,
       serviceAvailable: async (name, available) => {

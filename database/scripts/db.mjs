@@ -147,7 +147,7 @@ function manifest() {
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND n.nspname IN ('${name}','ops')
     `));
   }
-  const schemaVersion=databases.golden_lift_catalog.some(t=>t.table==='products'&&t.columns.some(c=>c.name==='is_active'))?'1.4':databases.golden_lift_media.some(t=>t.columns.some(c=>c.name==='pipeline_version'))?'1.3':databases.golden_lift_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
+  const schemaVersion=databases.golden_lift_catalog.some(t=>t.table==='deletion_operations')?'1.5':databases.golden_lift_catalog.some(t=>t.table==='products'&&t.columns.some(c=>c.name==='is_active'))?'1.4':databases.golden_lift_media.some(t=>t.columns.some(c=>c.name==='pipeline_version'))?'1.3':databases.golden_lift_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
   fs.writeFileSync(path.join(root,'database/schema-manifest.json'),JSON.stringify({schemaVersion,physicalTables:Object.values(databases).reduce((sum,t)=>sum+t.length,0),databases},null,2)+'\n');
   console.log('Exported the installed column, constraint, index and trigger dictionary.');
 }

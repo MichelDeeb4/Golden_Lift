@@ -1,12 +1,14 @@
 # Golden Lift — Visitor and Administration Design
 
-The [Category-driven catalog and UX phase](implementation/catalog-model-and-ux-fix-completed-work.md) remains **in progress** for replacing Product Type with leaf-category schemas and reusable group/attribute selection. The independently delivered category tree below now supplies recursive management; it does not activate the pending classification migration. The earlier phase report remains dated foundation evidence.
+Updated catalog experience, 2026-10-08: leaf creation includes searchable, ordered group selection. Attributes and groups support multiple memberships and reviewed edits. The recursive category tree remains the browsing context. Product creation needs only a leaf category and Arabic name; generated specifications render each unique attribute once. Visitor detail combines images/videos in one gallery and exposes ancestors, Back to Category, eligible same-category Previous/Next and More from this Category.
 
-The [Admin CRUD modal phase](implementation/admin-crud-modal-fix-completed-work.md) keeps collection context while creating or editing reusable configuration and category metadata. Create actions remain visible when a record is selected. Small forms use responsive, accessible modals with dirty-close warnings; the full product editor, category tree, Media grid and complex type assignments retain their workspaces. Product creation uses an overlay with required type/category/cover/specification inputs before client-side editor navigation. See [decision 014](decisions/014-admin-crud-modals.md) for concurrency, cache and contract tradeoffs.
+Earlier Category-model reports retain their dated migration-foundation scope; current relationships and runtime authority are described above.
+
+The [Admin CRUD modal phase](implementation/admin-crud-modal-fix-completed-work.md) keeps collection context while creating or editing reusable configuration and category metadata. Create actions remain visible when a record is selected. Small forms use responsive, accessible modals with dirty-close warnings; the full product editor, category tree, Media grid and reviewed relationships retain their workspaces. Product creation uses a minimal category/Arabic-name overlay before client-side editor navigation. See [decision 014](decisions/014-admin-crud-modals.md) for concurrency, cache and contract tradeoffs.
 
 Updated: 2026-10-07.
 
-Category administration now uses a 350px recursive catalog tree beside selected-category details, with logical 20px nesting, 40px rows, subtle gold selection, disclosure separate from selection and contextual overflow ordering. Below 900px, Browse Categories opens a full-height drawer. Search retains ancestors, keyboard arrows follow locale direction, and in-memory expansion survives SPA navigation and CRUD. Root and subcategory creation have distinct actions and fixed parent context. See [decision 016](decisions/016-category-tree-workspace.md) and the [desktop workspace](assets/category-tree/workspace-desktop.png), [mobile details](assets/category-tree/detail-mobile.png), [Arabic tree](assets/category-tree/tree-mobile-ar.png) and [Sorani tree](assets/category-tree/tree-mobile-ckb.png). The pending category group migration is not represented as an implemented assignment workflow.
+Category administration now uses a 350px recursive catalog tree beside selected-category details, with logical 20px nesting, 40px rows, subtle gold selection, disclosure separate from selection and contextual overflow ordering. Below 900px, Browse Categories opens a full-height drawer. Search retains ancestors, keyboard arrows follow locale direction, and in-memory expansion survives SPA navigation and CRUD. Root and subcategory creation have distinct actions and fixed parent context. See [decision 016](decisions/016-category-tree-workspace.md) and the [desktop workspace](assets/category-tree/workspace-desktop.png), [mobile details](assets/category-tree/detail-mobile.png), [Arabic tree](assets/category-tree/tree-mobile-ar.png) and [Sorani tree](assets/category-tree/tree-mobile-ckb.png). Leaf group assignments are implemented in creation and reviewed editing.
 
 Normal visitor pages now load real Gateway/Catalog data, including category covers, bounded collections, search, dynamic public filters, eligible gallery/video associations and permitted technical-source PDFs. Demo content is an explicit fixture mode. The workspace composition below is retained, with shared hover/focus/pressed/selected states, keyboard overflow menus and reduced motion. Native local upload and delivery acceptance is recorded in the [functional integration report](implementation/functional-integration-completed-work.md); production provider gates remain separate.
 
@@ -138,7 +140,7 @@ ADMIN — simplified desktop layout shown in English/LTR
 │ Dashboard        │ Page heading / Breadcrumbs            │
 │ Categories       │                                       │
 │ Products         │ Filters / Primary action              │
-│ Product types    │                                       │
+│ Attribute groups │                                       │
 │ Attributes       │ Table, form or media library           │
 │ Attribute groups │                                       │
 │ Units            │ Validation / Conflict feedback        │
@@ -155,7 +157,6 @@ ADMIN — simplified desktop layout shown in English/LTR
 | Categories | Inline master/detail workspace with bounded recursive navigation, path breadcrumbs, translation fields, ready image cover, sibling-order controls, move review and branch-deletion preview |
 | Products | Bounded server-filtered table, publication/featured information, compact name/model identity, viewport-triggered cover thumbnails, context/status columns and overflow actions |
 | Product editor | Three zones: section rail / focused canvas / read-only summary. Overview, Translations, Specifications, Media and Visibility remain mounted; saves retain their existing independent contract boundaries |
-| Product types | Persistent master list beside inline details, metadata, assignments, groups, required/public/filterable settings and reviewed schema ordering |
 | Attributes | NUMBER, BOOLEAN, TEXT and CHOICE definitions; bounds, units, translated help, options and deprecation |
 | Attribute groups / Units | Focused editors for reusable grouping and unit metadata |
 | Media | Grid-first library, upload drawer with retained transfer state, loaded-page filename search, server kind/status filters and private asset inspector drawer |
@@ -163,7 +164,7 @@ ADMIN — simplified desktop layout shown in English/LTR
 
 ### Product editing workflow
 
-Staff choose a product type and category before the model code, enter independent Arabic/English/Sorani translations, and fill the form generated from the current backend schema. Arabic is required. Optional translations are not automatically copied or translated.
+Staff select a live leaf category before the optional model code, enter independent Arabic/English/Sorani translations, and fill the form generated from the current backend schema. Arabic is required. Optional translations are not automatically copied or translated.
 
 NUMBER values preserve precision as strings. BOOLEAN controls distinguish unset, true and false. TEXT and CHOICE controls follow backend constraints. Type changes show their impact before confirmation. Publication, basic content and Media have separate saves so one operation does not discard another draft.
 
@@ -281,7 +282,7 @@ PRODUCT EDITOR — desktop at 1300px and wider
 
 Below 1300px, Product summary opens as a read-only drawer. Below 1100px, shell navigation uses a drawer. Below 768px, section navigation is horizontal, fields stack and tables retain bounded horizontal scrolling. The public mobile header uses a 64px command row and 36px locale row; neither overlaps the demo notice. Arabic/Sorani preserve logical placement and field direction. Technical identifiers use directional isolation.
 
-Category navigation stays in the main canvas; focused modals handle creation and metadata editing. Move/delete impact reviews stay focused confirmations. Product types, attributes, groups and units retain bounded master lists and details, with permanent Create actions and focused creation/metadata overlays. Complex assignments remain in the workspace. These workspaces retain existing save, schema-impact and lifecycle rules.
+Category navigation stays in the main canvas; focused modals handle creation and metadata editing. Move/delete impact reviews stay focused confirmations. Attributes, groups and units use bounded tables, focused editing and optional usage inspectors, with permanent Create actions and focused creation/metadata overlays. Relationship edits use ordered multi-select dialogs and captured impact review. These workspaces retain existing save, schema-impact and lifecycle rules.
 
 Media drag/drop and earlier/later actions both operate on the actual global association order. Removing an association retains shared bytes. The library's filename search applies only to the loaded page, as its label states. Private grants, readiness/security checks and owner authorization remain authoritative.
 

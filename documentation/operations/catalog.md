@@ -1,5 +1,7 @@
 # Catalog category administration (B4)
 
+Historical B4 scope: current category creation also supports atomic ordered Group assignment, and configured leaves cannot receive children. See the [current model](../architecture/catalog-classification-model.md), [final implementation report](../implementation/final-catalog-admin-visitor-completed-work.md) and [current OpenAPI](../api/openapi.json) for supported commands. The authorization and retained branch-operation rules below still apply.
+
 Implemented locally on the existing four-database backend. Catalog uses its own Prisma client and runtime role. No database migration, dependency upgrade, frontend, product API or Media upload workflow is introduced. See [decision 005](../decisions/005-category-administration.md), [OpenAPI](../api/openapi.json), [local setup](backend-local.md) and [Identity setup](identity.md).
 
 ## Authorization and transport
@@ -135,3 +137,7 @@ Hosted CI, Docker deployment, production providers, load capacity, Media deliver
 ## Dynamic Catalog Core
 
 B4 category behavior remains as documented above. Ordinary product attributes now belong to explicit product types after reviewed v1.2 cutover. Category/product placement does not change type/values. Shared schema changes participate in relevant branch-deletion tokens. See the [dynamic configuration/product guide](dynamic-catalog.md) for guarded API examples, privacy, lifecycle, staged evolution and operator migration instructions.
+
+## Permanent deletion application switch
+
+The six-entity deletion policy supersedes the earlier soft-delete workflows for new deletion requests. Use the [deletion policy](../architecture/deletion-policy.md) and [rollout/recovery](deletion-recovery.md). The normal development profile has not yet applied the ownership-copy migration; do not infer installed-profile readiness from disposable fixture verification.

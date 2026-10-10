@@ -69,14 +69,19 @@ export interface TechnicalDocument {
   readonly media: MediaReference;
   readonly permitted: boolean;
 }
+export interface ProductNavigation {
+  readonly breadcrumbs: readonly { id: string; name: string }[];
+  readonly previous: { id: string; name: string } | null;
+  readonly next: { id: string; name: string } | null;
+}
 export interface Product {
+  readonly navigation?: ProductNavigation;
   readonly id: string;
   readonly categoryId: string;
   readonly name: string;
   readonly description: string;
   readonly model: string | null;
   readonly categoryName: string;
-  readonly productTypeName?: string;
   readonly media: readonly MediaReference[];
   readonly attributes: readonly TechnicalAttribute[];
   readonly documents: readonly TechnicalDocument[];
@@ -111,7 +116,6 @@ export interface ProductQuery {
   readonly categoryId?: string;
   readonly sort?: 'featured' | 'name';
   readonly page?: number;
-  readonly productTypeId?: string;
   readonly filters?: readonly PublicProductFilter[];
 }
 export interface CatalogDataSource {
@@ -199,6 +203,13 @@ const valueSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 const productSchema = z.object({
+  navigation: z
+    .object({
+      breadcrumbs: z.array(z.object({ id: z.string().uuid(), name: z.string() })),
+      previous: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
+      next: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
+    })
+    .optional(),
   id: z.string().uuid(),
   categoryId: z.string().uuid(),
   name: z.string(),
@@ -295,7 +306,6 @@ export class ApiCatalogDataSource implements CatalogDataSource {
         sort: query.sort ?? 'featured',
         ...(query.text?.trim() ? { search: query.text.trim() } : {}),
         ...(query.categoryId ? { category: query.categoryId } : {}),
-        ...(query.productTypeId ? { productType: query.productTypeId } : {}),
         ...(query.filters?.length ? { filters: JSON.stringify(query.filters) } : {}),
       },
       z.object({
@@ -341,6 +351,7 @@ export class ApiCatalogDataSource implements CatalogDataSource {
       description: p.description ?? '',
       model: p.modelCode,
       categoryName: p.categoryName,
+      ...(p.navigation ? { navigation: p.navigation } : {}),
       media: [
         ...p.media.filter((m) => m.assetId === p.coverAssetId),
         ...p.media.filter((m) => m.assetId !== p.coverAssetId),
@@ -433,3 +444,4 @@ export const catalogKeys = {
     ['catalog', source, locale, 'product', id] as const,
 };
 export * from './staff';
+export * from './deletion';

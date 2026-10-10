@@ -1,5 +1,7 @@
 # Golden Lift design system
 
+Relationship selectors use labeled native checkboxes, bounded search/pagination, ordered selections and keyboard Earlier/Later alternatives. Shared focused dialogs provide dirty-close review and captured-version impact confirmation. Existing GLFilterToolbar, GLPagination, semantic action menus, gold Save/Create, red destructive/close controls, RTL logical layout and reduced motion remain. Video thumbnails include a play icon and VIDEO badge. Current validation belongs to the [final phase report](implementation/final-catalog-admin-visitor-completed-work.md).
+
 Implemented 2026-10-05. The public web shell uses architectural charcoal, metallic neutrals, warm white and selective gold. The exact requested palette, semantic roles, spacing, typography, radii, shadows, motion and z-index values are exported by `@golden-lift/tokens`. Brand gold is #C9A15B; small gold-colored text uses the darker semantic `text.gold` to meet contrast requirements on white.
 
 ## Packages and ownership

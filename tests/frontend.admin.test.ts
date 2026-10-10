@@ -72,12 +72,11 @@ async function openCreate(page: Page) {
   const resource = new URL(page.url()).pathname.split('/')[2];
   const label: Record<string, string> = {
     attributes: 'Create Attribute',
-    'product-types': 'Create Product Type',
     'attribute-groups': 'Create Group',
     units: 'Create Unit',
     categories: 'Create Root Category',
   };
-  await page.getByRole('button', { name: label[resource!], exact: true }).click();
+  await page.getByRole('button', { name: label[resource!], exact: true }).first().click();
 }
 async function english(page: Page) {
   await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
@@ -220,6 +219,8 @@ async function reviewSnapshot(page: Page, name: string, target?: Locator) {
     });
     return;
   }
+  expect(test.info().project.ignoreSnapshots).toBe(false);
+  console.info('[visual comparison] ' + test.info().snapshotPath(name + '.png'));
   await expect(surface).toHaveScreenshot(name + '.png', {
     animations: 'disabled',
     mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
@@ -245,7 +246,7 @@ test('anonymous redirect, real login, role separation and logout', async ({ page
   await page.goto('/admin/categories');
   await expect(page.getByRole('alert')).toContainText('permission');
 });
-test('category and type create, independent translations, product editor, publication and stale version', async ({
+test('category groups create, independent translations, product editor, publication and stale version', async ({
   page,
 }) => {
   await login(page, fixture.adminEmail);
@@ -267,18 +268,6 @@ test('category and type create, independent translations, product editor, public
   await expect(
     page.getByRole('link', { name: 'Browser category English', exact: true }),
   ).toBeVisible();
-  await page.goto('/admin/product-types');
-  await openCreate(page);
-  dialog = page.getByRole('dialog').last();
-  await dialog.getByLabel('Code', { exact: true }).fill('browser-type');
-  await translation(dialog, 'ar', 'Browser type Arabic');
-  await translation(dialog, 'en', 'Browser type English');
-  await reviewSnapshot(page, 'admin-type-editor');
-  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Browser type English', exact: true })).toBeVisible();
-  const typeHref = await page
-    .getByRole('link', { name: 'Browser type English', exact: true })
-    .getAttribute('href');
   await page.goto('/admin/attributes');
   await openCreate(page);
   dialog = page.getByRole('dialog').last();
@@ -295,44 +284,36 @@ test('category and type create, independent translations, product editor, public
   await expect(
     page.getByRole('link', { name: 'Browser capacity English', exact: true }),
   ).toBeVisible();
-  await page.goto(typeHref!);
-  await page.getByLabel('Attributes', { exact: true }).click();
-  await page.getByRole('option', { name: 'browser-capacity', exact: true }).click();
-  await page.getByLabel('Required', { exact: true }).check();
-  await page.getByLabel('Public', { exact: true }).check();
-  await page.getByLabel('Filterable', { exact: true }).check();
-  await page.getByRole('button', { name: 'Assign attribute', exact: true }).click();
-  await page
-    .getByRole('dialog')
-    .last()
-    .getByRole('button', { name: 'Apply reviewed change', exact: true })
-    .click();
-  await expect(
-    page
-      .locator('main section')
-      .filter({ has: page.getByRole('heading', { name: 'Schema', exact: true }) }),
-  ).toContainText('browser-capacity · Required');
-  await page.goto('/admin/products/new');
-  await translation(page, 'ar', 'Browser product Arabic');
-  await translation(page, 'en', 'Browser product English');
-  await editorSection(page, 'Overview');
-  await page.getByRole('button', { name: /^Browse categories:/ }).click();
-  dialog = page.getByRole('dialog').last();
-  await dialog
-    .getByRole('row')
-    .filter({ hasText: 'Browser category English' })
-    .getByRole('button', { name: 'Select', exact: true })
-    .click();
-  await page.getByRole('combobox', { name: 'Type', exact: true }).click();
-  await page.getByRole('option', { name: 'Browser type English', exact: true }).click();
+  const attributeId = new URL(
+    (await page
+      .getByRole('link', { name: 'Browser capacity English', exact: true })
+      .getAttribute('href'))!,
+    'http://localhost',
+  ).pathname
+    .split('/')
+    .pop()!;
+  const group = await catalogRequest(page, '/admin/attribute-groups', {
+    code: 'browser-group',
+    translations: [{ locale: 'ar', name: 'Browser group', description: null }],
+    attributeIds: [attributeId],
+  });
+  const categoryRows = await catalogRequest(page, '/admin/categories?locale=en&limit=100');
+  const category = categoryRows.items.find(
+    (row: { name: string }) => row.name === 'Browser category English',
+  );
+  await replaceMemberships(page, 'categories', category.id, [group.id]);
+  await createDraftProduct(
+    page,
+    'Browser category English',
+    'Browser product Arabic',
+    'Browser product English',
+  );
   await editorSection(page, 'Specifications');
-  await page.getByLabel('Browser capacity English *', { exact: true }).fill('0.000001');
-  await editorSection(page, 'Media');
-  await page.getByRole('button', { name: 'Cover image', exact: true }).click();
-  dialog = page.getByRole('dialog').last();
-  await dialog.getByRole('button', { name: 'Select', exact: true }).click();
+  await page.getByLabel('Browser capacity English', { exact: true }).fill('0.000001');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}$/);
+  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await setFixtureCover(page);
+  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}(?:\?.*)?$/);
   await expect(page.getByLabel('Name (en)', { exact: true })).toHaveValue(
     'Browser product English',
   );
@@ -360,7 +341,7 @@ test('category and type create, independent translations, product editor, public
   await page.getByLabel('Active', { exact: true }).check();
   await page.getByRole('button', { name: 'Save — Publication', exact: true }).click();
   await expect(page.locator('.gl-toast')).toContainText('Saved');
-  const productId = page.url().split('/').at(-1)!;
+  const productId = new URL(page.url()).pathname.split('/').at(-1)!;
   productHref = '/admin/products/' + productId;
   const publicResponse = await page.request.get(
     `http://localhost:3000/api/v1/products/${productId}?locale=en`,
@@ -369,7 +350,7 @@ test('category and type create, independent translations, product editor, public
   expect((await publicResponse.json()).name).toBe('Browser product English');
   await page.reload();
   await editorSection(page, 'Specifications');
-  await expect(page.getByLabel('Browser capacity English *', { exact: true })).toHaveValue(
+  await expect(page.getByLabel('Browser capacity English', { exact: true })).toHaveValue(
     '0.000001',
   );
   const persisted = await fixture.persistence(productId);
@@ -390,8 +371,11 @@ test('category and type create, independent translations, product editor, public
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('changed');
   await expect(page.getByLabel('Name (en)', { exact: true })).toHaveValue('Unsaved stale draft');
-  page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Reload latest', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Leave without saving', exact: true })
+    .click();
   await expect(page.getByLabel('Name (en)', { exact: true })).toHaveValue(
     'Browser product English',
   );
@@ -414,7 +398,7 @@ test('category and type create, independent translations, product editor, public
   });
   await rowActions.click();
   await expect(
-    page.getByRole('group', { name: 'Actions — Browser product English', exact: true }),
+    page.getByRole('menu', { name: 'Actions — Browser product English', exact: true }),
   ).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(rowActions).toBeFocused();
@@ -485,7 +469,7 @@ test('real upload parts, completion, processing feedback and controlled private 
     .locator('.gl-admin-toolbar')
     .filter({ has: page.locator('bdi').filter({ hasText: assetId }) });
   await association.getByRole('button', { name: 'Actions', exact: true }).click();
-  await association.getByRole('button', { name: 'Move earlier', exact: true }).click();
+  await association.getByRole('menuitem', { name: 'Move earlier', exact: true }).click();
   const tiles = media.locator('[draggable="true"]');
   await expect(tiles).toHaveCount(2);
   await tiles.first().dragTo(tiles.last());
@@ -501,7 +485,7 @@ test('real upload parts, completion, processing feedback and controlled private 
     )
     .toBeGreaterThan(0);
   await association.getByRole('button', { name: 'Actions', exact: true }).click();
-  await association.getByRole('button', { name: 'Detach', exact: true }).click();
+  await association.getByRole('menuitem', { name: 'Detach', exact: true }).click();
   const detached = page.waitForResponse(
     (response) => response.url().endsWith('/media') && response.request().method() === 'POST',
   );
@@ -649,6 +633,8 @@ test('published Admin content is real on public pages, filters persist and Media
   const detail = await page.request.get(`http://localhost:3000/api/v1/products/${id}?locale=en`);
   expect(detail.status()).toBe(200);
   const product = await detail.json();
+  expect(product).not.toHaveProperty('productType');
+  expect(product).not.toHaveProperty('productTypeName');
   expect(product.media.some((m: { kind: string }) => m.kind === 'VIDEO')).toBe(true);
   expect(product.media.some((m: { kind: string }) => m.kind === 'PDF')).toBe(false);
   const persistedMedia = (await fixture.persistence(id)).media;
@@ -679,7 +665,11 @@ test('published Admin content is real on public pages, filters persist and Media
     await expect(
       page.getByRole('heading', { level: 1, name: 'Browser product English' }),
     ).toBeVisible();
-    await expect(page.getByText('Browser type English', { exact: true })).toBeVisible();
+    await expect(
+      page
+        .locator('.gl-breadcrumb')
+        .getByRole('link', { name: 'Browser category English', exact: true }),
+    ).toBeVisible();
     await expect
       .poll(() =>
         page
@@ -687,7 +677,7 @@ test('published Admin content is real on public pages, filters persist and Media
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);
-    await page.getByRole('tab', { name: /Specifications/ }).click();
+    await page.getByRole('tab', { name: 'Specifications', exact: true }).click();
     await expect(page.locator('.gl-product-dossier .gl-specifications')).toContainText('0.000001');
     expect(
       await page.evaluate(
@@ -713,6 +703,10 @@ test('published Admin content is real on public pages, filters persist and Media
     .getByRole('button', { name: 'Open', exact: true })
     .click();
   expect((await documentGrant).status()).toBe(200);
+  await page
+    .getByRole('button', { name: /^Product video —/ })
+    .first()
+    .click();
   const video = page.locator('video').last();
   await video.scrollIntoViewIfNeeded();
   await expect
@@ -764,16 +758,23 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
     .getByRole('tree')
     .getByRole('button', { name: 'Actions — Browser child', exact: true })
     .click();
-  const childRow = page.getByRole('group', { name: 'Actions — Browser child', exact: true });
-  const earlier = childRow.getByRole('button', { name: 'Move earlier', exact: true });
+  const childRow = page.getByRole('menu', { name: 'Actions — Browser child', exact: true });
+  const earlier = childRow.getByRole('menuitem', { name: 'Move earlier', exact: true });
   await (
     (await earlier.isEnabled())
       ? earlier
-      : childRow.getByRole('button', { name: 'Move later', exact: true })
+      : childRow.getByRole('menuitem', { name: 'Move later', exact: true })
   ).click();
   await expect(page.locator('.gl-toast')).toContainText('Saved');
   await page.goto(child);
-  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: 'Actions — Browser child', exact: true })
+    .click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('menuitem', { name: 'Edit', exact: true })
+    .click();
   await page.getByRole('dialog').last().getByRole('tab', { name: 'English', exact: true }).click();
   await page
     .getByRole('dialog')
@@ -790,7 +791,7 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
     .click();
   await page
     .locator('.gl-category-detail')
-    .getByRole('button', { name: 'Move', exact: true })
+    .getByRole('menuitem', { name: 'Move', exact: true })
     .click();
   await page
     .getByRole('dialog')
@@ -812,7 +813,7 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
     .click();
   await page
     .locator('.gl-category-detail')
-    .getByRole('button', { name: 'Delete', exact: true })
+    .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
   await expect(page.getByRole('dialog').last()).toContainText('Categories: 2');
   await page
@@ -841,16 +842,14 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   const translations = page.getByRole('dialog', { name: 'Edit', exact: true });
   await translation(translations, 'en', 'Browser choice edited');
-  page.once('dialog', (prompt) => prompt.accept());
-  await translations.getByRole('button', { name: 'Close', exact: true }).click();
-  await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
+  await translations.getByRole('button', { name: 'Add choice option', exact: true }).click();
   dialog = page.getByRole('dialog').last();
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option');
   await translation(dialog, 'ar', 'Browser option Arabic');
   await translation(dialog, 'en', 'Browser option English');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByText('Browser option English', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
+  await expect(translations.getByText('Browser option English', { exact: true })).toBeVisible();
+  await translations.getByRole('button', { name: 'Add choice option', exact: true }).click();
   dialog = page.getByRole('dialog').last();
   await expect(dialog.getByLabel('Code', { exact: true })).toHaveValue('');
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option');
@@ -859,27 +858,28 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(dialog).toContainText('This option code already exists');
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Add choice option', exact: true }).click();
+  await translations.getByRole('button', { name: 'Add choice option', exact: true }).click();
   await expect(dialog.getByLabel('Code', { exact: true })).toHaveValue('browser-option');
   await expect(dialog.getByLabel('Name (en)', { exact: true })).toHaveValue(
     'Second option English',
   );
   await dialog.getByLabel('Code', { exact: true }).fill('browser-option-two');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByText('Second option English', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await expect(translations.getByText('Second option English', { exact: true })).toBeVisible();
   await expect(translations.getByLabel('Name (en)', { exact: true })).toHaveValue(
     'Browser choice edited',
   );
   await page.getByRole('button', { name: 'Save', exact: true }).filter({ visible: true }).click();
   await page
-    .getByRole('dialog')
-    .last()
+    .getByRole('dialog', { name: 'Review change impact', exact: true })
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
-  await expect(page.getByRole('dialog').last()).not.toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Review change impact', exact: true }),
+  ).not.toBeVisible();
   const option = page
-    .locator('main section > div')
+    .getByRole('dialog', { name: 'browser-choice', exact: true })
+    .locator('section > div')
     .filter({ has: page.locator('summary').filter({ hasText: /^Edit — browser-option$/ }) });
   await option.locator('summary').click();
   await translation(option, 'en', 'Browser option edited');
@@ -889,7 +889,7 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
     .last()
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
-  await expect(page.getByText('Browser option edited', { exact: true })).toBeVisible();
+  await expect(option.getByText('Browser option edited', { exact: true })).toBeVisible();
   await option.getByRole('button', { name: 'Delete', exact: true }).click();
   await page
     .getByRole('dialog')
@@ -898,9 +898,14 @@ test('choice options preserve definition drafts and reviewed deletion uses curre
     .click();
   await expect(option).not.toBeVisible();
   await page
-    .getByRole('region', { name: 'State', exact: true })
-    .getByRole('button', { name: 'Delete', exact: true })
+    .getByRole('dialog', { name: 'browser-choice', exact: true })
+    .getByRole('button', { name: 'Close', exact: true })
     .click();
+  const definitionRow = page.getByRole('row').filter({ hasText: 'browser-choice' });
+  await definitionRow
+    .getByRole('button', { name: 'Actions — browser-choice', exact: true })
+    .click();
+  await definitionRow.getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await page
     .getByRole('dialog')
     .last()
@@ -1055,8 +1060,7 @@ test('units, groups and three translated choice options persist through assignme
     await editor.getByLabel('Symbol', { exact: true }).fill('mm');
     await editor.getByLabel('Dimension', { exact: true }).fill('length');
   });
-  await create('attribute-groups', 'workflow-group', 'Workflow group');
-  const type = await create('product-types', 'workflow-type', 'Workflow type');
+  const group = await create('attribute-groups', 'workflow-group', 'Workflow group');
   await create('attributes', 'workflow-number', 'Workflow number', async (editor) => {
     await editor.getByRole('combobox', { name: 'Unit', exact: true }).click();
     await page.getByRole('option', { name: 'workflow-mm (mm)', exact: true }).click();
@@ -1084,82 +1088,76 @@ test('units, groups and three translated choice options persist through assignme
     for (const language of ['ar', 'en', 'ckb'] as const)
       await translation(dialog, language, `Workflow option ${index} ${language}`);
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(page.getByText(`Workflow option ${index} en`, { exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole('dialog', { name: 'workflow-choice', exact: true })
+        .getByText(`Workflow option ${index} en`, { exact: true }),
+    ).toBeVisible();
   }
   const option = page
-    .locator('main section > div')
+    .getByRole('dialog', { name: 'workflow-choice', exact: true })
+    .locator('section > div')
     .filter({ has: page.locator('summary').filter({ hasText: 'workflow-option-3' }) });
   await option.locator('summary').click();
   await option.getByLabel('Sort order', { exact: true }).fill('-1');
   await option.getByRole('button', { name: 'Save', exact: true }).click();
   await page
-    .getByRole('dialog')
-    .last()
+    .getByRole('dialog', { name: 'Review change impact', exact: true })
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
-  await expect(page.getByRole('dialog').last()).not.toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Review change impact', exact: true }),
+  ).not.toBeVisible();
   await page.reload();
   await option.locator('summary').click();
   await expect(option.getByLabel('Sort order', { exact: true })).toHaveValue('-1');
   async function confirm() {
     await page
-      .getByRole('dialog')
-      .last()
+      .getByRole('dialog', { name: 'Review change impact', exact: true })
       .getByRole('button', { name: 'Apply reviewed change', exact: true })
       .click();
-    await expect(page.getByRole('dialog').last()).not.toBeVisible();
+    await expect(
+      page.getByRole('dialog', { name: 'Review change impact', exact: true }),
+    ).not.toBeVisible();
   }
-  await page.goto(type);
-  await page.getByLabel('Attribute groups', { exact: true }).click();
-  await page.getByRole('option', { name: 'workflow-group', exact: true }).click();
-  await page.getByRole('button', { name: 'Group', exact: true }).click();
-  await confirm();
-  for (const code of ['workflow-number', 'workflow-choice']) {
-    await page.getByLabel('Attributes', { exact: true }).click();
-    await page.getByRole('option', { name: code, exact: true }).click();
-    await page.getByRole('combobox', { name: 'Group', exact: true }).click();
-    await page.getByRole('option', { name: 'workflow-group', exact: true }).click();
-    await page.getByRole('checkbox', { name: 'Required', exact: true }).check();
-    await page.getByRole('checkbox', { name: 'Public', exact: true }).check();
-    await page.getByRole('checkbox', { name: 'Filterable', exact: true }).check();
-    await page.getByRole('button', { name: 'Assign attribute', exact: true }).click();
-    await confirm();
-  }
-  await page.goto('/admin/products/new');
-  await translation(page, 'ar', 'Workflow product Arabic');
-  await translation(page, 'en', 'Workflow product English');
-  await editorSection(page, 'Overview');
-  await page.getByRole('button', { name: /^Browse categories:/ }).click();
-  await page
-    .getByRole('dialog')
-    .last()
-    .getByRole('row')
-    .filter({ hasText: 'Workflow category English' })
-    .getByRole('button', { name: 'Select', exact: true })
-    .click();
-  await page.getByLabel('Type', { exact: true }).click();
-  await page.getByRole('option', { name: 'Workflow type English', exact: true }).click();
+  const attributes = await catalogRequest(page, '/admin/attributes?limit=100');
+  const definitions = attributes.items.filter((row: { code: string }) =>
+    ['workflow-number', 'workflow-choice'].includes(row.code),
+  );
+  await replaceMemberships(
+    page,
+    'attribute-groups',
+    group.split('/').pop()!,
+    definitions.map((row: { id: string }) => row.id),
+  );
+  const categories = await catalogRequest(page, '/admin/categories?locale=en&limit=100');
+  const category = categories.items.find(
+    (row: { name: string }) => row.name === 'Workflow category English',
+  );
+  await replaceMemberships(page, 'categories', category.id, [group.split('/').pop()!]);
+  await createDraftProduct(
+    page,
+    'Workflow category English',
+    'Workflow product Arabic',
+    'Workflow product English',
+  );
   await editorSection(page, 'Specifications');
   await expect(page.getByText('Workflow group English', { exact: true })).toBeVisible();
-  await page.getByLabel('Workflow number English * (mm)', { exact: true }).fill('0.000001');
-  await page.getByLabel('Workflow choice English *', { exact: true }).click();
+  await page.getByLabel('Workflow number English (mm)', { exact: true }).fill('0.000001');
+  await page.getByRole('combobox', { name: 'Workflow choice English', exact: true }).click();
   await page.getByRole('option', { name: 'Workflow option 3 en', exact: true }).click();
-  await editorSection(page, 'Media');
-  await page.getByRole('button', { name: 'Cover image', exact: true }).click();
-  await page
-    .getByRole('dialog')
-    .last()
-    .locator('.gl-admin-media section')
-    .filter({ hasText: 'Browser fixture image.png' })
-    .getByRole('button', { name: 'Select', exact: true })
-    .click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}$/);
+  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await setFixtureCover(page);
+  await editorSection(page, 'Visibility');
+  await page.getByLabel('Active', { exact: true }).check();
+  await page.getByRole('button', { name: 'Save — Publication', exact: true }).click();
+  await expect(page.locator('.gl-toast')).toContainText('Saved');
   const href = new URL(page.url()).pathname,
     id = href.split('/').at(-1)!;
   await page.reload();
   await editorSection(page, 'Specifications');
-  await expect(page.getByLabel('Workflow choice English *', { exact: true })).toContainText(
+  await expect(page.getByLabel('Workflow choice English', { exact: true })).toContainText(
     'Workflow option 3 en',
   );
   const state = await fixture.persistence(id);
@@ -1181,23 +1179,26 @@ test('units, groups and three translated choice options persist through assignme
   ).toBe(true);
   await page.goto(choice);
   const retained = page
-    .locator('main section > div')
+    .getByRole('dialog', { name: 'workflow-choice', exact: true })
+    .locator('section > div')
     .filter({ has: page.locator('summary').filter({ hasText: 'workflow-option-3' }) });
   await retained.getByRole('button', { name: 'Deprecated', exact: true }).click();
   await confirm();
   await page.goto(href);
   await editorSection(page, 'Specifications');
-  await expect(page.getByLabel('Workflow choice English *', { exact: true })).toContainText(
+  await expect(page.getByLabel('Workflow choice English', { exact: true })).toContainText(
     'Workflow option 3 en',
   );
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.gl-toast')).toContainText('Saved');
-  await page.goto('/admin/products/new');
-  await editorSection(page, 'Overview');
-  await page.getByLabel('Type', { exact: true }).click();
-  await page.getByRole('option', { name: 'Workflow type English', exact: true }).click();
+  await createDraftProduct(
+    page,
+    'Workflow category English',
+    'Fresh workflow Arabic',
+    'Fresh workflow English',
+  );
   await editorSection(page, 'Specifications');
-  await page.getByLabel('Workflow choice English *', { exact: true }).click();
+  await page.getByLabel('Workflow choice English', { exact: true }).click();
   await expect(page.getByRole('option', { name: /Workflow option 3 en/ })).toHaveCount(0);
 });
 
@@ -1324,3 +1325,47 @@ test('Super Admin invitation, disable/enable, session revocation and retained de
     await adminContext.close();
   }
 });
+
+async function catalogRequest(page: Page, path: string, data?: unknown) {
+  const session = await (
+    await page.request.get('http://localhost:3000/api/v1/auth/session')
+  ).json();
+  const response = await page.request.fetch('http://localhost:3000/api/v1' + path, {
+    method: data ? 'POST' : 'GET',
+    headers: { origin: 'http://localhost:8082', 'x-csrf-token': session.csrfToken },
+    ...(data ? { data } : {}),
+  });
+  expect(response.status(), await response.text()).toBeLessThan(300);
+  return response.json();
+}
+async function replaceMemberships(page: Page, resource: string, id: string, orderedIds: string[]) {
+  const path = '/admin/' + resource + '/' + id + '/memberships';
+  const state = await catalogRequest(page, path);
+  const input = { orderedIds, expectedVersion: state.version };
+  const impact = await catalogRequest(page, path + '/preview', input);
+  expect(impact.blockers).toEqual([]);
+  await catalogRequest(page, path, { ...input, precondition: impact.precondition, confirm: true });
+}
+async function createDraftProduct(page: Page, category: string, ar: string, en: string) {
+  await page.goto('/admin/products/new');
+  const modal = page.getByRole('dialog', { name: 'Create Product', exact: true });
+  await modal.getByRole('button', { name: /Browse categories/ }).click();
+  await page.getByRole('dialog').last().getByRole('link', { name: category, exact: true }).click();
+  await translation(modal, 'ar', ar);
+  await translation(modal, 'en', en);
+  await modal.locator('button[type=submit]').click();
+  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}(?:\?.*)?$/);
+}
+async function setFixtureCover(page: Page) {
+  await editorSection(page, 'Media');
+  await page.getByRole('button', { name: 'Cover image', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .last()
+    .locator('.gl-admin-media section')
+    .filter({ hasText: 'Browser fixture image.png' })
+    .getByRole('button', { name: 'Select', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save — Media', exact: true }).click();
+  await expect(page.locator('.gl-toast')).toContainText('Saved');
+}

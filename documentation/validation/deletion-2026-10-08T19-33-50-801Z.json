@@ -1,0 +1,86 @@
+{
+  "recordedAt": "2026-10-08T19:33:50.801Z",
+  "acceptance": "FAIL",
+  "reason": "Retained-reference compatibility decision, obsolete-path contraction and production provider acceptance remain open.",
+  "checks": {
+    "serviceBuild": "PASS",
+    "storefrontDefaultBuild": "PASS",
+    "typecheck": "PASS",
+    "formatAndArchitecture": "PASS",
+    "architectureSources": 245,
+    "architectureProbes": 14,
+    "unit": {
+      "passed": 41,
+      "failed": 0
+    },
+    "affectedPostgresAndHttp": {
+      "passed": 65,
+      "failed": 0
+    },
+    "targetedDeletion": {
+      "passed": 14,
+      "failed": 0
+    },
+    "browser": {
+      "startTime": "2026-10-08T19:30:52.058Z",
+      "durationMs": 25248.352000000003,
+      "expected": 3,
+      "unexpected": 0,
+      "skipped": 0,
+      "coverage": [
+        "Product owned file cleanup through signed local HTTP relays",
+        "Direct Media stale-impact rejection and Category cover cleanup",
+        "Category Product blocker and empty Category deletion",
+        "Attribute owned values and memberships",
+        "Group last-supplier reachability preservation",
+        "Unit all-reference blocking and unused delete",
+        "390px English/Arabic/Kurdish deletion dialogs"
+      ]
+    },
+    "prismaSqlParity": {
+      "profiles": [
+        "disposable",
+        "installed default local"
+      ],
+      "models": 71,
+      "columns": 714,
+      "foreignKeys": 76
+    }
+  },
+  "normalRollout": {
+    "migrations": [
+      27,
+      28,
+      29
+    ],
+    "holdersCopied": 28,
+    "sharedSourceAssets": 6,
+    "productsPreserved": 11,
+    "categoriesPreserved": 15,
+    "assetsAfter": 38,
+    "variantsAfter": 154,
+    "uploadSessionsPreserved": 10,
+    "sourceObjectsRetained": true,
+    "backup": ".local/deletion-backups/2026-10-08T19-29-22-541Z",
+    "writers": "No active Catalog/Media application clients; no automatic application restart.",
+    "initialCopyAttempt": "Stopped before owner switching because pg hides its password property. Corrected explicit lock-pool credential copying, added real explicit-credential pool regression, rebuilt and resumed the stable manifest successfully."
+  },
+  "failureTests": [
+    "Storage purge failure retains metadata/retryable state; replay converges",
+    "Duplicate cleanup delivery is idempotent",
+    "Pending deletion fences authorized/fresh storage writes",
+    "Attribute business event and deletion roll back atomically",
+    "Impact-to-delete dependency change rejects deletion",
+    "Stale version rejects deletion",
+    "Pending Category rejects new Products and children",
+    "Four concurrent storage locks finalize through a one-connection transaction pool"
+  ],
+  "unverified": [
+    "Retained FK-holder archive policy",
+    "Removal of legacy compatibility helpers/runtime grants",
+    "Production RabbitMQ",
+    "Production S3 versioned/object-lock policies",
+    "Hosted CI",
+    "Deployment"
+  ]
+}

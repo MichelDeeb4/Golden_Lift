@@ -1,4 +1,5 @@
-import { Plus, FilterX, Save, Search } from '@golden-lift/icons';
+import { DeletionDialog } from './deletion';
+import { Plus, FilterX, Save, Search, Trash2 } from '@golden-lift/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -28,7 +29,6 @@ import {
   GLActionMenu,
   GLFilterToolbar,
   GLDrawer,
-  GLConfirmDialog,
   GLWorkspace,
   GLWorkspacePanel,
 } from '@golden-lift/ui';
@@ -36,7 +36,6 @@ import { useStaffApi, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
   ActionFeedback,
-  Confirm,
   TableState,
   TranslationFields,
   emptyTranslations,
@@ -65,7 +64,6 @@ export function Products({ create = false }: { create?: boolean } = {}) {
     params = useLocalSearchParams<{
       text?: string;
       active?: string;
-      productTypeId?: string;
       categoryId?: string;
       cursor?: string;
       sort?: string;
@@ -75,7 +73,6 @@ export function Products({ create = false }: { create?: boolean } = {}) {
   const [categoryFilter, setCategoryFilter] = useState(false);
   const [creating, setCreating] = useState(create);
   const [deleteTarget, setDeleteTarget] = useState<z.infer<typeof productRowSchema> | null>(null);
-  const deleteAction = useAction('products');
   useEffect(() => setText(params.text ?? ''), [params.text]);
   const pagination = useAdminPagination('cursor');
   const search = new URLSearchParams({
@@ -182,7 +179,6 @@ export function Products({ create = false }: { create?: boolean } = {}) {
               active: '',
               featured: '',
               sort: '',
-              productTypeId: '',
               categoryId: '',
               cursor: '',
             });
@@ -259,34 +255,13 @@ export function Products({ create = false }: { create?: boolean } = {}) {
           ])}
         />
       </TableState>
-      <GLConfirmDialog
-        open={Boolean(deleteTarget)}
-        title={t('remove')}
-        onClose={() => setDeleteTarget(null)}
-        pending={deleteAction.isPending}
-        cancelLabel={t('cancel')}
-        confirmLabel={t('remove')}
-        onConfirm={() => {
-          if (!deleteTarget) return;
-          const target = deleteTarget;
-          deleteAction.mutate(
-            () =>
-              api.request(
-                '/admin/products/' + target.id,
-                z.undefined(),
-                { expectedVersion: target.version, confirmed: true },
-                'DELETE',
-              ),
-            { onSuccess: () => setDeleteTarget(null) },
-          );
-        }}
-      >
-        <p>
-          <strong>{deleteTarget?.name}</strong>
-        </p>
-        <p>{t('noRestore')}</p>
-        <ActionFeedback action={deleteAction} />
-      </GLConfirmDialog>
+      {deleteTarget && (
+        <DeletionDialog
+          path={'/admin/products/' + deleteTarget.id}
+          scope="products"
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
       <AdminPagination
         pagination={pagination}
         data={rows.data}
@@ -311,6 +286,15 @@ export function Products({ create = false }: { create?: boolean } = {}) {
   );
 }
 type Managed = z.infer<typeof managedProductSchema>;
+const placementImpactSchema = z.object({
+  precondition: z.string(),
+  sharedAttributeIds: z.array(z.string()),
+  addedAttributeIds: z.array(z.string()),
+  removedAttributeIds: z.array(z.string()),
+  retainedValueCount: z.string(),
+  nonApplicableValueCount: z.string(),
+  blockers: z.array(z.string()),
+});
 function CollectionCover({ assetId }: { assetId: string }) {
   return (
     <div className="gl-collection-cover">
@@ -319,6 +303,7 @@ function CollectionCover({ assetId }: { assetId: string }) {
   );
 }
 export function ProductEditor({ id }: { id: string }) {
+  const [deleteMediaId, setDeleteMediaId] = useState<string | null>(null);
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const api = useStaffApi(),
     { locale } = useLocale(),
@@ -335,6 +320,16 @@ export function ProductEditor({ id }: { id: string }) {
     [values, setValues] = useState<Record<string, AttributeValue>>({}),
     [errors, setErrors] = useState<string[]>([]),
     [categoryOpen, setCategoryOpen] = useState(false),
+    [placementReview, setPlacementReview] = useState<{
+      input: {
+        categoryId: string;
+        expectedVersion: string;
+        expectedSchemaRevision: string;
+        expectedCategoryVersion: string;
+      };
+      impact: z.infer<typeof placementImpactSchema>;
+      name: string;
+    } | null>(null),
     [mediaOpen, setMediaOpen] = useState(false),
     [coverPicking, setCoverPicking] = useState(false),
     [pickKind, setPickKind] = useState<'IMAGE' | 'VIDEO' | 'PDF' | undefined>(undefined),
@@ -469,7 +464,11 @@ export function ProductEditor({ id }: { id: string }) {
       ...(cover ? { coverAssetId: cover } : {}),
       modelCode: model.trim() || null,
       values: [
-        ...Object.entries(values).map(([definitionId, value]) => ({ definitionId, value })),
+        ...Object.entries(values)
+          .filter(([definitionId]) =>
+            schema.data.form.fields.some((field) => field.definitionId === definitionId),
+          )
+          .map(([definitionId, value]) => ({ definitionId, value })),
         ...(id
           ? loaded!.values
               .filter((value) => !values[value.definitionId])
@@ -661,6 +660,35 @@ export function ProductEditor({ id }: { id: string }) {
                   />
                 )}
               </GLFormSection>
+              {schema.data?.form.nonApplicableValues?.some(
+                (field) => values[field.definitionId],
+              ) && (
+                <GLFormSection
+                  title={t('nonApplicableValues')}
+                  description={t('nonApplicableHelp')}
+                >
+                  {schema.data.form.nonApplicableValues
+                    .filter((field) => values[field.definitionId])
+                    .map((field) => (
+                      <div className="gl-admin-toolbar" key={field.definitionId}>
+                        <span>{field.label}</span>
+                        <GLButton
+                          variant="destructive"
+                          onClick={() =>
+                            setValues((previous) => {
+                              const next = { ...previous };
+                              delete next[field.definitionId];
+                              return next;
+                            })
+                          }
+                        >
+                          <Trash2 size={18} />
+                          {t('remove')} — {field.label}
+                        </GLButton>
+                      </div>
+                    ))}
+                </GLFormSection>
+              )}
             </GLWorkspacePanel>
             {(!id || ['overview', 'content', 'specifications'].includes(section)) && (
               <GLActionBar>
@@ -852,12 +880,11 @@ export function ProductEditor({ id }: { id: string }) {
                                     onSelect: () => setCover(item.assetId),
                                   },
                                   {
-                                    label: t('detach'),
+                                    label: t('remove'),
                                     icon: 'delete',
-                                    disabled: item.assetId === cover,
+
                                     destructive: true,
-                                    onSelect: () =>
-                                      setMedia(media.filter((m) => m.assetId !== item.assetId)),
+                                    onSelect: () => setDeleteMediaId(item.assetId),
                                   },
                                 ]}
                               />
@@ -934,64 +961,7 @@ export function ProductEditor({ id }: { id: string }) {
                       }}
                     />
                   </div>
-                  <div className="gl-product-danger">
-                    {' '}
-                    <Confirm
-                      scope="products"
-                      entityName={
-                        loaded.translations.find((row) => row.locale === locale)?.name ??
-                        loaded.modelCode ??
-                        loaded.id
-                      }
-                      title={t('remove')}
-                      work={() =>
-                        api
-                          .request(
-                            `/admin/products/${id}`,
-                            z.undefined(),
-                            { expectedVersion: loaded.version, confirmed: true },
-                            'DELETE',
-                          )
-                          .then(() => {
-                            let filters: Record<string, string> = {};
-                            try {
-                              const destination = new URL(
-                                returnTo ?? '/admin/products',
-                                window.location.origin,
-                              );
-                              if (
-                                destination.origin === window.location.origin &&
-                                destination.pathname === '/admin/products'
-                              )
-                                filters = Object.fromEntries(
-                                  [...destination.searchParams].filter(([key]) =>
-                                    [
-                                      'text',
-                                      'active',
-                                      'featured',
-                                      'productTypeId',
-                                      'categoryId',
-                                      'cursor',
-                                      'sort',
-                                    ].includes(key),
-                                  ),
-                                );
-                            } catch {
-                              filters = {};
-                            }
-                            router.replace({
-                              pathname: '/admin/[...path]',
-                              params: {
-                                ...filters,
-                                path: ['products'],
-                              },
-                            });
-                          })
-                      }
-                    >
-                      {t('confirmDelete')}
-                    </Confirm>
-                  </div>
+
                   <GLActionBar>
                     <span>
                       {visibilityDirty ? t('dirty') : t('saved')} ? {t('sectionSaveHelp')}
@@ -1020,6 +990,18 @@ export function ProductEditor({ id }: { id: string }) {
           )}
         </GLWorkspace>
       )}
+      {deleteMediaId && (
+        <DeletionDialog
+          path={'/admin/media/assets/' + deleteMediaId}
+          scope="media"
+          onClose={() => setDeleteMediaId(null)}
+          onAccepted={() => {
+            void api
+              .request(`/admin/products/${id}/management`, managedProductSchema)
+              .then((product) => acceptSection(product, 'media'));
+          }}
+        />
+      )}
       <GLModal open={categoryOpen} onClose={() => setCategoryOpen(false)} title={t('category')}>
         <CategoryPicker
           leaf
@@ -1027,20 +1009,24 @@ export function ProductEditor({ id }: { id: string }) {
             if (!selected) return;
             if (id && loaded) {
               if ((dirty || form.formState.isDirty) && !(await confirmDiscard())) return;
+              const input = {
+                categoryId: selected.id,
+                expectedVersion: loaded.version,
+                expectedSchemaRevision: loaded.schemaRevision,
+                expectedCategoryVersion: selected.version,
+              };
               action.mutate(() =>
                 api
                   .request(
-                    `/admin/products/${id}/placement`,
-                    jsonResponse,
-                    {
-                      categoryId: selected.id,
-                      expectedVersion: loaded.version,
-                      expectedSchemaRevision: loaded.schemaRevision,
-                      expectedCategoryVersion: selected.version,
-                    },
+                    `/admin/products/${id}/placement/preview`,
+                    placementImpactSchema,
+                    input,
                     'POST',
                   )
-                  .then(refresh),
+                  .then((impact) => {
+                    setPlacementReview({ input, impact, name: selected.name });
+                    action.setSaved(false);
+                  }),
               );
             } else {
               setCategory(selected);
@@ -1048,6 +1034,69 @@ export function ProductEditor({ id }: { id: string }) {
             setCategoryOpen(false);
           }}
         />
+      </GLModal>
+      <GLModal
+        open={!!placementReview}
+        title={t('impact')}
+        onClose={() => {
+          if (!action.isPending) setPlacementReview(null);
+        }}
+      >
+        {placementReview && (
+          <>
+            <p>
+              {t('category')}: {placementReview.name}
+            </p>
+            <p>
+              {t('attributes')}: +{placementReview.impact.addedAttributeIds.length} / −
+              {placementReview.impact.removedAttributeIds.length}
+            </p>
+            <p>
+              {t('retainedValues')} ({placementReview.impact.retainedValueCount})
+            </p>
+            {placementReview.impact.blockers.map((blocker) => (
+              <GLAlert key={blocker} tone="error">
+                {blocker}
+              </GLAlert>
+            ))}
+            <ActionFeedback action={action} />
+            <div className="gl-dialog-actions">
+              <GLButton
+                variant="secondary"
+                disabled={action.isPending}
+                onClick={() => setPlacementReview(null)}
+              >
+                {t('cancel')}
+              </GLButton>
+              <GLButton
+                loading={action.isPending}
+                disabled={placementReview.impact.blockers.length > 0}
+                onClick={() =>
+                  action.mutate(() =>
+                    api
+                      .request(
+                        `/admin/products/${id}/placement`,
+                        jsonResponse,
+                        {
+                          ...placementReview.input,
+                          precondition: placementReview.impact.precondition,
+                          confirm: true,
+                        },
+                        'POST',
+                      )
+                      .then(async () => {
+                        setPlacementReview(null);
+                        await refresh();
+                      }),
+                  )
+                }
+              >
+                <Save size={18} />
+                {t('confirm')}
+              </GLButton>
+            </div>
+          </>
+        )}
       </GLModal>
       <MediaPicker
         allowedKind={!id || coverPicking ? 'IMAGE' : pickKind}

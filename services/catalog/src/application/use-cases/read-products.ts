@@ -22,7 +22,10 @@ export class ReadProducts {
     });
   }
   async public(id: Uuid, language: Locale): Promise<PublicProductDto> {
-    return this.uow.execute((r) => this.project(r, id, language));
+    return this.uow.execute(async (r) => ({
+      ...(await this.project(r, id, language)),
+      navigation: await r.products.publicNavigation(id, language),
+    }));
   }
   async collection(input: PublicProductQuery): Promise<PublicProductPage> {
     for (const filter of input.filters) {

@@ -6,6 +6,11 @@ export type Locale = 'ar' | 'en' | 'ckb';
 export const locales: readonly Locale[] = ['ar', 'en', 'ckb'];
 export const languageNames = { ar: 'العربية', en: 'English', ckb: 'کوردی' } as const;
 const en = {
+  backToCategory: 'Back to Category',
+  previousProduct: 'Previous Product',
+  nextProduct: 'Next Product',
+  moreFromCategory: 'More from this Category',
+  productNavigation: 'Product navigation',
   home: 'Home',
   products: 'Products',
   categories: 'Categories',
@@ -89,6 +94,7 @@ const en = {
   missingImage: 'Image unavailable',
   unsupported: 'This media format is not supported.',
   video: 'Product video',
+  videoBadge: 'VIDEO',
   mediaError: 'Media is unavailable. Please refresh the authorization.',
   refresh: 'Refresh',
   documentDemo: 'Illustrative specification sheet',
@@ -167,6 +173,11 @@ const en = {
 type Messages = Record<keyof typeof en, string>;
 const ar: Messages = {
   ...en,
+  backToCategory: 'العودة إلى التصنيف',
+  previousProduct: 'المنتج السابق',
+  nextProduct: 'المنتج التالي',
+  moreFromCategory: 'المزيد من هذا التصنيف',
+  productNavigation: 'تصفح المنتجات',
   home: 'الرئيسية',
   products: 'المنتجات',
   categories: 'الفئات',
@@ -247,6 +258,7 @@ const ar: Messages = {
   missingImage: 'الصورة غير متاحة',
   unsupported: 'صيغة الوسائط هذه غير مدعومة.',
   video: 'فيديو المنتج',
+  videoBadge: 'فيديو',
   mediaError: 'الوسائط غير متاحة. يرجى تحديث إذن الوصول.',
   refresh: 'تحديث',
   documentDemo: 'ورقة مواصفات توضيحية',
@@ -324,6 +336,11 @@ const ar: Messages = {
 };
 const ckb: Messages = {
   ...en,
+  backToCategory: 'گەڕانەوە بۆ پۆل',
+  previousProduct: 'بەرهەمی پێشوو',
+  nextProduct: 'بەرهەمی داهاتوو',
+  moreFromCategory: 'بەرهەمی زیاتر لەم پۆلە',
+  productNavigation: 'گەڕان بە بەرهەمەکان',
   home: 'سەرەکی',
   products: 'بەرهەمەکان',
   categories: 'پۆلەکان',
@@ -405,6 +422,7 @@ const ckb: Messages = {
   missingImage: 'وێنە بەردەست نییە',
   unsupported: 'ئەم جۆرە میدیایە پشتگیری ناکرێت.',
   video: 'ڤیدیۆی بەرهەم',
+  videoBadge: 'ڤیدیۆ',
   mediaError: 'میدیا بەردەست نییە. مۆڵەتی دەستگەیشتن نوێ بکەرەوە.',
   refresh: 'نوێکردنەوە',
   documentDemo: 'پەڕەی تایبەتمەندیی نموونەیی',

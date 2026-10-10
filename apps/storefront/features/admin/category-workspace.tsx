@@ -1,4 +1,6 @@
-import { ArrowUpDown, FolderPlus, X } from '@golden-lift/icons';
+import { DeletionDialog } from './deletion';
+import { RelationshipSelection, RelationshipEditor } from './relationships';
+import { ArrowUpDown, FolderPlus, Plus, Save, X } from '@golden-lift/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -60,6 +62,7 @@ export function Categories({ id }: { id?: string }) {
     { locale } = useLocale(),
     t = useAdminTranslation();
   const action = useAction('categories');
+  const [groupIds, setGroupIds] = useState<string[]>([]);
   const [reloadError, setReloadError] = useState<unknown>(null);
   const { expanded, setExpanded } = useCategoryTreeState();
   const [browse, setBrowse] = useState(false);
@@ -80,6 +83,7 @@ export function Categories({ id }: { id?: string }) {
   const dirty =
     !!editor &&
     (form.formState.isDirty ||
+      groupIds.length > 0 ||
       cover !== (editor.kind === 'edit' ? (editor.category?.coverAssetId ?? null) : null));
   useUnsaved(dirty);
   const detail = useQuery({
@@ -148,22 +152,6 @@ export function Categories({ id }: { id?: string }) {
           ]),
       );
   }, [id, path.data]);
-  const preview = useQuery({
-    queryKey: ['staff', 'category-delete-preview', deleteTarget?.id],
-    enabled: !!deleteTarget,
-    queryFn: ({ signal }) =>
-      api.request(
-        `/admin/categories/${deleteTarget!.id}/deletion-preview`,
-        z.object({
-          previewPrecondition: z.string(),
-          category: categorySchema,
-          impact: z.record(z.string()),
-        }),
-        undefined,
-        'GET',
-        signal,
-      ),
-  });
   const source = useQuery({
     queryKey: ['staff', 'category-source', moveTarget?.parentId, locale],
     enabled: !!moveTarget,
@@ -213,6 +201,7 @@ export function Categories({ id }: { id?: string }) {
     }
     form.reset(structuredClone(emptyTranslations));
     setCover(null);
+    setGroupIds([]);
     setEditor({ kind: 'create', category: parent });
   }
   function edit(category: Category) {
@@ -220,6 +209,7 @@ export function Categories({ id }: { id?: string }) {
     setReloadError(null);
     form.reset(translationDefaults(category.translations));
     setCover(category.coverAssetId);
+    setGroupIds([]);
     setEditor({ kind: 'edit', category });
   }
   function move(category: Category) {
@@ -403,7 +393,11 @@ export function Categories({ id }: { id?: string }) {
                 </div>
               )}
               <GLFormSection title={t('groups')}>
-                <p>{leaf ? t('categoryGroupsPending') : t('groupsLeafOnly')}</p>
+                {leaf ? (
+                  <RelationshipEditor resource="categories" id={detail.data.id} />
+                ) : (
+                  <p>{t('groupsLeafOnly')}</p>
+                )}
                 {leaf && schema.error && <StaffError error={schema.error} />}
                 {leaf && schema.data && (
                   <ul>
@@ -482,6 +476,7 @@ export function Categories({ id }: { id?: string }) {
                         coverAssetId: cover,
                       }
                     : {
+                        groupIds,
                         parentId: captured.category?.id ?? null,
                         expectedParentVersion: captured.category?.version ?? null,
                         translations: translationInput(values),
@@ -514,6 +509,14 @@ export function Categories({ id }: { id?: string }) {
             </p>
           </GLFormSection>
           <TranslationFields form={form} />
+          {editor?.kind === 'create' && (
+            <RelationshipSelection
+              resource="attribute-groups"
+              value={groupIds}
+              onChange={setGroupIds}
+              disabled={action.isPending}
+            />
+          )}
           <GLFormSection title={t('cover')}>
             <div className="gl-cover-editor">
               {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} />}
@@ -563,6 +566,11 @@ export function Categories({ id }: { id?: string }) {
               {t('cancel')}
             </GLButton>
             <GLButton type="submit" loading={action.isPending}>
+              {editor?.kind === 'create' ? (
+                <Plus size={18} aria-hidden="true" />
+              ) : (
+                <Save size={18} aria-hidden="true" />
+              )}
               {editor?.kind === 'create'
                 ? editor.category
                   ? t('createSubcategory')
@@ -594,79 +602,18 @@ export function Categories({ id }: { id?: string }) {
           {t('close')}
         </GLButton>
       </GLModal>
-      <GLModal
-        className="gl-admin-overlay"
-        open={!!deleteTarget}
-        title={t('remove') + ' — ' + (deleteTarget?.name ?? '')}
-        onClose={() => {
-          if (!action.isPending) setDeleteTarget(null);
-        }}
-      >
-        <p>{t('confirmDelete')}</p>
-        <p>
-          {t('categories')}: {preview.data?.impact['totalCategoryCount'] ?? '…'} · {t('products')}:{' '}
-          {preview.data?.impact['productCount'] ?? '…'}
-        </p>
-        {preview.error && (
-          <GLAlert tone="error">
-            {t('error')}
-            <GLButton variant="text" onClick={() => void preview.refetch()}>
-              <ArrowUpDown size={18} aria-hidden="true" />
-              {t('retry')}
-            </GLButton>
-          </GLAlert>
-        )}
-        <ActionFeedback action={action} reload={() => void preview.refetch()} />
-        <GLActionBar>
-          <GLButton
-            variant="ghost"
-            disabled={action.isPending}
-            onClick={() => setDeleteTarget(null)}
-          >
-            <X size={18} aria-hidden="true" />
-            {t('cancel')}
-          </GLButton>
-          <GLButton
-            variant="destructive"
-            disabled={!preview.data}
-            loading={action.isPending}
-            onClick={() => {
-              const captured = deleteTarget!,
-                review = preview.data!;
-              action.mutate(
-                () =>
-                  api.request(
-                    '/admin/categories/' + captured.id,
-                    jsonResponse,
-                    {
-                      confirm: true,
-                      expectedVersion: review.category.version,
-                      previewPrecondition: review.previewPrecondition,
-                    },
-                    'DELETE',
-                  ),
-                {
-                  onSuccess: () => {
-                    setDeleteTarget(null);
-                    setExpanded((previous) => {
-                      const next = new Set(previous);
-                      next.delete(captured.id);
-                      return next;
-                    });
-                    if (
-                      id === captured.id ||
-                      ancestors.some((category) => category.id === captured.id)
-                    )
-                      select(captured.parentId ?? undefined);
-                  },
-                },
-              );
-            }}
-          >
-            {t('confirm')}
-          </GLButton>
-        </GLActionBar>
-      </GLModal>
+      {deleteTarget && (
+        <DeletionDialog
+          path={'/admin/categories/' + deleteTarget.id}
+          scope="categories"
+          onClose={() => setDeleteTarget(null)}
+          onAccepted={() => {
+            if (id === deleteTarget.id || ancestors.some((c) => c.id === deleteTarget.id))
+              select(deleteTarget.parentId ?? undefined);
+          }}
+        />
+      )}
+
       <GLModal
         className="gl-admin-overlay"
         open={!!moveTarget}

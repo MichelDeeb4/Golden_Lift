@@ -69,6 +69,7 @@ export const fieldSchema = z.object({
   control: z.string(),
   required: z.boolean(),
   groupPlacementId: id.nullable(),
+  groupPlacementIds: z.array(id).optional(),
   sortOrder: z.string(),
   unit: z.object({ code: z.string(), symbol: z.string(), label: z.string() }).nullable(),
   minimum: z.string().nullable(),
@@ -78,15 +79,13 @@ export const fieldSchema = z.object({
   deprecated: z.boolean(),
   options: z.array(z.object({ id, label: z.string(), deprecated: z.boolean() })),
 });
-export const formSchema = z.object({
-  productTypeId: id,
+export const categoryFormSchema = z.object({
+  nonApplicableValues: z.array(z.object({ definitionId: id, label: z.string() })).optional(),
+  categoryId: id,
   schemaRevision: version,
   groups: z.array(z.object({ id, label: z.string(), sortOrder: z.string() })),
   fields: z.array(fieldSchema),
 });
-export const categoryFormSchema = formSchema
-  .omit({ productTypeId: true })
-  .extend({ categoryId: id });
 export const attributeValueSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('NUMBER'), number: z.string() }),
   z.object({ kind: z.literal('BOOLEAN'), boolean: z.boolean() }),

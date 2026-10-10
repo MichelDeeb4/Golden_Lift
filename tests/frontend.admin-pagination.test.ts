@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test';
 import type { Page, Locator } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
-const captures = 'documentation/assets/admin-actions-dialogs-filters/pagination-regression';
+const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captures = captureRoot
+  ? captureRoot + '/pagination'
+  : 'documentation/assets/admin-actions-dialogs-filters/pagination-regression';
 test.describe.configure({ mode: 'serial' });
 const browserFailures = new WeakMap<Page, string[]>();
 test.beforeEach(async ({ page }) => {
@@ -241,7 +244,7 @@ test('slow collection requests retain rows and disabled controls; a real outage 
   await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(nav(page)).toContainText('26–45 of 45');
   await expect(page).toHaveURL(/kind=NUMBER.*page=2.*q=PAGE-ATTR/);
-  await expect(page.getByLabel('Search', { exact: true })).toHaveValue('PAGE-ATTR');
+  await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue('PAGE-ATTR');
   await intact(page, retryToken);
 });
 
@@ -295,7 +298,9 @@ test('deleting the only group on page two returns to page one without losing fil
   await expect(page).toHaveURL(/page=1/);
   await expect(page.locator('tbody tr')).toHaveCount(25);
   await expect(nav(page)).toContainText('1–25 of 25');
-  await expect(page.getByLabel('Search', { exact: true })).toHaveValue('PAGE-GROUP');
+  await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue(
+    'PAGE-GROUP',
+  );
   await intact(page, token);
 });
 test('Attributes and Groups scroll in document flow without crossing rows, at desktop/tablet and 125% CSS zoom', async ({

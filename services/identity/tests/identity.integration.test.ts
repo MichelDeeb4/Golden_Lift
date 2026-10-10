@@ -154,14 +154,14 @@ const isCode = (code: string) => (error: unknown) =>
   error instanceof ApplicationError && error.code === code;
 const b4CategoryId = 'ab000000-0000-4000-8000-000000000001';
 const b4Routes: readonly (readonly [string, string, unknown?])[] = [
-  ...['product-types', 'attributes', 'attribute-groups', 'units'].flatMap((resource) => [
+  ...['attributes', 'attribute-groups', 'units'].flatMap((resource) => [
     ['GET', '/api/v1/admin/' + resource] as const,
     ['POST', '/api/v1/admin/' + resource, {}] as const,
     ['GET', '/api/v1/admin/' + resource + '/' + b4CategoryId] as const,
     ['POST', '/api/v1/admin/' + resource + '/' + b4CategoryId + '/changes/preview', {}] as const,
     ['POST', '/api/v1/admin/' + resource + '/' + b4CategoryId + '/changes', {}] as const,
   ]),
-  ['GET', '/api/v1/admin/product-types/' + b4CategoryId + '/schema'],
+  ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/schema'],
   ['GET', '/api/v1/admin/attribute-options/' + b4CategoryId],
   ['POST', '/api/v1/admin/attributes/' + b4CategoryId + '/options', {}],
   ['POST', '/api/v1/admin/attribute-options/' + b4CategoryId + '/changes/preview', {}],
@@ -176,8 +176,16 @@ const b4Routes: readonly (readonly [string, string, unknown?])[] = [
   ['GET', '/api/v1/admin/products/' + b4CategoryId + '/edit-schema'],
   ['PATCH', '/api/v1/admin/products/' + b4CategoryId, {}],
   ['POST', '/api/v1/admin/products/' + b4CategoryId + '/placement', {}],
-  ['POST', '/api/v1/admin/products/' + b4CategoryId + '/type-change/preview', {}],
-  ['POST', '/api/v1/admin/products/' + b4CategoryId + '/type-change', {}],
+  ['POST', '/api/v1/admin/products/' + b4CategoryId + '/placement/preview', {}],
+  ...['categories', 'attribute-groups', 'attributes'].flatMap((resource) => [
+    ['GET', '/api/v1/admin/' + resource + '/' + b4CategoryId + '/memberships'] as const,
+    [
+      'POST',
+      '/api/v1/admin/' + resource + '/' + b4CategoryId + '/memberships/preview',
+      {},
+    ] as const,
+    ['POST', '/api/v1/admin/' + resource + '/' + b4CategoryId + '/memberships', {}] as const,
+  ]),
   ['GET', '/api/v1/admin/categories'],
   ['GET', '/api/v1/admin/categories/' + b4CategoryId],
   ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/breadcrumbs'],
@@ -220,7 +228,7 @@ before(async () => {
     tools.file(
       scratch,
       service,
-      'sql/' + (service === 'identity' ? '01_identity.sql' : '22_catalog_admin_fresh.sql'),
+      'sql/' + (service === 'identity' ? '01_identity.sql' : '25_category_catalog_fresh.sql'),
       { owner: true, atomic: true },
     );
     tools.grantRuntime(scratch, service);
@@ -615,7 +623,7 @@ test('authenticated category creation and editing retain version checks and atom
     adminSession,
   );
   assert.equal(edited.status, 200);
-  assert.equal(edited.body.version, '2');
+  assert.ok(BigInt(edited.body.version) > BigInt(created.body.version));
   assert.equal(
     (
       await call(

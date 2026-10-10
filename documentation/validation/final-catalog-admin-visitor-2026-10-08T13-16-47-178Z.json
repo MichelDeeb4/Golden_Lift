@@ -1,0 +1,170 @@
+{
+  "checkedAt": "2026-10-08T13:16:47.178Z",
+  "status": "PASS",
+  "scope": "Final category-driven Catalog, Admin CRUD relationships and visitor gallery/navigation",
+  "tests": {
+    "backendUnit": {
+      "command": "npm.cmd run check",
+      "status": "PASS",
+      "passed": 39,
+      "failed": 0,
+      "skipped": 0
+    },
+    "backendIntegration": {
+      "command": "node scripts/test.mjs integration (disposable PostgreSQL profile)",
+      "status": "PASS",
+      "passed": 89,
+      "failed": 0,
+      "skipped": 0
+    },
+    "migration": {
+      "command": "npm.cmd run test:catalog-migration (disposable PostgreSQL profile)",
+      "status": "PASS",
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontendUnit": {
+      "command": "npm.cmd run test:frontend",
+      "status": "PASS",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "adminAndRealVisitor": {
+      "command": "npm.cmd run test:admin (disposable PostgreSQL profile; no snapshot updates)",
+      "status": "PASS",
+      "passed": 53,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "startedAt": "2026-10-08T13:01:33.202Z",
+      "durationMs": 291776.734
+    },
+    "demoVisitor": {
+      "command": "npm.cmd run test:storefront (explicit demo export; no snapshot updates)",
+      "status": "PASS",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "startedAt": "2026-10-08T13:13:19.280Z",
+      "durationMs": 25021.485999999997
+    }
+  },
+  "totalDistinctPassingTests": 217,
+  "engineering": {
+    "build": "PASS",
+    "typecheck": "PASS",
+    "format": "PASS",
+    "architectureSourceFiles": 227,
+    "architectureEnforcementProbes": 14,
+    "prismaSchemasValidated": 4,
+    "storefrontApiExport": "PASS",
+    "storefrontDemoExport": "PASS",
+    "independentHttpProcessSmoke": "PASS",
+    "diffCheck": "PASS"
+  },
+  "visualRegression": {
+    "staffComparisons": 16,
+    "visitorComparisons": 7,
+    "total": 23,
+    "reviewedBeforeBaselineUpdate": true,
+    "finalRunsUpdateSnapshots": false,
+    "staffAuditCommand": "npm.cmd run test:admin -- frontend.admin.test.ts --max-failures=1 (all capture modes disabled)",
+    "refreshedProductEditorComparisonCommand": "npm.cmd run test:admin -- frontend.admin.test.ts --grep 'category groups create' (no snapshot updates; snapshots enabled assertion)",
+    "currentEvidenceDirectory": "documentation/assets/final-catalog-admin-visitor",
+    "retiredTypeEditorBaselineRemoved": true
+  },
+  "migration": {
+    "backupBytes": 416483,
+    "restoredRehearsal": "PASS",
+    "localRetirement": "PASS",
+    "physicalProductTypeBindingRemoved": true,
+    "parity": {
+      "products": {
+        "count": "11",
+        "hash": "094b549ce477267fac3d337c612adf20"
+      },
+      "product_specification_values": {
+        "count": "90",
+        "hash": "b05e3710504ad62d8a7a2687879e3b18"
+      },
+      "product_specification_texts": {
+        "count": "20",
+        "hash": "321067982004bef8e8a6cf82779fd575"
+      },
+      "product_specification_choices": {
+        "count": "10",
+        "hash": "e69feb553f57f29d121852d4fd3bc7cb"
+      },
+      "product_media": {
+        "count": "18",
+        "hash": "c040225d4dd4126f949a44ad1b0ccdc6"
+      },
+      "category_attribute_groups": {
+        "count": "21",
+        "hash": "8a77bd16f3dcb347668409e0e5b51372"
+      },
+      "attribute_group_attributes": {
+        "count": "9",
+        "hash": "f9bcc4570e3d4934b9dc4b85a6e2bd39"
+      }
+    },
+    "archivedBindingsImmutable": true,
+    "normalAccountsRetained": true
+  },
+  "runtime": {
+    "checkedAt": "2026-10-08T13:16:24.710Z",
+    "command": "npm.cmd start (normal local profile)",
+    "endpoints": [
+      {
+        "name": "website",
+        "url": "http://localhost:8081",
+        "status": 200
+      },
+      {
+        "name": "gateway",
+        "url": "http://localhost:3000/health/ready",
+        "status": 200
+      },
+      {
+        "name": "identity",
+        "url": "http://localhost:3001/health/ready",
+        "status": 200
+      },
+      {
+        "name": "catalog",
+        "url": "http://localhost:3002/health/ready",
+        "status": 200
+      },
+      {
+        "name": "media",
+        "url": "http://localhost:3003/health/ready",
+        "status": 200
+      },
+      {
+        "name": "inquiries",
+        "url": "http://localhost:3004/health/ready",
+        "status": 200
+      }
+    ]
+  },
+  "disposablePostgres": {
+    "stoppedAndRemoved": true
+  },
+  "limits": {
+    "selectedRelationships": 500,
+    "affectedCategories": 100,
+    "affectedProducts": 1000,
+    "productValueMutations": 500,
+    "visitorAncestorNodes": 500
+  },
+  "limitations": [
+    "Historical SQL archives and an always-NULL compatibility view slot remain outside runtime classification.",
+    "Product basics/specifications, Media and publication retain independent save boundaries.",
+    "Categories retain the existing live/soft-deleted lifecycle.",
+    "Fixture mail, scanner and processing adapters are test-only; production provider acceptance is not claimed.",
+    "No hosted CI, deployment, external accessibility certification or device performance benchmark is claimed."
+  ]
+}

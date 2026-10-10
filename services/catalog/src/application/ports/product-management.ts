@@ -12,7 +12,6 @@ import type {
 export interface ProductListInput {
   readonly locale: Locale;
   readonly categoryId?: Uuid;
-  readonly productTypeId?: Uuid;
   readonly text?: string;
   readonly active?: boolean;
   readonly featured?: boolean;

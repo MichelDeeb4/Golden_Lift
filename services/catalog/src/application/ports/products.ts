@@ -8,6 +8,7 @@ import type {
   PublicProductQuery,
   PublicProductMedia,
   Locale,
+  ProductNavigation,
 } from '@golden-lift/contracts';
 export interface ProductCreate {
   readonly categoryId: Uuid;
@@ -21,6 +22,7 @@ export interface ProductWrite {
   readonly values: readonly ProductAttributeValue[];
 }
 export interface ProductRepository {
+  publicNavigation(id: Uuid, language: Locale): Promise<ProductNavigation>;
   publicPage(input: PublicProductQuery): Promise<{
     readonly ids: readonly Uuid[];
     readonly hasNextPage: boolean;

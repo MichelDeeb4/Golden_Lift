@@ -26,7 +26,7 @@ const tools = (await import(
 )) as DatabaseTools;
 const entrypoints: Record<FixtureService, string> = {
   identity: '01_identity.sql',
-  catalog: '22_catalog_admin_fresh.sql',
+  catalog: '25_category_catalog_fresh.sql',
   media: '18_media_core_fresh.sql',
   inquiries: '04_inquiries.sql',
 };

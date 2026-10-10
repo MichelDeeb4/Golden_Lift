@@ -1,6 +1,6 @@
 # Category-driven catalog classification
 
-Status: **implementation in progress**, 2026-10-07. The normal project still runs the previous Product Type workflows. [Decision 015](../decisions/015-category-driven-catalog.md) defines the replacement; the following describes the implemented migration foundation and the intended runtime cutover.
+Status: category-authoritative runtime implemented, 2026-10-08. [Decision 020](../decisions/020-final-category-relationships.md) records transaction, retention and compatibility tradeoffs. Current acceptance belongs to the [final phase report](../implementation/final-catalog-admin-visitor-completed-work.md).
 
 ```mermaid
 erDiagram
@@ -22,6 +22,6 @@ The Catalog-owned `GET /api/v1/admin/categories/{id}/schema?locale=en` endpoint 
 
 SQL cutover 24 has been exercised on disposable databases. It changes eligibility, publication integrity, privacy and reverse schema dependencies together. Inactive drafts can omit a cover and required values. Published products require a verified image cover, valid required category fields and explicit resolution of retained nonapplicable values. Changing category can retain values in an inactive product; nonapplicable values are hidden from public delivery and cannot be edited as applicable fields. They are never silently deleted.
 
-The cutover retires legacy type tables as immutable owner-only migration evidence, closes their writes, revokes runtime access and removes the old service stage sentinel. Old binaries therefore reject dynamic operations after cutover. This is a coordinated release requirement: do not apply cutover 24 to the normal project while its application still depends on Product Type.
+The cutover retires legacy type tables as immutable owner-only migration evidence, closes their writes, revokes runtime access and removes the old service stage sentinel. Old binaries therefore reject dynamic operations after cutover. Cutover and physical binding retirement have been applied to the normal local project after restored-copy rehearsal; deployment remains coordinated.
 
-Still required: replace Product Type repositories/use cases/contracts/routes/selectors, implement reviewed relationship mutations and category changes, update publication/draft DTOs and Prisma bindings, complete the recursive tree and multi-select workflows, and integrate public contextual navigation and Media presentation. The new read endpoint and migrations alone do not complete that scope.
+Owner creation includes initial relationships atomically. Existing leaf groups and inverse group/attribute memberships use reviewed preview/commit endpoints. Product placement compares source/target schemas and retains values. Runtime Product Type code/contracts/Prisma models are removed; SQL 26 archives and drops physical bindings after parity verification. Visitor detail supplies eligible same-category neighbors and ancestor breadcrumbs. See [retirement operations](../operations/product-type-migration.md).

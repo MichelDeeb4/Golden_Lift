@@ -5,13 +5,16 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
+  ListObjectVersionsCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ApplicationError } from '@golden-lift/contracts';
-import type { PrivateStorage, StoredObject } from '../../application/ports/storage.js';
+import type { DeletionStorage, StoredObject } from '../../application/ports/storage.js';
 import { objectKey } from './filesystem.js';
 
-export class S3Storage implements PrivateStorage {
+export class S3Storage implements DeletionStorage {
   constructor(
     private readonly client: S3Client,
     readonly bucket: string,
@@ -121,6 +124,58 @@ export class S3Storage implements PrivateStorage {
       )
         return false;
       throw error;
+    }
+  }
+  private namespace(prefix: string) {
+    if (!/^(originals|outputs|quarantine|staging)\/[a-f0-9-]{36}$/.test(prefix))
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid owned storage namespace.');
+    return prefix;
+  }
+  async inventory(prefix: string) {
+    this.namespace(prefix);
+    const rows: { key: string; bytes: string }[] = [];
+    let token: string | undefined;
+    do {
+      const result = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ...(token ? { ContinuationToken: token } : {}),
+        }),
+      );
+      for (const item of result.Contents ?? [])
+        if (item.Key === prefix || item.Key?.startsWith(prefix + '/'))
+          rows.push({ key: objectKey(item.Key), bytes: String(item.Size ?? 0) });
+      token = result.IsTruncated ? result.NextContinuationToken : undefined;
+      if (result.IsTruncated && !token)
+        throw new ApplicationError('DEPENDENCY_UNAVAILABLE', 'Incomplete storage inventory.');
+    } while (token);
+    return rows;
+  }
+  async removeNamespace(prefix: string) {
+    this.namespace(prefix);
+    // Remove actual versions and delete markers, not just the latest-key visibility.
+    // Always rescan the first bounded page after deletion; never skip modified continuation positions.
+    for (;;) {
+      const result = await this.client.send(
+        new ListObjectVersionsCommand({ Bucket: this.bucket, Prefix: prefix, MaxKeys: 1000 }),
+      );
+      const objects = [...(result.Versions ?? []), ...(result.DeleteMarkers ?? [])].filter(
+        (x) => x.Key === prefix || x.Key?.startsWith(prefix + '/'),
+      );
+      if (!objects.length) {
+        if (result.IsTruncated)
+          throw new ApplicationError('INVALID_STATE', 'Ambiguous storage namespace prefix.');
+        return;
+      }
+      for (const item of objects)
+        await this.client.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucket,
+            Key: objectKey(item.Key!),
+            ...(item.VersionId ? { VersionId: item.VersionId } : {}),
+          }),
+        );
     }
   }
   close(): void {

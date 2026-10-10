@@ -28,6 +28,7 @@ export function categoryDto(row: CategoryRow, locale: Locale): CategoryDto {
 }
 const live = {
   deleted_at: null,
+  deletion_pending: false,
   category_translations: { some: { locale: 'ar', deleted_at: null } },
 } satisfies Prisma.CategoriesWhereInput;
 const translations = (locale: Locale) => ({
@@ -93,11 +94,11 @@ export class PrismaCategoryRepository implements CategoryRepository {
           : null,
     };
   }
-  async hasProducts(id: Uuid): Promise<boolean> {
-    return !!(await this.database.products.findFirst({
-      where: { category_id: id, deleted_at: null },
-      select: { id: true },
-    }));
+  async hasLeafContent(id: Uuid): Promise<boolean> {
+    const [row] = await this.database.$queryRaw<
+      { content: boolean }[]
+    >`SELECT EXISTS(SELECT 1 FROM catalog.products WHERE category_id=${id}::uuid AND deleted_at IS NULL) OR EXISTS(SELECT 1 FROM catalog.category_attribute_groups WHERE category_id=${id}::uuid AND deleted_at IS NULL) content`;
+    return row?.content ?? false;
   }
   async touch(id: Uuid, expectedVersion: Version, coverAssetId?: Uuid | null): Promise<Version> {
     const [row] = await this.database.categories.updateManyAndReturn({

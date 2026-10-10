@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
+const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captures = captureRoot ? captureRoot + '/modals' : 'documentation/assets/admin-crud-modals';
 test.describe.configure({ mode: 'default' });
 test.beforeAll(async () => {
   fixture = await adminBrowserFixture();
@@ -40,8 +42,7 @@ async function intact(page: Page, value: string) {
 }
 async function apply(page: Page) {
   await page
-    .getByRole('dialog')
-    .last()
+    .getByRole('dialog', { name: 'Review change impact', exact: true })
     .getByRole('button', { name: 'Apply reviewed change', exact: true })
     .click();
 }
@@ -52,14 +53,13 @@ test('configuration modal CRUD persists without document reload and keeps Create
   await login(page);
   for (const [resource, action] of [
     ['attributes', 'Create Attribute'],
-    ['product-types', 'Create Product Type'],
     ['attribute-groups', 'Create Group'],
     ['units', 'Create Unit'],
   ]) {
     await page.goto('/admin/' + resource);
     const token = await marker(page);
     const name = 'Modal ' + resource;
-    await page.getByRole('button', { name: action, exact: true }).click();
+    await page.getByRole('button', { name: action, exact: true }).first().click();
     let dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await dialog.getByLabel('Code', { exact: true }).fill('modal-' + resource);
@@ -78,33 +78,36 @@ test('configuration modal CRUD persists without document reload and keeps Create
     await intact(page, token);
     await page.getByRole('link', { name, exact: true }).click();
     await expect(page.locator('tr[aria-selected="true"]').getByRole('button')).toBeVisible();
-    await expect(page.getByRole('button', { name: action, exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: action, exact: true }).first()).toBeVisible();
     await intact(page, token);
     await page.getByRole('button', { name: 'Edit', exact: true }).click();
-    dialog = page.getByRole('dialog');
+    dialog = page.getByRole('dialog', { name: 'Edit', exact: true });
     await names(dialog, name + ' updated');
     if (resource === 'attributes') {
       await dialog.evaluate((element) => {
         element.scrollTop = 0;
       });
       await dialog.screenshot({
-        path: 'documentation/assets/admin-crud-modals/attribute-edit-desktop.png',
+        path: captures + '/attribute-edit-desktop.png',
         animations: 'disabled',
       });
     }
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await apply(page);
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'Edit', exact: true })).not.toBeVisible();
     await expect(page.getByRole('link', { name: name + ' updated', exact: true })).toBeVisible();
     await intact(page, token);
     await page.reload();
     await expect(page.getByRole('link', { name: name + ' updated', exact: true })).toBeVisible();
     const deleteToken = await marker(page);
     await page.getByRole('link', { name: name + ' updated', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
     await page
-      .getByRole('region', { name: 'State', exact: true })
-      .getByRole('button', { name: 'Delete', exact: true })
+      .getByRole('row')
+      .filter({ has: page.getByRole('link', { name: name + ' updated', exact: true }) })
+      .getByRole('button', { name: /Actions/ })
       .click();
+    await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
     await apply(page);
     await expect(page.getByRole('link', { name: name + ' updated', exact: true })).toHaveCount(0);
     await intact(page, deleteToken);
@@ -128,7 +131,11 @@ test('category modal create, edit and deletion update the tree without document 
   await page.reload();
   await page.getByRole('link', { name: 'Modal category', exact: true }).click();
   token = await marker(page);
-  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page
+    .locator('.gl-category-detail')
+    .getByRole('button', { name: /^Actions/ })
+    .click();
+  await page.getByRole('menuitem', { name: 'Edit', exact: true }).click();
   dialog = page.getByRole('dialog');
   await names(dialog, 'Modal category updated');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
@@ -148,7 +155,7 @@ test('category modal create, edit and deletion update the tree without document 
     .click();
   await page
     .locator('.gl-category-detail')
-    .getByRole('button', { name: 'Delete', exact: true })
+    .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/categories$/);
@@ -173,13 +180,7 @@ test('product modal creation, editor navigation and deletion preserve the docume
 }) => {
   test.setTimeout(120000);
   await login(page);
-  await page.goto('/admin/product-types');
-  await page.getByRole('button', { name: 'Create Product Type', exact: true }).click();
-  let dialog = page.getByRole('dialog');
-  await dialog.getByLabel('Code', { exact: true }).fill('modal-product-type');
-  await names(dialog, 'Modal product type');
-  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(dialog).not.toBeVisible();
+  let dialog;
   await page.goto('/admin/categories');
   await page.getByRole('button', { name: 'Create Root Category', exact: true }).click();
   dialog = page.getByRole('dialog');
@@ -190,28 +191,22 @@ test('product modal creation, editor navigation and deletion preserve the docume
   let token = await marker(page);
   await page.getByRole('button', { name: 'Create Product', exact: true }).first().click();
   dialog = page.getByRole('dialog', { name: 'Create Product', exact: true });
-  await dialog.getByRole('combobox', { name: 'Type', exact: true }).click();
-  await page.getByRole('option', { name: 'Modal product type', exact: true }).click();
   await names(dialog, 'Modal product');
-  await dialog.getByRole('button', { name: /^Category:/ }).click();
-  let picker = page.getByRole('dialog', { name: 'Category', exact: true });
-  await picker
-    .getByRole('row')
-    .filter({ hasText: 'Modal product category' })
-    .getByRole('button', { name: 'Select', exact: true })
+  await dialog.getByRole('button', { name: /Browse categories/ }).click();
+  await page
+    .getByRole('dialog')
+    .last()
+    .getByRole('link', { name: 'Modal product category', exact: true })
     .click();
-  await dialog.getByRole('button', { name: /^Cover image:/ }).click();
-  picker = page.getByRole('dialog').last();
-  await picker.getByRole('button', { name: 'Select', exact: true }).first().click();
   await dialog.evaluate((element) => {
     element.scrollTop = 0;
   });
   await dialog.screenshot({
-    path: 'documentation/assets/admin-crud-modals/product-create-desktop.png',
+    path: captures + '/product-create-desktop.png',
     animations: 'disabled',
   });
-  await dialog.getByRole('button', { name: 'Create Product', exact: true }).click();
-  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}\?/);
+  await dialog.locator('button[type=submit]').click();
+  await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}(?:\?.*)?$/);
   await intact(page, token);
   const id = new URL(page.url()).pathname.split('/').pop()!;
   expect((await fixture.persistence(id)).product).not.toBeNull();
@@ -266,7 +261,7 @@ test('attribute modal preserves conflicts and filters through deprecation', asyn
   const id = (await link.getAttribute('href'))!.split('/').pop()!;
   await link.click();
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
-  dialog = page.getByRole('dialog');
+  dialog = page.getByRole('dialog', { name: 'Edit', exact: true });
   await names(dialog, 'Conflict draft');
   const token = await marker(page);
   await concurrentAttributeChange(page, id);
@@ -293,18 +288,27 @@ test('attribute modal preserves conflicts and filters through deprecation', asyn
     .last()
     .getByRole('button', { name: 'Reload latest', exact: true })
     .click();
-  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(
+    page.getByRole('dialog', { name: 'Review change impact', exact: true }),
+  ).not.toBeVisible();
+  await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel('Name (en)', { exact: true })).toHaveValue('Conflict latest');
   await names(dialog, 'Conflict recovered');
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await apply(page);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(dialog).not.toBeVisible();
+  await expect(
+    page.getByRole('dialog', { name: 'Review change impact', exact: true }),
+  ).not.toBeVisible();
   expect(new URL(page.url()).searchParams.get('kind')).toBe('NUMBER');
   expect(new URL(page.url()).searchParams.get('q')).toBe('Conflict');
   await page
-    .getByRole('region', { name: 'State', exact: true })
-    .getByRole('button', { name: 'Deprecated', exact: true })
+    .getByRole('dialog', { name: 'modal-conflict', exact: true })
+    .getByRole('button', { name: 'Close', exact: true })
     .click();
+  const row = page.getByRole('row').filter({ hasText: 'modal-conflict' });
+  await row.getByRole('button', { name: 'Actions — modal-conflict', exact: true }).click();
+  await row.getByRole('menuitem', { name: 'Deprecated', exact: true }).click();
   await apply(page);
   await expect(page.getByRole('link', { name: 'Conflict recovered', exact: true })).toHaveCount(0);
   await intact(page, token);
@@ -315,7 +319,9 @@ test('attribute modal preserves conflicts and filters through deprecation', asyn
   await expect(page.getByRole('link', { name: 'Conflict recovered', exact: true })).toBeVisible();
 });
 
-test('mobile RTL modals retain dirty drafts and restore focus', async ({ page }) => {
+test('mobile RTL modals retain drafts on Stay, discard on Leave and restore focus', async ({
+  page,
+}) => {
   page.on('dialog', async (prompt) => {
     if (prompt.type() === 'beforeunload') await prompt.accept();
   });
@@ -326,32 +332,41 @@ test('mobile RTL modals retain dirty drafts and restore focus', async ({ page })
   for (const locale of ['en', 'ar', 'ckb'] as const) {
     await page.evaluate((locale) => localStorage.setItem('gl.locale', locale), locale);
     await page.goto('/admin/attributes');
-    const create = page.getByRole('button', { name: labels[locale], exact: true });
+    const create = page.getByRole('button', { name: labels[locale], exact: true }).first();
     await create.click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog', { name: labels[locale], exact: true });
     const code = dialog.locator('input').first();
     await code.fill('retained-' + locale);
-    page.once('dialog', (prompt) => prompt.dismiss());
     await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^(Stay|البقاء|مانەوە)$/ }).click();
     await expect(dialog).toBeVisible();
     await expect(code).toHaveValue('retained-' + locale);
     const box = await dialog.boundingBox();
     await dialog.screenshot({
-      path: `documentation/assets/admin-crud-modals/attribute-create-${locale}-mobile.png`,
+      path: `${captures}/attribute-create-${locale}-mobile.png`,
       animations: 'disabled',
     });
     expect(box!.width).toBeLessThanOrEqual(390);
     expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
       true,
     );
-    page.once('dialog', (prompt) => prompt.accept());
     await page.keyboard.press('Escape');
+    await page
+      .getByRole('button', {
+        name: /^(Leave without saving|المغادرة دون حفظ|دەرچوون بەبێ پاشەکەوت)$/,
+      })
+      .click();
     await expect(dialog).not.toBeVisible();
     await expect(create).toBeFocused();
     await create.click();
-    await expect(dialog.locator('input').first()).toHaveValue('retained-' + locale);
-    page.once('dialog', (prompt) => prompt.accept());
+    await expect(dialog.locator('input').first()).toHaveValue('');
+    await code.fill('reopened-' + locale);
     await page.keyboard.press('Escape');
+    await page
+      .getByRole('button', {
+        name: /^(Leave without saving|المغادرة دون حفظ|دەرچوون بەبێ پاشەکەوت)$/,
+      })
+      .click();
   }
 });
 

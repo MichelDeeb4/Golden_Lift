@@ -157,7 +157,7 @@ try {
       file(
         scratch,
         name,
-        'sql/' + (name === 'identity' ? '01_identity.sql' : '19_catalog_media_core_fresh.sql'),
+        'sql/' + (name === 'identity' ? '01_identity.sql' : '25_category_catalog_fresh.sql'),
         {
           owner: true,
           atomic: true,
@@ -447,7 +447,7 @@ try {
         sql(
           scratch,
           'catalog',
-          "SELECT jsonb_build_object('types',(SELECT count(*) FROM catalog.product_types WHERE deleted_at IS NULL),'definitions',(SELECT count(*) FROM catalog.specification_definitions WHERE deleted_at IS NULL),'groups',(SELECT count(*) FROM catalog.specification_groups WHERE deleted_at IS NULL),'assets',(SELECT count(*) FROM catalog.media_asset_refs WHERE deleted_at IS NULL))",
+          "SELECT jsonb_build_object('definitions',(SELECT count(*) FROM catalog.specification_definitions WHERE deleted_at IS NULL),'groups',(SELECT count(*) FROM catalog.specification_groups WHERE deleted_at IS NULL),'assets',(SELECT count(*) FROM catalog.media_asset_refs WHERE deleted_at IS NULL))",
           true,
         ),
       ),

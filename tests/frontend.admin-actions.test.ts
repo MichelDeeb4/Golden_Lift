@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
-const captures = 'documentation/assets/admin-actions-dialogs-filters/after';
+const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captures = captureRoot
+  ? captureRoot + '/actions'
+  : 'documentation/assets/admin-actions-dialogs-filters/after';
 test.describe.configure({ mode: 'serial' });
 const nativeDialogs = new WeakMap<Page, string[]>();
 const browserErrors = new WeakMap<Page, string[]>();
@@ -93,6 +96,18 @@ test('Groups have one icon overflow, compact desktop filters, modal edit and no 
 }) => {
   await login(page);
   await page.goto('/admin/attribute-groups');
+  const navigation = page.getByRole('navigation', { name: 'Dashboard', exact: true });
+  for (const [title, href] of [
+    ['Media', '/admin/media'],
+    ['Account', '/admin/account'],
+  ]) {
+    const group = navigation
+      .locator('.gl-nav-group')
+      .filter({ has: page.locator('p').filter({ hasText: new RegExp('^' + title + '$') }) });
+    await expect(group.locator('a')).toHaveCount(1);
+    await expect(group.locator('a')).toHaveAttribute('href', href!);
+  }
+  await expect(navigation.getByRole('link', { name: 'Product types', exact: true })).toHaveCount(0);
   await expect(page.locator('tbody tr')).toHaveCount(25);
   await expect(
     page.locator('tbody').getByRole('button', { name: 'Edit', exact: true }),

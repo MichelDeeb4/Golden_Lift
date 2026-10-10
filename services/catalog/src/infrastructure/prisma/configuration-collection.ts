@@ -1,3 +1,4 @@
+import { definitionMemberships, groupCounts } from './relationship-metadata.js';
 import type {
   ConfigurationCollectionQuery,
   ConfigurationCollectionReader,
@@ -55,7 +56,7 @@ export class PrismaConfigurationCollection implements ConfigurationCollectionRea
         skip,
         take: input.pageSize,
       });
-      return { ...metadata, items: rows.map(definitionDto) };
+      return { ...metadata, items: await definitionMemberships(this.db, rows.map(definitionDto)) };
     }
     if (input.resource === 'groups') {
       const where: Prisma.SpecificationGroupsWhereInput = {
@@ -77,7 +78,7 @@ export class PrismaConfigurationCollection implements ConfigurationCollectionRea
         skip,
         take: input.pageSize,
       });
-      return { ...metadata, items: rows.map(groupDto) };
+      return { ...metadata, items: await groupCounts(this.db, rows.map(groupDto)) };
     }
     const where: Prisma.UnitsWhereInput = {
       deleted_at: null,

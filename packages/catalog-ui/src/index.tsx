@@ -22,6 +22,7 @@ import {
 } from '@golden-lift/ui';
 import {
   ArrowUpRight,
+  Play,
   Maximize2,
   ChevronLeft,
   ChevronRight,
@@ -320,6 +321,7 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
   }
   return (
     <div
+      id="product-gallery"
       className="gl-gallery"
       role="region"
       tabIndex={0}
@@ -359,9 +361,15 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
           <button
             key={m.id}
             onClick={() => setSelected(i)}
-            aria-label={m.alt}
+            aria-label={m.kind === 'video' ? t('video') + ' — ' + m.alt : m.alt}
             aria-pressed={i === selected}
           >
+            {m.kind === 'video' && (
+              <span className="gl-video-thumbnail-badge">
+                <Play size={18} aria-hidden="true" />
+                {t('videoBadge')}
+              </span>
+            )}
             <GLMediaImage
               reference={
                 m.kind === 'image'

@@ -1,3 +1,4 @@
+import { FencedStorage } from '../infrastructure/storage/fenced.js';
 import { setTimeout as pause } from 'node:timers/promises';
 import {
   databasePool,
@@ -25,7 +26,7 @@ try {
     throw new Error('Production processors require an isolated resource-limited worker.');
   const pool = await databasePool(serviceConfig('media').database),
     database = orm(pool),
-    storage = await privateStorage(settings),
+    storage = new FencedStorage(await privateStorage(settings), pool),
     transactions = new PrismaMediaUnitOfWork(database),
     scanner = new ClamAvScanner(settings.scannerHost, settings.scannerPort),
     processor = new SystemMediaProcessor(
@@ -115,7 +116,7 @@ try {
     );
   } finally {
     clearInterval(timer);
-    storage.close();
+    await storage.close();
     await closePersistence(database, pool);
   }
 } catch (error) {

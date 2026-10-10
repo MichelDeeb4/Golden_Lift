@@ -1,9 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { lstat, mkdir, open, realpath, link, unlink } from 'node:fs/promises';
+import { lstat, mkdir, open, realpath, link, unlink, readdir, rmdir } from 'node:fs/promises';
 import path from 'node:path';
 import { ApplicationError } from '@golden-lift/contracts';
-import type { PrivateStorage, StoredObject } from '../../application/ports/storage.js';
+import type { DeletionStorage, StoredObject } from '../../application/ports/storage.js';
 
 export function objectKey(key: string): string {
   if (
@@ -14,7 +14,7 @@ export function objectKey(key: string): string {
     throw new ApplicationError('VALIDATION_FAILED', 'Invalid private object identity.');
   return key;
 }
-export class FilesystemStorage implements PrivateStorage {
+export class FilesystemStorage implements DeletionStorage {
   readonly bucket = 'private-filesystem';
   private constructor(private readonly root: string) {}
   static async create(root: string): Promise<FilesystemStorage> {
@@ -111,6 +111,77 @@ export class FilesystemStorage implements PrivateStorage {
         return false;
       throw error;
     }
+  }
+  private namespace(prefix: string) {
+    if (!/^(originals|outputs|quarantine|staging)\/[a-f0-9-]{36}$/.test(prefix))
+      throw new ApplicationError('VALIDATION_FAILED', 'Invalid owned storage namespace.');
+    return prefix;
+  }
+  async inventory(prefix: string): Promise<readonly { key: string; bytes: string }[]> {
+    this.namespace(prefix);
+    const result: { key: string; bytes: string }[] = [];
+    const walk = async (key: string): Promise<void> => {
+      let location: string;
+      try {
+        location = await this.location(key, false);
+        const stat = await lstat(location);
+        if (stat.isSymbolicLink())
+          throw new ApplicationError('FORBIDDEN', 'Unsafe private storage path.');
+        if (stat.isDirectory()) {
+          for (const name of await readdir(location)) {
+            if (!/^[a-zA-Z0-9_-]{1,80}$/.test(name))
+              throw new ApplicationError(
+                'INVALID_STATE',
+                'Unrecognized file in owned storage namespace.',
+              );
+            await walk(key + '/' + name);
+          }
+        } else if (stat.isFile() && stat.nlink === 1)
+          result.push({ key, bytes: String(stat.size) });
+        else throw new ApplicationError('FORBIDDEN', 'Unsafe private storage object.');
+      } catch (error) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          error.code === 'ENOENT'
+        )
+          return;
+        throw error;
+      }
+    };
+    await walk(prefix);
+    return result;
+  }
+  async removeNamespace(prefix: string) {
+    this.namespace(prefix);
+    const walk = async (key: string): Promise<void> => {
+      try {
+        const location = await this.location(key, false),
+          stat = await lstat(location);
+        if (stat.isSymbolicLink())
+          throw new ApplicationError('FORBIDDEN', 'Unsafe private storage path.');
+        if (stat.isDirectory()) {
+          for (const name of await readdir(location)) {
+            if (!/^[a-zA-Z0-9_-]{1,80}$/.test(name))
+              throw new ApplicationError('INVALID_STATE', 'Unrecognized owned storage entry.');
+            await walk(key + '/' + name);
+          }
+          await rmdir(location);
+        } else if (stat.isFile() && stat.nlink === 1) await unlink(location);
+        else throw new ApplicationError('FORBIDDEN', 'Unsafe private storage object.');
+      } catch (error) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          error.code === 'ENOENT'
+        )
+          return;
+        throw error;
+      }
+    };
+    await walk(prefix);
   }
   close(): void {}
 }

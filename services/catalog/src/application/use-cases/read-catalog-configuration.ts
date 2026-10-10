@@ -1,13 +1,7 @@
-import type {
-  AuthenticatedActor,
-  Locale,
-  Uuid,
-  EffectiveTypeSchema,
-  ProductFormSchema,
-} from '@golden-lift/contracts';
+import type { AuthenticatedActor, Locale, Uuid } from '@golden-lift/contracts';
 import { ApplicationError } from '@golden-lift/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
-import { categoryFormSchema } from '../../domain/effective-schema.js';
+import { categoryFormSchema, translated } from '../../domain/effective-schema.js';
 import type { CatalogUnitOfWork } from '../ports/catalog.js';
 import type { ConfigurationTarget } from '../ports/product-schema.js';
 import type { ConfigurationCollectionQuery } from '../ports/configuration-collection.js';
@@ -31,11 +25,6 @@ export class ReadCatalogConfiguration {
   }
   async detail(target: ConfigurationTarget, actor: AuthenticatedActor) {
     requireContentAdmin(actor);
-    if (target.resource === 'types')
-      throw new ApplicationError(
-        'INVALID_STATE',
-        'Product Type is retired; use categories and groups.',
-      );
     return this.uow.execute(async (r) => {
       const value =
         target.resource === 'definitions'
@@ -50,17 +39,12 @@ export class ReadCatalogConfiguration {
     });
   }
   async list(
-    resource: 'types' | 'definitions' | 'groups' | 'units',
+    resource: 'definitions' | 'groups' | 'units',
     after: string | null,
     limit: number,
     actor: AuthenticatedActor,
   ) {
     requireContentAdmin(actor);
-    if (resource === 'types')
-      throw new ApplicationError(
-        'INVALID_STATE',
-        'Product Type is retired; use categories and groups.',
-      );
     return this.uow.execute(async (r) =>
       resource === 'definitions'
         ? r.definitions.list(after as Uuid | null, limit)
@@ -69,22 +53,29 @@ export class ReadCatalogConfiguration {
           : r.units.list(after, limit),
     );
   }
-  /** Retired transport signature: stale clients receive an explicit safe error. */
-  async schema(
-    _id: Uuid,
-    _language: Locale,
-    actor: AuthenticatedActor,
-  ): Promise<{ configuration: EffectiveTypeSchema; form: ProductFormSchema }> {
-    requireContentAdmin(actor);
-    throw new ApplicationError('INVALID_STATE', 'Product Type is retired; use category schemas.');
-  }
   async productSchema(id: Uuid, language: Locale, actor: AuthenticatedActor) {
     requireContentAdmin(actor);
     return this.uow.execute(async (r) => {
       const product = await r.products.find(id);
       if (!product) throw new ApplicationError('NOT_FOUND', 'Product not found.');
       const effective = await r.categorySchemas.schema(product.categoryId);
-      return { product, configuration: effective, form: categoryFormSchema(effective, language) };
+      const nonApplicableValues = [];
+      for (const value of product.values) {
+        if (effective.attributes.some((field) => field.definition.id === value.definitionId))
+          continue;
+        const definition = await r.definitions.find(value.definitionId);
+        nonApplicableValues.push({
+          definitionId: value.definitionId,
+          label: definition
+            ? translated(definition.translations, language).name
+            : value.definitionId,
+        });
+      }
+      return {
+        product,
+        configuration: effective,
+        form: { ...categoryFormSchema(effective, language), nonApplicableValues },
+      };
     });
   }
 }

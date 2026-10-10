@@ -2,6 +2,8 @@
 
 Status: **category authority applied to the normal local Catalog**, 2026-10-07, during the [Product Create fix](../implementation/fix-product-create-disabled.md). Writers were stopped; an owning-database backup restored with matching retained rows, and migration passed on the restored copy before normal application. The ten published demo products, existing staff accounts and Media were preserved. This is local migration evidence, not a hosted release. Use only Catalog owning credentials. `.local/database.json` is the normal profile; `GL_DATABASE_CONFIG_FILE` selects an isolated profile. Credentials, raw inventory and reviewed mappings stay ignored locally.
 
+Physical product bindings were archived and removed on 2026-10-08 after backup/restore rehearsal and exact parity. See [binding retirement](product-type-migration.md). The staged backfill/cutover commands below apply only before retirement; inventory remains available afterward.
+
 Read-only inventory:
 
 ```powershell

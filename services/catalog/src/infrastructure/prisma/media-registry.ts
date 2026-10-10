@@ -44,6 +44,15 @@ export class PrismaMediaRegistry implements CatalogMediaRegistry {
         },
       });
       if (seen) return;
+      const deleted = await tx.deletionOperations.findFirst({
+        where: { asset_ids: { has: event.assetId } },
+      });
+      if (deleted) {
+        await tx.inboxMessages.create({
+          data: { consumer_name: 'catalog-media-v1', message_id: event.id },
+        });
+        return;
+      }
       const previous = await tx.mediaAssetRefs.findUnique({ where: { id: event.assetId } });
       if (!previous) {
         await tx.mediaAssetRefs.create({
@@ -116,7 +125,7 @@ export class PrismaMediaRegistry implements CatalogMediaRegistry {
         { eligible: boolean }[]
       >`SELECT EXISTS(SELECT 1 FROM catalog.public_asset_usage u
         JOIN catalog.media_asset_refs a ON a.id=u.asset_id WHERE u.asset_id=${id}::uuid AND u.owner_type=${context.ownerType}
-          AND u.owner_id IS NOT DISTINCT FROM ${context.ownerId}::uuid AND NOT a.security_blocked AND a.deleted_at IS NULL
+          AND u.owner_id IS NOT DISTINCT FROM ${context.ownerId}::uuid AND NOT a.security_blocked AND a.deleted_at IS NULL AND NOT a.deletion_pending
           AND (u.owner_type <> 'PRODUCT' OR EXISTS(SELECT 1 FROM catalog.products p WHERE p.id=u.owner_id AND p.is_active AND p.deleted_at IS NULL))) eligible`;
       if (!rows[0]?.eligible)
         throw new ApplicationError('FORBIDDEN', 'Media is not public in this context.');

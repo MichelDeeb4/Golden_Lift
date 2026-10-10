@@ -5,6 +5,7 @@ import type { CategoryDto, SessionAuthenticator } from '@golden-lift/contracts';
 import { staffRequest } from '@golden-lift/platform';
 import type { CreateCategory } from '../../application/use-cases/create-category.js';
 import type { EditCategory } from '../../application/use-cases/edit-category.js';
+import { array } from './dynamic-input.js';
 export const CREATE_CATEGORY = Symbol('CreateCategory'),
   EDIT_CATEGORY = Symbol('EditCategory'),
   STAFF_AUTHENTICATOR = Symbol('StaffAuthenticator');
@@ -49,9 +50,18 @@ export class AdminCategoriesController {
     @Req() request: IncomingMessage,
   ): Promise<CategoryDto> {
     const actor = await this.authentication.authenticate(staffRequest(request, true)),
-      item = body(value, ['parentId', 'expectedParentVersion', 'translations', 'coverAssetId']);
+      item = body(value, [
+        'parentId',
+        'expectedParentVersion',
+        'translations',
+        'coverAssetId',
+        'groupIds',
+      ]);
     return this.create.execute(
       {
+        ...(item['groupIds'] === undefined
+          ? {}
+          : { groupIds: array(item['groupIds'], 500).map(uuid) }),
         parentId: item['parentId'] == null ? null : uuid(item['parentId']),
         expectedParentVersion:
           item['expectedParentVersion'] == null ? null : version(item['expectedParentVersion']),

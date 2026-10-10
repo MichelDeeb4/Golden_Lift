@@ -32,6 +32,9 @@ const include = {
 } as const;
 export class PrismaProductRepository implements ProductRepository {
   constructor(private readonly db: Database) {}
+  publicNavigation(id: Uuid, language: Parameters<ProductRepository['publicNavigation']>[1]) {
+    return new PrismaPublicProducts(this.db).navigation(id, language);
+  }
   publicPage(input: Parameters<ProductRepository['publicPage']>[0]) {
     return new PrismaPublicProducts(this.db).page(input);
   }

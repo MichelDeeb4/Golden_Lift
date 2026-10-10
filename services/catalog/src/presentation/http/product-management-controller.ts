@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
 import { ApplicationError, locale, uuid, version } from '@golden-lift/contracts';
 import type { ProductMediaDto, SessionAuthenticator, Uuid } from '@golden-lift/contracts';
@@ -44,7 +33,6 @@ export class ProductManagementController {
       q = strictRecord(value, [
         'locale',
         'categoryId',
-        'productTypeId',
         'text',
         'active',
         'featured',
@@ -56,9 +44,7 @@ export class ProductManagementController {
     if (sort !== 'id' && sort !== 'manual')
       throw new ApplicationError('VALIDATION_FAILED', 'Invalid product sort.');
     const cursorScope = JSON.stringify(
-      ['locale', 'categoryId', 'productTypeId', 'text', 'active', 'featured', 'sort'].map(
-        (key) => q[key] ?? null,
-      ),
+      ['locale', 'categoryId', 'text', 'active', 'featured', 'sort'].map((key) => q[key] ?? null),
     );
     let afterId: Uuid | undefined, afterOrder: string | undefined;
     if (q['cursor']) {
@@ -94,7 +80,6 @@ export class ProductManagementController {
         ...(afterId ? { afterId } : {}),
         ...(afterOrder !== undefined ? { afterOrder } : {}),
         ...(q['categoryId'] ? { categoryId: uuid(q['categoryId']) } : {}),
-        ...(q['productTypeId'] ? { productTypeId: uuid(q['productTypeId']) } : {}),
         ...(q['text'] ? { text: text(q['text']) } : {}),
         ...(q['active'] === undefined ? {} : { active: optionalFilter(q['active'])! }),
         ...(q['featured'] === undefined ? {} : { featured: optionalFilter(q['featured'])! }),
@@ -127,20 +112,6 @@ export class ProductManagementController {
         sortOrder: text(v['sortOrder']),
         featuredOrder: text(v['featuredOrder']),
       },
-      actor,
-    );
-  }
-  @Delete(':id') @HttpCode(204) async remove(
-    @Param('id') id: string,
-    @Body() value: unknown,
-    @Req() req: IncomingMessage,
-  ) {
-    const actor = await this.auth.authenticate(staffRequest(req, true)),
-      v = strictRecord(value, ['expectedVersion', 'confirmed']);
-    return this.products.remove(
-      uuid(id),
-      version(v['expectedVersion']),
-      v['confirmed'] === true,
       actor,
     );
   }

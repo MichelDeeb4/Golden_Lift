@@ -1,12 +1,12 @@
 import type { CategoryDto, EventEnvelope, Locale, Uuid, Version } from '@golden-lift/contracts';
 import type { ConfigurationCollectionReader } from './configuration-collection.js';
+import type { CatalogRelationships } from './catalog-relationships.js';
 import type { Translation } from '../../domain/category.js';
 import type { CategoryNavigation, CategoryTreeWriter } from './category-tree.js';
 import type { CategoryList } from './category-query.js';
 import type {
   AttributeDefinitionRepository,
   AttributeGroupRepository,
-  ProductTypeRepository,
   SchemaChangeReader,
   UnitRepository,
 } from './product-schema.js';
@@ -16,7 +16,7 @@ export type { CategoryCursor, CategoryList } from './category-query.js';
 export interface CategoryRepository {
   find(id: Uuid, locale: Locale): Promise<CategoryDto | null>;
   list(input: CategoryList): Promise<readonly CategoryDto[]>;
-  hasProducts(id: Uuid): Promise<boolean>;
+  hasLeafContent(id: Uuid): Promise<boolean>;
   touch(id: Uuid, expectedVersion: Version, coverAssetId?: Uuid | null): Promise<Version>;
   insert(
     id: Uuid,
@@ -30,9 +30,9 @@ export interface Outbox {
   append(event: EventEnvelope): Promise<void>;
 }
 export interface CatalogRepositories {
+  readonly relationships: CatalogRelationships;
   readonly configurationCollection: ConfigurationCollectionReader;
   readonly categorySchemas: CategorySchemaReader;
-  readonly productTypes: ProductTypeRepository;
   readonly definitions: AttributeDefinitionRepository;
   readonly groups: AttributeGroupRepository;
   readonly units: UnitRepository;

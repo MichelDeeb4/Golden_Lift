@@ -194,7 +194,6 @@ test('actual loaded Arabic fonts cover Sorani-specific glyphs', () => {
 test('live collection maps exact filters, cover-first media and permitted PDF owner context', async () => {
   const productId = randomUUID(),
     categoryId = randomUUID(),
-    typeId = randomUUID(),
     imageId = randomUUID(),
     videoId = randomUUID(),
     sheetId = randomUUID(),
@@ -215,13 +214,11 @@ test('live collection maps exact filters, cover-first media and permitted PDF ow
           {
             id: productId,
             categoryId,
-            productTypeId: typeId,
             name: 'Product',
             description: null,
             modelCode: 'Exact',
             coverAssetId: imageId,
             categoryName: 'Category',
-            productTypeName: 'Type',
             resolvedNameLocale: 'ckb',
             media: [
               { assetId: videoId, kind: 'VIDEO', title: 'Video', altText: '' },

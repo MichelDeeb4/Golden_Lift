@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "1.4",
-  "physicalTables": 66,
+  "schemaVersion": "1.5",
+  "physicalTables": 71,
   "databases": {
     "golden_lift_identity": [
       {
@@ -500,6 +500,138 @@
     ],
     "golden_lift_catalog": [
       {
+        "table": "attribute_group_attributes",
+        "schema": "catalog",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "group_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "definition_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "sort_order",
+            "type": "bigint",
+            "default": "1024",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "is_required",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "is_public",
+            "type": "boolean",
+            "default": "true",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "is_searchable",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "is_filterable",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "is_comparable",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "deleted_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "version",
+            "type": "bigint",
+            "default": "1",
+            "nullable": false,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX attribute_group_attributes_pkey ON catalog.attribute_group_attributes USING btree (id)",
+          "CREATE UNIQUE INDEX group_attribute_live_uq ON catalog.attribute_group_attributes USING btree (group_id, definition_id) WHERE (deleted_at IS NULL)",
+          "CREATE INDEX group_attribute_order_live_idx ON catalog.attribute_group_attributes USING btree (group_id, sort_order, id) WHERE (deleted_at IS NULL)",
+          "CREATE INDEX group_attribute_reverse_live_idx ON catalog.attribute_group_attributes USING btree (definition_id, group_id) WHERE (deleted_at IS NULL)"
+        ],
+        "triggers": [
+          "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.attribute_group_attributes FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER category_new_use BEFORE INSERT OR UPDATE ON catalog.attribute_group_attributes FOR EACH ROW EXECUTE FUNCTION catalog.guard_category_new_use()",
+          "CREATE CONSTRAINT TRIGGER category_relationship_integrity AFTER INSERT OR UPDATE ON catalog.attribute_group_attributes DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_category_relationships()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.attribute_group_attributes FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.attribute_group_attributes FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER group_attribute_identity_immutable BEFORE UPDATE ON catalog.attribute_group_attributes FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('group_id', 'definition_id')",
+          "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.attribute_group_attributes FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
+        ],
+        "constraints": [
+          "CHECK ((is_public OR (NOT (is_searchable OR is_filterable OR is_comparable))))",
+          "NOT NULL created_at",
+          "FOREIGN KEY (definition_id) REFERENCES catalog.specification_definitions(id) ON DELETE RESTRICT",
+          "NOT NULL definition_id",
+          "FOREIGN KEY (group_id) REFERENCES catalog.specification_groups(id) ON DELETE RESTRICT",
+          "NOT NULL group_id",
+          "NOT NULL id",
+          "NOT NULL is_comparable",
+          "NOT NULL is_filterable",
+          "NOT NULL is_public",
+          "NOT NULL is_required",
+          "NOT NULL is_searchable",
+          "PRIMARY KEY (id)",
+          "NOT NULL sort_order",
+          "NOT NULL updated_at",
+          "CHECK ((version > 0))",
+          "NOT NULL version",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        ]
+      },
+      {
         "table": "categories",
         "schema": "catalog",
         "columns": [
@@ -558,6 +690,20 @@
             "default": "1",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "schema_revision",
+            "type": "bigint",
+            "default": "1",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "deletion_pending",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -567,8 +713,15 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER b_pending_deletion BEFORE UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_deletion()",
+          "CREATE CONSTRAINT TRIGGER category_relationship_integrity AFTER INSERT OR UPDATE ON catalog.categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_category_relationships()",
+          "CREATE TRIGGER category_relationship_retention AFTER UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_category_relationships()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.categories FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE CONSTRAINT TRIGGER exclusive_media_owner AFTER INSERT OR DELETE OR UPDATE ON catalog.categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_exclusive_media_owners()",
           "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('cover_asset_id')",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.categories FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_media_assignment BEFORE INSERT OR UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.prevent_pending_media_assignment()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE TRIGGER technical_owner_deletion AFTER UPDATE ON catalog.categories FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_owner_technical_links()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.categories FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -577,8 +730,104 @@
           "CHECK (((parent_id IS NULL) OR (parent_id <> id)))",
           "FOREIGN KEY (cover_asset_id) REFERENCES catalog.media_asset_refs(id) ON DELETE RESTRICT",
           "NOT NULL created_at",
+          "NOT NULL deletion_pending",
           "NOT NULL id",
           "FOREIGN KEY (parent_id) REFERENCES catalog.categories(id) ON DELETE RESTRICT",
+          "PRIMARY KEY (id)",
+          "CHECK ((schema_revision > 0))",
+          "NOT NULL schema_revision",
+          "NOT NULL sort_order",
+          "NOT NULL updated_at",
+          "CHECK ((version > 0))",
+          "NOT NULL version",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        ]
+      },
+      {
+        "table": "category_attribute_groups",
+        "schema": "catalog",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "category_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "group_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "sort_order",
+            "type": "bigint",
+            "default": "1024",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "deleted_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "version",
+            "type": "bigint",
+            "default": "1",
+            "nullable": false,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX category_attribute_groups_pkey ON catalog.category_attribute_groups USING btree (id)",
+          "CREATE UNIQUE INDEX category_group_live_uq ON catalog.category_attribute_groups USING btree (category_id, group_id) WHERE (deleted_at IS NULL)",
+          "CREATE INDEX category_group_order_live_idx ON catalog.category_attribute_groups USING btree (category_id, sort_order, id) WHERE (deleted_at IS NULL)",
+          "CREATE INDEX category_group_reverse_live_idx ON catalog.category_attribute_groups USING btree (group_id, category_id) WHERE (deleted_at IS NULL)"
+        ],
+        "triggers": [
+          "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.category_attribute_groups FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER category_group_identity_immutable BEFORE UPDATE ON catalog.category_attribute_groups FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('category_id', 'group_id')",
+          "CREATE CONSTRAINT TRIGGER category_relationship_integrity AFTER INSERT OR UPDATE ON catalog.category_attribute_groups DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_category_relationships()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.category_attribute_groups FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.category_attribute_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.category_attribute_groups FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
+          "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.category_attribute_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
+        ],
+        "constraints": [
+          "FOREIGN KEY (category_id) REFERENCES catalog.categories(id) ON DELETE RESTRICT",
+          "NOT NULL category_id",
+          "NOT NULL created_at",
+          "FOREIGN KEY (group_id) REFERENCES catalog.specification_groups(id) ON DELETE RESTRICT",
+          "NOT NULL group_id",
+          "NOT NULL id",
           "PRIMARY KEY (id)",
           "NOT NULL sort_order",
           "NOT NULL updated_at",
@@ -655,8 +904,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.category_specifications FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.category_specifications FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER legacy_configuration_closed BEFORE INSERT OR UPDATE ON catalog.category_specifications FOR EACH ROW EXECUTE FUNCTION catalog.guard_legacy_configuration()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.category_specifications FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.category_specifications FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.category_specifications DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.category_specifications FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -744,7 +994,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.category_technical_sheets FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.category_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.category_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.category_technical_sheets FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE TRIGGER semantics_immutable BEFORE UPDATE ON catalog.category_technical_sheets FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('category_id', 'sheet_id')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.category_technical_sheets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.category_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -853,7 +1104,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.category_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.category_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.category_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.category_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.category_translations FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.category_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.category_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1110,6 +1363,13 @@
             "default": "false",
             "nullable": false,
             "generated": ""
+          },
+          {
+            "name": "deletion_pending",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -1118,7 +1378,7 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.media_asset_refs FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.media_asset_refs FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.media_asset_refs FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER registered_asset_kind_immutable BEFORE UPDATE ON catalog.media_asset_refs FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('media_kind')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.media_asset_refs DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.media_asset_refs FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -1126,6 +1386,7 @@
         "constraints": [
           "CHECK (((deleted_at IS NULL) OR (retirement_event_id IS NOT NULL)))",
           "NOT NULL created_at",
+          "NOT NULL deletion_pending",
           "NOT NULL id",
           "CHECK ((media_kind = ANY (ARRAY['IMAGE'::text, 'VIDEO'::text, 'PDF'::text])))",
           "NOT NULL media_kind",
@@ -1298,12 +1559,15 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.pages FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE CONSTRAINT TRIGGER exclusive_media_owner AFTER INSERT OR DELETE OR UPDATE ON catalog.pages DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_exclusive_media_owners()",
           "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.pages FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('cover_asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.pages FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_media_assignment BEFORE INSERT OR UPDATE ON catalog.pages FOR EACH ROW EXECUTE FUNCTION catalog.prevent_pending_media_assignment()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.pages DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.pages FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "FOREIGN KEY (cover_asset_id) REFERENCES catalog.media_asset_refs(id) ON DELETE RESTRICT",
           "NOT NULL created_at",
           "NOT NULL id",
@@ -1387,7 +1651,8 @@
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_code_reservations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
           "CREATE TRIGGER code_ownership_immutable BEFORE UPDATE ON catalog.product_code_reservations FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('product_id', 'code')",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_code_reservations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_code_reservations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_code_reservations FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_code_reservations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_code_reservations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1484,12 +1749,16 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_media FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE CONSTRAINT TRIGGER exclusive_media_owner AFTER INSERT OR DELETE OR UPDATE ON catalog.product_media DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_exclusive_media_owners()",
           "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('asset_id')",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_media FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_media_assignment BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION catalog.prevent_pending_media_assignment()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_media DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_media FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "FOREIGN KEY (asset_id) REFERENCES catalog.media_asset_refs(id) ON DELETE RESTRICT",
           "NOT NULL asset_id",
           "CHECK ((content_locale = ANY (ARRAY['ar'::text, 'en'::text, 'ckb'::text])))",
@@ -1587,7 +1856,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_media_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_media_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_media_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_media_translations FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_media_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_media_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1673,8 +1943,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_specification_choices FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_choices FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_specification_choices FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER category_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_choices FOR EACH ROW EXECUTE FUNCTION catalog.guard_category_new_use()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_specification_choices FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_specification_choices FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_specification_choices DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_specification_choices FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1760,8 +2031,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_specification_texts FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_texts FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_specification_texts FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER category_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_texts FOR EACH ROW EXECUTE FUNCTION catalog.guard_category_new_use()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_specification_texts FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_specification_texts FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_specification_texts DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_specification_texts FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1865,8 +2137,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_specification_values FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_values FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_specification_values FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER category_new_use BEFORE INSERT OR UPDATE ON catalog.product_specification_values FOR EACH ROW EXECUTE FUNCTION catalog.guard_category_new_use()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_specification_values FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_specification_values FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_specification_values DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_specification_values FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -1956,7 +2229,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_technical_configurations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_technical_configurations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_technical_configurations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_technical_configurations FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE TRIGGER semantics_immutable BEFORE UPDATE ON catalog.product_technical_configurations FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('sheet_id', 'product_sheet_id', 'configuration_id')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_technical_configurations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_technical_configurations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2054,7 +2328,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_technical_sheets FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_technical_sheets FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE TRIGGER semantics_immutable BEFORE UPDATE ON catalog.product_technical_sheets FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('product_id', 'sheet_id')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_technical_sheets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_technical_sheets FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2173,7 +2448,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.product_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.product_translations FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -2263,9 +2539,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_type_groups FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.product_type_groups FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_type_groups FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.product_type_groups FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER retired_type_configuration BEFORE INSERT OR UPDATE ON catalog.product_type_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_retired_type_configuration()",
           "CREATE TRIGGER type_group_identity_immutable BEFORE UPDATE ON catalog.product_type_groups FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('product_type_id', 'group_id')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_type_groups DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_type_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2397,9 +2672,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_type_specifications FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.product_type_specifications FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_type_specifications FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.product_type_specifications FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER retired_type_configuration BEFORE INSERT OR UPDATE ON catalog.product_type_specifications FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_retired_type_configuration()",
           "CREATE TRIGGER type_assignment_identity_immutable BEFORE UPDATE ON catalog.product_type_specifications FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('product_type_id', 'definition_id')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_type_specifications DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_type_specifications FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2501,7 +2775,7 @@
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_type_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_type_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.product_type_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER retired_type_configuration BEFORE INSERT OR UPDATE ON catalog.product_type_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_retired_type_configuration()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_type_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_type_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -2590,8 +2864,7 @@
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.product_types FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.product_types FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE TRIGGER product_type_code_immutable BEFORE UPDATE ON catalog.product_types FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('code')",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.product_types FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
-          "CREATE TRIGGER soft_delete_dynamic_owned AFTER UPDATE ON catalog.product_types FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_dynamic_owned_rows()",
+          "CREATE TRIGGER retired_type_configuration BEFORE INSERT OR UPDATE ON catalog.product_types FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_retired_type_configuration()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.product_types DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.product_types FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -2632,7 +2905,7 @@
             "name": "cover_media_id",
             "type": "uuid",
             "default": null,
-            "nullable": false,
+            "nullable": true,
             "generated": ""
           },
           {
@@ -2692,16 +2965,16 @@
             "generated": ""
           },
           {
-            "name": "product_type_id",
-            "type": "uuid",
-            "default": null,
-            "nullable": true,
+            "name": "is_active",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
             "generated": ""
           },
           {
-            "name": "is_active",
+            "name": "deletion_pending",
             "type": "boolean",
-            "default": "true",
+            "default": "false",
             "nullable": false,
             "generated": ""
           }
@@ -2709,13 +2982,13 @@
         "indexes": [
           "CREATE INDEX products_category_live_idx ON catalog.products USING btree (category_id, sort_order, id) WHERE (deleted_at IS NULL)",
           "CREATE INDEX products_featured_live_idx ON catalog.products USING btree (featured_order, id) WHERE ((deleted_at IS NULL) AND is_featured)",
-          "CREATE UNIQUE INDEX products_pkey ON catalog.products USING btree (id)",
-          "CREATE INDEX products_type_live_idx ON catalog.products USING btree (product_type_id, id) WHERE (deleted_at IS NULL)"
+          "CREATE UNIQUE INDEX products_pkey ON catalog.products USING btree (id)"
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.products FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER dynamic_new_use BEFORE INSERT OR UPDATE ON catalog.products FOR EACH ROW EXECUTE FUNCTION catalog.guard_dynamic_new_use()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.products FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER b_pending_deletion BEFORE UPDATE ON catalog.products FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_deletion()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.products FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
+          "CREATE TRIGGER pending_owner_reference BEFORE INSERT OR UPDATE ON catalog.products FOR EACH ROW EXECUTE FUNCTION catalog.guard_pending_owner_reference()",
           "CREATE TRIGGER technical_owner_deletion AFTER UPDATE ON catalog.products FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_owner_technical_links()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.products DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.products FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -2723,8 +2996,8 @@
         "constraints": [
           "FOREIGN KEY (category_id) REFERENCES catalog.categories(id) ON DELETE RESTRICT",
           "NOT NULL category_id",
-          "NOT NULL cover_media_id",
           "NOT NULL created_at",
+          "NOT NULL deletion_pending",
           "NOT NULL featured_order",
           "NOT NULL id",
           "NOT NULL is_active",
@@ -2732,12 +3005,49 @@
           "FOREIGN KEY (id, current_model_code_id) REFERENCES catalog.product_code_reservations(product_id, id) DEFERRABLE INITIALLY DEFERRED",
           "FOREIGN KEY (id, cover_media_id) REFERENCES catalog.product_media(product_id, id) DEFERRABLE INITIALLY DEFERRED",
           "PRIMARY KEY (id)",
-          "FOREIGN KEY (product_type_id) REFERENCES catalog.product_types(id) ON DELETE RESTRICT",
           "NOT NULL sort_order",
           "NOT NULL updated_at",
           "CHECK ((version > 0))",
           "NOT NULL version",
           "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+        ]
+      },
+      {
+        "table": "retired_product_bindings",
+        "schema": "catalog",
+        "columns": [
+          {
+            "name": "product_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "legacy_type_id",
+            "type": "uuid",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "archived_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX retired_product_bindings_pkey ON catalog.retired_product_bindings USING btree (product_id)"
+        ],
+        "triggers": [
+          "CREATE TRIGGER immutable_retired_bindings BEFORE INSERT OR DELETE OR UPDATE ON catalog.retired_product_bindings FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_retired_type_configuration()"
+        ],
+        "constraints": [
+          "NOT NULL archived_at",
+          "PRIMARY KEY (product_id)",
+          "NOT NULL product_id"
         ]
       },
       {
@@ -2928,12 +3238,15 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.site_settings FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE CONSTRAINT TRIGGER exclusive_media_owner AFTER INSERT OR DELETE OR UPDATE ON catalog.site_settings DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_exclusive_media_owners()",
           "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.site_settings FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('logo_asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.site_settings FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_media_assignment BEFORE INSERT OR UPDATE ON catalog.site_settings FOR EACH ROW EXECUTE FUNCTION catalog.prevent_pending_media_assignment()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.site_settings DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.site_settings FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "NOT NULL created_at",
           "CHECK ((id = 1))",
           "NOT NULL id",
@@ -3155,15 +3468,18 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE CONSTRAINT TRIGGER category_relationship_integrity AFTER INSERT OR UPDATE ON catalog.specification_definitions DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_category_relationships()",
+          "CREATE TRIGGER category_relationship_retention AFTER UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_category_relationships()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
           "CREATE TRIGGER definition_semantics BEFORE UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION catalog.guard_definition_semantics()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_definitions FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_definitions FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER soft_delete_dynamic_owned AFTER UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_dynamic_owned_rows()",
           "CREATE TRIGGER specification_code_immutable BEFORE UPDATE ON catalog.specification_definitions FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('code')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_definitions DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_definitions FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "CHECK ((((minimum_value IS NULL) OR ((minimum_value)::text <> ALL (ARRAY['NaN'::text, 'Infinity'::text, '-Infinity'::text]))) AND ((maximum_value IS NULL) OR ((maximum_value)::text <> ALL (ARRAY['NaN'::text, 'Infinity'::text, '-Infinity'::text])))))",
           "NOT NULL allow_multiple",
           "CHECK (((value_type = 'NUMBER'::text) OR ((unit_code IS NULL) AND (minimum_value IS NULL) AND (maximum_value IS NULL))))",
@@ -3264,8 +3580,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_group_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_group_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_group_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_group_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_group_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_group_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_group_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -3338,14 +3654,17 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE CONSTRAINT TRIGGER category_relationship_integrity AFTER INSERT OR UPDATE ON catalog.specification_groups DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_category_relationships()",
+          "CREATE TRIGGER category_relationship_retention AFTER UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_category_relationships()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER group_code_immutable BEFORE UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('code')",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_groups FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
           "CREATE TRIGGER soft_delete_dynamic_owned AFTER UPDATE ON catalog.specification_groups FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_dynamic_owned_rows()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_groups DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_groups FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "CHECK (((length(btrim(code)) >= 1) AND (length(btrim(code)) <= 128)))",
           "UNIQUE (code)",
           "NOT NULL code",
@@ -3425,8 +3744,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_option_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_option_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_option_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_option_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_option_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_option_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_option_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -3522,9 +3841,9 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_options FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_options FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_options FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_options FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER option_identity_immutable BEFORE UPDATE ON catalog.specification_options FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('definition_id', 'code')",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_options FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
           "CREATE TRIGGER soft_delete_dynamic_owned AFTER UPDATE ON catalog.specification_options FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_dynamic_owned_rows()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_options DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_options FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
@@ -3620,8 +3939,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.specification_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.specification_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.specification_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.specification_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.specification_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.specification_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -4694,13 +5013,16 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
+          "CREATE CONSTRAINT TRIGGER exclusive_media_owner AFTER INSERT OR DELETE OR UPDATE ON catalog.technical_sheet_sources DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_exclusive_media_owners()",
           "CREATE TRIGGER media_attachment BEFORE INSERT OR UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION catalog.protect_new_media_attachment('asset_id')",
           "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.technical_sheet_sources FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
+          "CREATE TRIGGER pending_media_assignment BEFORE INSERT OR UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION catalog.prevent_pending_media_assignment()",
           "CREATE TRIGGER semantics_immutable BEFORE UPDATE ON catalog.technical_sheet_sources FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('sheet_id', 'asset_id', 'page_from', 'page_to')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.technical_sheet_sources DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.technical_sheet_sources FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
         "constraints": [
+          "TRIGGER DEFERRABLE INITIALLY DEFERRED",
           "FOREIGN KEY (asset_id) REFERENCES catalog.media_asset_refs(id) ON DELETE RESTRICT",
           "NOT NULL asset_id",
           "CHECK ((page_to >= page_from))",
@@ -5129,8 +5451,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.unit_translations FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.unit_translations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.unit_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.unit_translations FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.unit_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.unit_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
           "CREATE TRIGGER z_catalog_write_guard BEFORE INSERT OR UPDATE ON catalog.unit_translations FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()"
         ],
@@ -5209,8 +5531,8 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON catalog.units FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON catalog.units FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
-          "CREATE TRIGGER schema_dependency AFTER INSERT OR UPDATE ON catalog.units FOR EACH ROW EXECUTE FUNCTION catalog.bump_effective_schema()",
+          "CREATE TRIGGER category_schema_dependency AFTER INSERT OR UPDATE ON catalog.units FOR EACH ROW EXECUTE FUNCTION catalog.bump_category_schema()",
+          "CREATE TRIGGER deletion_write_guard BEFORE DELETE ON catalog.units FOR EACH STATEMENT EXECUTE FUNCTION catalog.guard_write_statement()",
           "CREATE TRIGGER soft_delete_dynamic_owned AFTER UPDATE ON catalog.units FOR EACH ROW EXECUTE FUNCTION catalog.soft_delete_dynamic_owned_rows()",
           "CREATE TRIGGER unit_semantics_immutable BEFORE UPDATE ON catalog.units FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('code', 'symbol', 'dimension')",
           "CREATE CONSTRAINT TRIGGER z_catalog_integrity AFTER INSERT OR UPDATE ON catalog.units DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION catalog.validate_deferred()",
@@ -5266,6 +5588,111 @@
           "PRIMARY KEY (id)",
           "NOT NULL revision",
           "NOT NULL validated_revision"
+        ]
+      },
+      {
+        "table": "deletion_operations",
+        "schema": "ops",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "entity_type",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "entity_id",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "requested_by",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "requested_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "status",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "failure_code",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "retry_count",
+            "type": "integer",
+            "default": "0",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "completed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "asset_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "owner_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "nullable": false,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX deletion_operation_pending ON ops.deletion_operations USING btree (entity_type, entity_id) WHERE (completed_at IS NULL)",
+          "CREATE UNIQUE INDEX deletion_operations_pkey ON ops.deletion_operations USING btree (id)"
+        ],
+        "triggers": [
+          "CREATE TRIGGER deletion_operations_no_delete BEFORE DELETE OR TRUNCATE ON ops.deletion_operations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+        ],
+        "constraints": [
+          "NOT NULL asset_ids",
+          "NOT NULL entity_id",
+          "CHECK ((entity_type = ANY (ARRAY['PRODUCT'::text, 'MEDIA'::text, 'ATTRIBUTE'::text, 'ATTRIBUTE_GROUP'::text, 'UNIT'::text, 'CATEGORY'::text])))",
+          "NOT NULL entity_type",
+          "NOT NULL id",
+          "NOT NULL owner_ids",
+          "PRIMARY KEY (id)",
+          "NOT NULL requested_at",
+          "NOT NULL requested_by",
+          "CHECK ((retry_count >= 0))",
+          "NOT NULL retry_count",
+          "CHECK ((status = ANY (ARRAY['MEDIA_CLEANUP'::text, 'COMPLETED'::text, 'RETRYABLE'::text])))",
+          "NOT NULL status"
         ]
       },
       {
@@ -5563,7 +5990,6 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.asset_variants FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.asset_variants FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE CONSTRAINT TRIGGER required_outputs AFTER INSERT OR UPDATE ON media.asset_variants DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media.validate_outputs()",
           "CREATE TRIGGER variant_identity BEFORE UPDATE ON media.asset_variants FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('asset_id', 'variant_key', 'mime_type', 'storage_bucket', 'storage_key', 'byte_size', 'sha256', 'generation', 'object_version', 'width_px', 'height_px', 'duration_ms')"
         ],
@@ -5755,6 +6181,13 @@
             "default": null,
             "nullable": true,
             "generated": ""
+          },
+          {
+            "name": "deletion_pending",
+            "type": "boolean",
+            "default": "false",
+            "nullable": false,
+            "generated": ""
           }
         ],
         "indexes": [
@@ -5767,7 +6200,6 @@
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
           "CREATE TRIGGER asset_semantics BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION media.protect_asset_semantics()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.assets FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE CONSTRAINT TRIGGER required_outputs AFTER INSERT OR UPDATE ON media.assets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION media.validate_outputs()",
           "CREATE TRIGGER verified_input BEFORE UPDATE ON media.assets FOR EACH ROW EXECUTE FUNCTION media.protect_verified_input()"
         ],
@@ -5776,6 +6208,7 @@
           "CHECK (((status <> 'READY'::text) OR ((detected_mime_type IS NOT NULL) AND (byte_size IS NOT NULL) AND (sha256 IS NOT NULL))))",
           "CHECK (((deleted_at IS NULL) OR (retirement_event_id IS NOT NULL)))",
           "NOT NULL created_at",
+          "NOT NULL deletion_pending",
           "CHECK (((duration_ms IS NULL) OR (duration_ms >= 0)))",
           "CHECK (((height_px IS NULL) OR (height_px > 0)))",
           "NOT NULL id",
@@ -5913,8 +6346,7 @@
           "CREATE INDEX processing_stale_lease_idx ON media.processing_jobs USING btree (locked_until, id) WHERE ((deleted_at IS NULL) AND (status = 'RUNNING'::text))"
         ],
         "triggers": [
-          "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.processing_jobs FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.processing_jobs FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+          "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.processing_jobs FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()"
         ],
         "constraints": [
           "FOREIGN KEY (asset_id) REFERENCES media.assets(id) ON DELETE RESTRICT",
@@ -6082,7 +6514,6 @@
         ],
         "triggers": [
           "CREATE TRIGGER a_update_guard BEFORE UPDATE ON media.upload_sessions FOR EACH ROW EXECUTE FUNCTION ops.guard_row_update()",
-          "CREATE TRIGGER no_physical_delete BEFORE DELETE OR TRUNCATE ON media.upload_sessions FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()",
           "CREATE TRIGGER upload_identity BEFORE UPDATE ON media.upload_sessions FOR EACH ROW EXECUTE FUNCTION ops.immutable_fields('asset_id', 'uploader_staff_id', 'expected_byte_size', 'idempotency_key', 'request_hash', 'declared_sha256', 'purpose')"
         ],
         "constraints": [
@@ -6107,6 +6538,110 @@
           "NOT NULL uploader_staff_id",
           "CHECK ((version > 0))",
           "NOT NULL version"
+        ]
+      },
+      {
+        "table": "deletion_operations",
+        "schema": "ops",
+        "columns": [
+          {
+            "name": "id",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "entity_type",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "entity_id",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "requested_by",
+            "type": "uuid",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "requested_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "status",
+            "type": "text",
+            "default": null,
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "failure_code",
+            "type": "text",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "retry_count",
+            "type": "integer",
+            "default": "0",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "completed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "nullable": true,
+            "generated": ""
+          },
+          {
+            "name": "asset_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "nullable": false,
+            "generated": ""
+          },
+          {
+            "name": "owner_ids",
+            "type": "uuid[]",
+            "default": "'{}'::uuid[]",
+            "nullable": false,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          "CREATE UNIQUE INDEX deletion_operations_pkey ON ops.deletion_operations USING btree (id)"
+        ],
+        "triggers": [
+          "CREATE TRIGGER deletion_operations_no_delete BEFORE DELETE OR TRUNCATE ON ops.deletion_operations FOR EACH STATEMENT EXECUTE FUNCTION ops.reject_physical_delete()"
+        ],
+        "constraints": [
+          "NOT NULL asset_ids",
+          "NOT NULL entity_id",
+          "CHECK ((entity_type = 'MEDIA'::text))",
+          "NOT NULL entity_type",
+          "NOT NULL id",
+          "NOT NULL owner_ids",
+          "PRIMARY KEY (id)",
+          "NOT NULL requested_at",
+          "NOT NULL requested_by",
+          "CHECK ((retry_count >= 0))",
+          "NOT NULL retry_count",
+          "CHECK ((status = ANY (ARRAY['MEDIA_CLEANUP'::text, 'COMPLETED'::text, 'RETRYABLE'::text])))",
+          "NOT NULL status"
         ]
       },
       {

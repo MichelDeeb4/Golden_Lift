@@ -15,12 +15,6 @@ export async function exerciseDynamicCatalog({
     return result.body;
   };
   const base = '/api/v1/admin',
-    type = await call(
-      'POST',
-      base + '/product-types',
-      { code: 'synthetic-process-type', translations: names },
-      201,
-    ),
     group = await call(
       'POST',
       base + '/attribute-groups',
@@ -60,7 +54,7 @@ export async function exerciseDynamicCatalog({
     },
     201,
   );
-  const schema = () => call('GET', base + '/product-types/' + type.id + '/schema');
+  const schema = () => call('GET', base + '/categories/' + category.id + '/schema');
   const change = async (path, change, version, schemaRevision = null) => {
     const body = { change, expectedVersion: version, expectedSchemaRevision: schemaRevision },
       preview = await call('POST', path + '/changes/preview', body);
@@ -71,68 +65,55 @@ export async function exerciseDynamicCatalog({
       precondition: preview.precondition,
     });
   };
-  let current = await schema();
-  await change(
-    base + '/product-types/' + type.id,
-    { kind: 'group.place', placementId: null, groupId: group.id, sortOrder: '1024' },
-    current.configuration.type.version,
-    current.form.schemaRevision,
+  const memberships = base + '/attribute-groups/' + group.id + '/memberships';
+  const state = await call('GET', memberships),
+    input = {
+      orderedIds: [number.id, hidden.id, choice.id, text.id],
+      expectedVersion: state.version,
+    };
+  const impact = await call('POST', memberships + '/preview', input);
+  assert.deepEqual(impact.blockers, []);
+  await call('POST', memberships, { ...input, precondition: impact.precondition, confirm: true });
+  const category = await call(
+    'POST',
+    base + '/categories',
+    { translations: names, groupIds: [group.id] },
+    201,
   );
-  current = await schema();
-  const placement = current.configuration.groups[0].id;
-  for (const d of [number, hidden, choice, text]) {
-    current = await schema();
-    await change(
-      base + '/product-types/' + type.id,
-      {
-        kind: 'assignment.put',
-        assignmentId: null,
-        assignment: {
-          definitionId: d.id,
-          groupPlacementId: placement,
-          sortOrder: '1024',
-          required: d.id === number.id,
-          public: true,
-          searchable: false,
-          filterable: false,
-          comparable: false,
-        },
-      },
-      current.configuration.type.version,
-      current.form.schemaRevision,
-    );
-  }
-  current = await schema();
+  const current = await schema();
   assert.equal(current.form.fields.length, 4);
   assert.equal(
     current.form.fields.find((f) => f.definitionId === choice.id).options[0].id,
     option.id,
   );
-  const category = await call('POST', base + '/categories', { translations: names }, 201),
-    coverAssetId = await registerImage();
-  const product = await call(
+  const coverAssetId = await registerImage();
+  const draft = await call(
     'POST',
     base + '/products',
-    {
-      categoryId: category.id,
-      productTypeId: type.id,
-      coverAssetId,
-      translations: names,
-      modelCode: 'SYNTHETIC-DYNAMIC-PROCESS',
-      expectedSchemaRevision: current.form.schemaRevision,
-      expectedCategoryVersion: category.version,
-      values: [
-        { definitionId: number.id, value: { kind: 'NUMBER', number: '90071992547409.123456' } },
-        { definitionId: hidden.id, value: { kind: 'BOOLEAN', boolean: false } },
-        { definitionId: choice.id, value: { kind: 'CHOICE', optionIds: [option.id] } },
-        {
-          definitionId: text.id,
-          value: { kind: 'TEXT', translations: [{ locale: 'ar', text: 'Synthetic Arabic text' }] },
-        },
-      ],
-    },
+    { categoryId: category.id, translations: names, modelCode: 'SYNTHETIC-DYNAMIC-PROCESS' },
     201,
   );
+  const saved = await call('PATCH', base + '/products/' + draft.id, {
+    expectedVersion: draft.version,
+    expectedSchemaRevision: draft.schemaRevision,
+    coverAssetId,
+    values: [
+      { definitionId: number.id, value: { kind: 'NUMBER', number: '90071992547409.123456' } },
+      { definitionId: hidden.id, value: { kind: 'BOOLEAN', boolean: false } },
+      { definitionId: choice.id, value: { kind: 'CHOICE', optionIds: [option.id] } },
+      {
+        definitionId: text.id,
+        value: { kind: 'TEXT', translations: [{ locale: 'ar', text: 'Synthetic Arabic text' }] },
+      },
+    ],
+  });
+  const product = await call('POST', base + '/products/' + draft.id + '/publication', {
+    expectedVersion: saved.version,
+    active: true,
+    featured: false,
+    sortOrder: '0',
+    featuredOrder: '0',
+  });
   assert.equal(
     (await call('GET', base + '/products/' + product.id + '/edit-schema')).form.fields.length,
     4,
@@ -168,7 +149,7 @@ export async function exerciseDynamicCatalog({
         textMaxLength: 4000,
       },
     },
-    number.version,
+    (await call('GET', base + '/attributes/' + number.id)).version,
   );
   await call(
     'PATCH',
@@ -192,23 +173,17 @@ export async function exerciseDynamicCatalog({
     expectedDestinationRevision: childList.listRevision,
   });
   const moved = await call('GET', base + '/products/' + product.id);
-  assert.equal(moved.productTypeId, type.id);
+  assert.equal(moved.categoryId, category.id);
   assert.equal(
     moved.values.find((v) => v.definitionId === number.id).value.number,
     '90071992547409.123456',
   );
-  for (const path of [
-    '/product-types',
-    '/attributes',
-    '/attribute-groups',
-    '/units',
-    '/products/' + product.id,
-  ]) {
+  for (const path of ['/attributes', '/attribute-groups', '/units', '/products/' + product.id]) {
     assert.equal((await request('GET', base + path, undefined, superSession)).response.status, 403);
     assert.equal((await request('GET', base + path)).response.status, 401);
   }
   assert.equal(
-    (await request('POST', base + '/product-types', {}, adminSession, { 'x-csrf-token': '' }))
+    (await request('POST', base + '/attribute-groups', {}, adminSession, { 'x-csrf-token': '' }))
       .response.status,
     403,
   );
@@ -222,12 +197,7 @@ export async function exerciseDynamicCatalog({
   publicResponse = await request('GET', '/api/v1/products/' + product.id);
   assert.equal(publicResponse.response.status, 404);
   const retained = await retainedResources();
-  assert.ok(
-    retained.types >= 1 &&
-      retained.definitions >= 4 &&
-      retained.groups >= 1 &&
-      retained.assets >= 1,
-  );
+  assert.ok(retained.definitions >= 4 && retained.groups >= 1 && retained.assets >= 1);
   console.log(
     'PASS dynamic configuration -> translated form -> verified-cover product -> public privacy/fallback -> stale schema -> category move -> retained soft deletion',
   );

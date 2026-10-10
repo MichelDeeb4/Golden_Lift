@@ -21,5 +21,10 @@ export interface PrivateStorage {
     download: boolean,
     version?: string | null,
   ): Promise<string>;
-  close(): void;
+  close(): void | Promise<void>;
+}
+/** Owner-scoped inventory and destruction, implemented only by private storage adapters. */
+export interface DeletionStorage extends PrivateStorage {
+  inventory(prefix: string): Promise<readonly { key: string; bytes: string }[]>;
+  removeNamespace(prefix: string): Promise<void>;
 }

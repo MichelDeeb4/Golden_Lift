@@ -1594,3 +1594,29 @@ html[dir='rtl'] .gl-drawer {
 .gl-button-label svg {
   flex: none;
 }
+
+.gl-gallery-thumbnails button {
+  position: relative;
+}
+.gl-video-thumbnail-badge {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(18, 22, 23, 0.85);
+  color: white;
+  font-size: 10px;
+  padding: 4px;
+}
+.gl-product-neighbors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  padding-block: 24px;
+  border-block: 1px solid var(--gl-border);
+}

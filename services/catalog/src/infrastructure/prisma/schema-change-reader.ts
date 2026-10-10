@@ -23,11 +23,6 @@ export class PrismaSchemaChangeReader implements SchemaChangeReader {
     );
   }
   async facts(target: ConfigurationTarget): Promise<SchemaChangeFacts> {
-    if (target.resource === 'types')
-      throw new ApplicationError(
-        'INVALID_STATE',
-        'Product Type is retired; use category classification.',
-      );
     const categories = new PrismaCategorySchemaRepository(this.db),
       definitions = new PrismaAttributeDefinitionRepository(this.db),
       products = new PrismaProductRepository(this.db);
@@ -124,13 +119,7 @@ export class PrismaSchemaChangeReader implements SchemaChangeReader {
       state:
         JSON.stringify(object) +
         '\n' +
-        schemas
-          .map((s) =>
-            'categoryId' in s
-              ? s.categoryId + ':' + s.schemaRevision
-              : s.type.id + ':' + s.type.schemaRevision,
-          )
-          .join(',') +
+        schemas.map((s) => s.categoryId + ':' + s.schemaRevision).join(',') +
         '\n' +
         (await products.impactState(ids)) +
         '\n' +

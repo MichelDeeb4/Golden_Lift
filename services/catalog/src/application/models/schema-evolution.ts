@@ -2,9 +2,7 @@ import { ApplicationError } from '@golden-lift/contracts';
 import type {
   AttributeDefinitionDto,
   AttributeOptionDto,
-  EffectiveTypeSchema,
   EffectiveCategorySchema,
-  TypeAttributeDto,
 } from '@golden-lift/contracts';
 import type { ConfigurationChange, SchemaChangeFacts } from '../ports/product-schema.js';
 const invalid = (message: string): never => {
@@ -13,64 +11,11 @@ const invalid = (message: string): never => {
 export function evolvedSchemas(
   facts: SchemaChangeFacts,
   change: ConfigurationChange,
-): readonly (EffectiveTypeSchema | EffectiveCategorySchema)[] {
+): readonly EffectiveCategorySchema[] {
   return facts.schemas.map((schema) => {
     let attributes = [...schema.attributes],
       groups = [...schema.groups];
     switch (change.kind) {
-      case 'assignment.put': {
-        const draft = change.assignment,
-          previous = attributes.find((a) => a.id === change.assignmentId);
-        if (change.assignmentId && !previous) invalid('Assignment does not belong to this type.');
-        if (previous && previous.definition.id !== draft.definitionId)
-          invalid('Replace attribute membership explicitly; its definition identity is stable.');
-        if (draft.groupPlacementId && !groups.some((g) => g.id === draft.groupPlacementId))
-          invalid('Assignment group must belong to this type.');
-        if (!draft.public && (draft.searchable || draft.filterable || draft.comparable))
-          invalid('Search/filter/comparison flags require assignment visibility.');
-        const definition = previous?.definition ?? (facts.target as AttributeDefinitionDto);
-        if (!previous && attributes.some((a) => a.definition.id === draft.definitionId))
-          invalid('Attribute is already assigned.');
-        const assignment: TypeAttributeDto = {
-          id: previous?.id ?? draft.definitionId,
-          definition,
-          groupPlacementId: draft.groupPlacementId,
-          sortOrder: draft.sortOrder,
-          version:
-            previous?.version ?? ('type' in schema ? schema.type.version : schema.categoryVersion),
-          required: draft.required,
-          public: draft.public,
-          searchable: draft.searchable,
-          filterable: draft.filterable,
-          comparable: draft.comparable,
-        };
-        attributes = previous
-          ? attributes.map((a) => (a.id === previous.id ? assignment : a))
-          : [...attributes, assignment];
-        if (attributes.length > 500)
-          invalid('Type schema supports at most 500 active assignments.');
-        break;
-      }
-      case 'assignment.remove':
-        if (!attributes.some((a) => a.id === change.assignmentId))
-          invalid('Assignment does not belong to this type.');
-        else attributes = attributes.filter((a) => a.id !== change.assignmentId);
-        break;
-      case 'group.remove': {
-        if (
-          !groups.some((g) => g.id === change.placementId) ||
-          change.moveAssignmentsTo === change.placementId ||
-          (change.moveAssignmentsTo && !groups.some((g) => g.id === change.moveAssignmentsTo))
-        )
-          invalid('Group removal requires an explicit valid reassignment target.');
-        groups = groups.filter((g) => g.id !== change.placementId);
-        attributes = attributes.map((a) =>
-          a.groupPlacementId === change.placementId
-            ? { ...a, groupPlacementId: change.moveAssignmentsTo }
-            : a,
-        );
-        break;
-      }
       case 'definition.update':
         attributes = attributes.map((a) =>
           a.definition.id === (facts.target as AttributeDefinitionDto).id

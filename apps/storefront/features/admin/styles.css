@@ -531,3 +531,26 @@
 .gl-configuration-table td:last-child {
   width: 64px;
 }
+
+.gl-membership-options {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+  margin-block: 12px;
+}
+.gl-membership-order {
+  padding-inline-start: 24px;
+}
+.gl-membership-order li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-block: 4px;
+  flex-wrap: wrap;
+}
+.gl-membership-order li > span {
+  flex: 1;
+  min-width: 120px;
+  overflow-wrap: anywhere;
+}

@@ -1,3 +1,5 @@
+import { DeletionDialog } from './deletion';
+import { RelationshipSelection, RelationshipEditor } from './relationships';
 import { Plus } from '@golden-lift/icons';
 import { FilterX, X, Pencil, Save } from '@golden-lift/icons';
 import { useConfirmDiscard, useHasUnsavedChanges } from './context';
@@ -44,16 +46,17 @@ import {
   MoreOptions,
 } from './common';
 import type { TranslationForm } from './common';
-import { AssignmentEditor, OptionEditor, OrderEditor } from './configuration-editors';
+import { OptionEditor } from './configuration-editors';
 import { AddChoiceOption } from './choice-options';
 import { AdminPagination, useAdminPagination } from './pagination';
-export type ConfigurationResource = 'product-types' | 'attributes' | 'attribute-groups' | 'units';
+export type ConfigurationResource = 'attributes' | 'attribute-groups' | 'units';
 const optionSchema = namedSchema.extend({
   definitionId: z.string().uuid(),
   sortOrder: z.string(),
   deprecated: z.boolean(),
 });
 const definitionSchema = namedSchema.extend({
+  groups: z.array(namedSchema).optional(),
   kind: z.enum(['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE']),
   unit: z.object({ code: z.string(), symbol: z.string() }).nullable(),
   minimum: z.string().nullable(),
@@ -65,6 +68,10 @@ const definitionSchema = namedSchema.extend({
   textMultiline: z.boolean(),
   textMaxLength: z.number(),
   options: z.array(optionSchema),
+});
+const groupSchema = namedSchema.extend({
+  attributeCount: z.string().optional(),
+  categoryCount: z.string().optional(),
 });
 const unitSchema = namedSchema
   .omit({ id: true })
@@ -105,11 +112,7 @@ export function Configuration({
     [multiline, setMultiline] = useState(false),
     [maxLength, setMaxLength] = useState('4000'),
     [symbol, setSymbol] = useState(''),
-    [dimension, setDimension] = useState(''),
-    [definitionId, setDefinitionId] = useState(''),
-    [required, setRequired] = useState(false),
-    [groupPlacement, setGroupPlacement] = useState(''),
-    [groupId, setGroupId] = useState('');
+    [dimension, setDimension] = useState('');
   const router = useRouter(),
     filters = useLocalSearchParams<{
       q?: string;
@@ -132,17 +135,15 @@ export function Configuration({
     maxLength,
   ]);
   const constraintsDirty = constraintsBaseline !== null && constraints !== constraintsBaseline;
-  useUnsaved(form.formState.isDirty || constraintsDirty || Boolean(definitionId || groupId));
+  useUnsaved(form.formState.isDirty || constraintsDirty || false);
   const title =
-    resource === 'product-types'
-      ? t('types')
-      : resource === 'attributes'
-        ? t('attributes')
-        : resource === 'attribute-groups'
-          ? t('groups')
-          : t('units');
+    resource === 'attributes'
+      ? t('attributes')
+      : resource === 'attribute-groups'
+        ? t('groups')
+        : t('units');
   const response =
-    resource === 'attributes' ? definitionSchema : resource === 'units' ? unitSchema : namedSchema;
+    resource === 'attributes' ? definitionSchema : resource === 'units' ? unitSchema : groupSchema;
   const pagination = useAdminPagination('numbered');
   const listSearch = new URLSearchParams({
     page: String(pagination.page),
@@ -168,48 +169,7 @@ export function Configuration({
       api.request(`/admin/${resource}/${id}`, response, undefined, 'GET', signal),
     enabled: !!id,
   });
-  const definitions = useStaffOptions(
-    '/admin/attributes',
-    definitionSchema,
-    resource === 'product-types' && !!id,
-  );
-  const groups = useStaffOptions(
-    '/admin/attribute-groups',
-    namedSchema,
-    resource === 'product-types' && !!id,
-  );
   const units = useStaffOptions('/admin/units', unitSchema, resource === 'attributes');
-  const schema = useQuery({
-    queryKey: ['staff', 'configuration-schema', id, locale],
-    queryFn: ({ signal }) =>
-      api.request(
-        `/admin/product-types/${id}/schema?locale=${locale}`,
-        z.object({
-          configuration: z.object({
-            groups: z.array(
-              z.object({ id: z.string(), group: namedSchema, sortOrder: z.string() }),
-            ),
-            attributes: z.array(
-              z.object({
-                id: z.string(),
-                definition: definitionSchema,
-                groupPlacementId: z.string().nullable(),
-                sortOrder: z.string(),
-                required: z.boolean(),
-                public: z.boolean(),
-                filterable: z.boolean(),
-                searchable: z.boolean(),
-                comparable: z.boolean(),
-              }),
-            ),
-          }),
-        }),
-        undefined,
-        'GET',
-        signal,
-      ),
-    enabled: resource === 'product-types' && !!id,
-  });
   useEffect(() => {
     if (detail.data && !form.formState.isDirty && !constraintsDirty) {
       form.reset(translationDefaults(detail.data.translations));
@@ -249,13 +209,11 @@ export function Configuration({
       });
   }, [editing, detail.data, editPrecondition]);
   const changeKind =
-    resource === 'product-types'
-      ? 'type.metadata'
-      : resource === 'attribute-groups'
-        ? 'group.metadata'
-        : resource === 'units'
-          ? 'unit.metadata'
-          : 'definition.update';
+    resource === 'attribute-groups'
+      ? 'group.metadata'
+      : resource === 'units'
+        ? 'unit.metadata'
+        : 'definition.update';
   const definitionInput = {
     code: id ? (detail.data?.code ?? code) : code,
     translations: translationInput(form.getValues()),
@@ -299,8 +257,6 @@ export function Configuration({
     setId(undefined);
     form.reset(structuredClone(emptyTranslations));
     setConstraintsBaseline(null);
-    setDefinitionId('');
-    setGroupId('');
   };
   const chooseRecord = async (nextId: string, edit = false) => {
     if ((form.formState.isDirty || constraintsDirty) && !(await confirmDiscard())) return false;
@@ -337,11 +293,9 @@ export function Configuration({
             {t(
               resource === 'attributes'
                 ? 'createAttribute'
-                : resource === 'product-types'
-                  ? 'createType'
-                  : resource === 'units'
-                    ? 'createUnit'
-                    : 'createGroup',
+                : resource === 'units'
+                  ? 'createUnit'
+                  : 'createGroup',
             )}
           </GLButton>
         }
@@ -447,8 +401,15 @@ export function Configuration({
                   {resource === 'attributes' && (
                     <>
                       <th>{t('type')}</th>
+                      <th>{t('groups')}</th>
                       <th>{t('unit')}</th>
                       <th>{t('visibility')}</th>
+                    </>
+                  )}
+                  {resource === 'attribute-groups' && (
+                    <>
+                      <th>{t('attributes')}</th>
+                      <th>{t('categories')}</th>
                     </>
                   )}
                   <th>{t('status')}</th>
@@ -478,8 +439,22 @@ export function Configuration({
                     {resource === 'attributes' && 'kind' in row && (
                       <>
                         <td>{row.kind}</td>
+                        <td>
+                          {row.groups
+                            ?.map(
+                              (g) =>
+                                g.translations.find((t) => t.locale === locale)?.name ?? g.code,
+                            )
+                            .join(', ') || '—'}
+                        </td>
                         <td>{row.unit?.symbol ?? '—'}</td>
                         <td>{row.public ? t('public') : t('internal')}</td>
+                      </>
+                    )}
+                    {resource === 'attribute-groups' && (
+                      <>
+                        <td>{'attributeCount' in row ? row.attributeCount : '0'}</td>
+                        <td>{'categoryCount' in row ? row.categoryCount : '0'}</td>
                       </>
                     )}
                     <td>{row.deprecated ? t('deprecated') : t('active')}</td>
@@ -565,6 +540,7 @@ export function Configuration({
                 </div>
               </GLFormSection>
               <TranslationFields form={form} labelsOnly={resource === 'units'} />
+              {resource !== 'units' && <RelationshipEditor resource={resource} id={id} />}
               {resource === 'units' && 'symbol' in detail.data && (
                 <>
                   <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
@@ -575,6 +551,17 @@ export function Configuration({
                 <>
                   {constraintsFields}
                   {visibilityFields}
+                  {'options' in detail.data && detail.data.kind === 'CHOICE' && (
+                    <GLFormSection title={t('option')}>
+                      {detail.data.options.map((option) => (
+                        <p key={option.id}>
+                          {option.translations.find((row) => row.locale === locale)?.name ??
+                            option.code}
+                        </p>
+                      ))}
+                      <AddChoiceOption key={id} definitionId={id!} options={detail.data.options} />
+                    </GLFormSection>
+                  )}
                 </>
               )}
               <GLActionBar>
@@ -659,14 +646,26 @@ export function Configuration({
             const record = response.parse(value);
             const key = 'id' in record ? record.id : record.code;
             queryClient.setQueryData(['staff', 'configuration', resource, key], record);
-            if (!(form.formState.isDirty || constraintsDirty || definitionId || groupId)) {
+            if (!(form.formState.isDirty || constraintsDirty)) {
               form.reset(structuredClone(emptyTranslations));
               setConstraintsBaseline(null);
               setId(key);
             }
           }}
         />
-        {(deleting || deprecating) && id && detail.data && (
+        {deleting && id && (
+          <DeletionDialog
+            path={`/admin/${resource}/${id}`}
+            scope="configuration"
+            onClose={() => setDeleting(false)}
+            onAccepted={() => {
+              form.reset(structuredClone(emptyTranslations));
+              setDeleting(false);
+              setId(undefined);
+            }}
+          />
+        )}
+        {deprecating && id && detail.data && (
           <>
             {' '}
             <ReviewedChange
@@ -682,15 +681,7 @@ export function Configuration({
               version={detail.data.version}
               schemaRevision={detail.data.schemaRevision ?? null}
               change={{
-                kind: deprecating
-                  ? 'definition.deprecate'
-                  : resource === 'product-types'
-                    ? 'type.delete'
-                    : resource === 'attributes'
-                      ? 'definition.delete'
-                      : resource === 'units'
-                        ? 'unit.delete'
-                        : 'group.delete',
+                kind: 'definition.deprecate',
               }}
               label={t('remove')}
               onCommitted={async () => {
@@ -774,171 +765,15 @@ export function Configuration({
                     <AddChoiceOption key={id} definitionId={id!} options={detail.data.options} />
                   </section>
                 )}
-              {resource === 'product-types' && (
-                <section>
-                  <GLHeading level={2} role="heading5">
-                    {t('schema')}
-                  </GLHeading>
-                  <MoreOptions query={definitions} label={t('attributes')} />
-                  <MoreOptions query={groups} label={t('groups')} />
-                  <div className="gl-schema-subsection">
-                    <GLHeading level={3} role="heading6">
-                      {t('groups')}
-                    </GLHeading>{' '}
-                    <GLSelect
-                      label={t('groups')}
-                      value={groupId}
-                      onChange={setGroupId}
-                      options={[
-                        { value: '', label: t('choose') },
-                        ...groups.items.map((x) => ({ value: x.id, label: x.code })),
-                      ]}
-                    />
-                    <ReviewedChange
-                      path={`/admin/product-types/${id}`}
-                      version={detail.data.version}
-                      schemaRevision={detail.data.schemaRevision!}
-                      change={{
-                        kind: 'group.place',
-                        placementId: null,
-                        groupId,
-                        sortOrder: '1024',
-                      }}
-                      label={t('group')}
-                      onSaved={() => setGroupId('')}
-                    />
-                  </div>
-                  <GLHeading level={3} role="heading6">
-                    {t('attributes')}
-                  </GLHeading>
-                  {schema.data?.configuration.attributes.map((a) => (
-                    <div key={a.id}>
-                      <AssignmentEditor
-                        path={`/admin/product-types/${id}`}
-                        version={detail.data!.version}
-                        revision={detail.data!.schemaRevision!}
-                        assignment={a}
-                        groups={schema.data!.configuration.groups}
-                      />
-                      {a.definition.code} · {a.required ? t('required') : ''}
-                      <ReviewedChange
-                        path={`/admin/product-types/${id}`}
-                        version={detail.data.version}
-                        schemaRevision={detail.data.schemaRevision!}
-                        change={{ kind: 'assignment.remove', assignmentId: a.id }}
-                        label={t('remove')}
-                      />
-                    </div>
-                  ))}
-                  {schema.data && (
-                    <>
-                      <OrderEditor
-                        path={`/admin/product-types/${id}`}
-                        version={detail.data.version}
-                        revision={detail.data.schemaRevision!}
-                        collection="attributes"
-                        items={schema.data.configuration.attributes.map((a) => ({
-                          id: a.id,
-                          label: a.definition.code,
-                        }))}
-                      />
-                      <OrderEditor
-                        path={`/admin/product-types/${id}`}
-                        version={detail.data.version}
-                        revision={detail.data.schemaRevision!}
-                        collection="groups"
-                        items={schema.data.configuration.groups.map((g) => ({
-                          id: g.id,
-                          label: g.group.code,
-                        }))}
-                      />
-                      {schema.data.configuration.groups.map((group) => (
-                        <ReviewedChange
-                          key={group.id}
-                          path={`/admin/product-types/${id}`}
-                          version={detail.data!.version}
-                          schemaRevision={detail.data!.schemaRevision!}
-                          change={{
-                            kind: 'group.remove',
-                            placementId: group.id,
-                            moveAssignmentsTo: null,
-                          }}
-                          label={`${t('remove')} — ${group.group.code}`}
-                        />
-                      ))}
-                    </>
-                  )}
-                  <GLSelect
-                    label={t('attributes')}
-                    value={definitionId}
-                    onChange={setDefinitionId}
-                    options={[
-                      { value: '', label: t('choose') },
-                      ...definitions.items
-                        .filter((x) => !x.deprecated)
-                        .map((x) => ({ value: x.id, label: x.code })),
-                    ]}
-                  />
-                  <GLSelect
-                    label={t('group')}
-                    value={groupPlacement}
-                    onChange={setGroupPlacement}
-                    options={[
-                      { value: '', label: t('all') },
-                      ...(schema.data?.configuration.groups ?? []).map((x) => ({
-                        value: x.id,
-                        label: x.group.code,
-                      })),
-                    ]}
-                  />
-                  <GLCheckbox
-                    label={t('required')}
-                    checked={required}
-                    onChange={(e) => setRequired(e.target.checked)}
-                  />
-                  <GLCheckbox
-                    label={t('public')}
-                    checked={pub}
-                    onChange={(e) => setPub(e.target.checked)}
-                  />
-                  <GLCheckbox
-                    label={t('filterable')}
-                    checked={filterable}
-                    onChange={(e) => setFilterable(e.target.checked)}
-                  />
-                  <ReviewedChange
-                    path={`/admin/product-types/${id}`}
-                    version={detail.data.version}
-                    schemaRevision={detail.data.schemaRevision!}
-                    change={{
-                      kind: 'assignment.put',
-                      assignmentId: null,
-                      assignment: {
-                        definitionId,
-                        groupPlacementId: groupPlacement || null,
-                        sortOrder: '1024',
-                        required,
-                        public: pub,
-                        filterable,
-                        searchable: false,
-                        comparable: false,
-                      },
-                    }}
-                    label={t('assign')}
-                    onSaved={() => setDefinitionId('')}
-                  />
-                </section>
-              )}
               <GLFormSection title={t('state')}>
                 {' '}
-                {['product-types', 'attributes'].includes(resource) && (
+                {resource === 'attributes' && (
                   <ReviewedChange
                     path={`/admin/${resource}/${id}`}
                     version={detail.data.version}
                     schemaRevision={detail.data.schemaRevision ?? null}
                     change={{
-                      kind:
-                        resource === 'product-types' ? 'type.deprecate' : 'definition.deprecate',
+                      kind: 'definition.deprecate',
                     }}
                     label={t('deprecated')}
                   />
@@ -968,6 +803,7 @@ function ConfigurationCreate({
     confirmDiscard = useConfirmDiscard(),
     action = useAction('configuration');
   const form = useForm<TranslationForm>({ defaultValues: structuredClone(emptyTranslations) });
+  const [membershipIds, setMembershipIds] = useState<string[]>([]);
   const [code, setCode] = useState(''),
     [kind, setKind] = useState('NUMBER'),
     [unit, setUnit] = useState(''),
@@ -982,6 +818,7 @@ function ConfigurationCreate({
     [dimension, setDimension] = useState('');
   const units = useStaffOptions('/admin/units', unitSchema, open && resource === 'attributes');
   const dirty =
+    membershipIds.length > 0 ||
     form.formState.isDirty ||
     Boolean(
       code ||
@@ -1001,6 +838,7 @@ function ConfigurationCreate({
   useEffect(() => {
     if (open) return;
     form.reset(structuredClone(emptyTranslations));
+    setMembershipIds([]);
     setCode('');
     setKind('NUMBER');
     setUnit('');
@@ -1016,6 +854,7 @@ function ConfigurationCreate({
   }, [open]);
   const definitionInput = {
     code,
+    groupIds: membershipIds,
     kind,
     unitCode: kind === 'NUMBER' ? unit || null : null,
     minimum: kind === 'NUMBER' ? minimum || null : null,
@@ -1061,11 +900,9 @@ function ConfigurationCreate({
         title={t(
           resource === 'attributes'
             ? 'createAttribute'
-            : resource === 'product-types'
-              ? 'createType'
-              : resource === 'units'
-                ? 'createUnit'
-                : 'createGroup',
+            : resource === 'units'
+              ? 'createUnit'
+              : 'createGroup',
         )}
       >
         <form
@@ -1079,7 +916,7 @@ function ConfigurationCreate({
                     ? { ...definitionInput, code, translations: translationInput(v) }
                     : resource === 'units'
                       ? { code, symbol, dimension, translations: translationInput(v) }
-                      : { code, translations: translationInput(v) },
+                      : { code, translations: translationInput(v), attributeIds: membershipIds },
                   'POST',
                 ),
               {
@@ -1114,6 +951,15 @@ function ConfigurationCreate({
             <GLFormSection title={t('type')}>{typeField}</GLFormSection>
           )}
           <TranslationFields form={form} labelsOnly={resource === 'units'} />
+          {resource !== 'units' && (
+            <RelationshipSelection
+              resource={resource === 'attributes' ? 'attribute-groups' : 'attributes'}
+              value={membershipIds}
+              onChange={setMembershipIds}
+              disabled={action.isPending}
+              ordered={resource !== 'attributes'}
+            />
+          )}
           {resource === 'attributes' && (
             <>
               {constraintsFields}

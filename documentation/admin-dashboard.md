@@ -1,8 +1,10 @@
 # Golden Lift Admin dashboard
 
+Current relationship workflows, 2026-10-08: Category creation accepts ordered Attribute Groups immediately and persists them atomically. Existing leaf groups, Attribute multi-group membership and Group multi-attribute membership are editable through reviewed dialogs. Tables show memberships and actual relationship counts. Product placement previews target schema impact and retains values. See [decision 020](decisions/020-final-category-relationships.md).
+
 Current Product creation, 2026-10-07: select a leaf category and enter an Arabic name; optional model code and English/Sorani names. Create saves an inactive draft, closes the modal, shows Product created and navigates to the editor without a reload. Specifications and Media are added later. Publication separately requires complete required values and a ready image cover. See the [fix report](implementation/fix-product-create-disabled.md) and [decision 017](decisions/017-minimal-category-product-drafts.md).
 
-The category tree retains recursive disclosure, ancestor search, keyboard navigation, compact actions and mobile browsing. Product Type is retired from product creation/editing and navigation. The normal Catalog category cutover was applied after backup restore verification and migration rehearsal. Category schemas now supply reusable groups and unique attributes; relationship editing remains separate unfinished work. See [migration operations](operations/catalog-migration.md).
+The category tree retains recursive disclosure, ancestor search, keyboard navigation, compact actions and mobile browsing. Product Type is retired from product creation/editing and navigation. The normal Catalog category cutover was applied after backup restore verification and migration rehearsal. Category schemas now supply reusable groups and unique attributes; relationship editing is implemented in the final phase. See [migration operations](operations/catalog-migration.md).
 
 Earlier [CRUD modal](implementation/admin-crud-modal-fix-completed-work.md), [category model](implementation/catalog-model-and-ux-fix-completed-work.md) and [category tree](implementation/category-tree-completed-work.md) reports retain their dated historical scope.
 
@@ -18,7 +20,6 @@ The 2026-10-07 functional integration adds API-default visitor collections/searc
 | `/admin` | Admin launchpad, bounded first-page catalog/Media selection and actual Media job count |
 | `/admin/categories`, `/:id` | Recursive navigation, translations, image cover, move, sibling ordering, deletion preview/confirmation |
 | `/admin/products`, `/new`, `/:id` | Collection filters, independent translations, leaf category placement, schema-driven attributes, ordered media, publication and soft deletion |
-| `/admin/product-types`, `/:id` | Retired notice; existing links remain safe, with no Product Type creation |
 | `/admin/attributes`, `/:id` | Typed definitions, numeric/text/choice constraints, translated help, options and deprecation |
 | `/admin/attribute-groups`, `/:id` | Shared translated groups |
 | `/admin/units`, `/:code` | Canonical units and translated metadata |
@@ -66,7 +67,7 @@ Navigation is grouped into Overview, Catalog, Media and Account; Super Admin use
 
 Product editors now follow Identity (type/category before model) → Content (language tabs) → Specifications (backend groups/order, two desktop columns) → Media (cover/gallery/video/PDF) → Publication. Persistent actions show each independent section's dirty state. They preserve version/schema checks, drafts, decimal/bigint strings, false/zero/unset distinctions and reviewed type-change impacts.
 
-Category location and parent appear before translations/cover. Type group placement precedes assignments; attribute constraints hide irrelevant fields and normalize type-specific payloads. State actions follow options/schema. Media has visual tiles, compact filters and a drawer picker. Staff directory secondary actions use an overflow menu and confirmation of the captured account/version; passwords/action links remain excluded from documentation.
+Category location and parent appear before translations/cover. Leaf group order and reusable group membership define the generated fields; attribute constraints hide irrelevant fields and normalize type-specific payloads. State actions follow options/schema. Media has visual tiles, compact filters and a drawer picker. Staff directory secondary actions use an overflow menu and confirmation of the captured account/version; passwords/action links remain excluded from documentation.
 
 See the [current design guide](visitor-and-administration-design.md), [decision 010](decisions/010-ui-ux-refinement.md) and [current completion report](implementation/ui-ux-refinement-completed-work.md). No backend/API/schema changes were made in this refinement. The operational dashboard uses real Media job data; unsupported global catalog totals are not fabricated.
 

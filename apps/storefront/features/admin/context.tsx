@@ -363,31 +363,25 @@ export function StaffShell({ children }: { children: ReactNode }) {
   const permitted = isSuper
     ? /^\/super-admin\/(admins(?:\/[^/]+)?|account)\/?$/.test(pathname)
     : pathname.startsWith('/admin') && !pathname.startsWith('/super-admin');
-  const links = isSuper
+  const groups: { title: string; items: readonly (readonly [string, string])[] }[] = isSuper
     ? [
-        ['/super-admin/admins', t('admins')],
-        ['/super-admin/account', t('account')],
+        { title: t('staff'), items: [['/super-admin/admins', t('admins')]] },
+        { title: t('account'), items: [['/super-admin/account', t('account')]] },
       ]
     : [
-        ['/admin', t('dashboard')],
-        ['/admin/categories', t('categories')],
-        ['/admin/products', t('products')],
-        ['/admin/attributes', t('attributes')],
-        ['/admin/attribute-groups', t('groups')],
-        ['/admin/units', t('units')],
-        ['/admin/media', t('media')],
-        ['/admin/account', t('account')],
-      ];
-  const groups = isSuper
-    ? [
-        { title: t('staff'), items: links.slice(0, 1) },
-        { title: t('account'), items: links.slice(1) },
-      ]
-    : [
-        { title: t('overview'), items: links.slice(0, 1) },
-        { title: t('catalog'), items: links.slice(1, 7) },
-        { title: t('media'), items: links.slice(7, 8) },
-        { title: t('account'), items: links.slice(8) },
+        { title: t('overview'), items: [['/admin', t('dashboard')]] },
+        {
+          title: t('catalog'),
+          items: [
+            ['/admin/categories', t('categories')],
+            ['/admin/products', t('products')],
+            ['/admin/attributes', t('attributes')],
+            ['/admin/attribute-groups', t('groups')],
+            ['/admin/units', t('units')],
+          ],
+        },
+        { title: t('media'), items: [['/admin/media', t('media')]] },
+        { title: t('account'), items: [['/admin/account', t('account')]] },
       ];
   const nav = (
     <nav aria-label={t('dashboard')}>

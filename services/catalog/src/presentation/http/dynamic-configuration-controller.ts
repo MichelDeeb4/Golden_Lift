@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, locale, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@golden-lift/contracts';
 import type { SessionAuthenticator } from '@golden-lift/contracts';
 import { staffRequest } from '@golden-lift/platform';
 import type { ReadCatalogConfiguration } from '../../application/use-cases/read-catalog-configuration.js';
@@ -9,7 +9,6 @@ import type {
   CreateAttributeGroup,
   CreateAttributeOption,
   CreateCanonicalUnit,
-  CreateProductType,
 } from '../../application/use-cases/create-catalog-configuration.js';
 import type { ChangeCatalogSchema } from '../../application/use-cases/change-catalog-schema.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
@@ -26,7 +25,6 @@ import {
   text,
 } from './dynamic-input.js';
 export const CONFIGURATION_READER = Symbol('ConfigurationReader'),
-  CREATE_TYPE = Symbol('CreateType'),
   CREATE_DEFINITION = Symbol('CreateDefinition'),
   CREATE_GROUP = Symbol('CreateGroup'),
   CREATE_UNIT = Symbol('CreateUnit'),
@@ -36,7 +34,6 @@ export const CONFIGURATION_READER = Symbol('ConfigurationReader'),
 export class DynamicConfigurationController {
   constructor(
     @Inject(CONFIGURATION_READER) private readonly read: ReadCatalogConfiguration,
-    @Inject(CREATE_TYPE) private readonly types: CreateProductType,
     @Inject(CREATE_DEFINITION) private readonly definitions: CreateAttributeDefinition,
     @Inject(CREATE_GROUP) private readonly groups: CreateAttributeGroup,
     @Inject(CREATE_UNIT) private readonly units: CreateCanonicalUnit,
@@ -44,15 +41,6 @@ export class DynamicConfigurationController {
     @Inject(SCHEMA_CHANGES) private readonly changes: ChangeCatalogSchema,
     @Inject(STAFF_AUTHENTICATOR) private readonly authentication: SessionAuthenticator,
   ) {}
-  @Get('product-types/:id/schema') async schema(
-    @Param('id') id: string,
-    @Query() value: unknown,
-    @Req() req: IncomingMessage,
-  ) {
-    const actor = await this.authentication.authenticate(staffRequest(req, false)),
-      q = strictRecord(value, ['locale']);
-    return this.read.schema(uuid(id), locale(q['locale']), actor);
-  }
   @Post('attributes/:id/options') async createOption(
     @Param('id') id: string,
     @Body() value: unknown,
@@ -87,7 +75,6 @@ export class DynamicConfigurationController {
       );
     if (q['page'] !== undefined || q['pageSize'] !== undefined) {
       if (
-        r === 'types' ||
         q['cursor'] !== undefined ||
         q['limit'] !== undefined ||
         (q['kind'] !== undefined &&
@@ -155,8 +142,6 @@ export class DynamicConfigurationController {
   ) {
     const actor = await this.authentication.authenticate(staffRequest(req, true));
     switch (resource(name)) {
-      case 'types':
-        return this.types.execute(named(value), actor);
       case 'definitions':
         return this.definitions.execute(definition(value), actor);
       case 'groups':

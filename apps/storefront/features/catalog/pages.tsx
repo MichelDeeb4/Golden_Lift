@@ -32,7 +32,6 @@ import {
   GLProductGallery,
   GLSpecificationList,
   GLTechnicalDocumentCard,
-  GLVideo,
 } from '@golden-lift/catalog-ui';
 import { useGLTranslation, useLocale } from '@golden-lift/i18n';
 import { ArrowUpRight, Layers, Ruler, ShieldCheck } from '@golden-lift/icons';
@@ -625,7 +624,7 @@ function ListingGrid({
 export function ProductPage() {
   const { id } = useLocalSearchParams<{ id: string }>(),
     q = useProduct(id),
-    related = useProducts(),
+    related = useProducts({ categoryId: q.data?.categoryId }),
     { t } = useGLTranslation(),
     [tab, setTab] = useState('overview');
   useEffect(() => {
@@ -666,17 +665,14 @@ export function ProductPage() {
               <GLBreadcrumb
                 items={[
                   { href: '/', label: t('home') },
-                  { href: '/products', label: t('products') },
-                  { href: '/categories/' + p.categoryId, label: p.categoryName },
+                  ...(p.navigation?.breadcrumbs.map((c) => ({
+                    href: '/categories/' + c.id,
+                    label: c.name,
+                  })) ?? [{ href: '/categories/' + p.categoryId, label: p.categoryName }]),
                   { href: '/products/' + p.id, label: p.name },
                 ]}
               />
               <span className="gl-overline">{p.categoryName}</span>
-              {p.productTypeName && (
-                <GLText role="technicalLabel" className="gl-muted">
-                  {p.productTypeName}
-                </GLText>
-              )}
               <GLHeading fluid level={1}>
                 {p.name}
               </GLHeading>
@@ -694,7 +690,7 @@ export function ProductPage() {
                   </a>
                 )}
                 {p.media.some((m) => m.kind === 'video') && (
-                  <a href="#product-video" className="gl-button gl-button-secondary gl-button-md">
+                  <a href="#product-gallery" className="gl-button gl-button-secondary gl-button-md">
                     {t('video')}
                   </a>
                 )}
@@ -702,6 +698,19 @@ export function ProductPage() {
             </div>
           </div>
         </GLSection>
+        <nav className="gl-product-neighbors" aria-label={t('productNavigation')}>
+          <a href={'/categories/' + p.categoryId}>{t('backToCategory')}</a>
+          {p.navigation?.previous && (
+            <a href={'/products/' + p.navigation.previous.id}>
+              {t('previousProduct')} — {p.navigation.previous.name}
+            </a>
+          )}
+          {p.navigation?.next && (
+            <a href={'/products/' + p.navigation.next.id}>
+              {t('nextProduct')} — {p.navigation.next.name}
+            </a>
+          )}
+        </nav>
         <GLSection className="gl-product-dossier">
           <div className="gl-dossier-heading">
             <span className="gl-overline">01 / {t('overview')}</span>
@@ -728,16 +737,6 @@ export function ProductPage() {
             </div>
           </div>
         </GLSection>
-        {p.media.some((m) => m.kind === 'video') && (
-          <GLSection id="product-video">
-            <SectionHeading overline={'03 / ' + t('video')} title={t('video')} />
-            {p.media
-              .filter((m) => m.kind === 'video')
-              .map((m) => (
-                <GLVideo key={m.id} reference={m} />
-              ))}
-          </GLSection>
-        )}
         {p.documents.length > 0 && (
           <GLSection id="product-documents">
             <SectionHeading overline={'04 / ' + t('documents')} title={t('documents')} />
@@ -750,7 +749,8 @@ export function ProductPage() {
         )}
         {related.data?.items.some((r) => r.id !== p.id) && (
           <GLSection>
-            <SectionHeading overline={'05 / ' + t('related')} title={t('related')} />
+            <SectionHeading overline={'05 / ' + t('related')} title={t('moreFromCategory')} />
+            <a href={'/categories/' + p.categoryId}>{t('viewAll')} →</a>
             <div className="gl-grid">
               {related.data.items
                 .filter((r) => r.id !== p.id)

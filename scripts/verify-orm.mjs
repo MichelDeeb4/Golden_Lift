@@ -49,11 +49,17 @@ for (const service of ['identity', 'catalog', 'media', 'inquiries']) {
           (/\@db.Decimal\(([^)]+)\)/.exec(field.attributes)?.[1] ?? '').replaceAll(' ', '') +
           ')',
       };
-      assert.equal(types[field.type], source.type, name + '.' + physical + ' type');
+      assert.equal(
+        types[field.type] + (field.suffix === '[]' ? '[]' : ''),
+        source.type,
+        name + '.' + physical + ' type',
+      );
       assert.equal(field.suffix === '?', source.nullable, name + '.' + physical + ' nullability');
       const database = /@default\(dbgenerated\(("(?:[^"\\]|\\.)*")\)\)/.exec(field.attributes);
       const literal = /@default\(("(?:[^"\\]|\\.)*"|true|false|\d+)\)/.exec(field.attributes);
       let value = database ? JSON.parse(database[1]) : (literal?.[1] ?? null);
+      if (!database && field.suffix === '[]' && /@default\(\[\]\)/.test(field.attributes))
+        value = "'{}'::" + types[field.type] + '[]';
       if (!database && literal?.[1].startsWith('"'))
         value =
           "'" +

@@ -3,15 +3,12 @@ import type {
   AttributeDefinitionDto,
   PublicAttributeValue,
   CatalogTranslation,
-  EffectiveTypeSchema,
   EffectiveCategorySchema,
   CategoryFormSchema,
   EffectiveAttributeDto,
   SchemaGroupDto,
   FormField,
   Locale,
-  ProductFormSchema,
-  TypeAttributeDto,
 } from '@golden-lift/contracts';
 export function translated(items: readonly CatalogTranslation[], language: Locale) {
   const selected = items.find((t) => t.locale === language),
@@ -22,7 +19,7 @@ export function translated(items: readonly CatalogTranslation[], language: Local
     resolvedLocale: selected?.name ? language : ('ar' as Locale),
   };
 }
-export function publicAttribute(field: TypeAttributeDto): boolean {
+export function publicAttribute(field: EffectiveAttributeDto): boolean {
   return field.public && field.definition.public;
 }
 export function publicValue(
@@ -51,13 +48,6 @@ export function publicValue(
       }),
     };
   return value;
-}
-export function formSchema(schema: EffectiveTypeSchema, language: Locale): ProductFormSchema {
-  return {
-    productTypeId: schema.type.id,
-    schemaRevision: schema.type.schemaRevision,
-    ...formContent(schema, language),
-  };
 }
 export function categoryFormSchema(
   schema: EffectiveCategorySchema,
@@ -108,6 +98,8 @@ function formContent(
         control,
         required: field.required,
         groupPlacementId: field.groupPlacementId,
+        groupPlacementIds:
+          field.groupPlacementIds ?? (field.groupPlacementId ? [field.groupPlacementId] : []),
         sortOrder: field.sortOrder,
         unit: d.unit
           ? {

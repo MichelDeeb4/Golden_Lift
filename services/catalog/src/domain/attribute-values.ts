@@ -2,10 +2,9 @@ import { ApplicationError } from '@golden-lift/contracts';
 import type {
   AttributeValue,
   AttributeValueMutation,
-  EffectiveTypeSchema,
   EffectiveCategorySchema,
   ProductAttributeValue,
-  TypeAttributeDto,
+  EffectiveAttributeDto,
 } from '@golden-lift/contracts';
 export function exactQuantity(value: string): bigint {
   if (!/^-?(?:0|[1-9][0-9]{0,13})(?:\.[0-9]{1,6})?$/.test(value))
@@ -21,7 +20,7 @@ function invalid(message: string): never {
   throw new ApplicationError('INVALID_STATE', message);
 }
 const validators: Readonly<
-  Record<AttributeValue['kind'], (field: TypeAttributeDto, value: AttributeValue) => void>
+  Record<AttributeValue['kind'], (field: EffectiveAttributeDto, value: AttributeValue) => void>
 > = {
   NUMBER(field, value) {
     if (value.kind !== 'NUMBER')
@@ -66,7 +65,7 @@ const validators: Readonly<
   },
 };
 export function validateValues(
-  schema: Pick<EffectiveTypeSchema | EffectiveCategorySchema, 'attributes'>,
+  schema: Pick<EffectiveCategorySchema, 'attributes'>,
   values: readonly ProductAttributeValue[],
   requireComplete = true,
 ): void {
@@ -75,6 +74,7 @@ export function validateValues(
     if (seen.has(item.definitionId)) invalid('Duplicate attribute value.');
     seen.add(item.definitionId);
     const field = schema.attributes.find((a) => a.definition.id === item.definitionId);
+    if (!field && !requireComplete) continue;
     if (!field) invalid('Attribute is not assigned to this category.');
     if (field.definition.kind !== item.value.kind)
       invalid('Attribute value type does not match its definition.');
@@ -103,15 +103,15 @@ export function equalAttributeValues(a: AttributeValue | undefined, b: Attribute
   return false;
 }
 export function applyValueMutations(
-  schema: Pick<EffectiveTypeSchema | EffectiveCategorySchema, 'attributes'>,
+  schema: Pick<EffectiveCategorySchema, 'attributes'>,
   current: readonly ProductAttributeValue[],
   changes: readonly AttributeValueMutation[],
   requireComplete = true,
 ): readonly ProductAttributeValue[] {
-  if (changes.length > 100)
+  if (changes.length > 500)
     throw new ApplicationError(
       'VALIDATION_FAILED',
-      'At most 100 attribute mutations are accepted.',
+      'At most 500 attribute mutations are accepted.',
     );
   const result = new Map(current.map((v) => [v.definitionId, v])),
     seen = new Set<string>();

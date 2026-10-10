@@ -2,6 +2,8 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: '.',
   testMatch: [
+    'frontend.deletion.test.ts',
+    'frontend.final-catalog.test.ts',
     'frontend.admin.test.ts',
     'frontend.admin-modal.test.ts',
     'frontend.category-tree.test.ts',
@@ -18,6 +20,7 @@ export default defineConfig({
     browserName: 'chromium',
     channel: 'msedge',
     headless: true,
+    actionTimeout: 15000,
     viewport: { width: 1440, height: 1000 },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

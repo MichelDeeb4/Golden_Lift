@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
+const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captures = captureRoot
+  ? captureRoot + '/product-create'
+  : 'documentation/assets/product-create';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
@@ -80,7 +84,7 @@ test('minimal creation enables from watched fields, rejects parent selection and
   await expect(submit).toBeEnabled();
   await expect(modal.getByLabel('Type', { exact: true })).toHaveCount(0);
   await expect(modal.getByRole('button', { name: /Cover/ })).toHaveCount(0);
-  await modal.screenshot({ path: 'documentation/assets/product-create/create-en.png' });
+  await modal.screenshot({ path: captures + '/create-en.png' });
   const marker = await page.evaluate(() => {
     const token = crypto.randomUUID();
     (window as unknown as { draftDocument: string }).draftDocument = token;
@@ -125,7 +129,7 @@ test('minimal creation enables from watched fields, rejects parent selection and
     'مسودة محفوظة',
   );
   expect(product.active).toBe(false);
-  await page.screenshot({ path: 'documentation/assets/product-create/draft-editor.png' });
+  await page.screenshot({ path: captures + '/draft-editor.png' });
 });
 test('live Identity requires a session, mutation CSRF and the approved Origin', async ({
   page,
@@ -228,7 +232,7 @@ for (const locale of ['ar', 'ckb'])
     );
     expect(overflow).toBe(false);
     await modal.screenshot({
-      path: 'documentation/assets/product-create/create-' + locale + '-mobile.png',
+      path: captures + '/create-' + locale + '-mobile.png',
     });
     await submit.click();
     await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]+\?/);

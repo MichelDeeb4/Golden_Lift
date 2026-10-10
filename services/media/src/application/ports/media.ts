@@ -31,6 +31,7 @@ export interface MediaAsset {
   readonly security: 'UNVERIFIED' | 'VERIFIED' | 'BLOCKED' | 'REJECTED';
   readonly version: Version;
   readonly deleted: boolean;
+  readonly deletionPending: boolean;
   readonly key: string;
   readonly bytes: string | null;
   readonly sha256: string | null;

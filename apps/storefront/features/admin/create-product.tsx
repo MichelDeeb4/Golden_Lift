@@ -87,7 +87,10 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
                 },
                 onSuccess: (response) => {
                   const result = createdProduct.parse(response);
-                  const returnTo = window.location.pathname + window.location.search;
+                  const returnTo =
+                    window.location.pathname === '/admin/products'
+                      ? window.location.pathname + window.location.search
+                      : '/admin/products';
                   form.reset(defaults);
                   setCategory(null);
                   onClose();

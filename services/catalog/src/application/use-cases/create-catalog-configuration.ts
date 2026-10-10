@@ -1,5 +1,5 @@
 import { ApplicationError, version } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Uuid, ProductTypeDto } from '@golden-lift/contracts';
+import type { AuthenticatedActor, Uuid } from '@golden-lift/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { exactQuantity } from '../../domain/attribute-values.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';
@@ -10,6 +10,7 @@ import type {
   UnitDraft,
 } from '../ports/product-schema.js';
 import { configurationEvent } from '../models/configuration-event.js';
+import { relationshipIds } from './manage-catalog-relationships.js';
 export function validateNamed(input: NamedDraft): void {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(input.code))
     throw new ApplicationError(
@@ -60,23 +61,16 @@ export function validateLabels(input: NamedDraft): void {
       'Units and options support labels without descriptions.',
     );
 }
-/** Retired transport adapter retained so stale clients get a policy error, not a database error. */
-export class CreateProductType {
-  async execute(_input: NamedDraft, actor: AuthenticatedActor): Promise<ProductTypeDto> {
-    requireContentAdmin(actor);
-    throw new ApplicationError(
-      'INVALID_STATE',
-      'Product Type is retired; use category classification.',
-    );
-  }
-}
 export class CreateAttributeDefinition {
   constructor(
     private readonly uow: CatalogUnitOfWork,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
-  async execute(input: DefinitionDraft, actor: AuthenticatedActor) {
+  async execute(
+    input: DefinitionDraft & { readonly groupIds?: readonly Uuid[] },
+    actor: AuthenticatedActor,
+  ) {
     requireContentAdmin(actor);
     validateDefinition(input);
     const id = this.ids.newUuid(),
@@ -85,6 +79,11 @@ export class CreateAttributeDefinition {
       if (input.unitCode && !(await r.units.find(input.unitCode)))
         throw new ApplicationError('INVALID_STATE', 'Canonical unit must be active.');
       await r.definitions.create(id, input);
+      if (input.groupIds?.length)
+        await r.relationships.replace(
+          { resource: 'definitions', id },
+          relationshipIds(input.groupIds),
+        );
       const result = await r.definitions.find(id);
       if (!result)
         throw new ApplicationError('INTERNAL_ERROR', 'Created configuration could not be read.');
@@ -102,13 +101,21 @@ export class CreateAttributeGroup {
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
-  async execute(input: NamedDraft, actor: AuthenticatedActor) {
+  async execute(
+    input: NamedDraft & { readonly attributeIds?: readonly Uuid[] },
+    actor: AuthenticatedActor,
+  ) {
     requireContentAdmin(actor);
     validateNamed(input);
     const id = this.ids.newUuid(),
       event = configurationEvent(this.ids, this.clock, 'AttributeGroup', id, version('1'));
     return this.uow.execute(async (r) => {
       await r.groups.create(id, input);
+      if (input.attributeIds?.length)
+        await r.relationships.replace(
+          { resource: 'groups', id },
+          relationshipIds(input.attributeIds),
+        );
       const result = await r.groups.find(id);
       if (!result)
         throw new ApplicationError('INTERNAL_ERROR', 'Created configuration could not be read.');

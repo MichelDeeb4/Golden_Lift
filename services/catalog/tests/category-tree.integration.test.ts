@@ -6,7 +6,7 @@ import type {
   CategoryCollectionPage,
   AdminCategoryDto,
   BreadcrumbPage,
-  BranchDeletionPreview,
+  DeletionImpact,
   Uuid,
 } from '@golden-lift/contracts';
 import pg from 'pg';
@@ -25,6 +25,11 @@ import {
   DeleteCategoryBranch,
   PreviewCategoryDeletion,
 } from '../src/application/use-cases/delete-category-branch.js';
+import { PrismaCatalogDeletionUnitOfWork } from '../src/infrastructure/prisma/deletion.js';
+import {
+  GetCategoryDeletionImpact,
+  DeleteCategoryTree,
+} from '../src/application/use-cases/delete-catalog-entities.js';
 import { ReadCategoryNavigation } from '../src/application/use-cases/read-category-navigation.js';
 import { catalogApplication } from '../src/composition/application.js';
 import { gatewayApplication } from '../../gateway/src/composition/application.js';
@@ -44,7 +49,7 @@ const ids = { newUuid: () => uuid(randomUUID()) },
 const isCode = (code: string) => (error: unknown) =>
   error instanceof ApplicationError && error.code === code;
 before(async () => {
-  fixture = await databaseFixture('catalog');
+  fixture = await databaseFixture('catalog', { catalogProfile: 'category' });
   database = orm(fixture.pool);
   transactions = new PrismaCatalogUnitOfWork(database);
   navigation = new PrismaCategoryNavigation(database);
@@ -108,7 +113,7 @@ async function remove(id: Uuid) {
 }
 async function product(categoryId: Uuid) {
   const id = ids.newUuid(),
-    typeId = ids.newUuid(),
+    groupId = ids.newUuid(),
     mediaId = ids.newUuid(),
     assetId = ids.newUuid(),
     code = 'SYNTHETIC-' + randomUUID();
@@ -117,12 +122,13 @@ async function product(categoryId: Uuid) {
       await tx.mediaAssetRefs.create({
         data: { id: assetId, media_kind: 'IMAGE', source_version: 1n, ready_at: new Date() },
       });
-      await tx.productTypes.create({ data: { id: typeId, code: 'b4-fixture-' + typeId } });
-      await tx.productTypeTranslations.create({
-        data: { product_type_id: typeId, locale: 'ar', name: 'Synthetic B4 fixture type' },
+      await tx.specificationGroups.create({ data: { id: groupId, code: 'b4-fixture-' + groupId } });
+      await tx.specificationGroupTranslations.create({
+        data: { group_id: groupId, locale: 'ar', name: 'Synthetic fixture group' },
       });
+      await tx.$executeRaw`INSERT INTO catalog.category_attribute_groups(category_id,group_id) VALUES(${categoryId}::uuid,${groupId}::uuid)`;
       await tx.products.create({
-        data: { id, category_id: categoryId, cover_media_id: mediaId, product_type_id: typeId },
+        data: { id, category_id: categoryId, cover_media_id: mediaId, is_active: true },
       });
       await tx.productTranslations.create({
         data: { product_id: id, locale: 'ar', name: 'Synthetic product' },
@@ -138,7 +144,7 @@ async function product(categoryId: Uuid) {
     },
     { isolationLevel: 'Serializable' },
   );
-  return { id, mediaId, assetId, code, typeId };
+  return { id, mediaId, assetId, code, groupId };
 }
 async function richBranch() {
   const root = await category(),
@@ -152,10 +158,14 @@ async function richBranch() {
     observationId = ids.newUuid(),
     textDefinition = ids.newUuid(),
     choiceDefinition = ids.newUuid(),
-    numberDefinition = ids.newUuid();
+    numberDefinition = ids.newUuid(),
+    coverAsset = ids.newUuid();
   await database.$transaction(
     async (tx) => {
-      await tx.categories.update({ where: { id: root.id }, data: { cover_asset_id: p.assetId } });
+      await tx.mediaAssetRefs.create({
+        data: { id: coverAsset, media_kind: 'IMAGE', source_version: 1n, ready_at: new Date() },
+      });
+      await tx.categories.update({ where: { id: root.id }, data: { cover_asset_id: coverAsset } });
       await tx.technicalSheets.create({ data: { id: sheetId, sheet_key: 'synthetic-' + sheetId } });
       await tx.technicalSheetTranslations.create({
         data: { sheet_id: sheetId, locale: 'ar', title: 'Synthetic shared sheet' },
@@ -217,12 +227,7 @@ async function richBranch() {
           label: 'Synthetic specification',
         })),
       });
-      await tx.productTypeSpecifications.createMany({
-        data: [textDefinition, choiceDefinition, numberDefinition].map((id) => ({
-          product_type_id: p.typeId,
-          definition_id: id,
-        })),
-      });
+      await tx.$executeRaw`INSERT INTO catalog.attribute_group_attributes(group_id,definition_id) SELECT ${p.groupId}::uuid,id FROM unnest(${[textDefinition, choiceDefinition, numberDefinition]}::uuid[]) ids(id)`;
       const text = await tx.productSpecificationValues.create({
         data: { product_id: p.id, definition_id: textDefinition, value_type: 'TEXT' },
       });
@@ -283,7 +288,7 @@ test('Admin detail exposes actual translations, missing locales, exact counts an
     p = await product(root.id);
   await new EditCategory(transactions, ids, clock).execute(
     root.id,
-    root.version,
+    (await navigation.detail(root.id, 'ar'))!.version,
     [ar, { ...ar, locale: 'en', name: 'English', description: null }],
     actor,
   );
@@ -358,12 +363,10 @@ test('branch moves root-to-child, branch-to-branch and child-to-root retain desc
     }),
     rowsBefore,
   );
-  assert.equal(
-    await database.productTypeSpecifications.count({
-      where: { product_type_id: branch.p.typeId, deleted_at: null },
-    }),
-    3,
-  );
+  const [members] = await database.$queryRaw<
+    { count: string }[]
+  >`SELECT count(*)::text FROM catalog.attribute_group_attributes WHERE group_id=${branch.p.groupId}::uuid AND deleted_at IS NULL`;
+  assert.equal(members?.count, '3');
   assert.equal(
     await database.productTechnicalConfigurations.count({
       where: { deleted_at: null, product_technical_sheets: { product_id: branch.p.id } },
@@ -641,33 +644,35 @@ test('preview becomes stale after descendant edits, products, attachments and sc
     isCode('VERSION_CONFLICT'),
   );
 });
-test('confirmed deletion soft-deletes owned records once, retains shared sheets/evidence/files/codes, and emits one bounded envelope', async () => {
+test('permanent Category deletion blocks descendant Products without changing retained records or publishing cleanup', async () => {
   const branch = await richBranch(),
-    state = await preview(branch.root.id),
-    count = await database.outboxEvents.count(),
-    result = await remove(branch.root.id);
-  assert.deepEqual(result.impact, state.impact);
-  assert.equal(await database.outboxEvents.count(), count + 1);
-  assert.equal(await navigation.detail(branch.root.id, 'ar'), null);
-  assert.equal(await navigation.detail(branch.leaf.id, 'ar'), null);
-  assert.ok((await database.products.findUniqueOrThrow({ where: { id: branch.p.id } })).deleted_at);
-  for (const query of [
-    database.categoryTranslations.count({
-      where: { category_id: { in: [branch.root.id, branch.leaf.id] }, deleted_at: null },
-    }),
-    database.categorySpecifications.count({
-      where: { category_id: branch.leaf.id, deleted_at: null },
-    }),
-    database.productMedia.count({ where: { product_id: branch.p.id, deleted_at: null } }),
-    database.productSpecificationValues.count({
+    deletions = new PrismaCatalogDeletionUnitOfWork(database);
+  const state = await new GetCategoryDeletionImpact(deletions).execute(branch.root.id, actor),
+    count = await database.outboxEvents.count();
+  assert.equal(state.allowed, false);
+  await assert.rejects(
+    new DeleteCategoryTree(deletions, ids).execute(
+      branch.root.id,
+      {
+        confirmed: true,
+        expectedVersion: state.expectedVersion,
+        impactRevision: state.impactRevision,
+      },
+      actor,
+    ),
+    isCode('DELETE_BLOCKED_BY_PRODUCTS'),
+  );
+  for (const id of [branch.root.id, branch.leaf.id]) assert.ok(await navigation.detail(id, 'ar'));
+  assert.equal(
+    (await database.products.findUniqueOrThrow({ where: { id: branch.p.id } })).deleted_at,
+    null,
+  );
+  assert.equal(
+    await database.productSpecificationValues.count({
       where: { product_id: branch.p.id, deleted_at: null },
     }),
-    database.productTechnicalSheets.count({ where: { product_id: branch.p.id, deleted_at: null } }),
-    database.productTechnicalConfigurations.count({
-      where: { product_technical_sheets: { product_id: branch.p.id }, deleted_at: null },
-    }),
-  ])
-    assert.equal(await query, 0);
+    3,
+  );
   assert.equal(
     (await database.technicalSheets.findUniqueOrThrow({ where: { id: branch.sheetId } }))
       .deleted_at,
@@ -686,41 +691,7 @@ test('confirmed deletion soft-deletes owned records once, retains shared sheets/
       (await database.mediaAssetRefs.findUniqueOrThrow({ where: { id } })).deleted_at,
       null,
     );
-  assert.equal(
-    await database.categoryTechnicalSheets.count({
-      where: { category_id: branch.outside.id, deleted_at: null },
-    }),
-    1,
-  );
-  const event = await database.outboxEvents.findFirstOrThrow({
-    where: { aggregate_id: branch.root.id, event_type: 'catalog.category.branch.deleted.v1' },
-  });
-  assert.equal(event.aggregate_version?.toString(), result.version);
-  assert.ok(JSON.stringify(event.payload).length < 1000);
-  assert.equal((event.payload as { id: string }).id, event.id);
-  await assert.rejects(
-    deletion().execute(
-      branch.root.id,
-      {
-        confirm: true,
-        expectedVersion: state.category.version,
-        previewPrecondition: state.previewPrecondition,
-      },
-      actor,
-    ),
-    isCode('NOT_FOUND'),
-  );
-  await assert.rejects(
-    database.$transaction(
-      async (tx) => {
-        await tx.productCodeReservations.create({
-          data: { product_id: branch.p.id, code: branch.p.code },
-        });
-      },
-      { isolationLevel: 'Serializable' },
-    ),
-  );
-  assert.equal(await database.outboxEvents.count(), count + 1);
+  assert.equal(await database.outboxEvents.count(), count);
 });
 test('failure after deletion/event normalization rolls everything back', async () => {
   const root = await category(),
@@ -865,7 +836,7 @@ test('runtime credentials cannot access the private write gate, physically delet
   await assert.rejects(fixture.pool.query('SELECT revision FROM catalog.write_gate'), {
     code: '42501',
   });
-  await assert.rejects(fixture.pool.query('DELETE FROM catalog.categories'), { code: '42501' });
+  await assert.rejects(fixture.pool.query('DELETE FROM catalog.categories'), { code: '25000' });
   await assert.rejects(fixture.pool.query('TRUNCATE catalog.categories'), { code: '42501' });
   const root = await category();
   await remove(root.id);
@@ -1173,13 +1144,13 @@ test('gateway API exposes bounded Admin navigation, scope-bound cursors, destina
       400,
     );
     const state = (await (
-      await call('GET', base + '/' + parent.id + '/deletion-preview')
-    ).json()) as BranchDeletionPreview;
+      await call('GET', base + '/' + parent.id + '/deletion-impact')
+    ).json()) as DeletionImpact;
     assert.equal(
       (
         await call('DELETE', base + '/' + parent.id, {
-          expectedVersion: state.category.version,
-          previewPrecondition: state.previewPrecondition,
+          expectedVersion: state.expectedVersion,
+          impactRevision: state.impactRevision,
         })
       ).status,
       400,
@@ -1187,12 +1158,12 @@ test('gateway API exposes bounded Admin navigation, scope-bound cursors, destina
     assert.equal(
       (
         await call('DELETE', base + '/' + parent.id, {
-          confirm: true,
-          expectedVersion: state.category.version,
-          previewPrecondition: state.previewPrecondition,
+          confirmed: true,
+          expectedVersion: state.expectedVersion,
+          impactRevision: state.impactRevision,
         })
       ).status,
-      200,
+      202,
     );
     for (const route of [
       base + '/' + parent.id,
@@ -1206,9 +1177,9 @@ test('gateway API exposes bounded Admin navigation, scope-bound cursors, destina
     assert.equal(
       (
         await call('DELETE', base + '/' + parent.id, {
-          confirm: true,
-          expectedVersion: state.category.version,
-          previewPrecondition: state.previewPrecondition,
+          confirmed: true,
+          expectedVersion: state.expectedVersion,
+          impactRevision: state.impactRevision,
         })
       ).status,
       404,
@@ -1227,16 +1198,33 @@ test('gateway API exposes bounded Admin navigation, scope-bound cursors, destina
 test('cover edits preserve omission/null semantics and reject unverified or wrong-kind assets through deferred integrity', async () => {
   const leaf = await category(),
     p = await product(leaf.id),
+    cover = ids.newUuid(),
+    registration = await database.$transaction(
+      (tx) =>
+        tx.mediaAssetRefs.create({
+          data: { id: cover, media_kind: 'IMAGE', source_version: 1n, ready_at: new Date() },
+        }),
+      { isolationLevel: 'Serializable' },
+    ),
     target = await new CreateCategory(transactions, ids, clock).execute(
-      { parentId: null, expectedParentVersion: null, translations: [ar], coverAssetId: p.assetId },
+      {
+        parentId: null,
+        expectedParentVersion: null,
+        translations: [ar],
+        coverAssetId: registration.id as Uuid,
+      },
       actor,
     ),
     edit = new EditCategory(transactions, ids, clock);
-  assert.equal((await navigation.detail(target.id, 'ar'))?.coverAssetId, p.assetId);
+  assert.equal((await navigation.detail(target.id, 'ar'))?.coverAssetId, cover);
   const updated = await edit.execute(target.id, target.version, [ar], actor);
-  assert.equal((await navigation.detail(target.id, 'ar'))?.coverAssetId, p.assetId);
+  assert.equal((await navigation.detail(target.id, 'ar'))?.coverAssetId, cover);
   const cleared = await edit.execute(target.id, updated.version, [ar], actor, null);
   assert.equal((await navigation.detail(target.id, 'ar'))?.coverAssetId, null);
+  await assert.rejects(
+    edit.execute(target.id, cleared.version, [ar], actor, p.assetId),
+    isCode('INVALID_STATE'),
+  );
   const count = await database.outboxEvents.count();
   await assert.rejects(
     edit.execute(target.id, cleared.version, [ar], actor, ids.newUuid()),

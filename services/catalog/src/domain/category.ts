@@ -7,6 +7,7 @@ export interface Translation {
   readonly slug: string | null;
 }
 export interface CategoryDraft {
+  readonly groupIds?: readonly Uuid[];
   readonly coverAssetId?: Uuid | null;
   readonly parentId: Uuid | null;
   readonly expectedParentVersion: Version | null;
@@ -47,6 +48,7 @@ export function categoryDraft(input: CategoryDraft): CategoryDraft {
       'Child creation requires its parent version; root creation has no parent version.',
     );
   return {
+    ...(input.groupIds === undefined ? {} : { groupIds: input.groupIds.map(uuid) }),
     parentId,
     expectedParentVersion,
     translations,

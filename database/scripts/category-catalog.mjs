@@ -24,12 +24,15 @@ export async function connectCatalog(cfg) {
 export async function inventoryCatalog(client) {
   const database = (await client.query('SELECT current_database() AS name')).rows[0].name;
   const rows = async (query) => (await client.query(query)).rows;
+  const bindingColumn = (await client.query("SELECT EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid='catalog.products'::regclass AND attname='product_type_id' AND NOT attisdropped) present")).rows[0].present;
   // A PostgreSQL client owns one connection; run inventory reads sequentially
   // within the same repeatable-read snapshot rather than queue concurrent queries.
   const queries = [
     'SELECT id::text,code,version::text,schema_revision::text,deprecated_at FROM catalog.product_types WHERE deleted_at IS NULL ORDER BY id',
     'SELECT id::text,parent_id::text,version::text FROM catalog.categories WHERE deleted_at IS NULL ORDER BY id',
-    'SELECT id::text,category_id::text,product_type_id::text,version::text,is_active FROM catalog.products WHERE deleted_at IS NULL ORDER BY id',
+    bindingColumn
+      ? 'SELECT id::text,category_id::text,product_type_id::text,version::text,is_active FROM catalog.products WHERE deleted_at IS NULL ORDER BY id'
+      : 'SELECT p.id::text,p.category_id::text,a.legacy_type_id::text product_type_id,p.version::text,p.is_active FROM catalog.products p LEFT JOIN catalog.retired_product_bindings a ON a.product_id=p.id WHERE p.deleted_at IS NULL ORDER BY p.id',
     'SELECT id::text,code,version::text FROM catalog.specification_groups WHERE deleted_at IS NULL ORDER BY id',
     'SELECT id::text,product_type_id::text,group_id::text,sort_order::text,version::text FROM catalog.product_type_groups WHERE deleted_at IS NULL ORDER BY id',
     'SELECT id::text,product_type_id::text,definition_id::text,type_group_id::text,sort_order::text,is_required,is_public,is_searchable,is_filterable,is_comparable,version::text FROM catalog.product_type_specifications WHERE deleted_at IS NULL ORDER BY id',
@@ -79,10 +82,10 @@ async function cli() {
       throw new Error('Unknown, missing or duplicate command option.');
     options[name] = value;
   }
-  if (!['inventory', 'propose', 'expand', 'backfill', 'validate', 'cutover'].includes(command))
-    throw new Error('Use inventory, propose, expand, backfill, validate or cutover.');
+  if (!['inventory', 'propose', 'expand', 'backfill', 'validate', 'cutover', 'retire-binding'].includes(command))
+    throw new Error('Use inventory, propose, expand, backfill, validate, cutover or retire-binding.');
   const cfg = config(), database = cfg.services.catalog.database;
-  if (['expand', 'backfill', 'cutover'].includes(command) && options['--confirm-database'] !== database)
+  if (['expand', 'backfill', 'cutover', 'retire-binding'].includes(command) && options['--confirm-database'] !== database)
     throw new Error('Writes require --confirm-database matching the exact owning Catalog database.');
   if (command === 'expand') {
     file(cfg, 'catalog', 'sql/23_category_schema_expand.sql', { owner: true, atomic: true });
@@ -91,6 +94,33 @@ async function cli() {
   }
   const client = await connectCatalog(cfg);
   try {
+    if (command === 'retire-binding') {
+      await localFile(options['--output']);
+      await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
+      await client.query("SET LOCAL statement_timeout='30s'");
+      await client.query('SELECT catalog.lock_write()');
+      await client.query('SELECT catalog.assert_valid_category_catalog()');
+      const tables = ['products', 'product_specification_values', 'product_specification_texts', 'product_specification_choices', 'product_media', 'category_attribute_groups', 'attribute_group_attributes'];
+      const parity = async () => {
+        const result = {};
+        for (const table of tables) result[table] = (await client.query(`SELECT count(*)::text count,
+          md5(coalesce(string_agg((to_jsonb(t)-'product_type_id')::text,E'\n' ORDER BY id),'')) hash FROM catalog.${table} t`)).rows[0];
+        return result;
+      };
+      const before = await parity();
+      const bindings = (await client.query("SELECT count(*)::text count,md5(coalesce(string_agg(id::text||':'||coalesce(product_type_id::text,'NULL'),E'\n' ORDER BY id),'')) hash FROM catalog.products")).rows[0];
+      const source = await fs.readFile(path.join(root, 'database/sql/26_retire_product_binding.sql'), 'utf8');
+      await client.query(source.replace(/^\\set ON_ERROR_STOP on\r?\n/, ''));
+      const after = await parity();
+      const archive = (await client.query("SELECT count(*)::text count,md5(coalesce(string_agg(product_id::text||':'||coalesce(legacy_type_id::text,'NULL'),E'\n' ORDER BY product_id),'')) hash FROM catalog.retired_product_bindings")).rows[0];
+      if (digest(before) !== digest(after) || digest(bindings) !== digest(archive)) throw new Error('Retirement parity failed; transaction rolled back.');
+      const role = identifier(cfg.services.catalog.user);
+      await client.query(`REVOKE ALL ON catalog.retired_product_bindings FROM ${role}`);
+      await client.query('COMMIT');
+      await writeLocal(options['--output'], { checkedAt: new Date().toISOString(), database, before, after, bindings, archive, passed: true });
+      console.log('PASS physical Product binding retirement; exact product/value/media/relationship and archived-binding parity.');
+      return;
+    }
     const writer = ['backfill', 'cutover'].includes(command);
     await client.query(writer ? 'BEGIN ISOLATION LEVEL SERIALIZABLE' : 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
     await client.query("SET LOCAL statement_timeout='30s'");

@@ -1,4 +1,5 @@
 import { Plus } from '@golden-lift/icons';
+import { DeletionOperations } from './deletion';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -59,6 +60,7 @@ function Dashboard() {
     <>
       <GLPageHeader title={t('dashboard')} description={t('operationalHelp')} />
       <CreateProduct open={creating} onClose={() => setCreating(false)} />
+      <DeletionOperations />
       <div className="gl-launchpad">
         <div>
           <h2 className="gl-launchpad-title">{t('createProductHelp')}</h2>
@@ -77,9 +79,7 @@ function Dashboard() {
           <a href="/admin/media">
             {t('uploadMedia')} <span aria-hidden="true">↗</span>
           </a>
-          <a href="/admin/product-types">
-            {t('types')} <span aria-hidden="true">↗</span>
-          </a>
+          <a href="/admin/attribute-groups">{t('groups')}</a>
         </div>
       </div>
       <div className="gl-recent-work">
@@ -158,8 +158,6 @@ function Page() {
       <Products />
     );
   if (resource === 'media') return <MediaLibrary id={id} />;
-  if (resource === 'product-types')
-    return <GLAlert tone="info">{t('retiredProductTypes')}</GLAlert>;
   if (['attributes', 'attribute-groups', 'units'].includes(resource ?? ''))
     return (
       <Configuration

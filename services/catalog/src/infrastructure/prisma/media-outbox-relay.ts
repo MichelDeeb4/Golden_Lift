@@ -12,7 +12,7 @@ export class CatalogMediaOutboxRelay implements OutboxRelayStore {
           { id: string; payload: unknown }[]
         >`WITH picked AS(SELECT id FROM ops.outbox_events
         WHERE deleted_at IS NULL AND published_at IS NULL AND available_at<=clock_timestamp() AND attempts<20
-          AND (locked_until IS NULL OR locked_until<clock_timestamp()) AND event_type='catalog.asset.retired.v1'
+          AND (locked_until IS NULL OR locked_until<clock_timestamp()) AND event_type IN ('catalog.asset.retired.v1','catalog.media.delete.requested.v1','catalog.media.delete.rejected.v1')
         ORDER BY created_at,id LIMIT 1 FOR UPDATE SKIP LOCKED)
         UPDATE ops.outbox_events e SET lease_token=${token}::uuid,locked_until=clock_timestamp()+interval '30 seconds',attempts=attempts+1
         FROM picked p WHERE e.id=p.id RETURNING e.id,e.payload`;

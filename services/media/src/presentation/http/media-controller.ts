@@ -291,20 +291,6 @@ export class AdminMediaController {
       await this.library.reprocess(uuid(id), version(value['expectedVersion']), actor),
     );
   }
-  @Post('assets/:id/retire') async retire(
-    @Param('id') id: string,
-    @Body() input: unknown,
-    @Req() req: IncomingMessage,
-  ) {
-    const actor = await this.auth.execute(staffRequest(req, true)),
-      value = body(input, ['expectedVersion', 'confirmed']);
-    return this.library.retire(
-      uuid(id),
-      version(value['expectedVersion']),
-      value['confirmed'] === true,
-      actor,
-    );
-  }
 }
 @Controller('api/v1')
 export class MediaDeliveryController {

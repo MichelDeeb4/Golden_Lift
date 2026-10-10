@@ -73,6 +73,7 @@ function asset(
     security: row.security_state as MediaAsset['security'],
     version: version(String(row.version)),
     deleted: row.deleted_at !== null,
+    deletionPending: row.deletion_pending,
     key: row.storage_key,
     bytes: row.byte_size?.toString() ?? null,
     sha256: row.sha256 ? Buffer.from(row.sha256).toString('hex') : null,
@@ -324,6 +325,7 @@ class PrismaMediaRepository implements MediaRepository {
       await this.db.assets.findMany({
         where: {
           deleted_at: null,
+          deletion_pending: false,
           ...(after ? { id: { gt: after } } : {}),
           ...(filters?.kind ? { media_kind: filters.kind } : {}),
           ...(filters?.status ? { status: filters.status } : {}),
@@ -350,6 +352,7 @@ class PrismaMediaRepository implements MediaRepository {
     return this.db.assets.count({
       where: {
         deleted_at: null,
+        deletion_pending: false,
         ...(filters?.kind ? { media_kind: filters.kind } : {}),
         ...(filters?.status ? { status: filters.status } : {}),
         ...(filters?.search
@@ -361,7 +364,7 @@ class PrismaMediaRepository implements MediaRepository {
   async claim(kind: MediaKind, token: Uuid, maxAttempts: number): Promise<ProcessingClaim | null> {
     const rows = await this.db.$queryRaw<{ id: string; asset_id: string; attempts: number }[]>`
       WITH picked AS (SELECT j.id FROM media.processing_jobs j JOIN media.assets a ON a.id=j.asset_id
-        WHERE j.deleted_at IS NULL AND a.deleted_at IS NULL AND
+        WHERE j.deleted_at IS NULL AND a.deleted_at IS NULL AND NOT a.deletion_pending AND
           ((a.status='PROCESSING' AND a.security_state='UNVERIFIED') OR
            (a.status='READY' AND a.security_state='VERIFIED' AND j.job_type<>'VALIDATE'))
           AND a.media_kind=${kind} AND j.attempts<${maxAttempts}
@@ -385,7 +388,7 @@ class PrismaMediaRepository implements MediaRepository {
       (await this.db
         .$executeRaw`UPDATE media.processing_jobs j SET locked_until=clock_timestamp()+interval '120 seconds'
       FROM media.assets a WHERE j.id=${job}::uuid AND j.lease_token=${token}::uuid AND j.status='RUNNING'
-        AND j.locked_until>clock_timestamp() AND j.deleted_at IS NULL AND a.id=j.asset_id AND a.deleted_at IS NULL
+        AND j.locked_until>clock_timestamp() AND j.deleted_at IS NULL AND a.id=j.asset_id AND a.deleted_at IS NULL AND NOT a.deletion_pending
         AND ((a.security_state='UNVERIFIED' AND a.status='PROCESSING') OR
           (a.security_state='VERIFIED' AND a.status='READY' AND j.job_type<>'VALIDATE'))`) === 1
     );
@@ -497,6 +500,11 @@ class PrismaMediaRepository implements MediaRepository {
   }
   async retry(id: Uuid, expected: Version) {
     const a = await this.asset(id);
+    if (a.deletionPending)
+      throw new ApplicationError(
+        'DELETE_ALREADY_IN_PROGRESS',
+        'Media deletion is already in progress.',
+      );
     if (a.version !== expected) throw conflict();
     if (a.deleted || a.status !== 'FAILED' || a.security !== 'UNVERIFIED' || !a.sha256)
       throw new ApplicationError(
@@ -512,6 +520,11 @@ class PrismaMediaRepository implements MediaRepository {
   }
   async block(id: Uuid, expected: Version) {
     const a = await this.asset(id);
+    if (a.deletionPending)
+      throw new ApplicationError(
+        'DELETE_ALREADY_IN_PROGRESS',
+        'Media deletion is already in progress.',
+      );
     if (a.deleted || a.version !== expected) throw conflict();
     const row = await this.db.assets.update({ where: { id }, data: { security_state: 'BLOCKED' } });
     await this.event({
@@ -528,6 +541,11 @@ class PrismaMediaRepository implements MediaRepository {
   }
   async reprocess(id: Uuid, expected: Version) {
     const a = await this.asset(id);
+    if (a.deletionPending)
+      throw new ApplicationError(
+        'DELETE_ALREADY_IN_PROGRESS',
+        'Media deletion is already in progress.',
+      );
     if (a.version !== expected) throw conflict();
     if (a.deleted || a.status !== 'READY' || a.security !== 'VERIFIED' || !a.sha256)
       throw new ApplicationError('INVALID_STATE', 'Only verified ready assets can be regenerated.');

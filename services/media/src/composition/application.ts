@@ -1,3 +1,14 @@
+import {
+  DeleteMedia,
+  GetMediaDeletionImpact,
+  GetMediaDeletionOperation,
+} from '../application/use-cases/delete-media.js';
+import { PrismaMediaDeletionStore } from '../infrastructure/prisma/deletion.js';
+import { HttpCatalogDeletionImpact } from '../infrastructure/http/deletion.js';
+import {
+  MediaDeletionController,
+  MEDIA_DELETION,
+} from '../presentation/http/deletion-controller.js';
 import type pg from 'pg';
 import type { SessionAuthenticator } from '@golden-lift/contracts';
 import {
@@ -49,14 +60,29 @@ export function mediaApplication(
     transactions = new PrismaMediaUnitOfWork(database),
     catalog = new HttpCatalogMedia(settings.catalogOrigin, settings.token),
     readiness = new CheckReadiness(new PrismaReadiness(database));
+  const deletionStore = new PrismaMediaDeletionStore(database),
+    deletionCatalog = new HttpCatalogDeletionImpact(settings.catalogOrigin, settings.token);
   return httpApplication(config, {
     ready: () => readiness.execute(),
     shutdown: async () => {
-      storage.close();
+      await storage.close();
       await closePersistence(database, pool);
     },
-    controllers: [StaffController, AdminMediaController, MediaDeliveryController],
+    controllers: [
+      MediaDeletionController,
+      StaffController,
+      AdminMediaController,
+      MediaDeliveryController,
+    ],
     providers: [
+      {
+        provide: MEDIA_DELETION,
+        useValue: {
+          impact: new GetMediaDeletionImpact(transactions, deletionCatalog, mediaIds),
+          remove: new DeleteMedia(transactions, deletionCatalog, deletionStore, mediaIds),
+          operation: new GetMediaDeletionOperation(deletionStore),
+        },
+      },
       { provide: STAFF_ACCESS, useValue: new CheckStaffAccess(authentication) },
       {
         provide: UPLOADS,

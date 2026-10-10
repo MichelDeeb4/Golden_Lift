@@ -21,7 +21,6 @@ import { catalogApplication } from '../src/composition/application.js';
 import { gatewayApplication } from '../../gateway/src/composition/application.js';
 import { httpConfig } from '@golden-lift/platform';
 import {
-  CreateProductType,
   CreateAttributeDefinition,
   CreateAttributeGroup,
   CreateCanonicalUnit,
@@ -32,11 +31,19 @@ import { CreateProduct, EditProduct } from '../src/application/use-cases/save-pr
 import { ReadProducts } from '../src/application/use-cases/read-products.js';
 import { ManageProducts } from '../src/application/use-cases/manage-products.js';
 import { PrismaProductManagementUnitOfWork } from '../src/infrastructure/prisma/product-management.js';
+import { PrismaCatalogDeletionUnitOfWork } from '../src/infrastructure/prisma/deletion.js';
+import {
+  GetMediaDeletionImpact,
+  DeleteMedia,
+  GetProductDeletionImpact,
+  DeleteProduct,
+} from '../src/application/use-cases/delete-catalog-entities.js';
 import { PrismaMediaRegistry } from '../src/infrastructure/prisma/media-registry.js';
 import { publicProductQuery } from '../src/presentation/http/public-product-query.js';
 import { ReadCatalogConfiguration } from '../src/application/use-cases/read-catalog-configuration.js';
-import { ChangeProductType } from '../src/application/use-cases/change-product-type.js';
+import { ManageCatalogRelationships } from '../src/application/use-cases/manage-catalog-relationships.js';
 import { CreateCategory } from '../src/application/use-cases/create-category.js';
+import { MoveProduct } from '../src/application/use-cases/move-product.js';
 import {
   PreviewCategoryDeletion,
   DeleteCategoryBranch,
@@ -56,7 +63,7 @@ const labelTranslations = translations.map((t) => ({ ...t, description: null }))
 const isCode = (code: string) => (error: unknown) =>
   error instanceof ApplicationError && error.code === code;
 before(async () => {
-  fixture = await databaseFixture('catalog');
+  fixture = await databaseFixture('catalog', { catalogProfile: 'category' });
   db = orm(fixture.pool);
   uow = new PrismaCatalogUnitOfWork(db);
 });
@@ -68,7 +75,7 @@ function reader() {
   return new ReadCatalogConfiguration(uow);
 }
 test('manual product pagination preserves bigint ordering and ID tie breaks', async () => {
-  const t = await type(),
+  const t = await classification(),
     management = new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock);
   const products = [];
   for (let index = 0; index < 3; index++) products.push(await product(t.id));
@@ -90,7 +97,7 @@ test('manual product pagination preserves bigint ordering and ID tie breaks', as
     const page = await management.list(
       {
         locale: 'en',
-        productTypeId: t.id,
+        categoryId: t.id,
         limit: 1,
         sort: 'manual',
         cursorScope: 'fixture',
@@ -120,8 +127,8 @@ test('manual product pagination preserves bigint ordering and ID tie breaks', as
     products[2]!.id,
   ]);
 });
-test('Admin management preserves versions, publication privacy, ordered media and retained tombstones', async () => {
-  const t = await type(),
+test('Admin management preserves versions and publication privacy; explicit deletion removes owned Media and Products', async () => {
+  const t = await classification(),
     p = await product(t.id);
   const management = new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock);
   const read = new ReadProducts(uow);
@@ -219,55 +226,87 @@ test('Admin management preserves versions, publication privacy, ordered media an
       ),
     isCode('INVALID_STATE'),
   );
-  const detached = await management.media(
-    p.id,
-    updated.version,
-    p.coverAssetId,
-    updated.media.filter((m) => m.assetId !== video),
-    actor,
-  );
-  assert.equal(
-    await db.productMedia.count({
-      where: { product_id: p.id, asset_id: video, deleted_at: { not: null } },
-    }),
-    1,
-  );
-  assert.equal(
-    (await db.mediaAssetRefs.findUniqueOrThrow({ where: { id: video } })).deleted_at,
-    null,
-  );
   await assert.rejects(
-    () => management.remove(p.id, detached.version, false, actor),
+    management.media(
+      p.id,
+      updated.version,
+      p.coverAssetId,
+      updated.media.filter((m) => m.assetId !== video),
+      actor,
+    ),
     isCode('VALIDATION_FAILED'),
   );
-  const published = await management.publication(
+  const deletions = new PrismaCatalogDeletionUnitOfWork(db);
+  const mediaImpact = await new GetMediaDeletionImpact(deletions).execute(video, actor);
+  const mediaDeletion = await new DeleteMedia(deletions, ids).execute(
+    video,
+    {
+      confirmed: true,
+      expectedVersion: mediaImpact.expectedVersion,
+      impactRevision: mediaImpact.impactRevision,
+    },
+    actor,
+  );
+  assert.equal(mediaDeletion.status, 'MEDIA_CLEANUP');
+  assert.equal(await db.productMedia.count({ where: { product_id: p.id, asset_id: video } }), 0);
+  // Exercise the Catalog consumer contract; physical Media cleanup has separate real-storage tests.
+  await deletions.execute((r) =>
+    r.complete({
+      schemaVersion: 1,
+      id: ids.newUuid(),
+      operationId: mediaDeletion.id,
+      producer: 'media',
+      type: 'media.delete.completed.v1',
+      assetIds: [video],
+    }),
+  );
+  assert.equal(await db.mediaAssetRefs.findUnique({ where: { id: video } }), null);
+  const retained = await management.detail(p.id, actor);
+  await management.publication(
     p.id,
-    detached.version,
+    retained.version,
     { active: true, featured: false, sortOrder: '0', featuredOrder: '0' },
     actor,
   );
   assert.equal((await read.public(p.id, 'ckb')).id, p.id);
-  await management.remove(p.id, published.version, true, actor);
+  const impact = await new GetProductDeletionImpact(deletions).execute(p.id, actor);
+  const operation = await new DeleteProduct(deletions, ids).execute(
+    p.id,
+    {
+      confirmed: true,
+      expectedVersion: impact.expectedVersion,
+      impactRevision: impact.impactRevision,
+    },
+    actor,
+  );
+  assert.equal(operation.status, 'MEDIA_CLEANUP');
   await assert.rejects(() => management.detail(p.id, actor), isCode('NOT_FOUND'));
   await assert.rejects(() => read.public(p.id, 'ar'), isCode('NOT_FOUND'));
-  const tombstone = await db.products.findUniqueOrThrow({ where: { id: p.id } });
-  assert.ok(tombstone.deleted_at);
-  assert.equal(tombstone.is_active, false);
-  const deletedEvents = await db.outboxEvents.findMany({
-    where: { aggregate_id: p.id, event_type: 'catalog.product.deleted.v1' },
-  });
-  assert.equal(deletedEvents.length, 1);
   assert.equal(
-    (deletedEvents[0]!.payload as { aggregate?: { version?: unknown } }).aggregate?.version,
-    tombstone.version.toString(),
+    (await db.products.findUniqueOrThrow({ where: { id: p.id } })).deletion_pending,
+    true,
   );
+  await deletions.execute((r) =>
+    r.complete({
+      schemaVersion: 1,
+      id: ids.newUuid(),
+      operationId: operation.id,
+      producer: 'media',
+      type: 'media.delete.completed.v1',
+      assetIds: [p.coverAssetId],
+    }),
+  );
+  assert.equal(await db.products.findUnique({ where: { id: p.id } }), null);
+  assert.equal(await db.productTranslations.count({ where: { product_id: p.id } }), 0);
+  assert.equal(await db.productCodeReservations.count({ where: { product_id: p.id } }), 0);
+  assert.ok(await db.categories.findUnique({ where: { id: t.id } }));
 });
 function changes() {
   return new ChangeCatalogSchema(uow, ids, clock);
 }
 
 test('public collection searches and filters exact public values with bounded HTTP pagination and privacy', async () => {
-  const t = await type(),
+  const t = await classification(),
     number = await attribute('NUMBER'),
     boolean = await attribute('BOOLEAN'),
     secret = await attribute('TEXT', false);
@@ -289,7 +328,7 @@ test('public collection searches and filters exact public values with bounded HT
     { definitionId: number.id, value: { kind: 'NUMBER', number: '99999999999999.999999' } },
   ]);
   const read = new ReadProducts(uow);
-  const input = publicProductQuery({ locale: 'en', productType: t.id, pageSize: '1' });
+  const input = publicProductQuery({ locale: 'en', category: t.id, pageSize: '1' });
   const page = await read.collection(input);
   assert.equal(page.items.length, 1);
   assert.equal(page.hasNextPage, true);
@@ -370,7 +409,7 @@ test('public collection searches and filters exact public values with bounded HT
   await gateway.listen(0, '127.0.0.1');
   try {
     const origin = await gateway.getUrl();
-    const response = await fetch(origin + '/api/v1/products?productType=' + t.id + '&locale=en');
+    const response = await fetch(origin + '/api/v1/products?category=' + t.id + '&locale=en');
     assert.equal(response.status, 200);
     assert.deepEqual(((await response.json()) as { items: unknown[] }).items, []);
     for (const query of [
@@ -387,13 +426,15 @@ test('public collection searches and filters exact public values with bounded HT
     await catalog.close();
   }
 });
-async function type() {
-  const t = await new CreateProductType().execute(
-    { code: 'type-' + randomUUID(), translations },
+async function classification() {
+  return new CreateCategory(uow, ids, clock).execute(
+    {
+      parentId: null,
+      expectedParentVersion: null,
+      translations: translations.map((t) => ({ ...t, slug: null })),
+    },
     actor,
   );
-  assert.ok(t);
-  return t;
 }
 async function attribute(kind: AttributeKind = 'NUMBER', visible = true) {
   const d = await new CreateAttributeDefinition(uow, ids, clock).execute(
@@ -415,49 +456,44 @@ async function attribute(kind: AttributeKind = 'NUMBER', visible = true) {
   assert.ok(d);
   return d;
 }
-async function commit(target: ConfigurationTarget, change: ConfigurationChange) {
-  const current = await reader().detail(target, actor),
-    expected = {
-      expectedVersion: current.version,
-      expectedSchemaRevision:
-        'schemaRevision' in current ? version(String(current.schemaRevision)) : null,
-    },
-    preview = await changes().preview(target, change, expected, actor);
-  assert.deepEqual(preview.blockers, []);
-  return changes().commit(target, change, expected, preview.precondition, true, actor);
-}
-async function assign(typeId: Uuid, definitionId: Uuid, required = false, visible = true) {
-  await commit(
-    { resource: 'types', id: typeId },
-    {
-      kind: 'assignment.put',
-      assignmentId: null,
-      assignment: {
-        definitionId,
-        groupPlacementId: null,
-        sortOrder: '1024',
-        required,
-        public: visible,
-        searchable: visible,
-        filterable: visible,
-        comparable: visible,
-      },
-    },
+
+const relationships = () => new ManageCatalogRelationships(uow, ids, clock);
+async function links(
+  target: import('../src/application/ports/catalog-relationships.js').RelationshipTarget,
+  orderedIds: readonly Uuid[],
+) {
+  const current = await relationships().read(target, actor);
+  const impact = await relationships().preview(target, orderedIds, current.version, actor);
+  assert.deepEqual(impact.blockers, []);
+  return relationships().commit(
+    target,
+    orderedIds,
+    current.version,
+    impact.precondition,
+    true,
+    actor,
   );
 }
+async function assign(categoryId: Uuid, definitionId: Uuid, required = false, visible = true) {
+  const g = await new CreateAttributeGroup(uow, ids, clock).execute(
+    { code: 'group-' + randomUUID(), translations, attributeIds: [definitionId] },
+    actor,
+  );
+  await db.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`UPDATE catalog.attribute_group_attributes SET is_required=${required},is_public=${visible},is_searchable=${visible},is_filterable=${visible},is_comparable=${visible} WHERE group_id=${g.id}::uuid AND definition_id=${definitionId}::uuid AND deleted_at IS NULL`;
+    },
+    { isolationLevel: 'Serializable' },
+  );
+  const current = await relationships().read({ resource: 'categories', id: categoryId }, actor);
+  await links({ resource: 'categories', id: categoryId }, [...current.orderedIds, g.id]);
+  return g;
+}
 async function product(
-  typeId: Uuid,
+  categoryId: Uuid,
   valueItems: readonly { definitionId: Uuid; value: AttributeValue }[] = [],
 ): Promise<ProductDto & { coverAssetId: Uuid }> {
-  const c = await new CreateCategory(uow, ids, clock).execute(
-      {
-        parentId: null,
-        expectedParentVersion: null,
-        translations: [{ ...translations[0]!, slug: null }],
-      },
-      actor,
-    ),
-    assetId = ids.newUuid();
+  const assetId = ids.newUuid();
   await db.$transaction(
     (tx) =>
       tx.mediaAssetRefs.create({
@@ -465,16 +501,11 @@ async function product(
       }),
     { isolationLevel: 'Serializable' },
   );
-  const schema = await reader().schema(typeId, 'ar', actor),
-    draft = await new CreateProduct(uow, ids, clock).execute(
-      {
-        categoryId: c.id,
-        modelCode: 'SYNTHETIC-' + randomUUID(),
-        translations,
-      },
-      actor,
-    );
-  const p = await new EditProduct(uow, ids, clock).execute(
+  const draft = await new CreateProduct(uow, ids, clock).execute(
+    { categoryId, modelCode: 'SYNTHETIC-' + randomUUID(), translations },
+    actor,
+  );
+  const saved = await new EditProduct(uow, ids, clock).execute(
     draft.id,
     {
       expectedVersion: draft.version,
@@ -484,9 +515,25 @@ async function product(
     },
     actor,
   );
-  assert.ok(p.coverAssetId);
-  assert.ok(schema);
-  return { ...p, coverAssetId: p.coverAssetId };
+  const published = await new ManageProducts(
+    new PrismaProductManagementUnitOfWork(db),
+    ids,
+    clock,
+  ).publication(
+    saved.id,
+    saved.version,
+    { active: true, featured: false, sortOrder: '0', featuredOrder: '0' },
+    actor,
+  );
+  assert.ok(published.coverAssetId);
+  return { ...published, coverAssetId: published.coverAssetId };
+}
+async function commit(target: ConfigurationTarget, change: ConfigurationChange) {
+  const current = await reader().detail(target, actor),
+    expected = { expectedVersion: current.version, expectedSchemaRevision: null };
+  const preview = await changes().preview(target, change, expected, actor);
+  assert.deepEqual(preview.blockers, []);
+  return changes().commit(target, change, expected, preview.precondition, true, actor);
 }
 function pausedSnapshot() {
   let started!: () => void,
@@ -512,912 +559,144 @@ function pausedSnapshot() {
   };
   return { uow: paused, started: ready, release, attempts: () => attempts };
 }
-test('configuration creates a dynamic form with translated groups and all four storage kinds', async () => {
-  const t = await type(),
-    unit = await new CreateCanonicalUnit(uow, ids, clock).execute(
-      {
-        code: 'unit-' + randomUUID(),
-        symbol: 'mm',
-        dimension: 'length',
-        translations: labelTranslations,
-      },
-      actor,
-    ),
-    group = await new CreateAttributeGroup(uow, ids, clock).execute(
-      { code: 'group-' + randomUUID(), translations },
-      actor,
-    );
-  assert.ok(unit && group);
-  await commit(
-    { resource: 'types', id: t.id },
-    { kind: 'group.place', placementId: null, groupId: group.id, sortOrder: '9007199254740993' },
-  );
-  for (const kind of ['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'] as const) {
-    const d = await attribute(kind);
-    await assign(t.id, d.id);
-  }
-  const schema = await reader().schema(t.id, 'ckb', actor);
-  assert.equal(schema.form.fields.length, 4);
-  assert.equal(schema.form.groups[0]?.sortOrder, '9007199254740993');
-  assert.equal(schema.form.fields[0]?.resolvedLabelLocale, 'ar');
-  assert.deepEqual(schema.form.fields[0]?.missingTranslationLocales, ['en', 'ckb']);
-});
-test('product values preserve false/zero and enforce public disclosure at both levels', async () => {
-  const t = await type(),
-    number = await attribute(),
-    boolean = await attribute('BOOLEAN'),
-    hidden = await attribute('TEXT', false);
-  await assign(t.id, number.id, true);
-  await assign(t.id, boolean.id, true);
-  await assign(t.id, hidden.id, false, true);
-  const p = await product(t.id, [
-    { definitionId: number.id, value: { kind: 'NUMBER', number: '0' } },
-    { definitionId: boolean.id, value: { kind: 'BOOLEAN', boolean: false } },
-    {
-      definitionId: hidden.id,
-      value: { kind: 'TEXT', translations: [{ locale: 'ar', text: 'private fixture secret' }] },
-    },
-  ]);
-  const publicData = await new ReadProducts(uow).public(p.id, 'en');
-  assert.equal(publicData.attributes.length, 2);
-  assert.equal(JSON.stringify(publicData).includes('private fixture secret'), false);
-  assert.ok(
-    publicData.attributes.some((v) => v.value.kind === 'BOOLEAN' && v.value.boolean === false),
-  );
-  assert.ok(p.values.some((v) => v.definitionId === hidden.id));
-});
-test('definition changes invalidate editor schemas and tightening bounds is blocked by impact', async () => {
-  const t = await type(),
+
+test('category groups and group attributes are reusable, ordered and deduplicated without duplicate stored values', async () => {
+  const c = await classification(),
+    other = await classification(),
     d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id, [
-    { definitionId: d.id, value: { kind: 'NUMBER', number: '25.123456' } },
-  ]);
-  await commit(
-    { resource: 'definitions', id: d.id },
-    {
-      kind: 'definition.update',
-      definition: {
-        code: d.code,
-        translations: [{ ...translations[0]!, name: 'Changed label' }],
-        kind: 'NUMBER',
-        unitCode: null,
-        minimum: null,
-        maximum: null,
-        allowMultiple: false,
-        public: true,
-        filterable: true,
-        textMultiline: false,
-        textMaxLength: 4000,
-      },
-    },
-  );
-  await assert.rejects(
-    new EditProduct(uow, ids, clock).execute(
-      p.id,
-      { expectedVersion: p.version, expectedSchemaRevision: p.schemaRevision, values: [] },
-      actor,
-    ),
-    isCode('VERSION_CONFLICT'),
-  );
-  const current = await reader().detail({ resource: 'definitions', id: d.id }, actor),
-    input = {
-      kind: 'definition.update' as const,
-      definition: {
-        code: d.code,
-        translations,
-        kind: 'NUMBER' as const,
-        unitCode: null,
-        minimum: null,
-        maximum: '10',
-        allowMultiple: false,
-        public: true,
-        filterable: true,
-        textMultiline: false,
-        textMaxLength: 4000,
-      },
-    },
-    expected = { expectedVersion: current.version, expectedSchemaRevision: null },
-    preview = await changes().preview(
-      { resource: 'definitions', id: d.id },
-      input,
-      expected,
-      actor,
-    );
-  assert.equal(preview.invalidProductCount, '1');
-  await assert.rejects(
-    changes().commit(
-      { resource: 'definitions', id: d.id },
-      input,
-      expected,
-      preview.precondition,
-      true,
-      actor,
-    ),
-    isCode('INVALID_STATE'),
-  );
-});
-test('requiredness uses staged values and a new product invalidates a saved preview', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const schema = await reader().schema(t.id, 'ar', actor),
-    a = schema.configuration.attributes[0]!;
-  const input = {
-      kind: 'assignment.put' as const,
-      assignmentId: a.id,
-      assignment: {
-        definitionId: d.id,
-        groupPlacementId: null,
-        sortOrder: '1024',
-        required: true,
-        public: true,
-        searchable: true,
-        filterable: true,
-        comparable: true,
-      },
-    },
-    expected = {
-      expectedVersion: schema.configuration.type.version,
-      expectedSchemaRevision: schema.configuration.type.schemaRevision,
-    },
-    preview = await changes().preview({ resource: 'types', id: t.id }, input, expected, actor);
-  await product(t.id);
-  await assert.rejects(
-    changes().commit(
-      { resource: 'types', id: t.id },
-      input,
-      expected,
-      preview.precondition,
-      true,
-      actor,
-    ),
-    isCode('VERSION_CONFLICT'),
-  );
-});
-test('soft deletion of a branch retains its shared type and attributes and schema edits stale B4 preview', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '42' } }]),
-    preview = await new PreviewCategoryDeletion(uow).execute(p.categoryId, actor);
-  await commit(
-    { resource: 'types', id: t.id },
-    { kind: 'type.metadata', translations: [{ ...translations[0]!, name: 'Revised type' }] },
-  );
-  await assert.rejects(
-    new DeleteCategoryBranch(uow, ids, clock).execute(
-      p.categoryId,
-      {
-        confirm: true,
-        expectedVersion: preview.category.version,
-        previewPrecondition: preview.previewPrecondition,
-      },
-      actor,
-    ),
-    isCode('VERSION_CONFLICT'),
-  );
-  const fresh = await new PreviewCategoryDeletion(uow).execute(p.categoryId, actor);
-  await new DeleteCategoryBranch(uow, ids, clock).execute(
-    p.categoryId,
-    {
-      confirm: true,
-      expectedVersion: fresh.category.version,
-      previewPrecondition: fresh.previewPrecondition,
-    },
+  const g1 = await new CreateAttributeGroup(uow, ids, clock).execute(
+    { code: 'reuse-' + randomUUID(), translations, attributeIds: [d.id] },
     actor,
   );
-  assert.equal((await db.productTypes.findUniqueOrThrow({ where: { id: t.id } })).deleted_at, null);
+  const g2 = await new CreateAttributeGroup(uow, ids, clock).execute(
+    { code: 'reuse-' + randomUUID(), translations, attributeIds: [d.id] },
+    actor,
+  );
+  await links({ resource: 'categories', id: c.id }, [g2.id, g1.id]);
+  await links({ resource: 'categories', id: other.id }, [g1.id]);
+  const s = await uow.execute((r) => r.categorySchemas.schema(c.id));
+  assert.equal(s.attributes.length, 1);
+  assert.equal(s.attributes[0]?.groupPlacementId, s.groups[0]?.id);
+  const p = await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '0' } }]);
   assert.equal(
-    (await db.specificationDefinitions.findUniqueOrThrow({ where: { id: d.id } })).deleted_at,
-    null,
+    await db.productSpecificationValues.count({
+      where: { product_id: p.id, definition_id: d.id, deleted_at: null },
+    }),
+    1,
   );
-  assert.ok((await db.products.findUniqueOrThrow({ where: { id: p.id } })).deleted_at);
-  await assert.rejects(new ReadProducts(uow).public(p.id, 'ar'), isCode('NOT_FOUND'));
+  const before = p.values;
+  await links({ resource: 'categories', id: c.id }, [g1.id]);
+  assert.deepEqual((await new ReadProducts(uow).admin(p.id, actor)).values, before);
 });
-test('configuration copy preserves destination-only fields and creates independent memberships', async () => {
-  const source = await type(),
-    destination = await type(),
-    a = await attribute(),
-    b = await attribute('BOOLEAN');
-  await assign(source.id, a.id);
-  await assign(destination.id, b.id);
-  const sourceSchema = await reader().schema(source.id, 'ar', actor);
-  await commit(
-    { resource: 'types', id: destination.id },
-    {
-      kind: 'type.copy',
-      sourceTypeId: source.id,
-      expectedSourceSchemaRevision: sourceSchema.form.schemaRevision,
-    },
+
+test('membership writes from either direction edit the same join and preserve values on detachment', async () => {
+  const c = await classification(),
+    d = await attribute(),
+    g = await assign(c.id, d.id);
+  const p = await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '12' } }]);
+  await new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock).publication(
+    p.id,
+    p.version,
+    { active: false, featured: false, sortOrder: '0', featuredOrder: '0' },
+    actor,
   );
-  const copied = await reader().schema(destination.id, 'ar', actor);
-  assert.equal(copied.form.fields.length, 2);
-  assert.notEqual(
-    copied.configuration.attributes.find((x) => x.definition.id === a.id)?.id,
-    sourceSchema.configuration.attributes[0]?.id,
+  await links({ resource: 'definitions', id: d.id }, []);
+  assert.deepEqual(
+    (await relationships().read({ resource: 'groups', id: g.id }, actor)).orderedIds,
+    [],
   );
-  await commit(
-    { resource: 'types', id: source.id },
-    { kind: 'assignment.remove', assignmentId: sourceSchema.configuration.attributes[0]!.id },
+  assert.equal((await new ReadProducts(uow).admin(p.id, actor)).values.length, 1);
+  await links({ resource: 'definitions', id: d.id }, [g.id]);
+  assert.deepEqual(
+    (await relationships().read({ resource: 'groups', id: g.id }, actor)).orderedIds,
+    [d.id],
   );
-  assert.equal((await reader().schema(destination.id, 'ar', actor)).form.fields.length, 2);
+  const [count] = await db.$queryRaw<
+    { count: string }[]
+  >`SELECT count(*)::text FROM catalog.attribute_group_attributes WHERE group_id=${g.id}::uuid AND definition_id=${d.id}::uuid AND deleted_at IS NULL`;
+  assert.equal(count?.count, '1');
 });
-test('copy preview rejects collisions rather than overwriting destination policies', async () => {
-  const source = await type(),
-    destination = await type(),
-    a = await attribute();
-  await assign(source.id, a.id, false, true);
-  await assign(destination.id, a.id, false, false);
-  const src = await reader().schema(source.id, 'ar', actor),
-    dst = await reader().schema(destination.id, 'ar', actor),
-    change = {
-      kind: 'type.copy' as const,
-      sourceTypeId: source.id,
-      expectedSourceSchemaRevision: src.form.schemaRevision,
-    },
-    expected = {
-      expectedVersion: dst.configuration.type.version,
-      expectedSchemaRevision: dst.form.schemaRevision,
-    },
-    impact = await changes().preview(
-      { resource: 'types', id: destination.id },
-      change,
-      expected,
-      actor,
-    );
-  assert.ok(impact.blockers.some((b) => b.includes('collisions')));
+
+test('published-value removal is blocked; shared reachability is retained when one group is removed', async () => {
+  const c = await classification(),
+    d = await attribute(),
+    g = await assign(c.id, d.id);
+  await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '1' } }]);
+  const state = await relationships().read({ resource: 'categories', id: c.id }, actor);
+  const impact = await relationships().preview(
+    { resource: 'categories', id: c.id },
+    [],
+    state.version,
+    actor,
+  );
+  assert.equal(impact.invalidProductCount, '1');
+  assert.deepEqual(impact.removedAttributeIds, [d.id]);
+  assert.ok(impact.blockers.length);
   await assert.rejects(
-    changes().commit(
-      { resource: 'types', id: destination.id },
-      change,
-      expected,
+    relationships().commit(
+      { resource: 'categories', id: c.id },
+      [],
+      state.version,
       impact.precondition,
       true,
       actor,
     ),
     isCode('INVALID_STATE'),
   );
-});
-test('retired product type change cannot mutate a product or its retained values', async () => {
-  const source = await type(),
-    a = await attribute();
-  await assign(source.id, a.id);
-  const p = await product(source.id, [
-    { definitionId: a.id, value: { kind: 'NUMBER', number: '12' } },
-  ]);
-  const types = new ChangeProductType(uow, ids, clock);
-  const input = {
-    productTypeId: ids.newUuid(),
-    expectedVersion: p.version,
-    expectedSchemaRevision: p.schemaRevision,
-    expectedDestinationSchemaRevision: version('1'),
-    values: [],
-  };
-  await assert.rejects(types.preview(p.id, input, actor), isCode('INVALID_STATE'));
-  await assert.rejects(types.commit(p.id, input, 'retired', true, actor), isCode('INVALID_STATE'));
-  const current = await new ReadProducts(uow).admin(p.id, actor);
-  assert.equal(current.coverAssetId, p.coverAssetId);
-  assert.equal(current.modelCode, p.modelCode);
-  assert.deepEqual(current.values, p.values);
-  assert.equal(current.version, p.version);
-});
-test('option deprecation preserves unchanged selections and prohibits new use or reselection', async () => {
-  const t = await type(),
-    d = await attribute('CHOICE'),
-    option = await new CreateAttributeOption(uow, ids, clock).execute(
-      d.id,
-      { code: 'synthetic-option', sortOrder: '1024', translations: labelTranslations },
-      actor,
-    );
-  assert.ok(option);
-  await assign(t.id, d.id);
-  const p = await product(t.id, [
-    { definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } },
-  ]);
-  await commit({ resource: 'options', id: option.id }, { kind: 'option.deprecate' });
-  const current = await new ReadProducts(uow).admin(p.id, actor),
-    edit = new EditProduct(uow, ids, clock),
-    retained = await edit.execute(
-      p.id,
-      {
-        expectedVersion: current.version,
-        expectedSchemaRevision: current.schemaRevision,
-        translations,
-        values: [],
-      },
-      actor,
-    );
-  assert.equal(retained.values.length, 1);
-  await assert.rejects(
-    product(t.id, [{ definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } }]),
-    isCode('INVALID_STATE'),
-  );
-  const removed = await edit.execute(
-    p.id,
-    {
-      expectedVersion: retained.version,
-      expectedSchemaRevision: retained.schemaRevision,
-      values: [{ definitionId: d.id, value: null }],
-    },
+  const shared = await new CreateAttributeGroup(uow, ids, clock).execute(
+    { code: 'shared-' + randomUUID(), translations, attributeIds: [d.id] },
     actor,
   );
-  await assert.rejects(
-    edit.execute(
-      p.id,
-      {
-        expectedVersion: removed.version,
-        expectedSchemaRevision: removed.schemaRevision,
-        values: [{ definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } }],
-      },
-      actor,
-    ),
-    isCode('INVALID_STATE'),
-  );
+  await links({ resource: 'categories', id: c.id }, [g.id, shared.id]);
+  await links({ resource: 'categories', id: c.id }, [shared.id]);
+  assert.equal((await uow.execute((r) => r.categorySchemas.schema(c.id))).attributes.length, 1);
 });
-test('staged population permits requiredness while assignment removal with active values is blocked', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id),
-    s = await reader().schema(t.id, 'ar', actor),
-    a = s.configuration.attributes[0]!,
-    change = {
-      kind: 'assignment.put' as const,
-      assignmentId: a.id,
-      assignment: {
-        definitionId: d.id,
-        groupPlacementId: null,
-        sortOrder: '1024',
-        required: true,
-        public: true,
-        searchable: true,
-        filterable: true,
-        comparable: true,
-      },
-    },
-    expected = {
-      expectedVersion: s.configuration.type.version,
-      expectedSchemaRevision: s.form.schemaRevision,
-    };
-  assert.equal(
-    (await changes().preview({ resource: 'types', id: t.id }, change, expected, actor))
-      .invalidProductCount,
-    '1',
-  );
-  await new EditProduct(uow, ids, clock).execute(
-    p.id,
-    {
-      expectedVersion: p.version,
-      expectedSchemaRevision: p.schemaRevision,
-      values: [{ definitionId: d.id, value: { kind: 'NUMBER', number: '20' } }],
-    },
-    actor,
-  );
-  await commit({ resource: 'types', id: t.id }, change);
-  const now = await reader().schema(t.id, 'ar', actor),
-    impact = await changes().preview(
-      { resource: 'types', id: t.id },
-      { kind: 'assignment.remove', assignmentId: a.id },
-      {
-        expectedVersion: now.configuration.type.version,
-        expectedSchemaRevision: now.form.schemaRevision,
-      },
-      actor,
-    );
-  assert.equal(impact.invalidProductCount, '1');
-});
-test('retained values prevent semantic changes and new configuration obeys lifecycle/runtime restrictions', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '3' } }]),
-    deletion = await new PreviewCategoryDeletion(uow).execute(p.categoryId, actor);
-  await new DeleteCategoryBranch(uow, ids, clock).execute(
-    p.categoryId,
-    {
-      confirm: true,
-      expectedVersion: deletion.category.version,
-      previewPrecondition: deletion.previewPrecondition,
-    },
-    actor,
-  );
-  const current = await reader().detail({ resource: 'definitions', id: d.id }, actor),
-    impact = await changes().preview(
-      { resource: 'definitions', id: d.id },
-      {
-        kind: 'definition.update',
-        definition: {
-          code: d.code,
-          translations,
-          kind: 'BOOLEAN',
-          unitCode: null,
-          minimum: null,
-          maximum: null,
-          allowMultiple: false,
-          public: true,
-          filterable: true,
-          textMultiline: false,
-          textMaxLength: 4000,
-        },
-      },
-      { expectedVersion: current.version, expectedSchemaRevision: null },
-      actor,
-    );
-  assert.ok(impact.blockers.some((b) => b.includes('Retained')));
-  const unused = await type();
-  await commit({ resource: 'types', id: unused.id }, { kind: 'type.delete' });
-  assert.ok((await db.productTypes.findUniqueOrThrow({ where: { id: unused.id } })).deleted_at);
-  await assert.rejects(
-    db.$transaction(
-      (tx) => tx.productTypes.update({ where: { id: unused.id }, data: { deleted_at: null } }),
-      { isolationLevel: 'Serializable' },
-    ),
-  );
-  await assert.rejects(db.productTypes.delete({ where: { id: unused.id } }));
-  await assert.rejects(db.$executeRaw`TRUNCATE catalog.product_types CASCADE`);
-  await assert.rejects(db.$queryRaw`SELECT * FROM catalog.write_gate`);
-});
-test('deterministic product save versus shared-schema change rejects stale editor state after retry', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '10' } }]),
-    paused = pausedSnapshot(),
-    pending = new EditProduct(paused.uow, ids, clock).execute(
-      p.id,
-      {
-        expectedVersion: p.version,
-        expectedSchemaRevision: p.schemaRevision,
-        values: [{ definitionId: d.id, value: { kind: 'NUMBER', number: '12' } }],
-      },
-      actor,
-    ),
-    outcome = assert.rejects(pending, isCode('VERSION_CONFLICT'));
-  await paused.started;
-  try {
-    await commit(
-      { resource: 'definitions', id: d.id },
-      {
-        kind: 'definition.update',
-        definition: {
-          code: d.code,
-          translations,
-          kind: 'NUMBER',
-          unitCode: null,
-          minimum: null,
-          maximum: '11',
-          allowMultiple: false,
-          public: true,
-          filterable: true,
-          textMultiline: false,
-          textMaxLength: 4000,
-        },
-      },
-    );
-  } finally {
-    paused.release();
-  }
-  await outcome;
-  assert.equal(paused.attempts(), 2);
-  assert.equal((await new ReadProducts(uow).admin(p.id, actor)).values[0]?.value.kind, 'NUMBER');
-});
-test('deterministic assignment removal versus value creation rejects a stale impact token', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const p = await product(t.id),
-    s = await reader().schema(t.id, 'ar', actor),
-    target = { resource: 'types' as const, id: t.id },
-    change = {
-      kind: 'assignment.remove' as const,
-      assignmentId: s.configuration.attributes[0]!.id,
-    },
-    expected = {
-      expectedVersion: s.configuration.type.version,
-      expectedSchemaRevision: s.form.schemaRevision,
-    },
-    preview = await changes().preview(target, change, expected, actor),
-    paused = pausedSnapshot(),
-    pending = new ChangeCatalogSchema(paused.uow, ids, clock).commit(
-      target,
-      change,
-      expected,
-      preview.precondition,
-      true,
-      actor,
-    ),
-    outcome = assert.rejects(pending, isCode('VERSION_CONFLICT'));
-  await paused.started;
-  try {
-    await new EditProduct(uow, ids, clock).execute(
-      p.id,
-      {
-        expectedVersion: p.version,
-        expectedSchemaRevision: p.schemaRevision,
-        values: [{ definitionId: d.id, value: { kind: 'NUMBER', number: '5' } }],
-      },
-      actor,
-    );
-  } finally {
-    paused.release();
-  }
-  await outcome;
-  assert.equal(paused.attempts(), 2);
-  assert.equal((await reader().schema(t.id, 'ar', actor)).form.fields.length, 1);
-});
-test('deterministic type deletion versus product creation cannot delete a newly used type', async () => {
-  const t = await type(),
-    target = { resource: 'types' as const, id: t.id },
-    change = { kind: 'type.delete' as const },
-    expected = { expectedVersion: t.version, expectedSchemaRevision: t.schemaRevision },
-    preview = await changes().preview(target, change, expected, actor),
-    paused = pausedSnapshot(),
-    pending = new ChangeCatalogSchema(paused.uow, ids, clock).commit(
-      target,
-      change,
-      expected,
-      preview.precondition,
-      true,
-      actor,
-    ),
-    outcome = assert.rejects(pending, isCode('VERSION_CONFLICT'));
-  await paused.started;
-  try {
-    await product(t.id);
-  } finally {
-    paused.release();
-  }
-  await outcome;
-  assert.equal(paused.attempts(), 2);
-  assert.equal((await db.productTypes.findUniqueOrThrow({ where: { id: t.id } })).deleted_at, null);
-});
-test('unrelated writer causes whole product transaction retry with exactly one committed event', async () => {
-  const t = await type(),
-    p = await product(t.id),
-    paused = pausedSnapshot(),
-    count = await db.outboxEvents.count(),
-    pending = new EditProduct(paused.uow, ids, clock).execute(
-      p.id,
-      {
-        expectedVersion: p.version,
-        expectedSchemaRevision: p.schemaRevision,
-        translations,
-        values: [],
-      },
-      actor,
-    );
-  await paused.started;
-  try {
-    await type();
-  } finally {
-    paused.release();
-  }
-  await pending;
-  assert.equal(paused.attempts(), 2);
-  assert.equal(await db.outboxEvents.count(), count + 2);
-});
-test('deterministic option deprecation versus new selection invalidates the editor after retry', async () => {
-  const t = await type(),
-    d = await attribute('CHOICE'),
-    option = await new CreateAttributeOption(uow, ids, clock).execute(
-      d.id,
-      { code: 'race-option', sortOrder: '1024', translations: labelTranslations },
-      actor,
-    );
-  assert.ok(option);
-  await assign(t.id, d.id);
-  const p = await product(t.id),
-    paused = pausedSnapshot();
-  const pending = new EditProduct(paused.uow, ids, clock).execute(
-      p.id,
-      {
-        expectedVersion: p.version,
-        expectedSchemaRevision: p.schemaRevision,
-        values: [{ definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } }],
-      },
-      actor,
-    ),
-    outcome = assert.rejects(pending, isCode('VERSION_CONFLICT'));
-  await paused.started;
-  try {
-    await commit({ resource: 'options', id: option.id }, { kind: 'option.deprecate' });
-  } finally {
-    paused.release();
-  }
-  await outcome;
-  assert.equal(paused.attempts(), 2);
-  assert.equal((await new ReadProducts(uow).admin(p.id, actor)).values.length, 0);
-});
-test('deterministic requiredness preview versus a new missing product cannot commit', async () => {
-  const t = await type(),
-    d = await attribute();
-  await assign(t.id, d.id);
-  const s = await reader().schema(t.id, 'ar', actor),
-    a = s.configuration.attributes[0]!,
-    target = { resource: 'types' as const, id: t.id };
-  const change: ConfigurationChange = {
-      kind: 'assignment.put',
-      assignmentId: a.id,
-      assignment: {
-        definitionId: d.id,
-        groupPlacementId: null,
-        sortOrder: a.sortOrder,
-        required: true,
-        public: true,
-        filterable: true,
-        searchable: true,
-        comparable: true,
-      },
-    },
-    expected = {
-      expectedVersion: s.configuration.type.version,
-      expectedSchemaRevision: s.form.schemaRevision,
-    },
-    preview = await changes().preview(target, change, expected, actor),
-    paused = pausedSnapshot();
-  const pending = new ChangeCatalogSchema(paused.uow, ids, clock).commit(
-      target,
-      change,
-      expected,
-      preview.precondition,
-      true,
-      actor,
-    ),
-    outcome = assert.rejects(pending, isCode('VERSION_CONFLICT'));
-  await paused.started;
-  try {
-    await product(t.id);
-  } finally {
-    paused.release();
-  }
-  await outcome;
-  assert.equal(paused.attempts(), 2);
-  assert.equal((await reader().schema(t.id, 'ar', actor)).form.fields[0]?.required, false);
-});
-test('copy retries atomically and group removal preserves attributes with explicit placement/order', async () => {
-  const source = await type(),
-    destination = await type(),
+
+test('schema revision and impact tokens reject intervening membership, product and translation changes', async () => {
+  const c = await classification(),
     d = await attribute(),
-    d2 = await attribute(),
-    group = await new CreateAttributeGroup(uow, ids, clock).execute(
-      { code: 'group-' + randomUUID(), translations },
+    g = await assign(c.id, d.id);
+  const target = { resource: 'groups' as const, id: g.id };
+  const current = await relationships().read(target, actor);
+  const impact = await relationships().preview(target, [], current.version, actor);
+  await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '2' } }]);
+  await assert.rejects(
+    relationships().commit(target, [], current.version, impact.precondition, true, actor),
+    isCode('VERSION_CONFLICT'),
+  );
+  const p = await new ReadProducts(uow).collection(
+    publicProductQuery({ locale: 'ar', category: c.id }),
+  );
+  assert.equal(p.items.length, 1);
+  const saved = await new ReadProducts(uow).admin(p.items[0]!.id, actor);
+  await commit({ resource: 'definitions', id: d.id }, { kind: 'definition.deprecate' });
+  await assert.rejects(
+    new EditProduct(uow, ids, clock).execute(
+      saved.id,
+      { expectedVersion: saved.version, expectedSchemaRevision: saved.schemaRevision, values: [] },
       actor,
-    );
-  assert.ok(group);
-  await commit(
-    { resource: 'types', id: source.id },
-    { kind: 'group.place', placementId: null, groupId: group.id, sortOrder: '2048' },
-  );
-  await assign(source.id, d.id);
-  await assign(source.id, d2.id);
-  let schema = await reader().schema(source.id, 'ar', actor);
-  const a = schema.configuration.attributes[0]!;
-  await commit(
-    { resource: 'types', id: source.id },
-    {
-      kind: 'assignment.put',
-      assignmentId: a.id,
-      assignment: {
-        definitionId: a.definition.id,
-        groupPlacementId: schema.configuration.groups[0]!.id,
-        sortOrder: '1024',
-        required: false,
-        public: true,
-        searchable: true,
-        filterable: true,
-        comparable: true,
-      },
-    },
-  );
-  schema = await reader().schema(source.id, 'ar', actor);
-  const target = { resource: 'types' as const, id: destination.id },
-    change = {
-      kind: 'type.copy' as const,
-      sourceTypeId: source.id,
-      expectedSourceSchemaRevision: schema.form.schemaRevision,
-    },
-    expected = {
-      expectedVersion: destination.version,
-      expectedSchemaRevision: destination.schemaRevision,
-    },
-    preview = await changes().preview(target, change, expected, actor),
-    paused = pausedSnapshot(),
-    count = await db.outboxEvents.count();
-  const pending = new ChangeCatalogSchema(paused.uow, ids, clock).commit(
-    target,
-    change,
-    expected,
-    preview.precondition,
-    true,
-    actor,
-  );
-  await paused.started;
-  try {
-    await type();
-  } finally {
-    paused.release();
-  }
-  await pending;
-  assert.equal(paused.attempts(), 2);
-  assert.equal(await db.outboxEvents.count(), count + 2);
-  let copy = await reader().schema(destination.id, 'ar', actor);
-  assert.equal(copy.configuration.attributes.length, 2);
-  assert.equal(copy.configuration.groups.length, 1);
-  const ordered = copy.configuration.attributes.map((x) => x.id).reverse();
-  await commit(target, { kind: 'type.order', collection: 'attributes', orderedIds: ordered });
-  copy = await reader().schema(destination.id, 'ar', actor);
-  assert.deepEqual(
-    [...copy.configuration.attributes]
-      .sort((a, b) => (BigInt(a.sortOrder) < BigInt(b.sortOrder) ? -1 : 1))
-      .map((x) => x.id),
-    ordered,
-  );
-  await commit(target, {
-    kind: 'group.remove',
-    placementId: copy.configuration.groups[0]!.id,
-    moveAssignmentsTo: null,
-  });
-  copy = await reader().schema(destination.id, 'ar', actor);
-  assert.equal(copy.configuration.groups.length, 0);
-  assert.ok(copy.configuration.attributes.every((x) => x.groupPlacementId === null));
-  assert.deepEqual(
-    copy.configuration.attributes.map((x) => x.id),
-    ordered,
-  );
-  assert.equal((await reader().schema(source.id, 'ar', actor)).configuration.groups.length, 1);
-});
-test('representative fixture measures batched schema resolution, fanout, writes and validation without a production throughput claim', async () => {
-  const timings: Record<string, number> = {},
-    types = [await type(), await type(), await type()],
-    defs: AttributeDefinitionDto[] = [];
-  for (let i = 0; i < 40; i++) defs.push(await attribute());
-  await db.$transaction(
-    async (tx) => {
-      await tx.productTypeSpecifications.createMany({
-        data: types.flatMap((t) =>
-          defs.map((d, i) => ({
-            product_type_id: t.id,
-            definition_id: d.id,
-            sort_order: BigInt(i * 1024),
-            is_public: true,
-            is_filterable: true,
-          })),
-        ),
-      });
-    },
-    { isolationLevel: 'Serializable', timeout: 10000 },
-  );
-  let start = performance.now();
-  for (const t of types) await reader().schema(t.id, 'ckb', actor);
-  timings['resolveThreeSchemasMs'] = performance.now() - start;
-  start = performance.now();
-  const products = [];
-  for (let i = 0; i < 60; i++)
-    products.push(
-      await product(types[i % 3]!.id, [
-        { definitionId: defs[0]!.id, value: { kind: 'NUMBER', number: '12.123456' } },
-      ]),
-    );
-  timings['sixtyProductWorkflowsMs'] = performance.now() - start;
-  const target = { resource: 'definitions' as const, id: defs[0]!.id },
-    change = { kind: 'definition.deprecate' as const },
-    expected = { expectedVersion: defs[0]!.version, expectedSchemaRevision: null };
-  start = performance.now();
-  const preview = await changes().preview(target, change, expected, actor);
-  timings['sharedDefinitionValidationPreviewMs'] = performance.now() - start;
-  assert.equal(preview.affectedProductCount, '60');
-  assert.deepEqual(preview.blockers, []);
-  start = performance.now();
-  await changes().commit(target, change, expected, preview.precondition, true, actor);
-  timings['sharedDefinitionFanoutCommitMs'] = performance.now() - start;
-  for (const t of types)
-    assert.notEqual(
-      (await reader().schema(t.id, 'ar', actor)).form.schemaRevision,
-      t.schemaRevision,
-    );
-  const p = await new ReadProducts(uow).admin(products[0]!.id, actor);
-  start = performance.now();
-  await new EditProduct(uow, ids, clock).execute(
-    p.id,
-    {
-      expectedVersion: p.version,
-      expectedSchemaRevision: p.schemaRevision,
-      translations,
-      values: [],
-    },
-    actor,
-  );
-  timings['singleProductEditMs'] = performance.now() - start;
-  fs.writeFileSync(
-    '.local/dynamic-performance.json',
-    JSON.stringify(
-      {
-        measuredAt: new Date().toISOString(),
-        fixture: { types: 3, definitions: 40, assignments: 120, products: 60, values: 60 },
-        timings,
-        scope:
-          'Disposable local PostgreSQL, includes application/transaction overhead; not production throughput. Membership fixture batching uses Prisma; measured product workflows include synthetic category/image provisioning.',
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-});
-test('configuration translation replacement retains omitted rows and reports actual missing locales', async () => {
-  const t = await new CreateProductType().execute(
-    {
-      code: 'translated-' + randomUUID(),
-      translations: [...translations, { locale: 'en', name: 'Saved English', description: null }],
-    },
-    actor,
-  );
-  await commit({ resource: 'types', id: t.id }, { kind: 'type.metadata', translations });
-  const current = await reader().detail({ resource: 'types', id: t.id }, actor);
-  assert.equal(current.translations.length, 1);
-  assert.ok(current.missingTranslationLocales.includes('en'));
-  assert.equal(
-    await db.productTypeTranslations.count({
-      where: { product_type_id: t.id, locale: 'en', deleted_at: { not: null } },
-    }),
-    1,
-  );
-});
-test('gateway headless contracts create configuration/product forms and reject mass assignment', async () => {
-  const pool = await import('pg').then(
-      ({ default: pg }) =>
-        new pg.Pool({ connectionString: fixture.pool.options.connectionString, max: 5 }),
     ),
-    origin = 'http://127.0.0.1:8083';
-  const authentication = {
-    authenticate: async (input: import('@golden-lift/contracts').StaffRequest) => {
-      if (input.sessionToken !== 'fixture-admin')
-        throw new ApplicationError('UNAUTHENTICATED', 'Staff authentication required.');
-      return actor;
-    },
-  };
-  const catalog = await catalogApplication(
-    httpConfig('catalog', { NODE_ENV: 'development', HOST: '127.0.0.1', ALLOWED_ORIGINS: origin }),
-    pool,
-    authentication,
+    isCode('VERSION_CONFLICT'),
   );
-  await catalog.listen(0, '127.0.0.1');
-  const upstream = await catalog.getUrl(),
-    gateway = await gatewayApplication(
-      httpConfig('gateway', {
-        NODE_ENV: 'development',
-        HOST: '127.0.0.1',
-        ALLOWED_ORIGINS: origin,
-      }),
-      { identity: upstream, catalog: upstream, media: upstream, inquiries: upstream },
-    );
-  await gateway.listen(0, '127.0.0.1');
-  const base = await gateway.getUrl();
-  const call = async (method: string, path: string, body?: unknown, staff = true) => {
-    const response = await fetch(base + path, {
-      method,
-      headers: {
-        origin,
-        'content-type': 'application/json',
-        ...(staff ? { cookie: 'gl_staff=fixture-admin' } : {}),
-        'x-request-id': 'dynamic-api-fixture',
-      },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    return { status: response.status, body: (await response.json()) as Record<string, unknown> };
-  };
-  try {
-    const created = await call('POST', '/api/v1/admin/product-types', {
-      code: 'api-' + randomUUID(),
+});
+
+test('all four typed values, options and exact canonical units retain precision and privacy', async () => {
+  const c = await classification();
+  const unit = await new CreateCanonicalUnit(uow, ids, clock).execute(
+    {
+      code: 'mm-' + randomUUID(),
+      symbol: 'mm',
+      dimension: 'length',
+      translations: labelTranslations,
+    },
+    actor,
+  );
+  const number = await new CreateAttributeDefinition(uow, ids, clock).execute(
+    {
+      code: 'num-' + randomUUID(),
       translations,
-    });
-    assert.equal(created.status, 201);
-    const typeId = uuid(created.body['id']);
-    const definition = await call('POST', '/api/v1/admin/attributes', {
-      code: 'api-boolean-' + randomUUID(),
-      translations,
-      kind: 'BOOLEAN',
-      unitCode: null,
+      kind: 'NUMBER',
+      unitCode: unit.code,
       minimum: null,
       maximum: null,
       allowMultiple: false,
@@ -1425,104 +704,255 @@ test('gateway headless contracts create configuration/product forms and reject m
       filterable: true,
       textMultiline: false,
       textMaxLength: 4000,
-    });
-    assert.equal(definition.status, 201);
-    const definitionId = uuid(definition.body['id']);
-    const spec = await call('GET', '/api/v1/admin/product-types/' + typeId + '/schema');
-    assert.equal(spec.status, 200);
-    const assignment = {
-        kind: 'assignment.put',
-        assignmentId: null,
-        assignment: {
-          definitionId,
-          groupPlacementId: null,
-          sortOrder: '1024',
-          required: true,
-          public: true,
-          searchable: false,
-          filterable: false,
-          comparable: false,
-        },
+    },
+    actor,
+  );
+  const bool = await attribute('BOOLEAN'),
+    text = await attribute('TEXT', false),
+    choice = await attribute('CHOICE');
+  const option = await new CreateAttributeOption(uow, ids, clock).execute(
+    choice.id,
+    {
+      code: 'option-' + randomUUID(),
+      sortOrder: '9007199254740993',
+      translations: labelTranslations,
+    },
+    actor,
+  );
+  assert.ok(option);
+  for (const d of [number, bool, text, choice]) await assign(c.id, d.id);
+  const p = await product(c.id, [
+    { definitionId: number.id, value: { kind: 'NUMBER', number: '99999999999999.999999' } },
+    { definitionId: bool.id, value: { kind: 'BOOLEAN', boolean: false } },
+    {
+      definitionId: text.id,
+      value: { kind: 'TEXT', translations: [{ locale: 'ar', text: 'Secret' }] },
+    },
+    { definitionId: choice.id, value: { kind: 'CHOICE', optionIds: [option.id] } },
+  ]);
+  const published = await new ReadProducts(uow).public(p.id, 'en');
+  assert.equal(published.attributes.length, 3);
+  assert.equal(published.attributes.find((a) => a.definitionId === number.id)?.unitSymbol, 'mm');
+  assert.deepEqual(published.attributes.find((a) => a.definitionId === bool.id)?.value, {
+    kind: 'BOOLEAN',
+    boolean: false,
+  });
+  assert.equal(p.values.find((a) => a.definitionId === number.id)?.value.kind, 'NUMBER');
+});
+
+test('tightened bounds and semantic unit/type changes cannot corrupt retained engineering values', async () => {
+  const c = await classification(),
+    d = await attribute();
+  await assign(c.id, d.id);
+  await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '12' } }]);
+  const draft = (definition: AttributeDefinitionDto) => ({
+    code: definition.code,
+    kind: definition.kind,
+    translations: definition.translations,
+    unitCode: definition.unit?.code ?? null,
+    minimum: definition.minimum,
+    maximum: definition.maximum,
+    allowMultiple: definition.allowMultiple,
+    public: definition.public,
+    filterable: definition.filterable,
+    textMultiline: definition.textMultiline,
+    textMaxLength: definition.textMaxLength,
+  });
+  const target = { resource: 'definitions' as const, id: d.id },
+    current = await reader().detail(target, actor);
+  const expected = { expectedVersion: current.version, expectedSchemaRevision: null };
+  const change = { kind: 'definition.update' as const, definition: { ...draft(d), maximum: '11' } };
+  assert.ok((await changes().preview(target, change, expected, actor)).blockers.length);
+  const typeChange = {
+    kind: 'definition.update' as const,
+    definition: { ...draft(d), kind: 'BOOLEAN' as const },
+  };
+  assert.ok(
+    (await changes().preview(target, typeChange, expected, actor)).blockers.some((b) =>
+      b.includes('semantic'),
+    ),
+  );
+});
+
+test('option deprecation retains unchanged selection and rejects new or repeated selection', async () => {
+  const c = await classification(),
+    d = await attribute('CHOICE');
+  const option = await new CreateAttributeOption(uow, ids, clock).execute(
+    d.id,
+    { code: 'option-' + randomUUID(), sortOrder: '1024', translations: labelTranslations },
+    actor,
+  );
+  assert.ok(option);
+  await assign(c.id, d.id);
+  const p = await product(c.id, [
+    { definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } },
+  ]);
+  await commit({ resource: 'options', id: option.id }, { kind: 'option.deprecate' });
+  const latest = await new ReadProducts(uow).admin(p.id, actor);
+  const unchanged = await new EditProduct(uow, ids, clock).execute(
+    p.id,
+    { expectedVersion: latest.version, expectedSchemaRevision: latest.schemaRevision, values: [] },
+    actor,
+  );
+  assert.deepEqual(unchanged.values, latest.values);
+  await assert.rejects(
+    product(c.id, [{ definitionId: d.id, value: { kind: 'CHOICE', optionIds: [option.id] } }]),
+    isCode('INVALID_STATE'),
+  );
+});
+
+test('category branch deletion retains reusable groups/attributes and rejects stale schema previews', async () => {
+  const c = await classification(),
+    d = await attribute(),
+    g = await assign(c.id, d.id);
+  const preview = await new PreviewCategoryDeletion(uow).execute(c.id, actor);
+  await links({ resource: 'groups', id: g.id }, []);
+  await assert.rejects(
+    new DeleteCategoryBranch(uow, ids, clock).execute(
+      c.id,
+      {
+        expectedVersion: preview.category.version,
+        previewPrecondition: preview.previewPrecondition,
+        confirm: true,
       },
-      expected = {
-        expectedVersion: created.body['version'],
-        expectedSchemaRevision: created.body['schemaRevision'],
-      };
-    const preview = await call(
-      'POST',
-      '/api/v1/admin/product-types/' + typeId + '/changes/preview',
-      { change: assignment, ...expected },
-    );
-    assert.equal(preview.status, 200);
-    assert.equal(
-      (
-        await call('POST', '/api/v1/admin/product-types/' + typeId + '/changes', {
-          change: assignment,
-          ...expected,
-          precondition: preview.body['precondition'],
-          confirm: true,
-        })
-      ).status,
-      200,
-    );
-    const current = await reader().schema(typeId, 'ar', actor),
-      category = await new CreateCategory(uow, ids, clock).execute(
-        {
-          parentId: null,
-          expectedParentVersion: null,
-          translations: [{ ...translations[0]!, slug: null }],
-        },
-        actor,
-      ),
-      asset = ids.newUuid();
-    await db.$transaction(
-      (tx) =>
-        tx.mediaAssetRefs.create({
-          data: { id: asset, media_kind: 'IMAGE', source_version: 1n, ready_at: new Date() },
-        }),
-      { isolationLevel: 'Serializable' },
-    );
-    const p = await call('POST', '/api/v1/admin/products', {
-      categoryId: category.id,
-      productTypeId: typeId,
-      coverAssetId: asset,
-      translations,
-      expectedSchemaRevision: current.form.schemaRevision,
-      expectedCategoryVersion: category.version,
-      values: [{ definitionId, value: { kind: 'BOOLEAN', boolean: false } }],
-    });
-    assert.equal(p.status, 201);
-    const productId = uuid(p.body['id']);
-    assert.equal(
-      (await call('GET', '/api/v1/admin/products/' + productId + '/edit-schema')).status,
-      200,
-    );
-    assert.equal(
-      (await call('GET', '/api/v1/products/' + productId + '?locale=ckb', undefined, false)).status,
-      200,
-    );
-    for (const forbidden of [
-      { productTypeId: typeId },
-      { categoryId: category.id },
-      { deleted_at: null },
-      { version: '99' },
-      { ready_at: new Date().toISOString() },
-      { role: 'SUPER_ADMIN' },
-    ])
-      assert.equal(
-        (
-          await call('PATCH', '/api/v1/admin/products/' + productId, {
-            expectedVersion: p.body['version'],
-            expectedSchemaRevision: p.body['schemaRevision'],
-            ...forbidden,
-          })
-        ).status,
-        400,
-      );
-    assert.equal((await call('GET', '/api/v1/admin/attributes', undefined, false)).status, 401);
-    assert.equal((await call('POST', '/api/v1/admin/asset-registration', {})).status, 404);
-  } finally {
-    await gateway.close();
-    await catalog.close();
-  }
+      actor,
+    ),
+    isCode('VERSION_CONFLICT'),
+  );
+  const fresh = await new PreviewCategoryDeletion(uow).execute(c.id, actor);
+  await new DeleteCategoryBranch(uow, ids, clock).execute(
+    c.id,
+    {
+      expectedVersion: fresh.category.version,
+      previewPrecondition: fresh.previewPrecondition,
+      confirm: true,
+    },
+    actor,
+  );
+  assert.ok(await reader().detail({ resource: 'groups', id: g.id }, actor));
+  assert.ok(await reader().detail({ resource: 'definitions', id: d.id }, actor));
+});
+
+test('shared schema conflicts preserve exact product values during a concurrent save', async () => {
+  const c = await classification(),
+    d = await attribute();
+  await assign(c.id, d.id);
+  const p = await product(c.id, [{ definitionId: d.id, value: { kind: 'NUMBER', number: '3' } }]);
+  const paused = pausedSnapshot();
+  const saving = new EditProduct(paused.uow, ids, clock).execute(
+    p.id,
+    {
+      expectedVersion: p.version,
+      expectedSchemaRevision: p.schemaRevision,
+      values: [{ definitionId: d.id, value: { kind: 'NUMBER', number: '4' } }],
+    },
+    actor,
+  );
+  await paused.started;
+  await commit({ resource: 'definitions', id: d.id }, { kind: 'definition.deprecate' });
+  paused.release();
+  await assert.rejects(saving, isCode('VERSION_CONFLICT'));
+  assert.deepEqual((await new ReadProducts(uow).admin(p.id, actor)).values, p.values);
+});
+
+test('representative category schema measures deduplicated reads without production throughput claims', async () => {
+  const start = performance.now(),
+    c = await classification(),
+    d = await attribute();
+  for (let i = 0; i < 5; i++) await assign(c.id, d.id);
+  const schema = await uow.execute((r) => r.categorySchemas.schema(c.id));
+  assert.equal(schema.groups.length, 5);
+  assert.equal(schema.attributes.length, 1);
+  fs.writeFileSync(
+    '.local/category-schema-performance.json',
+    JSON.stringify(
+      {
+        checkedAt: new Date().toISOString(),
+        milliseconds: performance.now() - start,
+        groups: 5,
+        uniqueAttributes: 1,
+        productionBenchmark: false,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+});
+
+test('reviewed category moves retain values, reject stale impact and resolve the target schema', async () => {
+  const source = await classification(),
+    target = await classification();
+  const shared = await attribute(),
+    removed = await attribute(),
+    added = await attribute();
+  await assign(source.id, shared.id);
+  await assign(source.id, removed.id);
+  await assign(target.id, shared.id);
+  await assign(target.id, added.id);
+  const p = await product(source.id, [
+    { definitionId: shared.id, value: { kind: 'NUMBER', number: '1.000001' } },
+    { definitionId: removed.id, value: { kind: 'NUMBER', number: '2' } },
+  ]);
+  const moving = new MoveProduct(uow, ids, clock);
+  const input = async () => {
+    const product = await new ReadProducts(uow).admin(p.id, actor);
+    const category = await uow.execute((r) => r.categorySchemas.schema(target.id));
+    return {
+      categoryId: target.id,
+      expectedVersion: product.version,
+      expectedSchemaRevision: product.schemaRevision,
+      expectedCategoryVersion: category.categoryVersion,
+    };
+  };
+  assert.equal((await moving.preview(p.id, await input(), actor)).blockers.length, 1);
+  await new ManageProducts(new PrismaProductManagementUnitOfWork(db), ids, clock).publication(
+    p.id,
+    p.version,
+    { active: false, featured: false, sortOrder: '0', featuredOrder: '0' },
+    actor,
+  );
+  const captured = await input(),
+    impact = await moving.preview(p.id, captured, actor);
+  assert.deepEqual(impact.sharedAttributeIds, [shared.id]);
+  assert.deepEqual(impact.addedAttributeIds, [added.id]);
+  assert.deepEqual(impact.removedAttributeIds, [removed.id]);
+  assert.equal(impact.nonApplicableValueCount, '1');
+  const changed = await new EditProduct(uow, ids, clock).execute(
+    p.id,
+    {
+      expectedVersion: captured.expectedVersion,
+      expectedSchemaRevision: captured.expectedSchemaRevision,
+      values: [],
+      modelCode: 'changed',
+    },
+    actor,
+  );
+  await assert.rejects(
+    moving.execute(p.id, { ...captured, precondition: impact.precondition, confirm: true }, actor),
+    isCode('VERSION_CONFLICT'),
+  );
+  const latest = await input(),
+    review = await moving.preview(p.id, latest, actor);
+  const moved = await moving.execute(
+    p.id,
+    { ...latest, precondition: review.precondition, confirm: true },
+    actor,
+  );
+  assert.equal(moved.categoryId, target.id);
+  assert.deepEqual(moved.values, changed.values);
+  const schema = await reader().productSchema(p.id, 'ar', actor);
+  assert.deepEqual(
+    new Set(schema.form.fields.map((f) => f.definitionId)),
+    new Set([shared.id, added.id]),
+  );
+  const saved = await new EditProduct(uow, ids, clock).execute(
+    p.id,
+    {
+      expectedVersion: moved.version,
+      expectedSchemaRevision: moved.schemaRevision,
+      values: [{ definitionId: added.id, value: { kind: 'NUMBER', number: '3' } }],
+    },
+    actor,
+  );
+  assert.equal(saved.values.length, 3);
 });

@@ -4,6 +4,8 @@ export {
   Link,
   Move,
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   CircleCheck,
   CircleOff,
   Trash2,

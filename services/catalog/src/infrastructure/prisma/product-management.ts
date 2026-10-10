@@ -21,8 +21,8 @@ class Repository implements ProductManagementRepository {
   async list(input: ProductListInput) {
     const where: Prisma.ProductsWhereInput = {
       deleted_at: null,
+      deletion_pending: false,
       ...(input.categoryId ? { category_id: input.categoryId } : {}),
-      ...(input.productTypeId ? { product_type_id: input.productTypeId } : {}),
       ...(input.active !== undefined ? { is_active: input.active } : {}),
       ...(input.featured !== undefined ? { is_featured: input.featured } : {}),
       ...(input.text
@@ -184,6 +184,11 @@ class Repository implements ProductManagementRepository {
     const old = await this.tx.productMedia.findMany({
       where: { product_id: id, deleted_at: null },
     });
+    if (old.some((row) => !media.some((item) => item.assetId === row.asset_id)))
+      throw new ApplicationError(
+        'VALIDATION_FAILED',
+        'Use permanent Media deletion; gallery updates cannot detach assets.',
+      );
     let coverId: string | null = null;
     for (const [index, item] of media.entries()) {
       const prior = old.find((m) => m.asset_id === item.assetId);

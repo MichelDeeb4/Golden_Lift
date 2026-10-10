@@ -7,6 +7,49 @@ import type {
 } from '../../application/ports/staff-proxy.js';
 const id = '[0-9a-fA-F-]{36}';
 const routes: readonly { method: string; path: RegExp; service: BusinessService }[] = [
+  {
+    method: 'GET',
+    path: /^\/api\/v1\/admin\/(?:products|categories|attributes|attribute-groups|units)\/[a-zA-Z0-9_.-]{1,128}\/deletion-impact$/,
+    service: 'catalog',
+  },
+  {
+    method: 'DELETE',
+    path: /^\/api\/v1\/admin\/(?:attributes|attribute-groups|units)\/[a-zA-Z0-9_.-]{1,128}$/,
+    service: 'catalog',
+  },
+  {
+    method: 'GET',
+    path: new RegExp('^/api/v1/admin/products/deletion-operations/' + id + '$'),
+    service: 'catalog',
+  },
+  {
+    method: 'GET',
+    path: new RegExp(
+      '^/api/v1/admin/media/(?:assets/' + id + '/deletion-impact|deletion-operations/' + id + ')$',
+    ),
+    service: 'media',
+  },
+  {
+    method: 'DELETE',
+    path: new RegExp('^/api/v1/admin/media/assets/' + id + '$'),
+    service: 'media',
+  },
+  {
+    method: 'GET',
+    path: new RegExp(
+      '^/api/v1/admin/(?:categories|attribute-groups|attributes)/' + id + '/memberships$',
+    ),
+    service: 'catalog',
+  },
+  {
+    method: 'POST',
+    path: new RegExp(
+      '^/api/v1/admin/(?:categories|attribute-groups|attributes)/' +
+        id +
+        '/memberships(?:/preview)?$',
+    ),
+    service: 'catalog',
+  },
   { method: 'GET', path: /^\/api\/v1\/admin\/products$/, service: 'catalog' },
   {
     method: 'GET',
@@ -21,9 +64,7 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
   { method: 'DELETE', path: new RegExp('^/api/v1/admin/products/' + id + '$'), service: 'catalog' },
   {
     method: 'GET',
-    path: new RegExp(
-      '^/api/v1/admin/(?:product-types|attributes|attribute-groups)(?:/' + id + '(?:/schema)?)?$',
-    ),
+    path: new RegExp('^/api/v1/admin/(?:attributes|attribute-groups)(?:/' + id + '(?:/schema)?)?$'),
     service: 'catalog',
   },
   {
@@ -38,13 +79,13 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
   },
   {
     method: 'POST',
-    path: /^\/api\/v1\/admin\/(?:product-types|attributes|attribute-groups|units)$/,
+    path: /^\/api\/v1\/admin\/(?:attributes|attribute-groups|units)$/,
     service: 'catalog',
   },
   {
     method: 'POST',
     path: new RegExp(
-      '^/api/v1/admin/(?:product-types|attributes|attribute-groups|attribute-options)/' +
+      '^/api/v1/admin/(?:attributes|attribute-groups|attribute-options)/' +
         id +
         '/changes(?:/preview)?$',
     ),
@@ -62,9 +103,7 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
   },
   {
     method: 'POST',
-    path: new RegExp(
-      '^/api/v1/admin/products(?:/' + id + '/(?:placement|type-change(?:/preview)?))?$',
-    ),
+    path: new RegExp('^/api/v1/admin/products(?:/' + id + '/(?:placement(?:/preview)?))?$'),
     service: 'catalog',
   },
   { method: 'PATCH', path: new RegExp('^/api/v1/admin/products/' + id + '$'), service: 'catalog' },
@@ -136,7 +175,7 @@ const routes: readonly { method: string; path: RegExp; service: BusinessService 
         id +
         '/(?:authorize|complete|cancel)|assets/' +
         id +
-        '/(?:block|retry|reprocess|retire))$',
+        '/(?:block|retry|reprocess))$',
     ),
     service: 'media',
   },

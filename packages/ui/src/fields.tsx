@@ -131,6 +131,10 @@ export function GLSelect({
               return;
             }
             if (e.key === 'Escape') {
+              if (open) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
               setOpen(false);
               return;
             }
@@ -228,7 +232,13 @@ export function GLCombobox({
               e.preventDefault();
               setActive((v) => Math.max(0, v - 1));
             }
-            if (e.key === 'Escape') setOpen(false);
+            if (e.key === 'Escape') {
+              if (open) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+              setOpen(false);
+            }
             if (e.key === 'Enter' && open && matches[active]) {
               e.preventDefault();
               onChange(matches[active]!.label);

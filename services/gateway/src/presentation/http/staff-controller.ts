@@ -11,8 +11,6 @@ export class StaffController {
     'staff/admins/*route',
     'admin/categories',
     'admin/categories/*route',
-    'admin/product-types',
-    'admin/product-types/*route',
     'admin/attributes',
     'admin/attributes/*route',
     'admin/attribute-groups',

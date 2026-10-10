@@ -5,7 +5,6 @@ import type {
   AttributeOptionDto,
   CatalogTranslation,
   Locale,
-  ProductTypeDto,
   UnitDto,
 } from '@golden-lift/contracts';
 import type { Prisma } from './generated/client.js';
@@ -23,7 +22,6 @@ export const definitionInclude = {
     orderBy: [{ sort_order: 'asc' }, { id: 'asc' }],
   },
 } satisfies Prisma.SpecificationDefinitionsInclude;
-export const typeInclude = { product_type_translations: { where: translationsWhere } } as const;
 export const groupInclude = {
   specification_group_translations: { where: translationsWhere },
 } as const;
@@ -47,20 +45,6 @@ export function labels(
   return items
     .map((t) => ({ locale: t.locale as Locale, name: t.label, description: null }))
     .sort((a, b) => a.locale.localeCompare(b.locale));
-}
-export function typeDto(
-  row: Prisma.ProductTypesGetPayload<{ include: typeof typeInclude }>,
-): ProductTypeDto {
-  const translations = names(row.product_type_translations);
-  return {
-    id: uuid(row.id),
-    code: row.code,
-    version: version(row.version.toString()),
-    schemaRevision: version(row.schema_revision.toString()),
-    deprecated: row.deprecated_at !== null,
-    translations,
-    missingTranslationLocales: missing(translations),
-  };
 }
 export function groupDto(
   row: Prisma.SpecificationGroupsGetPayload<{ include: typeof groupInclude }>,

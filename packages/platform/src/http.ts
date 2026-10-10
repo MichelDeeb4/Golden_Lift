@@ -10,6 +10,11 @@ import type { ApiError, ErrorCode } from '@golden-lift/contracts';
 import { ConfigurationError } from './config.js';
 import type { HttpConfig } from './config.js';
 const statuses: Record<ErrorCode, number> = {
+  DELETE_BLOCKED_BY_PRODUCTS: 409,
+  DELETE_BLOCKED_BY_UNIT_USAGE: 409,
+  DELETE_IMPACT_CHANGED: 409,
+  DELETE_ALREADY_IN_PROGRESS: 409,
+  MEDIA_DELETE_FAILED: 503,
   VALIDATION_FAILED: 400,
   UNAUTHENTICATED: 401,
   FORBIDDEN: 403,

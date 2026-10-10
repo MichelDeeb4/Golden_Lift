@@ -17,20 +17,15 @@ import { staffRequest } from '@golden-lift/platform';
 import type { ReadProducts } from '../../application/use-cases/read-products.js';
 import type { CreateProduct, EditProduct } from '../../application/use-cases/save-product.js';
 import type { ReadCatalogConfiguration } from '../../application/use-cases/read-catalog-configuration.js';
-import type {
-  ChangeProductType,
-  ProductTypeChange,
-} from '../../application/use-cases/change-product-type.js';
 import type { MoveProduct } from '../../application/use-cases/move-product.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import { CONFIGURATION_READER } from './dynamic-configuration-controller.js';
 import { strictRecord } from './category-query.js';
-import { nullableText, precondition, translations, values } from './dynamic-input.js';
+import { nullableText, translations, values } from './dynamic-input.js';
 import { publicProductQuery } from './public-product-query.js';
 export const READ_PRODUCTS = Symbol('ReadProducts'),
   CREATE_PRODUCT = Symbol('CreateProduct'),
   EDIT_PRODUCT = Symbol('EditProduct'),
-  CHANGE_PRODUCT_TYPE = Symbol('ChangeProductType'),
   MOVE_PRODUCT = Symbol('MoveProduct');
 @Controller('api/v1/products')
 export class PublicProductsController {
@@ -50,7 +45,6 @@ export class AdminProductsController {
     @Inject(CREATE_PRODUCT) private readonly create: CreateProduct,
     @Inject(EDIT_PRODUCT) private readonly edit: EditProduct,
     @Inject(CONFIGURATION_READER) private readonly schema: ReadCatalogConfiguration,
-    @Inject(CHANGE_PRODUCT_TYPE) private readonly types: ChangeProductType,
     @Inject(MOVE_PRODUCT) private readonly move: MoveProduct,
     @Inject(STAFF_AUTHENTICATOR) private readonly authentication: SessionAuthenticator,
   ) {}
@@ -114,6 +108,29 @@ export class AdminProductsController {
       actor,
     );
   }
+  @Post(':id/placement/preview') @HttpCode(200) async placementPreview(
+    @Param('id') id: string,
+    @Body() value: unknown,
+    @Req() req: IncomingMessage,
+  ) {
+    const actor = await this.authentication.authenticate(staffRequest(req, true));
+    const v = strictRecord(value, [
+      'categoryId',
+      'expectedVersion',
+      'expectedSchemaRevision',
+      'expectedCategoryVersion',
+    ]);
+    return this.move.preview(
+      uuid(id),
+      {
+        categoryId: uuid(v['categoryId']),
+        expectedVersion: version(v['expectedVersion']),
+        expectedSchemaRevision: version(v['expectedSchemaRevision']),
+        expectedCategoryVersion: version(v['expectedCategoryVersion']),
+      },
+      actor,
+    );
+  }
   @Post(':id/placement') @HttpCode(200) async placement(
     @Param('id') id: string,
     @Body() value: unknown,
@@ -125,7 +142,11 @@ export class AdminProductsController {
         'expectedVersion',
         'expectedSchemaRevision',
         'expectedCategoryVersion',
+        'precondition',
+        'confirm',
       ]);
+    if (typeof v['precondition'] !== 'string' || v['confirm'] !== true)
+      throw new ApplicationError('VALIDATION_FAILED', 'Review and confirm the category change.');
     return this.move.execute(
       uuid(id),
       {
@@ -133,54 +154,10 @@ export class AdminProductsController {
         expectedVersion: version(v['expectedVersion']),
         expectedSchemaRevision: version(v['expectedSchemaRevision']),
         expectedCategoryVersion: version(v['expectedCategoryVersion']),
+        precondition: v['precondition'],
+        confirm: true,
       },
       actor,
     );
-  }
-  @Post(':id/type-change/preview') @HttpCode(200) async typePreview(
-    @Param('id') id: string,
-    @Body() value: unknown,
-    @Req() req: IncomingMessage,
-  ) {
-    const actor = await this.authentication.authenticate(staffRequest(req, true));
-    return this.types.preview(uuid(id), this.typeInput(value, false).input, actor);
-  }
-  @Post(':id/type-change') @HttpCode(200) async typeChange(
-    @Param('id') id: string,
-    @Body() value: unknown,
-    @Req() req: IncomingMessage,
-  ) {
-    const actor = await this.authentication.authenticate(staffRequest(req, true)),
-      parsed = this.typeInput(value, true);
-    if (parsed.body['confirm'] !== true)
-      throw new ApplicationError(
-        'VALIDATION_FAILED',
-        'Explicit type-change confirmation is required.',
-      );
-    return this.types.commit(
-      uuid(id),
-      parsed.input,
-      precondition(parsed.body['precondition']),
-      true,
-      actor,
-    );
-  }
-  private typeInput(value: unknown, commit: boolean) {
-    const body = strictRecord(value, [
-        'productTypeId',
-        'expectedVersion',
-        'expectedSchemaRevision',
-        'expectedDestinationSchemaRevision',
-        'values',
-        ...(commit ? ['precondition', 'confirm'] : []),
-      ]),
-      input: ProductTypeChange = {
-        productTypeId: uuid(body['productTypeId']),
-        expectedVersion: version(body['expectedVersion']),
-        expectedSchemaRevision: version(body['expectedSchemaRevision']),
-        expectedDestinationSchemaRevision: version(body['expectedDestinationSchemaRevision']),
-        values: values(body['values']),
-      };
-    return { body, input };
   }
 }

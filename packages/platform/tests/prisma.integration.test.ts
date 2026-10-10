@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { uuid, version } from '@golden-lift/contracts';
+import { uuid } from '@golden-lift/contracts';
 import { sqlState } from '../src/transactions.js';
 import { databaseFixture } from './support/database-fixture.js';
 import { orm as identityOrm } from '../../../services/identity/src/infrastructure/prisma/client.js';
@@ -137,7 +137,7 @@ test('Prisma translation writes retain deleted rows and respect live partial uni
     { isolationLevel: 'Serializable' },
   );
   await work.execute(async ({ categories }) => {
-    await categories.touch(id, version('1'));
+    await categories.touch(id, (await categories.find(id, 'ar'))!.version);
     await categories.putTranslations(id, [
       { locale: 'en', name: 'Synthetic new English', description: null, slug: null },
     ]);
@@ -149,7 +149,7 @@ test('Prisma translation writes retain deleted rows and respect live partial uni
   assert.equal(rows.filter((r) => r.deleted_at === null).length, 1);
   assert.equal(rows.find((r) => r.id === old.id)?.name, 'Synthetic old English');
 });
-test('Media Prisma models preserve JSON/binary/int8 data and runtime deletion denial', async () => {
+test('Media Prisma models preserve JSON/binary/int8 data and restrict deletion to owned business tables', async () => {
   const hash = new Uint8Array(32).fill(127),
     metadata = { details: { locale: 'en', decimal: '123.000001' } };
   const asset = await media.assets.create({
@@ -167,11 +167,16 @@ test('Media Prisma models preserve JSON/binary/int8 data and runtime deletion de
   assert.equal(asset.byte_size, 9007199254740993n);
   assert.deepEqual(asset.sha256, hash);
   assert.deepEqual(asset.metadata, metadata);
+  await media.assets.delete({ where: { id: asset.id } });
+  assert.equal(await media.assets.findUnique({ where: { id: asset.id } }), null);
   await assert.rejects(
-    media.assets.delete({ where: { id: asset.id } }),
+    media.$executeRaw`DELETE FROM ops.deletion_operations`,
     (error: unknown) => sqlState(error) === '42501',
   );
-  assert.ok(await media.assets.findUnique({ where: { id: asset.id } }));
+  await assert.rejects(
+    media.$executeRaw`TRUNCATE media.assets`,
+    (error: unknown) => sqlState(error) === '42501',
+  );
 });
 test('Inquiries Prisma models preserve idempotency uniqueness after soft deletion', async () => {
   const data = {

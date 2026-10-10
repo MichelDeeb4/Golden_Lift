@@ -1,3 +1,10 @@
+import * as DeletionCases from '../application/use-cases/delete-catalog-entities.js';
+import { PrismaCatalogDeletionUnitOfWork } from '../infrastructure/prisma/deletion.js';
+import {
+  CatalogDeletionController,
+  CatalogMediaDeletionController,
+  DELETION,
+} from '../presentation/http/deletion-controller.js';
 import { orm } from '../infrastructure/prisma/client.js';
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
@@ -36,7 +43,6 @@ import { ReadCategories } from '../application/use-cases/read-categories.js';
 import { CreateCategory } from '../application/use-cases/create-category.js';
 import { EditCategory } from '../application/use-cases/edit-category.js';
 import {
-  CreateProductType,
   CreateAttributeDefinition,
   CreateAttributeGroup,
   CreateCanonicalUnit,
@@ -45,13 +51,16 @@ import {
 import { ReadCatalogConfiguration } from '../application/use-cases/read-catalog-configuration.js';
 import { ChangeCatalogSchema } from '../application/use-cases/change-catalog-schema.js';
 import { CreateProduct, EditProduct } from '../application/use-cases/save-product.js';
-import { ChangeProductType } from '../application/use-cases/change-product-type.js';
 import { ReadProducts } from '../application/use-cases/read-products.js';
 import { MoveProduct } from '../application/use-cases/move-product.js';
+import { ManageCatalogRelationships } from '../application/use-cases/manage-catalog-relationships.js';
+import {
+  CatalogRelationshipsController,
+  CATALOG_RELATIONSHIPS,
+} from '../presentation/http/catalog-relationships-controller.js';
 import {
   DynamicConfigurationController,
   CONFIGURATION_READER,
-  CREATE_TYPE,
   CREATE_DEFINITION,
   CREATE_GROUP,
   CREATE_UNIT,
@@ -64,7 +73,6 @@ import {
   READ_PRODUCTS,
   CREATE_PRODUCT,
   EDIT_PRODUCT,
-  CHANGE_PRODUCT_TYPE,
   MOVE_PRODUCT,
 } from '../presentation/http/products-controller.js';
 import { AuthenticateCategoryAdministrator } from '../application/use-cases/authenticate-category-administrator.js';
@@ -72,16 +80,10 @@ import { ReadCategoryNavigation } from '../application/use-cases/read-category-n
 import { MoveCategory } from '../application/use-cases/move-category.js';
 import { ReorderCategories } from '../application/use-cases/reorder-categories.js';
 import {
-  DeleteCategoryBranch,
-  PreviewCategoryDeletion,
-} from '../application/use-cases/delete-category-branch.js';
-import {
   CategoryTreeController,
   CATEGORY_NAVIGATION,
   MOVE_CATEGORY,
   REORDER_CATEGORIES,
-  PREVIEW_DELETION,
-  DELETE_BRANCH,
 } from '../presentation/http/category-tree-controller.js';
 import {
   CategoriesController,
@@ -103,10 +105,29 @@ export function catalogApplication(
     dynamicTransactions = new PrismaCatalogUnitOfWork(database, 3, true),
     ids = { newUuid: () => uuid(randomUUID()) },
     clock = { now: () => new Date().toISOString() };
+  const deletionUow = new PrismaCatalogDeletionUnitOfWork(database);
+  const deletionCases = {
+    productImpact: new DeletionCases.GetProductDeletionImpact(deletionUow),
+    product: new DeletionCases.DeleteProduct(deletionUow, ids),
+    mediaImpact: new DeletionCases.GetMediaDeletionImpact(deletionUow),
+    media: new DeletionCases.DeleteMedia(deletionUow, ids),
+    attributeImpact: new DeletionCases.GetAttributeDeletionImpact(deletionUow),
+    attribute: new DeletionCases.DeleteAttribute(deletionUow, ids, clock),
+    groupImpact: new DeletionCases.GetAttributeGroupDeletionImpact(deletionUow),
+    group: new DeletionCases.DeleteAttributeGroup(deletionUow, ids, clock),
+    unitImpact: new DeletionCases.GetUnitDeletionImpact(deletionUow),
+    unit: new DeletionCases.DeleteUnit(deletionUow, ids, clock),
+    categoryImpact: new DeletionCases.GetCategoryDeletionImpact(deletionUow),
+    category: new DeletionCases.DeleteCategoryTree(deletionUow, ids),
+    operation: new DeletionCases.GetDeletionOperation(deletionUow),
+  };
   return httpApplication(config, {
     ready: () => databaseReady(pool),
     shutdown: () => closePersistence(database, pool),
     controllers: [
+      CatalogDeletionController,
+      CatalogMediaDeletionController,
+      CatalogRelationshipsController,
       CategoriesController,
       ProductManagementController,
       AdminCategoriesController,
@@ -118,6 +139,11 @@ export function catalogApplication(
       CatalogMediaController,
     ],
     providers: [
+      { provide: DELETION, useValue: deletionCases },
+      {
+        provide: CATALOG_RELATIONSHIPS,
+        useValue: new ManageCatalogRelationships(dynamicTransactions, ids, clock),
+      },
       {
         provide: CATEGORY_SCHEMA,
         useValue: new ReadCategorySchema(new PrismaCategorySchemaReader(database)),
@@ -131,7 +157,6 @@ export function catalogApplication(
         provide: CONFIGURATION_READER,
         useValue: new ReadCatalogConfiguration(dynamicTransactions),
       },
-      { provide: CREATE_TYPE, useValue: new CreateProductType() },
       {
         provide: CREATE_DEFINITION,
         useValue: new CreateAttributeDefinition(dynamicTransactions, ids, clock),
@@ -156,10 +181,6 @@ export function catalogApplication(
       { provide: READ_PRODUCTS, useValue: new ReadProducts(dynamicTransactions) },
       { provide: CREATE_PRODUCT, useValue: new CreateProduct(dynamicTransactions, ids, clock) },
       { provide: EDIT_PRODUCT, useValue: new EditProduct(dynamicTransactions, ids, clock) },
-      {
-        provide: CHANGE_PRODUCT_TYPE,
-        useValue: new ChangeProductType(dynamicTransactions, ids, clock),
-      },
       { provide: MOVE_PRODUCT, useValue: new MoveProduct(dynamicTransactions, ids, clock) },
       {
         provide: READ_CATEGORIES,
@@ -170,8 +191,6 @@ export function catalogApplication(
       { provide: CATEGORY_NAVIGATION, useValue: new ReadCategoryNavigation(transactions) },
       { provide: MOVE_CATEGORY, useValue: new MoveCategory(transactions, ids, clock) },
       { provide: REORDER_CATEGORIES, useValue: new ReorderCategories(transactions, ids, clock) },
-      { provide: PREVIEW_DELETION, useValue: new PreviewCategoryDeletion(transactions) },
-      { provide: DELETE_BRANCH, useValue: new DeleteCategoryBranch(transactions, ids, clock) },
       {
         provide: STAFF_AUTHENTICATOR,
         useValue: new AuthenticateCategoryAdministrator(authentication),

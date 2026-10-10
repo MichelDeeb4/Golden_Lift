@@ -1,3 +1,7 @@
+import { directMediaDeletionRequest } from '@golden-lift/contracts';
+import { AcceptMediaDeletion } from '../application/use-cases/accept-media-deletion.js';
+import { deletionEvent, record } from '@golden-lift/contracts';
+import { PrismaCatalogDeletionUnitOfWork } from '../infrastructure/prisma/deletion.js';
 import { mediaEvent } from '@golden-lift/contracts';
 import {
   databasePool,
@@ -28,7 +32,19 @@ try {
       ...(process.env['MEDIA_EVENT_TRANSPORT'] === 'local-http'
         ? { localHttp: { listenPort: 3102, targetPort: 3103 } }
         : {}),
-      apply: (input) => registry.apply(mediaEvent(input)),
+      apply: async (input) => {
+        if (record(input)['type'] === 'media.deletion.requested.v1') {
+          await new AcceptMediaDeletion(new PrismaCatalogDeletionUnitOfWork(database)).execute(
+            directMediaDeletionRequest(input),
+          );
+          return;
+        }
+        await (String(record(input)['type']).startsWith('media.delete.')
+          ? new PrismaCatalogDeletionUnitOfWork(database).execute((r) =>
+              r.complete(deletionEvent(input)),
+            )
+          : registry.apply(mediaEvent(input)));
+      },
     });
   } finally {
     await closePersistence(database, pool);

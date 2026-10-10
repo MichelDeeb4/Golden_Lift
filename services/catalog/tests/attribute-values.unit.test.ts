@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { uuid, version } from '@golden-lift/contracts';
-import type { AttributeKind, EffectiveTypeSchema, TypeAttributeDto } from '@golden-lift/contracts';
+import type {
+  AttributeKind,
+  EffectiveCategorySchema,
+  EffectiveAttributeDto,
+} from '@golden-lift/contracts';
 import {
   applyValueMutations,
   exactQuantity,
@@ -9,8 +13,8 @@ import {
 } from '../src/domain/attribute-values.js';
 const id = uuid('ee100000-0000-4000-8000-000000000001'),
   option = uuid('ee100000-0000-4000-8000-000000000002');
-function schema(kind: AttributeKind, required = false): EffectiveTypeSchema {
-  const field: TypeAttributeDto = {
+function schema(kind: AttributeKind, required = false): EffectiveCategorySchema {
+  const field: EffectiveAttributeDto = {
     id,
     version: version('1'),
     groupPlacementId: null,
@@ -51,15 +55,10 @@ function schema(kind: AttributeKind, required = false): EffectiveTypeSchema {
     },
   };
   return {
-    type: {
-      id,
-      code: 'synthetic',
-      version: version('1'),
-      schemaRevision: version('1'),
-      deprecated: false,
-      translations: [{ locale: 'ar', name: 'Synthetic', description: null }],
-      missingTranslationLocales: ['en', 'ckb'],
-    },
+    categoryId: id,
+    categoryVersion: version('1'),
+    schemaRevision: version('1'),
+    leaf: true,
     groups: [],
     attributes: [field],
   };
@@ -145,4 +144,34 @@ test('deprecated values can remain unchanged while explicit removal prevents res
   assert.deepEqual(applyValueMutations(s, current, []), current);
   assert.deepEqual(applyValueMutations(s, current, [{ definitionId: id, value: null }]), []);
   assert.throws(() => applyValueMutations(s, [], current));
+});
+
+test('inactive drafts retain non-applicable values while publication rejects them', () => {
+  const current = [{ definitionId: id, value: { kind: 'NUMBER' as const, number: '1.000001' } }];
+  const empty = { ...schema('NUMBER'), attributes: [] };
+  assert.doesNotThrow(() => validateValues(empty, current, false));
+  assert.throws(() => validateValues(empty, current));
+  assert.deepEqual(applyValueMutations(empty, current, [], false), current);
+  assert.throws(() => applyValueMutations(empty, [], current, false));
+});
+
+test('one save supports the bounded 500-field category schema and rejects overflow', () => {
+  const base = schema('NUMBER');
+  const fields = Array.from({ length: 501 }, (_, index) => ({
+    ...base.attributes[0]!,
+    definition: {
+      ...base.attributes[0]!.definition,
+      id: uuid('fe100000-0000-4000-8000-' + String(index + 1).padStart(12, '0')),
+    },
+  }));
+  const changes = fields.map((field) => ({
+    definitionId: field.definition.id,
+    value: { kind: 'NUMBER' as const, number: '1.000001' },
+  }));
+  assert.equal(
+    applyValueMutations({ ...base, attributes: fields.slice(0, 500) }, [], changes.slice(0, 500))
+      .length,
+    500,
+  );
+  assert.throws(() => applyValueMutations({ ...base, attributes: fields }, [], changes));
 });

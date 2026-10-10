@@ -1,6 +1,6 @@
 export { validateDynamicValue } from './dynamic-values';
 import { z } from 'zod';
-import { fieldSchema, attributeValueSchema, formSchema } from '@golden-lift/api';
+import { fieldSchema, attributeValueSchema, categoryFormSchema } from '@golden-lift/api';
 import { GLCheckbox, GLInput, GLSelect, GLTextarea } from '@golden-lift/ui';
 import { useAdminTranslation } from './translations';
 export type AttributeField = z.infer<typeof fieldSchema>;
@@ -11,7 +11,7 @@ export function DynamicAttributeFields({
   errors = [],
   onChange,
 }: {
-  schema: Pick<z.infer<typeof formSchema>, 'groups' | 'fields'>;
+  schema: Pick<z.infer<typeof categoryFormSchema>, 'groups' | 'fields'>;
   values: Record<string, AttributeValue>;
   errors?: string[];
   onChange: (id: string, value: AttributeValue | undefined) => void;

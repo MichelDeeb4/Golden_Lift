@@ -1,4 +1,4 @@
-import { ApplicationError, locale, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, locale, uuid } from '@golden-lift/contracts';
 import type {
   AttributeValue,
   AttributeValueMutation,
@@ -6,7 +6,6 @@ import type {
   Uuid,
 } from '@golden-lift/contracts';
 import type {
-  AssignmentDraft,
   ConfigurationChange,
   ConfigurationTarget,
   DefinitionDraft,
@@ -58,11 +57,19 @@ export function translations(value: unknown): readonly CatalogTranslation[] {
     };
   });
 }
-export function named(value: unknown): NamedDraft {
-  const v = strictRecord(value, ['code', 'translations']);
-  return { code: text(v['code'], 128), translations: translations(v['translations']) };
+export function named(value: unknown): NamedDraft & { readonly attributeIds?: readonly Uuid[] } {
+  const v = strictRecord(value, ['code', 'translations', 'attributeIds']);
+  return {
+    code: text(v['code'], 128),
+    translations: translations(v['translations']),
+    ...(v['attributeIds'] === undefined
+      ? {}
+      : { attributeIds: array(v['attributeIds'], 500).map(uuid) }),
+  };
 }
-export function definition(value: unknown): DefinitionDraft {
+export function definition(
+  value: unknown,
+): DefinitionDraft & { readonly groupIds?: readonly Uuid[] } {
   const v = strictRecord(value, [
     'code',
     'translations',
@@ -75,6 +82,7 @@ export function definition(value: unknown): DefinitionDraft {
     'filterable',
     'textMultiline',
     'textMaxLength',
+    'groupIds',
   ]);
   if (
     !['NUMBER', 'BOOLEAN', 'TEXT', 'CHOICE'].includes(String(v['kind'])) ||
@@ -83,6 +91,7 @@ export function definition(value: unknown): DefinitionDraft {
   )
     throw new ApplicationError('VALIDATION_FAILED', 'Invalid attribute kind or text length.');
   return {
+    ...(v['groupIds'] === undefined ? {} : { groupIds: array(v['groupIds'], 500).map(uuid) }),
     code: text(v['code'], 128),
     translations: translations(v['translations']),
     kind: v['kind'] as DefinitionDraft['kind'],
@@ -113,53 +122,13 @@ export function option(value: unknown): OptionDraft {
     translations: translations(v['translations']),
   };
 }
-export function assignment(value: unknown): AssignmentDraft {
-  const v = strictRecord(value, [
-    'definitionId',
-    'groupPlacementId',
-    'sortOrder',
-    'required',
-    'public',
-    'searchable',
-    'filterable',
-    'comparable',
-  ]);
-  return {
-    definitionId: uuid(v['definitionId']),
-    groupPlacementId: nullableId(v['groupPlacementId']),
-    sortOrder: order(v['sortOrder']),
-    required: bool(v['required']),
-    public: bool(v['public']),
-    searchable: bool(v['searchable']),
-    filterable: bool(v['filterable']),
-    comparable: bool(v['comparable']),
-  };
-}
 export function change(value: unknown): ConfigurationChange {
-  const kind = strictRecord(value, [
-    'kind',
-    'translations',
-    'assignmentId',
-    'assignment',
-    'placementId',
-    'groupId',
-    'sortOrder',
-    'moveAssignmentsTo',
-    'collection',
-    'orderedIds',
-    'sourceTypeId',
-    'expectedSourceSchemaRevision',
-    'definition',
-    'option',
-  ])['kind'];
+  const kind = strictRecord(value, ['kind', 'translations', 'definition', 'option'])['kind'];
   const row = (keys: readonly string[]) => strictRecord(value, ['kind', ...keys]);
   switch (kind) {
-    case 'type.metadata':
     case 'group.metadata':
     case 'unit.metadata':
       return { kind, translations: translations(row(['translations'])['translations']) };
-    case 'type.deprecate':
-    case 'type.delete':
     case 'definition.deprecate':
     case 'definition.delete':
     case 'option.deprecate':
@@ -168,53 +137,15 @@ export function change(value: unknown): ConfigurationChange {
     case 'unit.delete':
       row([]);
       return { kind };
-    case 'assignment.put': {
-      const r = row(['assignmentId', 'assignment']);
-      return {
-        kind,
-        assignmentId: nullableId(r['assignmentId']),
-        assignment: assignment(r['assignment']),
-      };
+    case 'definition.update': {
+      const input = definition(row(['definition'])['definition']);
+      if (input.groupIds !== undefined)
+        throw new ApplicationError(
+          'VALIDATION_FAILED',
+          'Use the reviewed memberships command to change groups.',
+        );
+      return { kind, definition: input };
     }
-    case 'assignment.remove':
-      return { kind, assignmentId: uuid(row(['assignmentId'])['assignmentId']) };
-    case 'group.place': {
-      const r = row(['placementId', 'groupId', 'sortOrder']);
-      return {
-        kind,
-        placementId: nullableId(r['placementId']),
-        groupId: uuid(r['groupId']),
-        sortOrder: order(r['sortOrder']),
-      };
-    }
-    case 'group.remove': {
-      const r = row(['placementId', 'moveAssignmentsTo']);
-      return {
-        kind,
-        placementId: uuid(r['placementId']),
-        moveAssignmentsTo: nullableId(r['moveAssignmentsTo']),
-      };
-    }
-    case 'type.order': {
-      const r = row(['collection', 'orderedIds']);
-      if (r['collection'] !== 'groups' && r['collection'] !== 'attributes')
-        throw new ApplicationError('VALIDATION_FAILED', 'Invalid ordering collection.');
-      return {
-        kind,
-        collection: r['collection'],
-        orderedIds: array(r['orderedIds'], 500).map(uuid),
-      };
-    }
-    case 'type.copy': {
-      const r = row(['sourceTypeId', 'expectedSourceSchemaRevision']);
-      return {
-        kind,
-        sourceTypeId: uuid(r['sourceTypeId']),
-        expectedSourceSchemaRevision: version(r['expectedSourceSchemaRevision']),
-      };
-    }
-    case 'definition.update':
-      return { kind, definition: definition(row(['definition'])['definition']) };
     case 'option.update':
       return { kind, option: option(row(['option'])['option']) };
     default:
@@ -252,7 +183,7 @@ export function attributeValue(value: unknown): AttributeValue {
   }
 }
 export function values(value: unknown): readonly AttributeValueMutation[] {
-  return array(value, 100).map((item) => {
+  return array(value, 500).map((item) => {
     const r = strictRecord(item, ['definitionId', 'value']);
     return {
       definitionId: uuid(r['definitionId']),
@@ -261,7 +192,6 @@ export function values(value: unknown): readonly AttributeValueMutation[] {
   });
 }
 const resources = {
-  'product-types': 'types',
   attributes: 'definitions',
   'attribute-options': 'options',
   'attribute-groups': 'groups',

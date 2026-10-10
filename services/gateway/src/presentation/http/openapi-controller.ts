@@ -4,9 +4,9 @@ const document = {
   openapi: '3.1.0',
   info: {
     title: 'Golden Lift API',
-    version: '0.8.0',
+    version: '0.9.0',
     description:
-      'Identity, category administration, category-derived Catalog, B5 Media and Admin product management. Minimal inactive Product creation requires a live leaf category and Arabic name; Product Type is retired. Category schema revisions protect edits; publication separately requires complete values and a ready image cover. Live staff verification, optimistic versions, exact typed values, ordered Media and retained soft deletion remain. Production provider/isolation acceptance and deployment are separate. Public collections/search/category-derived filters are integrated; normal frontend defaults to real APIs.',
+      'Identity, category administration, category-derived Catalog, B5 Media and Admin product management. Minimal inactive Product creation requires a live leaf category and Arabic name; Category and reusable group relationships are authoritative; legacy classification is absent from runtime contracts. Category schema revisions protect edits; publication separately requires complete values and a ready image cover. Live staff verification, optimistic versions, exact typed values, ordered Media and retained soft deletion remain. Production provider/isolation acceptance and deployment are separate. Public collections/search/category-derived filters are integrated; normal frontend defaults to real APIs.',
   },
   servers: [
     {
@@ -2648,9 +2648,9 @@ const document = {
         },
       },
       delete: {
-        operationId: 'deleteCategoryBranch',
+        operationId: 'deleteCategoryTree',
         description:
-          'ADMIN confirmed atomic soft deletion using the reviewed routine and owner hooks. Revalidates all owned branch state and referenced asset/sheet versions. Descendant, product or attachment changes invalidate preview independently of root version. One bounded versioned outbox event. Fresh Catalog public/admin reads lose branch access; B4 does not revoke Media delivery, signed URLs or downloaded files. Repeated request is 404.',
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 202 durably accepts cleanup; pending owners cannot be delivered. Completion is reported by the operation endpoint after Media removes all objects and metadata.',
         security: [
           {
             staffSession: [],
@@ -2677,7 +2677,6 @@ const document = {
               type: 'string',
               format: 'uri',
             },
-            description: 'Configured staff origin.',
           },
           {
             name: 'X-CSRF-Token',
@@ -2686,7 +2685,6 @@ const document = {
             schema: {
               type: 'string',
             },
-            description: 'Session-bound token from login/session.',
           },
         ],
         requestBody: {
@@ -2694,30 +2692,25 @@ const document = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/DeleteBranchInput',
-              },
-              example: {
-                confirm: true,
-                expectedVersion: '1',
-                previewPrecondition:
-                  'b1-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+                $ref: '#/components/schemas/DeleteCommand',
               },
             },
           },
         },
         responses: {
-          '200': {
-            description: 'Successful response',
+          '202': {
+            description: 'Durable deletion operation',
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/BranchDeletionResult',
+                  $ref: '#/components/schemas/DeletionOperation',
                 },
               },
             },
           },
           '400': {
-            description: 'Malformed input or cursor.',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2727,7 +2720,8 @@ const document = {
             },
           },
           '401': {
-            description: 'Missing, expired, revoked, disabled or deleted session/account.',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2737,7 +2731,8 @@ const document = {
             },
           },
           '403': {
-            description: 'Requires ADMIN; SUPER_ADMIN is excluded. Unsafe Origin/CSRF is denied.',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2747,7 +2742,8 @@ const document = {
             },
           },
           '404': {
-            description: 'Selected category, parent or route is unavailable/deleted.',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2757,17 +2753,8 @@ const document = {
             },
           },
           '409': {
-            description: 'Stale row, list, path or preview precondition. Reload before retrying.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '413': {
-            description: 'JSON body exceeds 64 KiB.',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2778,7 +2765,7 @@ const document = {
           },
           '422': {
             description:
-              'Invalid destination, membership, cover, hierarchy or ordering-gap recovery beyond the documented bound.',
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -2789,7 +2776,7 @@ const document = {
           },
           '503': {
             description:
-              'Identity/Catalog is unavailable or the bounded transaction retry budget is exhausted.',
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -3595,434 +3582,6 @@ const document = {
         },
       },
     },
-    '/api/v1/admin/categories/{id}/deletion-preview': {
-      get: {
-        operationId: 'previewCategoryBranchDeletion',
-        description:
-          'ADMIN read-only, consistent active branch impact and scope-bound precondition. No private PDF links or mutations. Shared technical sheets, media registrations/files and reserved model codes remain; no restoration. Preview token provides concurrency protection, not authorization.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        responses: {
-          '200': {
-            description: 'Successful response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/BranchDeletionPreview',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Malformed input or cursor.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Missing, expired, revoked, disabled or deleted session/account.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Requires ADMIN; SUPER_ADMIN is excluded. Unsafe Origin/CSRF is denied.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Selected category, parent or route is unavailable/deleted.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'Stale row, list, path or preview precondition. Reload before retrying.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '413': {
-            description: 'JSON body exceeds 64 KiB.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '422': {
-            description:
-              'Invalid destination, membership, cover, hierarchy or ordering-gap recovery beyond the documented bound.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description:
-              'Identity/Catalog is unavailable or the bounded transaction retry budget is exhausted.',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    '/api/v1/admin/product-types': {
-      get: {
-        operationId: 'list_product_types',
-        summary: 'List product-types',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'limit',
-            in: 'query',
-            schema: {
-              type: 'integer',
-              minimum: 1,
-              maximum: 100,
-              default: 20,
-            },
-          },
-          {
-            name: 'cursor',
-            in: 'query',
-            schema: {
-              type: 'string',
-            },
-          },
-        ],
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ProductTypePage',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-      post: {
-        operationId: 'create_product_types',
-        summary: 'Create product-types',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/NamedConfigurationInput',
-              },
-            },
-          },
-        },
-        responses: {
-          '201': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ProductType',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-    },
-    '/api/v1/admin/product-types/{id}': {
-      get: {
-        operationId: 'read_product_types',
-        summary: 'Read actual saved product-types',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ProductType',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-    },
     '/api/v1/admin/attributes': {
       get: {
         operationId: 'list_attributes',
@@ -4386,6 +3945,146 @@ const document = {
           },
         },
       },
+      delete: {
+        operationId: 'deleteAttribute',
+        description:
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 200 means the owning-service transaction completed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteCommand',
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Deletion completed',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionCompleted',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/admin/attribute-groups': {
       get: {
@@ -4724,6 +4423,146 @@ const document = {
           },
           '503': {
             description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        operationId: 'deleteAttributeGroup',
+        description:
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 200 means the owning-service transaction completed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteCommand',
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Deletion completed',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionCompleted',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -5181,228 +5020,6 @@ const document = {
             },
           },
         },
-      },
-    },
-    '/api/v1/admin/product-types/{id}/changes/preview': {
-      post: {
-        operationId: 'preview_product_types_change',
-        summary: 'Preview guarded configuration change',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/PreviewConfigurationChangeInput',
-              },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/SchemaChangeImpact',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-    },
-    '/api/v1/admin/product-types/{id}/changes': {
-      post: {
-        operationId: 'commit_product_types_change',
-        summary: 'Commit confirmed configuration change',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/CommitConfigurationChangeInput',
-              },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ConfigurationChangeResult',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
       },
     },
     '/api/v1/admin/attributes/{id}/changes/preview': {
@@ -6395,115 +6012,6 @@ const document = {
         },
       },
     },
-    '/api/v1/admin/product-types/{id}/schema': {
-      get: {
-        operationId: 'read_type_schema',
-        summary: 'Resolve effective configuration and dynamic form',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-          {
-            name: 'locale',
-            in: 'query',
-            schema: {
-              $ref: '#/components/schemas/Locale',
-              default: 'ar',
-            },
-          },
-        ],
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/TypeSchemaResponse',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-    },
     '/api/v1/admin/products': {
       post: {
         operationId: 'create_product',
@@ -6700,15 +6208,6 @@ const document = {
           {
             in: 'query',
             name: 'categoryId',
-            required: false,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-          {
-            in: 'query',
-            name: 'productTypeId',
             required: false,
             schema: {
               type: 'string',
@@ -6984,11 +6483,9 @@ const document = {
         },
       },
       delete: {
-        operationId: 'delete_product',
-        summary: 'Soft delete product and retain associations',
-        tags: ['Catalog Administration'],
+        operationId: 'deleteProduct',
         description:
-          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 202 durably accepts cleanup; pending owners cannot be delivered. Completion is reported by the operation endpoint after Media removes all objects and metadata.',
         security: [
           {
             staffSession: [],
@@ -7007,13 +6504,48 @@ const document = {
               format: 'uuid',
             },
           },
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
         ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteCommand',
+              },
+            },
+          },
+        },
         responses: {
-          '204': {
-            description: 'Product soft deleted',
+          '202': {
+            description: 'Durable deletion operation',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionOperation',
+                },
+              },
+            },
           },
           '400': {
-            description: 'Safe error envelope',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -7023,7 +6555,8 @@ const document = {
             },
           },
           '401': {
-            description: 'Safe error envelope',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -7033,7 +6566,8 @@ const document = {
             },
           },
           '403': {
-            description: 'Safe error envelope',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -7043,7 +6577,8 @@ const document = {
             },
           },
           '404': {
-            description: 'Safe error envelope',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -7053,7 +6588,19 @@ const document = {
             },
           },
           '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -7063,22 +6610,13 @@ const document = {
             },
           },
           '503': {
-            description: 'Owning service or live Identity verification unavailable',
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
                   $ref: '#/components/schemas/ApiError',
                 },
-              },
-            },
-          },
-        },
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/DeleteProductInput',
               },
             },
           },
@@ -7301,228 +6839,6 @@ const document = {
             },
           },
         },
-      },
-    },
-    '/api/v1/admin/products/{id}/type-change/preview': {
-      post: {
-        operationId: 'preview_product_type_change',
-        summary: 'Preview explicit type/value mapping',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/ProductTypeChangeInput',
-              },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ProductTypeChangePreview',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
-      },
-    },
-    '/api/v1/admin/products/{id}/type-change': {
-      post: {
-        operationId: 'commit_product_type_change',
-        summary: 'Commit confirmed type/value mapping',
-        tags: ['Dynamic Catalog Core'],
-        description:
-          'Retired Product Type transport. Authenticated content callers receive INVALID_STATE; use category schemas. Existing type metadata is retained as migration-owner history.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/CommitProductTypeChangeInput',
-              },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Success',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/AdminProduct',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '404': {
-            description: 'Safe error envelope',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'VERSION_CONFLICT: stale user version or impact/schema token',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Owning service or live Identity verification unavailable',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-        deprecated: true,
       },
     },
     '/api/v1/products/{id}': {
@@ -8780,6 +8096,146 @@ const document = {
           },
         },
       },
+      delete: {
+        operationId: 'deleteMedia',
+        description:
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 202 durably accepts cleanup; pending owners cannot be delivered. Completion is reported by the operation endpoint after Media removes all objects and metadata.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteCommand',
+              },
+            },
+          },
+        },
+        responses: {
+          '202': {
+            description: 'Durable deletion operation',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionOperation',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
     },
     '/api/v1/admin/media/assets/{id}/usage': {
       get: {
@@ -9243,150 +8699,6 @@ const document = {
               'application/json': {
                 schema: {
                   $ref: '#/components/schemas/MediaAsset',
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '403': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '409': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '422': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '429': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-          '503': {
-            description: 'Safe error response',
-            content: {
-              'application/json': {
-                schema: {
-                  $ref: '#/components/schemas/ApiError',
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    '/api/v1/admin/media/assets/{id}/retire': {
-      post: {
-        operationId: 'mediaAssetretire',
-        description: 'Live ADMIN only. SUPER_ADMIN is denied.',
-        security: [
-          {
-            staffSession: [],
-          },
-          {
-            staffLocalSession: [],
-          },
-        ],
-        parameters: [
-          {
-            name: 'Origin',
-            in: 'header',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uri',
-            },
-            description: 'Must exactly match an approved staff origin.',
-          },
-          {
-            name: 'X-CSRF-Token',
-            in: 'header',
-            required: true,
-            schema: {
-              $ref: '#/components/schemas/ActionToken',
-            },
-            description:
-              'Read csrfToken from login/current-session JSON; it belongs to the current cookie.',
-          },
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/MediaRetire',
-              },
-            },
-          },
-        },
-        responses: {
-          '201': {
-            description: 'Successful response',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  additionalProperties: false,
-                  properties: {
-                    status: {
-                      const: 'RETIRED',
-                    },
-                  },
-                  required: ['status'],
                 },
               },
             },
@@ -10924,14 +10236,6 @@ const document = {
             },
           },
           {
-            name: 'productType',
-            in: 'query',
-            schema: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-          {
             name: 'search',
             in: 'query',
             schema: {
@@ -11084,6 +10388,1617 @@ const document = {
           },
           '503': {
             description: 'Owning service or live Identity verification unavailable',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/categories/{id}/memberships': {
+      get: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'read_categories_memberships',
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'commit_categories_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion', 'precondition', 'confirm'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                  precondition: {
+                    type: 'string',
+                  },
+                  confirm: {
+                    const: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/categories/{id}/memberships/preview': {
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'preview_categories_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MembershipReview',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attribute-groups/{id}/memberships': {
+      get: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'read_attribute_groups_memberships',
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'commit_attribute_groups_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion', 'precondition', 'confirm'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                  precondition: {
+                    type: 'string',
+                  },
+                  confirm: {
+                    const: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attribute-groups/{id}/memberships/preview': {
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'preview_attribute_groups_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MembershipReview',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attributes/{id}/memberships': {
+      get: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'read_attributes_memberships',
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'commit_attributes_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion', 'precondition', 'confirm'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                  precondition: {
+                    type: 'string',
+                  },
+                  confirm: {
+                    const: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/CatalogMemberships',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attributes/{id}/memberships/preview': {
+      post: {
+        tags: ['Catalog administration'],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        operationId: 'preview_attributes_memberships',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['orderedIds', 'expectedVersion'],
+                properties: {
+                  orderedIds: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    maxItems: 500,
+                    uniqueItems: true,
+                  },
+                  expectedVersion: {
+                    $ref: '#/components/schemas/Version',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/MembershipReview',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/products/{id}/placement/preview': {
+      post: {
+        operationId: 'preview_product_placement',
+        summary: 'Move product to a live leaf category, retaining values for explicit resolution',
+        tags: ['Dynamic Catalog Core'],
+        description:
+          ' ADMIN only through live Identity verification; SUPER_ADMIN has no content permissions. Mutations require approved Origin and session CSRF token. No internal transport routes are exposed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ProductPlacementPreviewInput',
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Successful response',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ProductPlacementImpact',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/products/{id}/deletion-impact': {
+      get: {
+        operationId: 'getProductDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/categories/{id}/deletion-impact': {
+      get: {
+        operationId: 'getCategoryTreeDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attributes/{id}/deletion-impact': {
+      get: {
+        operationId: 'getAttributeDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/attribute-groups/{id}/deletion-impact': {
+      get: {
+        operationId: 'getAttributeGroupDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/units/{code}/deletion-impact': {
+      get: {
+        operationId: 'getUnitDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/units/{code}': {
+      delete: {
+        operationId: 'deleteUnit',
+        description:
+          'Permanently delete explicit owned data after rechecking entity version and dependency fingerprint. Live ADMIN and approved Origin/session CSRF required. Shared definitions remain. 200 means the owning-service transaction completed.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+          {
+            name: 'Origin',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uri',
+            },
+          },
+          {
+            name: 'X-CSRF-Token',
+            in: 'header',
+            required: true,
+            schema: {
+              type: 'string',
+            },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DeleteCommand',
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Deletion completed',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionCompleted',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/assets/{id}/deletion-impact': {
+      get: {
+        operationId: 'getMediaDeletionImpact',
+        description:
+          'Read-only current dependency impact. Live ADMIN only; SUPER_ADMIN is excluded. Unit usage and any Product in a Category subtree block deletion.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Versioned permanent deletion impact',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionImpact',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/products/deletion-operations/{id}': {
+      get: {
+        operationId: 'getCatalogDeletionOperation',
+        description:
+          'Live ADMIN durable operation state. RETRYABLE with MEDIA_DELETE_FAILED remains pending and event redelivery retries cleanup. A rejected direct Media request reports DELETE_IMPACT_CHANGED and requires a fresh impact/confirmation.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Current durable operation status',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionOperation',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/media/deletion-operations/{id}': {
+      get: {
+        operationId: 'getMediaDeletionOperation',
+        description:
+          'Live ADMIN durable operation state. RETRYABLE with MEDIA_DELETE_FAILED remains pending and event redelivery retries cleanup. A rejected direct Media request reports DELETE_IMPACT_CHANGED and requires a fresh impact/confirmation.',
+        security: [
+          {
+            staffSession: [],
+          },
+          {
+            staffLocalSession: [],
+          },
+        ],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Current durable operation status',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/DeletionOperation',
+                },
+              },
+            },
+          },
+          '400': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '401': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '403': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '404': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '409': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '422': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiError',
+                },
+              },
+            },
+          },
+          '503': {
+            description:
+              'Safe error envelope. Conflicts include stale version/impact, blocking dependencies or pending deletion.',
             content: {
               'application/json': {
                 schema: {
@@ -11511,6 +12426,15 @@ const document = {
             type: ['string', 'null'],
             format: 'uuid',
           },
+          groupIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
         },
         description:
           'Root creation omits parent fields or supplies null; child creation requires both the parent UUID and current parent version. Optional coverAssetId must refer to an already verified active image registration; null clears a cover, omission preserves it on edit. Parent/order changes are rejected on generic PATCH.',
@@ -11863,96 +12787,6 @@ const document = {
           },
         },
       },
-      BranchDeletionImpact: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'totalCategoryCount',
-          'descendantCategoryCount',
-          'productCount',
-          'categoryTranslationCount',
-          'categorySpecificationCount',
-          'categoryCoverCount',
-          'categoryTechnicalLinkCount',
-          'productTranslationCount',
-          'productCodeReservationCount',
-          'productMediaCount',
-          'productMediaTranslationCount',
-          'productSpecificationValueCount',
-          'productSpecificationTextCount',
-          'productSpecificationChoiceCount',
-          'productTechnicalLinkCount',
-          'productTechnicalConfigurationCount',
-        ],
-        properties: {
-          totalCategoryCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          descendantCategoryCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          categoryTranslationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          categorySpecificationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          categoryCoverCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          categoryTechnicalLinkCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productTranslationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productCodeReservationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productMediaCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productMediaTranslationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productSpecificationValueCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productSpecificationTextCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productSpecificationChoiceCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productTechnicalLinkCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-          productTechnicalConfigurationCount: {
-            type: 'string',
-            pattern: '^(0|[1-9][0-9]*)$',
-          },
-        },
-        description:
-          'Active records only. Total includes selected root; descendants exclude it. Category covers stop being publicly referenced; registrations remain. Owned technical links/selections are deleted, shared sheet contents and source evidence remain. Counts use exact decimal strings.',
-      },
       BranchRetention: {
         type: 'object',
         additionalProperties: false,
@@ -11978,63 +12812,6 @@ const document = {
           },
           mediaDeliveryRevoked: {
             const: false,
-          },
-        },
-      },
-      BranchDeletionPreview: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['category', 'impact', 'previewPrecondition', 'retention'],
-        properties: {
-          category: {
-            $ref: '#/components/schemas/AdminCategory',
-          },
-          impact: {
-            $ref: '#/components/schemas/BranchDeletionImpact',
-          },
-          previewPrecondition: {
-            $ref: '#/components/schemas/BranchPreviewPrecondition',
-          },
-          retention: {
-            $ref: '#/components/schemas/BranchRetention',
-          },
-        },
-      },
-      DeleteBranchInput: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['confirm', 'expectedVersion', 'previewPrecondition'],
-        properties: {
-          confirm: {
-            const: true,
-          },
-          expectedVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          previewPrecondition: {
-            $ref: '#/components/schemas/BranchPreviewPrecondition',
-          },
-        },
-        description:
-          'Use the selected root version and scope-bound token from deletion-preview. Explicit boolean true required. Recompute full branch state in the deleting transaction; any relevant owned-record/membership change produces 409, even if the root version is unchanged. No restore; repeated deletion is 404.',
-      },
-      BranchDeletionResult: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['categoryId', 'version', 'impact', 'sourceListRevision'],
-        properties: {
-          categoryId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          version: {
-            $ref: '#/components/schemas/Version',
-          },
-          impact: {
-            $ref: '#/components/schemas/BranchDeletionImpact',
-          },
-          sourceListRevision: {
-            $ref: '#/components/schemas/CategoryListRevision',
           },
         },
       },
@@ -12073,47 +12850,6 @@ const document = {
         description:
           'Unique ar/en/ckb entries. Arabic required. Writes replace the active translation set; omitted optional descriptions become null. Plain text; future renderers must escape it.',
       },
-      ProductType: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'id',
-          'code',
-          'version',
-          'translations',
-          'missingTranslationLocales',
-          'schemaRevision',
-          'deprecated',
-        ],
-        properties: {
-          id: {
-            type: 'string',
-            format: 'uuid',
-          },
-          code: {
-            type: 'string',
-            pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$',
-          },
-          version: {
-            $ref: '#/components/schemas/Version',
-          },
-          translations: {
-            $ref: '#/components/schemas/CatalogTranslations',
-          },
-          missingTranslationLocales: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/Locale',
-            },
-          },
-          schemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          deprecated: {
-            type: 'boolean',
-          },
-        },
-      },
       AttributeGroup: {
         type: 'object',
         additionalProperties: false,
@@ -12138,6 +12874,14 @@ const document = {
             items: {
               $ref: '#/components/schemas/Locale',
             },
+          },
+          attributeCount: {
+            type: 'string',
+            pattern: '^[0-9]+$',
+          },
+          categoryCount: {
+            type: 'string',
+            pattern: '^[0-9]+$',
           },
         },
       },
@@ -12306,6 +13050,15 @@ const document = {
             minimum: 1,
             maximum: 10000,
           },
+          groupIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
         },
         description:
           'All policy fields are explicit. NUMBER alone accepts units/bounds; CHOICE alone allows multiple options; TEXT alone allows multiline metadata. Public disclosure defaults to false in storage; this API requires an explicit decision. Used type/unit semantics are immutable including retained deleted uses.',
@@ -12418,6 +13171,13 @@ const document = {
             },
             maxItems: 500,
           },
+          groups: {
+            type: 'array',
+            items: {
+              $ref: '#/components/schemas/AttributeGroup',
+            },
+            maxItems: 500,
+          },
         },
       },
       NamedConfigurationInput: {
@@ -12431,6 +13191,15 @@ const document = {
           },
           translations: {
             $ref: '#/components/schemas/CatalogTranslations',
+          },
+          attributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
           },
         },
       },
@@ -12525,113 +13294,6 @@ const document = {
           },
           comparable: {
             type: 'boolean',
-          },
-        },
-      },
-      TypeAssignment: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'id',
-          'definition',
-          'groupPlacementId',
-          'sortOrder',
-          'version',
-          'required',
-          'public',
-          'searchable',
-          'filterable',
-          'comparable',
-        ],
-        properties: {
-          id: {
-            type: 'string',
-            format: 'uuid',
-          },
-          definition: {
-            $ref: '#/components/schemas/AttributeDefinition',
-          },
-          groupPlacementId: {
-            anyOf: [
-              {
-                type: 'string',
-                format: 'uuid',
-              },
-              {
-                type: 'null',
-              },
-            ],
-          },
-          sortOrder: {
-            type: 'string',
-            pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
-            description: 'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
-          },
-          version: {
-            $ref: '#/components/schemas/Version',
-          },
-          required: {
-            type: 'boolean',
-          },
-          public: {
-            type: 'boolean',
-          },
-          searchable: {
-            type: 'boolean',
-          },
-          filterable: {
-            type: 'boolean',
-          },
-          comparable: {
-            type: 'boolean',
-          },
-        },
-        description:
-          'Effective public = global definition public AND assignment public. Search/comparison require effective public plus assignment permission; filtering additionally requires global filterable. Flags do not create search endpoints.',
-      },
-      TypeGroupPlacement: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['id', 'group', 'sortOrder', 'version'],
-        properties: {
-          id: {
-            type: 'string',
-            format: 'uuid',
-          },
-          group: {
-            $ref: '#/components/schemas/AttributeGroup',
-          },
-          sortOrder: {
-            type: 'string',
-            pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
-            description: 'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
-          },
-          version: {
-            $ref: '#/components/schemas/Version',
-          },
-        },
-      },
-      EffectiveTypeSchema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['type', 'groups', 'attributes'],
-        properties: {
-          type: {
-            $ref: '#/components/schemas/ProductType',
-          },
-          groups: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/TypeGroupPlacement',
-            },
-            maxItems: 500,
-          },
-          attributes: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/TypeAssignment',
-            },
-            maxItems: 500,
           },
         },
       },
@@ -12805,63 +13467,13 @@ const document = {
               $ref: '#/components/schemas/Locale',
             },
           },
-        },
-      },
-      ProductFormSchema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['productTypeId', 'schemaRevision', 'groups', 'fields'],
-        properties: {
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          schemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          groups: {
+          groupPlacementIds: {
             type: 'array',
             items: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['id', 'label', 'sortOrder'],
-              properties: {
-                id: {
-                  type: 'string',
-                  format: 'uuid',
-                },
-                label: {
-                  type: 'string',
-                },
-                sortOrder: {
-                  type: 'string',
-                  pattern: '^-?(?:0|[1-9][0-9]{0,18})$',
-                  description:
-                    'Signed bigint within PostgreSQL range; deterministic ties use UUID.',
-                },
-              },
+              type: 'string',
+              format: 'uuid',
             },
             maxItems: 500,
-          },
-          fields: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/FormField',
-            },
-            maxItems: 500,
-          },
-        },
-      },
-      TypeSchemaResponse: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['configuration', 'form'],
-        properties: {
-          configuration: {
-            $ref: '#/components/schemas/EffectiveTypeSchema',
-          },
-          form: {
-            $ref: '#/components/schemas/ProductFormSchema',
           },
         },
       },
@@ -13316,6 +13928,9 @@ const document = {
               },
             },
           },
+          navigation: {
+            $ref: '#/components/schemas/ProductNavigation',
+          },
         },
         description:
           'Anonymous safe projection with field-level requested-locale then Arabic fallback. No private attributes, saved translation sets, admin counts or private evidence. Asset UUID is not a delivery URL.',
@@ -13381,7 +13996,7 @@ const document = {
             items: {
               $ref: '#/components/schemas/ProductValueMutation',
             },
-            maxItems: 100,
+            maxItems: 500,
           },
         },
       },
@@ -13393,6 +14008,8 @@ const document = {
           'expectedVersion',
           'expectedSchemaRevision',
           'expectedCategoryVersion',
+          'precondition',
+          'confirm',
         ],
         properties: {
           categoryId: {
@@ -13408,38 +14025,11 @@ const document = {
           expectedCategoryVersion: {
             $ref: '#/components/schemas/Version',
           },
-        },
-      },
-      ProductTypeChangeInput: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'productTypeId',
-          'expectedVersion',
-          'expectedSchemaRevision',
-          'expectedDestinationSchemaRevision',
-          'values',
-        ],
-        properties: {
-          productTypeId: {
+          precondition: {
             type: 'string',
-            format: 'uuid',
           },
-          expectedVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          expectedSchemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          expectedDestinationSchemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          values: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/ProductValueMutation',
-            },
-            maxItems: 100,
+          confirm: {
+            const: true,
           },
         },
       },
@@ -13448,90 +14038,6 @@ const document = {
         pattern: '^s1-[a-f0-9]{64}$',
         description:
           'Scoped to operation, proposal, row/schema revisions and affected product/value/technical dependencies; recomputed at commit.',
-      },
-      CommitProductTypeChangeInput: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'productTypeId',
-          'expectedVersion',
-          'expectedSchemaRevision',
-          'expectedDestinationSchemaRevision',
-          'values',
-          'precondition',
-          'confirm',
-        ],
-        properties: {
-          productTypeId: {
-            type: 'string',
-            format: 'uuid',
-          },
-          expectedVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          expectedSchemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          expectedDestinationSchemaRevision: {
-            $ref: '#/components/schemas/Version',
-          },
-          values: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/ProductValueMutation',
-            },
-            maxItems: 100,
-          },
-          precondition: {
-            $ref: '#/components/schemas/SchemaImpactPrecondition',
-          },
-          confirm: {
-            const: true,
-          },
-        },
-      },
-      ProductTypeChangePreview: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'precondition',
-          'blockers',
-          'retainedDefinitionIds',
-          'incompatibleDefinitionIds',
-          'requiredMissingDefinitionIds',
-        ],
-        properties: {
-          precondition: {
-            $ref: '#/components/schemas/SchemaImpactPrecondition',
-          },
-          blockers: {
-            type: 'array',
-            items: {
-              type: 'string',
-            },
-          },
-          retainedDefinitionIds: {
-            type: 'array',
-            items: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-          incompatibleDefinitionIds: {
-            type: 'array',
-            items: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-          requiredMissingDefinitionIds: {
-            type: 'array',
-            items: {
-              type: 'string',
-              format: 'uuid',
-            },
-          },
-        },
       },
       ConfigurationChange: {
         oneOf: [
@@ -13937,7 +14443,7 @@ const document = {
           },
         },
         description:
-          'At most 100 affected types and 1000 active products interactively; larger scope returns INVALID_STATE, never a partial preview. Public PDFs may contain a newly hidden value; files are not redacted or revoked by this operation.',
+          'At most 100 affected categories and 1000 active products interactively; larger scope returns INVALID_STATE, never a partial preview. Public PDFs may contain a newly hidden value; files are not redacted or revoked by this operation.',
       },
       ConfigurationChangeResult: {
         type: 'object',
@@ -13955,9 +14461,6 @@ const document = {
               {
                 oneOf: [
                   {
-                    $ref: '#/components/schemas/ProductType',
-                  },
-                  {
                     $ref: '#/components/schemas/AttributeDefinition',
                   },
                   {
@@ -13970,30 +14473,6 @@ const document = {
                     $ref: '#/components/schemas/CanonicalUnit',
                   },
                 ],
-              },
-              {
-                type: 'null',
-              },
-            ],
-          },
-        },
-      },
-      ProductTypePage: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['items', 'nextCursor'],
-        properties: {
-          items: {
-            type: 'array',
-            items: {
-              $ref: '#/components/schemas/ProductType',
-            },
-            maxItems: 100,
-          },
-          nextCursor: {
-            anyOf: [
-              {
-                type: 'string',
               },
               {
                 type: 'null',
@@ -14161,19 +14640,6 @@ const document = {
           },
         },
         required: ['expectedVersion'],
-      },
-      MediaRetire: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          expectedVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          confirmed: {
-            const: true,
-          },
-        },
-        required: ['expectedVersion', 'confirmed'],
       },
       MediaVariant: {
         type: 'object',
@@ -14812,19 +15278,6 @@ const document = {
           },
         },
       },
-      DeleteProductInput: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['expectedVersion', 'confirmed'],
-        properties: {
-          expectedVersion: {
-            $ref: '#/components/schemas/Version',
-          },
-          confirmed: {
-            const: true,
-          },
-        },
-      },
       PublicFilterDefinition: {
         type: 'object',
         additionalProperties: false,
@@ -15072,6 +15525,14 @@ const document = {
           comparable: {
             type: 'boolean',
           },
+          groupPlacementIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+          },
         },
         description:
           'Effective public = global definition public AND assignment public. Search/comparison require effective public plus assignment permission; filtering additionally requires global filterable. Flags do not create search endpoints.',
@@ -15162,6 +15623,23 @@ const document = {
             type: 'string',
             format: 'uuid',
           },
+          nonApplicableValues: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['definitionId', 'label'],
+              properties: {
+                definitionId: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                label: {
+                  type: 'string',
+                },
+              },
+            },
+          },
         },
       },
       CategorySchemaResponse: {
@@ -15176,6 +15654,430 @@ const document = {
             $ref: '#/components/schemas/CategoryFormSchema',
           },
         },
+      },
+      CatalogMemberships: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['version', 'orderedIds'],
+        properties: {
+          version: {
+            $ref: '#/components/schemas/Version',
+          },
+          orderedIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+        },
+      },
+      MembershipReview: {
+        type: 'object',
+        required: [
+          'precondition',
+          'affectedProductCount',
+          'invalidProductCount',
+          'removedAttributeIds',
+          'addedAttributeIds',
+          'blockers',
+          'valuesRetained',
+        ],
+        properties: {
+          precondition: {
+            type: 'string',
+          },
+          affectedProductCount: {
+            type: 'string',
+          },
+          invalidProductCount: {
+            type: 'string',
+          },
+          removedAttributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+          addedAttributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+          blockers: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+          valuesRetained: {
+            const: true,
+          },
+        },
+      },
+      ProductPlacementPreviewInput: {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'categoryId',
+          'expectedVersion',
+          'expectedSchemaRevision',
+          'expectedCategoryVersion',
+        ],
+        properties: {
+          categoryId: {
+            type: 'string',
+            format: 'uuid',
+          },
+          expectedVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+          expectedSchemaRevision: {
+            $ref: '#/components/schemas/Version',
+          },
+          expectedCategoryVersion: {
+            $ref: '#/components/schemas/Version',
+          },
+        },
+      },
+      ProductPlacementImpact: {
+        type: 'object',
+        required: [
+          'precondition',
+          'sharedAttributeIds',
+          'addedAttributeIds',
+          'removedAttributeIds',
+          'retainedValueCount',
+          'nonApplicableValueCount',
+          'valuesRetained',
+          'blockers',
+        ],
+        properties: {
+          precondition: {
+            type: 'string',
+          },
+          sharedAttributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+          addedAttributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+          removedAttributeIds: {
+            type: 'array',
+            items: {
+              type: 'string',
+              format: 'uuid',
+            },
+            maxItems: 500,
+            uniqueItems: true,
+          },
+          retainedValueCount: {
+            type: 'string',
+          },
+          nonApplicableValueCount: {
+            type: 'string',
+          },
+          valuesRetained: {
+            const: true,
+          },
+          blockers: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+        },
+      },
+      ProductNavigation: {
+        type: 'object',
+        required: ['breadcrumbs', 'previous', 'next'],
+        properties: {
+          breadcrumbs: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['id', 'name'],
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+                name: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+          previous: {
+            oneOf: [
+              {
+                type: 'null',
+              },
+              {
+                type: 'object',
+                required: ['id', 'name'],
+                properties: {
+                  id: {
+                    type: 'string',
+                    format: 'uuid',
+                  },
+                  name: {
+                    type: 'string',
+                  },
+                },
+              },
+            ],
+          },
+          next: {
+            oneOf: [
+              {
+                type: 'null',
+              },
+              {
+                type: 'object',
+                required: ['id', 'name'],
+                properties: {
+                  id: {
+                    type: 'string',
+                    format: 'uuid',
+                  },
+                  name: {
+                    type: 'string',
+                  },
+                },
+              },
+            ],
+          },
+        },
+      },
+      DeleteCommand: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          expectedVersion: {
+            type: 'string',
+            pattern: '^[1-9][0-9]*$',
+          },
+          impactRevision: {
+            type: 'string',
+            pattern: '^d1-[a-f0-9]{64}$',
+          },
+          confirmed: {
+            const: true,
+          },
+        },
+        required: ['expectedVersion', 'impactRevision', 'confirmed'],
+      },
+      DeletionImpact: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allowed: {
+            type: 'boolean',
+          },
+          permanent: {
+            const: true,
+          },
+          entity: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              id: {
+                type: 'string',
+              },
+              type: {
+                type: 'string',
+                enum: ['PRODUCT', 'MEDIA', 'ATTRIBUTE', 'ATTRIBUTE_GROUP', 'UNIT', 'CATEGORY'],
+              },
+              displayName: {
+                type: 'string',
+              },
+            },
+            required: ['id', 'type', 'displayName'],
+          },
+          blockingDependencies: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                type: {
+                  type: 'string',
+                },
+                count: {
+                  type: 'string',
+                  pattern: '^(0|[1-9][0-9]*)$',
+                },
+                examples: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    additionalProperties: false,
+                    properties: {
+                      id: {
+                        type: 'string',
+                      },
+                      displayName: {
+                        type: 'string',
+                      },
+                    },
+                    required: ['id', 'displayName'],
+                  },
+                },
+              },
+              required: ['type', 'count'],
+            },
+          },
+          cascadingDeletes: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                type: {
+                  type: 'string',
+                },
+                count: {
+                  type: 'string',
+                  pattern: '^(0|[1-9][0-9]*)$',
+                },
+              },
+              required: ['type', 'count'],
+            },
+          },
+          detachedReferences: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                type: {
+                  type: 'string',
+                },
+                count: {
+                  type: 'string',
+                  pattern: '^(0|[1-9][0-9]*)$',
+                },
+              },
+              required: ['type', 'count'],
+            },
+          },
+          unaffectedEntities: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                type: {
+                  type: 'string',
+                },
+                count: {
+                  type: 'string',
+                  pattern: '^(0|[1-9][0-9]*)$',
+                },
+              },
+              required: ['type'],
+            },
+          },
+          warnings: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+          expectedVersion: {
+            type: 'string',
+            pattern: '^[1-9][0-9]*$',
+          },
+          impactRevision: {
+            type: 'string',
+            pattern: '^d1-[a-f0-9]{64}$',
+          },
+        },
+        required: [
+          'allowed',
+          'permanent',
+          'entity',
+          'blockingDependencies',
+          'cascadingDeletes',
+          'detachedReferences',
+          'unaffectedEntities',
+          'warnings',
+          'expectedVersion',
+          'impactRevision',
+        ],
+      },
+      DeletionOperation: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+          },
+          entityType: {
+            type: 'string',
+            enum: ['PRODUCT', 'MEDIA', 'ATTRIBUTE', 'ATTRIBUTE_GROUP', 'UNIT', 'CATEGORY'],
+          },
+          entityId: {
+            type: 'string',
+          },
+          status: {
+            type: 'string',
+            enum: ['MEDIA_CLEANUP', 'COMPLETED', 'RETRYABLE'],
+          },
+          failureCode: {
+            type: ['string', 'null'],
+          },
+          retryCount: {
+            type: 'integer',
+            minimum: 0,
+          },
+          completedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+          },
+        },
+        required: [
+          'id',
+          'entityType',
+          'entityId',
+          'status',
+          'failureCode',
+          'retryCount',
+          'completedAt',
+        ],
+      },
+      DeletionCompleted: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          status: {
+            const: 'COMPLETED',
+          },
+        },
+        required: ['status'],
       },
     },
     securitySchemes: {

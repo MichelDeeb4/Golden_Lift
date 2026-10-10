@@ -72,7 +72,6 @@ export function publicProductQuery(value: unknown): PublicProductQuery {
     'page',
     'pageSize',
     'category',
-    'productType',
     'search',
     'sort',
     'filters',
@@ -86,7 +85,6 @@ export function publicProductQuery(value: unknown): PublicProductQuery {
     sort: q['sort'] === 'name' ? 'name' : 'featured',
     filters: filters(q['filters']),
     ...(q['category'] !== undefined ? { categoryId: uuid(q['category']) } : {}),
-    ...(q['productType'] !== undefined ? { productTypeId: uuid(q['productType']) } : {}),
     ...(q['search'] !== undefined ? { search: text(q['search'], 200) } : {}),
   };
 }

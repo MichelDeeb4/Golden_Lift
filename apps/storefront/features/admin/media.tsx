@@ -1,3 +1,4 @@
+import { DeletionDialog } from './deletion';
 import { ArrowUpDown, Upload as UploadIcon, FilterX } from '@golden-lift/icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -498,8 +499,15 @@ export function MediaLibrary({
     );
   return (
     <>
+      {reviewedMedia?.operation === 'retire' && (
+        <DeletionDialog
+          path={'/admin/media/assets/' + reviewedMedia.asset.id}
+          scope="media"
+          onClose={() => setReviewedMedia(null)}
+        />
+      )}
       <GLConfirmDialog
-        open={Boolean(reviewedMedia)}
+        open={Boolean(reviewedMedia && reviewedMedia.operation !== 'retire')}
         title={reviewedMedia?.operation === 'retire' ? t('retire') : t('retry')}
         variant={reviewedMedia?.operation === 'retire' ? 'destructive' : 'secondary'}
         icon={
@@ -645,7 +653,7 @@ export function MediaLibrary({
                       ...(!asset.deleted
                         ? [
                             {
-                              label: t('retire'),
+                              label: t('remove'),
                               icon: 'delete' as const,
                               destructive: true,
                               onSelect: () => setReviewedMedia({ asset, operation: 'retire' }),
@@ -723,8 +731,19 @@ export function MediaLibrary({
                     {asset.kind === 'PDF' &&
                       asset.status === 'READY' &&
                       asset.security === 'VERIFIED' && <PdfDownload assetId={asset.id} />}
+                    <GLActionMenu
+                      label={t('actions')}
+                      items={[
+                        {
+                          label: t('remove'),
+                          icon: 'delete',
+                          destructive: true,
+                          onSelect: () => setReviewedMedia({ asset, operation: 'retire' }),
+                        },
+                      ]}
+                    />
                     <div className="gl-admin-toolbar">
-                      {(['retry', 'reprocess', 'retire', 'block'] as const)
+                      {(['retry', 'reprocess', 'block'] as const)
                         .filter(
                           (operation) =>
                             !asset.deleted &&
@@ -760,7 +779,6 @@ export function MediaLibrary({
                                 jsonResponse,
                                 {
                                   expectedVersion: asset.version,
-                                  ...(operation === 'retire' ? { confirmed: true } : {}),
                                 },
                                 'POST',
                               )

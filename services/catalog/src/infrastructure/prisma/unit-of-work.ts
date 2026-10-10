@@ -6,7 +6,6 @@ import { PrismaCategoryRepository } from './category-repository.js';
 import { PrismaOutbox } from './outbox.js';
 import { PrismaCategoryNavigation } from './category-navigation.js';
 import { PrismaCategoryTreeWriter } from './category-tree-writer.js';
-import { PrismaProductTypeRepository } from './product-type-repository.js';
 import { PrismaAttributeDefinitionRepository } from './attribute-definition-repository.js';
 import { PrismaAttributeGroupRepository } from './attribute-group-repository.js';
 import { PrismaUnitRepository } from './unit-repository.js';
@@ -14,6 +13,7 @@ import { PrismaProductRepository } from './product-repository.js';
 import { PrismaSchemaChangeReader } from './schema-change-reader.js';
 import { PrismaCategorySchemaRepository } from './category-schema-repository.js';
 import { PrismaConfigurationCollection } from './configuration-collection.js';
+import { PrismaCatalogRelationships } from './catalog-relationships.js';
 export function mapFailure(error: unknown): Error {
   if (error instanceof ApplicationError) return error;
   switch (sqlState(error)) {
@@ -62,9 +62,9 @@ export class PrismaCatalogUnitOfWork implements CatalogUnitOfWork {
                   );
               }
               return work({
+                relationships: new PrismaCatalogRelationships(tx),
                 configurationCollection: new PrismaConfigurationCollection(tx),
                 categorySchemas: new PrismaCategorySchemaRepository(tx),
-                productTypes: new PrismaProductTypeRepository(tx),
                 definitions: new PrismaAttributeDefinitionRepository(tx),
                 groups: new PrismaAttributeGroupRepository(tx),
                 units: new PrismaUnitRepository(tx),

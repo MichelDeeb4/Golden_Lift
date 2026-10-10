@@ -1,16 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Inject,
-  Param,
-  Post,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common';
 import {
   ApplicationError,
   locale,
@@ -29,10 +18,6 @@ import { staffRequest } from '@golden-lift/platform';
 import type { ReadCategoryNavigation } from '../../application/use-cases/read-category-navigation.js';
 import type { MoveCategory } from '../../application/use-cases/move-category.js';
 import type { ReorderCategories } from '../../application/use-cases/reorder-categories.js';
-import type {
-  DeleteCategoryBranch,
-  PreviewCategoryDeletion,
-} from '../../application/use-cases/delete-category-branch.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import {
   decodeCursor,
@@ -45,22 +30,25 @@ import {
 } from './category-query.js';
 export const CATEGORY_NAVIGATION = Symbol('ReadCategoryNavigation'),
   MOVE_CATEGORY = Symbol('MoveCategory'),
-  REORDER_CATEGORIES = Symbol('ReorderCategories'),
-  PREVIEW_DELETION = Symbol('PreviewCategoryDeletion'),
-  DELETE_BRANCH = Symbol('DeleteCategoryBranch');
+  REORDER_CATEGORIES = Symbol('ReorderCategories');
 @Controller('api/v1/admin/categories')
 export class CategoryTreeController {
   constructor(
-    @Inject(CATEGORY_NAVIGATION) private readonly read: ReadCategoryNavigation,
-    @Inject(MOVE_CATEGORY) private readonly move: MoveCategory,
-    @Inject(REORDER_CATEGORIES) private readonly reorder: ReorderCategories,
-    @Inject(PREVIEW_DELETION) private readonly preview: PreviewCategoryDeletion,
-    @Inject(DELETE_BRANCH) private readonly deletion: DeleteCategoryBranch,
-    @Inject(STAFF_AUTHENTICATOR) private readonly authentication: SessionAuthenticator,
+    @Inject(CATEGORY_NAVIGATION)
+    private readonly read: ReadCategoryNavigation,
+    @Inject(MOVE_CATEGORY)
+    private readonly move: MoveCategory,
+    @Inject(REORDER_CATEGORIES)
+    private readonly reorder: ReorderCategories,
+    @Inject(STAFF_AUTHENTICATOR)
+    private readonly authentication: SessionAuthenticator,
   ) {}
-  @Get() async list(
-    @Query() value: unknown,
-    @Req() request: IncomingMessage,
+  @Get()
+  async list(
+    @Query()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ): Promise<CategoryCollectionPage> {
     const actor = await this.authentication.authenticate(staffRequest(request, false));
     const { rootRevision: _rootRevision, ...page } = await this.children(value, null, actor);
@@ -70,7 +58,11 @@ export class CategoryTreeController {
     value: unknown,
     movingId: ReturnType<typeof uuid> | null,
     actor: AuthenticatedActor,
-  ): Promise<CategoryCollectionPage & { readonly rootRevision: string | null }> {
+  ): Promise<
+    CategoryCollectionPage & {
+      readonly rootRevision: string | null;
+    }
+  > {
     const input = listQuery(value, movingId),
       result = await this.read.list({ ...input, limit: input.limit + 1 }, actor),
       items = result.items.slice(0, input.limit),
@@ -86,10 +78,14 @@ export class CategoryTreeController {
       rootRevision: result.rootRevision,
     };
   }
-  @Get(':id/move-destinations') async destinations(
-    @Param('id') id: string,
-    @Query() value: unknown,
-    @Req() request: IncomingMessage,
+  @Get(':id/move-destinations')
+  async destinations(
+    @Param('id')
+    id: string,
+    @Query()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ): Promise<MoveDestinationPage> {
     const actor = await this.authentication.authenticate(staffRequest(request, false));
     const result = await this.children(value, uuid(id), actor);
@@ -98,10 +94,14 @@ export class CategoryTreeController {
     const { rootRevision, ...page } = result;
     return { ...page, rootDestination: { parentId: null, listRevision: rootRevision } };
   }
-  @Get(':id/breadcrumbs') async breadcrumbs(
-    @Param('id') id: string,
-    @Query() value: unknown,
-    @Req() request: IncomingMessage,
+  @Get(':id/breadcrumbs')
+  async breadcrumbs(
+    @Param('id')
+    id: string,
+    @Query()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ): Promise<BreadcrumbPage> {
     const actor = await this.authentication.authenticate(staffRequest(request, false)),
       query = strictRecord(value, ['locale', 'limit', 'cursor']),
@@ -155,18 +155,13 @@ export class CategoryTreeController {
           : null,
     };
   }
-  @Get(':id/deletion-preview') async deletionPreview(
-    @Param('id') id: string,
-    @Query() value: unknown,
-    @Req() request: IncomingMessage,
-  ) {
-    const actor = await this.authentication.authenticate(staffRequest(request, false));
-    strictRecord(value, []);
-    return this.preview.execute(uuid(id), actor);
-  }
-  @Post('reorder') @HttpCode(200) async ordering(
-    @Body() value: unknown,
-    @Req() request: IncomingMessage,
+  @Post('reorder')
+  @HttpCode(200)
+  async ordering(
+    @Body()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ) {
     const actor = await this.authentication.authenticate(staffRequest(request, true)),
       input = strictRecord(value, ['parentId', 'orderedIds', 'expectedListRevision']);
@@ -184,10 +179,15 @@ export class CategoryTreeController {
       actor,
     );
   }
-  @Post(':id/move') @HttpCode(200) async moving(
-    @Param('id') id: string,
-    @Body() value: unknown,
-    @Req() request: IncomingMessage,
+  @Post(':id/move')
+  @HttpCode(200)
+  async moving(
+    @Param('id')
+    id: string,
+    @Body()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ) {
     const actor = await this.authentication.authenticate(staffRequest(request, true)),
       input = strictRecord(value, [
@@ -209,32 +209,14 @@ export class CategoryTreeController {
       actor,
     );
   }
-  @Delete(':id') async remove(
-    @Param('id') id: string,
-    @Body() value: unknown,
-    @Req() request: IncomingMessage,
-  ) {
-    const actor = await this.authentication.authenticate(staffRequest(request, true)),
-      input = strictRecord(value, ['confirm', 'expectedVersion', 'previewPrecondition']);
-    if (input['confirm'] !== true)
-      throw new ApplicationError(
-        'VALIDATION_FAILED',
-        'Explicit branch deletion confirmation is required.',
-      );
-    return this.deletion.execute(
-      uuid(id),
-      {
-        confirm: true,
-        expectedVersion: version(input['expectedVersion']),
-        previewPrecondition: revisionPrecondition(input['previewPrecondition']),
-      },
-      actor,
-    );
-  }
-  @Get(':id') async detail(
-    @Param('id') id: string,
-    @Query() value: unknown,
-    @Req() request: IncomingMessage,
+  @Get(':id')
+  async detail(
+    @Param('id')
+    id: string,
+    @Query()
+    value: unknown,
+    @Req()
+    request: IncomingMessage,
   ) {
     const actor = await this.authentication.authenticate(staffRequest(request, false)),
       query = strictRecord(value, ['locale']);

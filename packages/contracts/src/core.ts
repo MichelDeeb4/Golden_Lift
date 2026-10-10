@@ -18,6 +18,11 @@ export interface AuthenticatedActor {
   readonly authVersion: Version;
 }
 export type ErrorCode =
+  | 'DELETE_BLOCKED_BY_PRODUCTS'
+  | 'DELETE_BLOCKED_BY_UNIT_USAGE'
+  | 'DELETE_IMPACT_CHANGED'
+  | 'DELETE_ALREADY_IN_PROGRESS'
+  | 'MEDIA_DELETE_FAILED'
   | 'VALIDATION_FAILED'
   | 'UNAUTHENTICATED'
   | 'FORBIDDEN'

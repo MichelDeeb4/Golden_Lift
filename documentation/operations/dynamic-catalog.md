@@ -1,5 +1,7 @@
 # Dynamic Catalog Core operating guide
 
+Historical milestone guide: Product Type authority described below has been superseded. Current operations use the [category-driven model](../architecture/catalog-classification-model.md), [final implementation report](../implementation/final-catalog-admin-visitor-completed-work.md) and [reviewed retirement procedure](product-type-migration.md). Do not use retired type routes or re-run the earlier cutover on a category-only database.
+
 This milestone exposes configuration and a narrow headless product workflow. It follows completed B4 category administration; B5 Media core and full product/technical-sheet interfaces remain planned. See [decision 006](../decisions/006-dynamic-catalog-core.md), [OpenAPI 0.4.0](../api/openapi.json), [model dictionary](../../database/docs/model-dictionary-v1.2.md) and [project status](../project-progress.md).
 
 All Admin reads and writes require a live ADMIN session verified by Identity. SUPER_ADMIN manages accounts and cannot manage content. Mutations, including POST previews, require the approved Origin and session-bound `X-CSRF-Token`. Anonymous product reads do not consult Identity. Gateway allows only the documented method/path combinations; there is no public asset-registration, migration, validator or internal introspection endpoint.

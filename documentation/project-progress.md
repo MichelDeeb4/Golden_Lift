@@ -1,6 +1,8 @@
 # Golden Lift: Completed Work and Project Status
 
-The 2026-10-07 [Product Create fix](implementation/fix-product-create-disabled.md) removes Product Type, Media and specification prerequisites from initial creation. Leaf category plus Arabic name creates an inactive PostgreSQL draft and opens the category-derived editor through SPA navigation. The normal Catalog cutover was applied after full backup/restore parity and restored-copy rehearsal. Category/group relationship editing and porting historical Type-specific regression suites remain separate work. Current evidence belongs to the dated fix report.
+2026-10-08 final catalog phase: atomic leaf/group and inverse group/attribute creation, reviewed relationship edits, deduplicated specification metadata, reviewed product category placement and contextual visitor gallery/navigation are implemented. Runtime Product Type removal and physical binding retirement have passed local backup/rehearsal parity. Verification is recorded in the [final phase report](implementation/final-catalog-admin-visitor-completed-work.md); earlier milestone counts remain historical.
+
+The 2026-10-07 [Product Create fix](implementation/fix-product-create-disabled.md) removes Product Type, Media and specification prerequisites from initial creation. Leaf category plus Arabic name creates an inactive PostgreSQL draft and opens the category-derived editor through SPA navigation. The normal Catalog cutover was applied after full backup/restore parity and restored-copy rehearsal. The final phase replaces runtime Type-specific regression workflows with category relationships. Current evidence belongs to the dated fix report.
 
 
 Updated: 2026-10-08. Earlier dated milestone evidence below remains historical.
@@ -11,7 +13,7 @@ The [Category tree workspace](implementation/category-tree-completed-work.md) no
 
 The normal local database now contains a [live catalog demonstration](operations/admin-local.md#live-local-catalog-demo): 10 published products, four featured products, seven leaf categories and six scanned/processed images. Identified placeholders were soft-deleted through authenticated APIs; useful roots, staff accounts and retained history remain. Desktop, mobile and Arabic visitor checks passed against the running APIs. [Dated evidence](validation/live-demo-2026-10-07.json) records this task separately from migration and production acceptance.
 
-The [Category catalog and UX phase](implementation/catalog-model-and-ux-fix-completed-work.md) is **in progress**. Its staged migration, deduplicated category schema endpoint and disposable PostgreSQL/HTTP foundation tests are implemented. This historical report predates the Product Create fix and normal category-authority cutover; remaining relationship CRUD is still unfinished. This is not final phase acceptance.
+The historical [Category catalog and UX phase](implementation/catalog-model-and-ux-fix-completed-work.md) reported **in progress** after its staged migration, deduplicated category schema endpoint and disposable PostgreSQL/HTTP foundation tests. Its unfinished relationship CRUD and category-authority cutover are superseded by the completed final phase linked above; its original counts remain historical evidence.
 
 The [Admin CRUD modal phase](implementation/admin-crud-modal-fix-completed-work.md) restores permanent creation actions, adds focused modal CRUD and replaces normal staff document navigation with SPA routing. Its report records the current verification and remaining contract limitations separately from the historical milestone counts below.
 
@@ -285,3 +287,7 @@ Subsequent work includes:
 - Production hosting, HTTPS/reverse-proxy configuration, real mail/storage providers, load/abuse controls and backup restoration exercises.
 
 The [backend implementation plan](backend-implementation-plan.md) records the wider milestone sequence. This status report describes what is implemented today and identifies the remaining work separately.
+
+## Permanent deletion implementation (2026-10-08)
+
+The new Product, Media, Attribute, Group, Unit and Category impact/DELETE paths implement permanent owned-data cleanup with existing B5 coordination, explicit blocking and Group reachability. Current real PostgreSQL/filesystem regressions and three signed local HTTP/browser workflows pass, including mobile English/Arabic/Kurdish dialogs; production RabbitMQ/S3 acceptance is unverified. The normal database/storage rollout completed all 28 owner copies across six shared assets with backups and source files retained. SQL 27/28/29 are installed and the local profile passes 71-model/714-column/76-FK Prisma parity. Retained-reference compatibility and obsolete-path contraction remain pending. See [completed implementation scope](implementation/deletion-completed-work.md), [policy](architecture/deletion-policy.md) and [recovery](operations/deletion-recovery.md). Earlier retention/soft-delete milestone reports above remain dated historical evidence.

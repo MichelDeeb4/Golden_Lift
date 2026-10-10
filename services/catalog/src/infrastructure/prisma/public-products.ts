@@ -12,12 +12,34 @@ const publicField = Prisma.sql`d.deleted_at IS NULL AND d.is_public  AND a.is_pu
 function scope(input: PublicProductQuery) {
   return Prisma.sql`${eligible}
     ${input.categoryId ? Prisma.sql`AND p.category_id=${input.categoryId}::uuid` : Prisma.empty}
-    ${input.productTypeId ? Prisma.sql`AND p.product_type_id=${input.productTypeId}::uuid` : Prisma.empty}`;
+`;
 }
 const literalPattern = (value: string) => '%' + value.replace(/[\\%_]/g, '\\$&') + '%';
 
 export class PrismaPublicProducts {
   constructor(private readonly tx: Database) {}
+  async navigation(id: Uuid, language: Locale) {
+    const breadcrumbs = await this.tx.$queryRaw<
+      { id: string; name: string }[]
+    >`WITH RECURSIVE path AS(SELECT c.id,c.parent_id,0 depth FROM catalog.live_categories c JOIN catalog.live_products p ON p.category_id=c.id WHERE p.id=${id}::uuid UNION ALL SELECT c.id,c.parent_id,path.depth+1 FROM catalog.live_categories c JOIN path ON path.parent_id=c.id) SELECT path.id::text,coalesce(t.name,ar.name,'') name FROM path LEFT JOIN catalog.category_translations t ON t.category_id=path.id AND t.locale=${language} AND t.deleted_at IS NULL LEFT JOIN catalog.category_translations ar ON ar.category_id=path.id AND ar.locale='ar' AND ar.deleted_at IS NULL ORDER BY depth DESC LIMIT 501`;
+    if (breadcrumbs.length > 500)
+      throw new ApplicationError('INVALID_STATE', 'Public category path exceeds response bounds.');
+    const neighbors = await this.tx.$queryRaw<{ previous: string | null; next: string | null }[]>(
+      Prisma.sql`WITH ordered AS(SELECT p.id,lag(p.id) OVER(ORDER BY p.sort_order,p.id)::text previous,lead(p.id) OVER(ORDER BY p.sort_order,p.id)::text next FROM catalog.live_products p WHERE p.category_id=(SELECT category_id FROM catalog.live_products WHERE id=${id}::uuid) AND ${eligible}) SELECT previous,next FROM ordered WHERE id=${id}::uuid`,
+    );
+    const name = async (key: string | null) => {
+      if (!key) return null;
+      const [row] = await this.tx.$queryRaw<
+        { name: string }[]
+      >`SELECT coalesce(t.name,ar.name,'') name FROM catalog.live_products p LEFT JOIN catalog.product_translations t ON t.product_id=p.id AND t.locale=${language} AND t.deleted_at IS NULL LEFT JOIN catalog.product_translations ar ON ar.product_id=p.id AND ar.locale='ar' AND ar.deleted_at IS NULL WHERE p.id=${key}::uuid`;
+      return row ? { id: uuid(key), name: row.name } : null;
+    };
+    return {
+      breadcrumbs: breadcrumbs.map((x) => ({ id: uuid(x.id), name: x.name })),
+      previous: await name(neighbors[0]?.previous ?? null),
+      next: await name(neighbors[0]?.next ?? null),
+    };
+  }
   async page(input: PublicProductQuery) {
     const conditions: Prisma.Sql[] = [scope(input)];
     if (input.search) {

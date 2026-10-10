@@ -94,7 +94,7 @@ export class RabbitMediaTransport {
         void (async () => {
           try {
             if (
-              message.content.length > 32768 ||
+              message.content.length > 65536 ||
               message.properties.contentType !== 'application/json'
             )
               throw new ApplicationError('VALIDATION_FAILED', 'Invalid broker envelope.');

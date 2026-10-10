@@ -1,3 +1,4 @@
+import { FencedStorage } from '../infrastructure/storage/fenced.js';
 import { databasePool, serviceConfig, startupFailed } from '@golden-lift/platform';
 import { mediaConfig } from '../infrastructure/config.js';
 import { mediaApplication } from './application.js';
@@ -6,12 +7,13 @@ const service = 'media' as const;
 try {
   const config = serviceConfig(service),
     settings = mediaConfig(),
-    storage = await privateStorage(settings),
-    pool = await databasePool(config.database);
+    pool = await databasePool(config.database),
+    storage = new FencedStorage(await privateStorage(settings), pool);
   let app;
   try {
     app = await mediaApplication(config, pool, storage, settings);
   } catch (error) {
+    await storage.close();
     await pool.end();
     throw error;
   }

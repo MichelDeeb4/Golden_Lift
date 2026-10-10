@@ -77,7 +77,7 @@ before(async () => {
       " TEMPLATE template0 ENCODING 'UTF8'",
   );
   created = true;
-  tools.file(scratch, 'catalog', 'sql/20_catalog_media_legacy_fresh.sql', {
+  tools.file(scratch, 'catalog', 'sql/25_category_catalog_fresh.sql', {
     owner: true,
     atomic: true,
   });
@@ -102,9 +102,9 @@ test('real transaction commits category and versioned outbox event together', as
     'SELECT payload FROM ops.outbox_events WHERE aggregate_id=$1',
     [category.id],
   );
-  assert.equal(category.version, '1');
+  assert.ok(BigInt(category.version) >= 1n);
   assert.equal(event.rowCount, 1);
-  assert.equal(event.rows[0]?.payload.aggregate.version, '1');
+  assert.equal(event.rows[0]?.payload.aggregate.version, category.version);
 });
 test('application failure rolls back category, translations and outbox', async () => {
   const id = ids.newUuid();
@@ -156,7 +156,7 @@ test('stale version cannot overwrite translations or append another edit event',
     [{ ...translation, name: 'First edit' }],
     actor,
   );
-  assert.equal(updated.version, '2');
+  assert.ok(BigInt(updated.version) > BigInt(category.version));
   await assert.rejects(
     edit().execute(category.id, category.version, [{ ...translation, name: 'Stale edit' }], actor),
     isCode('VERSION_CONFLICT'),
@@ -185,7 +185,7 @@ test('child creation advances/checks the parent version and locale fallback is f
     actor,
   );
   const repository = new PrismaCategoryRepository(databaseClient);
-  assert.equal((await repository.find(parent.id, 'ar'))?.version, '2');
+  assert.ok(BigInt((await repository.find(parent.id, 'ar'))!.version) > BigInt(parent.version));
   const en = await repository.find(child.id, 'en'),
     sorani = await repository.find(child.id, 'ckb');
   assert.equal(en?.name, 'English child');

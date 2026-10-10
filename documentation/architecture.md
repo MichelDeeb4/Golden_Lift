@@ -1,6 +1,8 @@
 # Golden Lift architecture and engineering standards
 
-Updated 2026-10-04. The user's standing instruction to follow best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). This guide describes the actual implementation, dependency rules and patterns.
+Updated 2026-10-08. The user's standing instruction to follow best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). This guide describes the actual implementation, dependency rules and patterns.
+
+Catalog classification now belongs to leaf Categories and their ordered Attribute Groups. Both directions of Group/Attribute editing use the same Catalog-owned memberships, reviewed use case and Prisma unit of work; product forms consume the service's deduplicated category schema. Product Type runtime classification has been retired with retained migration evidence. See [decision 020](decisions/020-final-category-relationships.md) and the [retirement procedure](operations/product-type-migration.md).
 
 ## Repository layout
 

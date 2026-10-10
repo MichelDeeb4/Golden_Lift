@@ -26,7 +26,12 @@ export class AuthorizeDelivery {
       if (grant.expiresAt < expires) expires = grant.expiresAt;
     }
     const asset = await this.transactions.execute((r) => r.asset(id));
-    if (asset.deleted || asset.status !== 'READY' || asset.security !== 'VERIFIED')
+    if (
+      asset.deleted ||
+      asset.deletionPending ||
+      asset.status !== 'READY' ||
+      asset.security !== 'VERIFIED'
+    )
       throw new ApplicationError('FORBIDDEN', 'Media is unavailable.');
     if (profile === 'original') {
       if (
