@@ -1,12 +1,12 @@
 {
   "phase": 3,
   "status": "BLOCKED",
-  "sourceCommit": null,
+  "sourceCommit": "6e98434fc816930e17f55662900519c539361a82",
   "baselineCommit": "0973610e5fc3c75dda1540c08ed33eaa6998d3bf",
   "branch": "implementation/phase-03-hybrid-database",
-  "workingTree": "Uncommitted source at local verification; source manifest identifies tested content",
+  "workingTree": "Code verified by exact-commit hosted workflow; follow-up only records evidence",
   "architectureRevision": "target-specification-2026-10-10-v1",
-  "checkedAt": "2026-10-10T16:55:48.101Z",
+  "checkedAt": "2026-10-10T17:03:51.904Z",
   "sourceManifestNormalization": "UTF8 LF",
   "sourceManifest": [
     {
@@ -542,10 +542,16 @@
     },
     {
       "id": "CI",
-      "command": "GitHub Actions foundation workflow for new branch (not yet executed)",
-      "status": "BLOCKED",
-      "exitCode": null,
-      "checkedAt": "2026-10-10T16:55:47.834Z"
+      "command": "GitHub Actions .github/workflows/backend.yml foundation job",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T17:03:51.904Z",
+      "sourceCommit": "6e98434fc816930e17f55662900519c539361a82",
+      "workflowUrl": "https://github.com/MichelDeeb4/business-platform/actions/runs/38069935003",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-hosted-ci.json",
+        "sha256": "e1e7447993a9f45ebf005d508e0e94fd9e6f2ca9303bcdd0e2d628b09a113283"
+      }
     }
   ],
   "tests": {
@@ -569,11 +575,20 @@
     "controlAndAdministration": "Separate bounded test pools, each max 2; four is not a server-wide production budget"
   },
   "unverified": [
-    "Hosted CI for new exact source commit",
     "OWNER-SCALE Phase 03 capacity/connection approval including maxDatabaseConnections",
     "OWNER-HOSTING Phase 03 production hosting/failure-domain approval"
   ],
   "phase04": "NOT STARTED",
   "legacyDataUntouched": true,
-  "containersCleaned": true
+  "containersCleaned": true,
+  "hostedEnvironment": "ubuntu-24.04; pinned Node; Linux Chromium; actual Docker/PostgreSQL tests",
+  "acceptanceGate": {
+    "command": "node packages/tooling/phase-03-gate.mjs",
+    "exitCode": 2,
+    "checkedAt": "2026-10-10T17:04:26.415Z",
+    "status": "BLOCKED",
+    "output": "Phase 03 BLOCKED: Decision deadline reached: OWNER-SCALE / Connection and capacity budgets; Decision deadline reached: OWNER-HOSTING / Hosting/region/budget/failure-domain decisions; Approved numeric target missing: maxDatabaseConnections",
+    "technicalCriteria": "6 of 6 PASS",
+    "ownerApprovalInferred": false
+  }
 }

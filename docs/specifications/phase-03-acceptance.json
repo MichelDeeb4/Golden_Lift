@@ -30,7 +30,7 @@
     },
     {
       "id": "CI",
-      "status": "BLOCKED",
+      "status": "PASS",
       "evidence": "CI"
     }
   ],

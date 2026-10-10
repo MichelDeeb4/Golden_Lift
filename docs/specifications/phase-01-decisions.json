@@ -156,7 +156,7 @@
     {
       "phase": 3,
       "status": "BLOCKED",
-      "reason": "Local implementation/tests pass; hosted exact-source CI pending and due OWNER-SCALE/OWNER-HOSTING values remain null"
+      "reason": "Technical verification PASS including exact-source hosted CI; OWNER-SCALE, OWNER-HOSTING and maxDatabaseConnections deadline require approval or explicit bounded deferral"
     },
     {
       "phase": 4,

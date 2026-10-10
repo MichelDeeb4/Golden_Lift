@@ -1,1 +1,4 @@
 *.pdf binary
+
+# Evidence hashes must survive checkout on every platform.
+docs/implementation/phases/evidence/* text eol=lf
