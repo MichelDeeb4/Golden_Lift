@@ -2,24 +2,24 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePathname, useRouter } from 'expo-router';
 import {
-  GLHeader,
-  GLMobileNavigationDrawer,
-  GLPageContainer,
-  GLLanguageSwitcher,
-  GLText,
-} from '@golden-lift/ui';
-import { useGLTranslation } from '@golden-lift/i18n';
+  BPHeader,
+  BPMobileNavigationDrawer,
+  BPPageContainer,
+  BPLanguageSwitcher,
+  BPText,
+} from '@business-platform/ui';
+import { useBPTranslation } from '@business-platform/i18n';
 import { useCatalog } from '../../providers/storefront';
 export function Brand() {
   return (
-    <a href="/" className="gl-brand" aria-label="Golden Lift">
-      <span className="gl-brand-mark" aria-hidden="true" />
-      <strong>GOLDEN LIFT</strong>
+    <a href="/" className="bp-brand" aria-label="Business Platform">
+      <span className="bp-brand-mark" aria-hidden="true" />
+      <strong>BUSINESS PLATFORM</strong>
     </a>
   );
 }
 export function Shell({ children }: { children: ReactNode }) {
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     pathname = usePathname(),
     router = useRouter(),
     [drawer, setDrawer] = useState(false),
@@ -41,29 +41,29 @@ export function Shell({ children }: { children: ReactNode }) {
   }, []);
   return (
     <>
-      <a className="gl-skip" href="#main">
+      <a className="bp-skip" href="#main">
         {t('skip')}
       </a>
-      <GLHeader
+      <BPHeader
         brand={<Brand />}
         links={links}
         active={pathname.startsWith('/products') ? '/products' : pathname}
         onMenu={() => setDrawer(true)}
         onSearch={() => router.push('/search')}
       />
-      <GLMobileNavigationDrawer open={drawer} onClose={() => setDrawer(false)} links={links} />
-      {source.demo && <div className="gl-demo-banner">{t('demo')}</div>}
+      <BPMobileNavigationDrawer open={drawer} onClose={() => setDrawer(false)} links={links} />
+      {source.demo && <div className="bp-demo-banner">{t('demo')}</div>}
       <main id="main" tabIndex={-1}>
         {children}
       </main>
-      <footer className="gl-footer">
-        <GLPageContainer>
-          <div className="gl-footer-statement">
-            <span className="gl-overline">GOLDEN LIFT / {t('brand')}</span>
+      <footer className="bp-footer">
+        <BPPageContainer>
+          <div className="bp-footer-statement">
+            <span className="bp-overline">BUSINESS PLATFORM / {t('brand')}</span>
             <p>{t('heroTitle')}</p>
             <a href="/products">{t('explore')} ↗</a>
           </div>
-          <div className="gl-footer-grid">
+          <div className="bp-footer-grid">
             <div>
               <Brand />
               <p>{t('footerBody')}</p>
@@ -80,11 +80,11 @@ export function Shell({ children }: { children: ReactNode }) {
               <a href="/contact">{t('contact')}</a>
             </nav>
           </div>
-          <div className="gl-footer-bottom">
-            <GLText role="caption">© {new Date().getFullYear()} Golden Lift</GLText>
-            <GLLanguageSwitcher />
+          <div className="bp-footer-bottom">
+            <BPText role="caption">© {new Date().getFullYear()} Business Platform</BPText>
+            <BPLanguageSwitcher />
           </div>
-        </GLPageContainer>
+        </BPPageContainer>
       </footer>
     </>
   );

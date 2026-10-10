@@ -136,7 +136,7 @@ async function image(name, manifest) {
     ? await request('/admin/media/uploads/' + manifest.uploads[name])
     : await request('/admin/media/uploads', {
         kind: 'IMAGE',
-        name: 'Golden Lift Demo - ' + name + '.jpg',
+        name: 'Business Platform Demo - ' + name + '.jpg',
         purpose: 'CATALOG',
         bytes: String(bytes.length),
         sha256: createHash('sha256').update(bytes).digest('hex'),
@@ -190,7 +190,7 @@ async function main() {
     throw new Error(
       'Use --apply --replace-known-test-records for the authorized local demo replacement.',
     );
-  if (process.env.NODE_ENV === 'production' || process.env.GL_DATABASE_CONFIG_FILE)
+  if (process.env.NODE_ENV === 'production' || process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE)
     throw new Error('This tool is restricted to the normal local development profile.');
   let password = await passwordFromInput();
   await request('/auth/login', { email: 'Admin@left.test', password });
@@ -331,7 +331,7 @@ async function main() {
         translations: translations(
           leaf.en,
           leaf.ar,
-          'Golden Lift demonstration collection.',
+          'Business Platform demonstration collection.',
           'مجموعة عرض توضيحي لجولدن لفت.',
         ),
       }));

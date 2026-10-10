@@ -23,9 +23,9 @@ The named Windows development profile is prepared with `npm.cmd run media:tools`
 After build and migrations, run the five normal API processes using `npm.cmd run dev`. Start asynchronous roles separately:
 
 ```powershell
-npm.cmd run worker --workspace @golden-lift/media
-npm.cmd run events --workspace @golden-lift/media
-npm.cmd run events:media --workspace @golden-lift/catalog
+npm.cmd run worker --workspace @business-platform/media
+npm.cmd run events --workspace @business-platform/media
+npm.cmd run events:media --workspace @business-platform/catalog
 ```
 
 Supply owning runtime URLs, distinct event keys, private RabbitMQ URLs and scanner endpoints through the process environment. RabbitMQ needs durable direct/dead-letter exchanges and quorum queues; use separate private vhost credentials and deny unapproved publishers/consumers. Confirmed broker publication is distinct from acknowledged Catalog registration. The relays retry connections, use manual acknowledgements, and leave unrelated outboxes alone. A failed event after 20 publish attempts remains retained with an exhausted status; investigate and replay the same event ID through approved operations. Inspect the dead-letter queue before replay; retain signatures and IDs. Never mark undelivered events successful.

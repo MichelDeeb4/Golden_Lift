@@ -1,7 +1,7 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { Uuid } from '@business-platform/contracts';
 import type { PrismaClient } from './client.js';
-import { retryTransaction } from '@golden-lift/platform';
+import { retryTransaction } from '@business-platform/platform';
 export class CatalogOwnerCopies {
   constructor(private readonly db: PrismaClient) {}
   async holders() {

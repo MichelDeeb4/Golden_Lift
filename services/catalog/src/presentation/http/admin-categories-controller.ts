@@ -1,8 +1,8 @@
 import type { IncomingMessage } from 'node:http';
 import { Body, Controller, Inject, Param, Patch, Post, Req } from '@nestjs/common';
-import { ApplicationError, locale, record, uuid, version } from '@golden-lift/contracts';
-import type { CategoryDto, SessionAuthenticator } from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+import { ApplicationError, locale, record, uuid, version } from '@business-platform/contracts';
+import type { CategoryDto, SessionAuthenticator } from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { CreateCategory } from '../../application/use-cases/create-category.js';
 import type { EditCategory } from '../../application/use-cases/edit-category.js';
 import { array } from './dynamic-input.js';

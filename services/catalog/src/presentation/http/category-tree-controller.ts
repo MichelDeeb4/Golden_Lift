@@ -6,15 +6,15 @@ import {
   uuid,
   version,
   revisionPrecondition,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   BreadcrumbPage,
   CategoryCollectionPage,
   MoveDestinationPage,
   SessionAuthenticator,
-} from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { ReadCategoryNavigation } from '../../application/use-cases/read-category-navigation.js';
 import type { MoveCategory } from '../../application/use-cases/move-category.js';
 import type { ReorderCategories } from '../../application/use-cases/reorder-categories.js';

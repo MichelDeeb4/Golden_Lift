@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { GLButton, GLHeading } from './primitives';
-import { GLBreadcrumb } from './navigation';
+import { BPButton, BPHeading } from './primitives';
+import { BPBreadcrumb } from './navigation';
 import type { NavLink } from './navigation';
 import {
   Pencil,
@@ -22,7 +22,7 @@ import {
   Download,
   FolderPlus,
   MoreHorizontal,
-} from '@golden-lift/icons';
+} from '@business-platform/icons';
 const actionIcons = {
   edit: Pencil,
   view: Eye,
@@ -44,7 +44,7 @@ const actionIcons = {
   more: MoreHorizontal,
 };
 
-export function GLPageHeader({
+export function BPPageHeader({
   title,
   description,
   breadcrumbs,
@@ -58,22 +58,22 @@ export function GLPageHeader({
   context?: ReactNode;
 }) {
   return (
-    <header className="gl-page-heading">
-      {breadcrumbs && <GLBreadcrumb items={breadcrumbs} />}
-      <div className="gl-page-heading-row">
+    <header className="bp-page-heading">
+      {breadcrumbs && <BPBreadcrumb items={breadcrumbs} />}
+      <div className="bp-page-heading-row">
         <div>
-          <GLHeading level={1} role="heading2">
+          <BPHeading level={1} role="heading2">
             {title}
-          </GLHeading>
-          {description && <p className="gl-page-intro">{description}</p>}
-          {context && <div className="gl-page-context">{context}</div>}
+          </BPHeading>
+          {description && <p className="bp-page-intro">{description}</p>}
+          {context && <div className="bp-page-context">{context}</div>}
         </div>
-        {actions && <div className="gl-page-actions">{actions}</div>}
+        {actions && <div className="bp-page-actions">{actions}</div>}
       </div>
     </header>
   );
 }
-export function GLFormSection({
+export function BPFormSection({
   title,
   description,
   children,
@@ -88,21 +88,21 @@ export function GLFormSection({
 }) {
   const heading = useId();
   return (
-    <section id={id} className={'gl-form-section ' + className} aria-labelledby={heading}>
-      <div className="gl-form-section-heading">
-        <GLHeading level={2} role="heading5" id={heading}>
+    <section id={id} className={'bp-form-section ' + className} aria-labelledby={heading}>
+      <div className="bp-form-section-heading">
+        <BPHeading level={2} role="heading5" id={heading}>
           {title}
-        </GLHeading>
+        </BPHeading>
         {description && <p>{description}</p>}
       </div>
-      <div className="gl-form-section-body">{children}</div>
+      <div className="bp-form-section-body">{children}</div>
     </section>
   );
 }
-export function GLActionBar({ children }: { children: ReactNode }) {
-  return <div className="gl-action-bar">{children}</div>;
+export function BPActionBar({ children }: { children: ReactNode }) {
+  return <div className="bp-action-bar">{children}</div>;
 }
-export interface GLMenuAction {
+export interface BPMenuAction {
   label: string;
   href?: string;
   onSelect?: () => void;
@@ -111,7 +111,7 @@ export interface GLMenuAction {
   icon?: keyof typeof actionIcons;
   tone?: 'success' | 'warning';
 }
-export function GLActionMenu({ label, items }: { label: string; items: readonly GLMenuAction[] }) {
+export function BPActionMenu({ label, items }: { label: string; items: readonly BPMenuAction[] }) {
   const [open, setOpen] = useState(false),
     host = useRef<HTMLDivElement>(null),
     trigger = useRef<HTMLButtonElement>(null),
@@ -120,7 +120,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
     if (!open) return;
     host.current
       ?.querySelector<HTMLElement>(
-        '.gl-action-menu-panel a, .gl-action-menu-panel button:not(:disabled)',
+        '.bp-action-menu-panel a, .bp-action-menu-panel button:not(:disabled)',
       )
       ?.focus();
     function outside(event: PointerEvent) {
@@ -131,7 +131,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
   }, [open]);
   return (
     <div
-      className="gl-action-menu"
+      className="bp-action-menu"
       ref={host}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
@@ -145,7 +145,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
           event.preventDefault();
           const actions = Array.from(
             host.current?.querySelectorAll<HTMLElement>(
-              '.gl-action-menu-panel a, .gl-action-menu-panel button:not(:disabled)',
+              '.bp-action-menu-panel a, .bp-action-menu-panel button:not(:disabled)',
             ) ?? [],
           );
           const current = actions.indexOf(document.activeElement as HTMLElement);
@@ -168,7 +168,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
       <button
         ref={trigger}
         type="button"
-        className="gl-button gl-button-ghost gl-button-md gl-action-menu-trigger"
+        className="bp-button bp-button-ghost bp-button-md bp-action-menu-trigger"
         title={label}
         aria-haspopup="menu"
         aria-label={label}
@@ -181,7 +181,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
       {open && (
         <div
           id={id}
-          className="gl-action-menu-panel"
+          className="bp-action-menu-panel"
           role="menu"
           aria-label={label}
           style={{
@@ -217,16 +217,16 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
                 key={index}
                 href={item.href}
                 role="menuitem"
-                className="gl-button gl-button-ghost gl-button-md"
+                className="bp-button bp-button-ghost bp-button-md"
                 onClick={() => setOpen(false)}
               >
                 {content}
               </a>
             ) : (
-              <GLButton
+              <BPButton
                 key={index}
                 role="menuitem"
-                className={separated ? 'gl-menu-destructive' : undefined}
+                className={separated ? 'bp-menu-destructive' : undefined}
                 variant={item.destructive ? 'destructive' : (item.tone ?? 'ghost')}
                 disabled={item.disabled}
                 onClick={() => {
@@ -236,7 +236,7 @@ export function GLActionMenu({ label, items }: { label: string; items: readonly 
                 }}
               >
                 {content}
-              </GLButton>
+              </BPButton>
             );
           })}
         </div>

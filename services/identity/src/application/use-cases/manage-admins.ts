@@ -1,11 +1,11 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   StaffAccountDto,
   Uuid,
   Version,
   EventEnvelope,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import {
   accountDto,
   displayName,

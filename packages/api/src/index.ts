@@ -1,31 +1,43 @@
 import { z } from 'zod';
-export const publicProductFilterSchema = z.discriminatedUnion('kind', [
-  z
-    .object({
-      definitionId: z.string().uuid(),
-      kind: z.literal('NUMBER'),
-      minimum: z.string().max(22).optional(),
-      maximum: z.string().max(22).optional(),
-    })
-    .strict(),
-  z
-    .object({ definitionId: z.string().uuid(), kind: z.literal('BOOLEAN'), value: z.boolean() })
-    .strict(),
-  z
-    .object({
-      definitionId: z.string().uuid(),
-      kind: z.literal('TEXT'),
-      value: z.string().min(1).max(200),
-    })
-    .strict(),
-  z
-    .object({
-      definitionId: z.string().uuid(),
-      kind: z.literal('CHOICE'),
-      optionId: z.string().uuid(),
-    })
-    .strict(),
-]);
+export const publicProductFilterSchema = z
+  .union([
+    z
+      .object({
+        definitionId: z.string().uuid(),
+        kind: z.literal('NUMBER'),
+        minimum: z.string().max(22).optional(),
+        maximum: z.string().max(22).optional(),
+      })
+      .strict(),
+    z
+      .object({ definitionId: z.string().uuid(), kind: z.literal('BOOLEAN'), value: z.boolean() })
+      .strict(),
+    z
+      .object({
+        definitionId: z.string().uuid(),
+        kind: z.literal('TEXT'),
+        value: z.string().min(1).max(200),
+      })
+      .strict(),
+    z
+      .object({
+        definitionId: z.string().uuid(),
+        kind: z.literal('CHOICE'),
+        optionId: z.string().uuid().optional(),
+        optionIds: z.array(z.string().uuid()).min(1).max(100).optional(),
+      })
+      .strict()
+      .refine(
+        (v) =>
+          (v.optionId === undefined) !== (v.optionIds === undefined) &&
+          (!v.optionIds || new Set(v.optionIds).size === v.optionIds.length),
+      ),
+  ])
+  .transform((f) =>
+    f.kind === 'CHOICE'
+      ? { definitionId: f.definitionId, kind: f.kind, optionIds: f.optionIds ?? [f.optionId!] }
+      : f,
+  );
 import { apiOrigin } from './origin';
 export type Language = 'ar' | 'en' | 'ckb';
 export interface MediaReference {
@@ -57,6 +69,7 @@ export interface Category {
   readonly image: MediaReference | null;
 }
 export interface TechnicalAttribute {
+  readonly group?: { readonly id: string; readonly label: string };
   readonly id: string;
   readonly label: string;
   readonly value: string;
@@ -110,14 +123,87 @@ export type PublicProductFilter =
     }
   | { readonly definitionId: string; readonly kind: 'BOOLEAN'; readonly value: boolean }
   | { readonly definitionId: string; readonly kind: 'TEXT'; readonly value: string }
-  | { readonly definitionId: string; readonly kind: 'CHOICE'; readonly optionId: string };
+  | { readonly definitionId: string; readonly kind: 'CHOICE'; readonly optionId: string }
+  | {
+      readonly definitionId: string;
+      readonly kind: 'CHOICE';
+      readonly optionIds: readonly string[];
+    };
 export interface ProductQuery {
   readonly text?: string;
   readonly categoryId?: string;
   readonly sort?: 'featured' | 'name';
   readonly page?: number;
+  readonly pageSize?: number;
   readonly filters?: readonly PublicProductFilter[];
 }
+
+export const PUBLIC_PAGE_SIZE = 12;
+export type CatalogFilterState = Required<
+  Pick<ProductQuery, 'sort' | 'page' | 'pageSize' | 'filters'>
+> &
+  Pick<ProductQuery, 'categoryId' | 'text'>;
+export function normalizeCatalogFilterState(query: ProductQuery): CatalogFilterState {
+  return {
+    text: query.text?.trim() || undefined,
+    categoryId: query.categoryId || undefined,
+    sort: query.sort ?? 'featured',
+    page: query.page ?? 1,
+    pageSize: query.pageSize ?? PUBLIC_PAGE_SIZE,
+    filters: (query.filters ?? [])
+      .map((f) =>
+        f.kind === 'CHOICE'
+          ? {
+              definitionId: f.definitionId,
+              kind: f.kind,
+              optionIds: [...('optionIds' in f ? f.optionIds : [f.optionId])].sort(),
+            }
+          : f,
+      )
+      .toSorted((a, b) => a.definitionId.localeCompare(b.definitionId)),
+  };
+}
+export function parseCatalogFilterState(params: Readonly<Record<string, string | undefined>>) {
+  try {
+    const filters = z
+      .array(publicProductFilterSchema)
+      .max(10)
+      .parse(JSON.parse(params.filters || '[]'));
+    if (new Set(filters.map((f) => f.definitionId)).size !== filters.length)
+      throw Error('Duplicate Attribute');
+    const page = z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .parse(params.page ?? 1);
+    const sort = z.enum(['featured', 'name']).parse(params.sort || 'featured');
+    if ((params.q ?? '').length > 200) throw Error('Search too long');
+    return {
+      state: normalizeCatalogFilterState({
+        text: params.q,
+        categoryId: params.categoryId ?? params.category,
+        filters,
+        sort,
+        page,
+      }),
+      invalid: false,
+    };
+  } catch {
+    return { state: normalizeCatalogFilterState({}), invalid: true };
+  }
+}
+export function serializeCatalogFilterState(input: ProductQuery): Record<string, string> {
+  const q = normalizeCatalogFilterState(input);
+  return {
+    ...(q.text ? { q: q.text } : {}),
+    ...(q.categoryId ? { categoryId: q.categoryId } : {}),
+    ...(q.sort === 'name' ? { sort: q.sort } : {}),
+    ...(q.page > 1 ? { page: String(q.page) } : {}),
+    ...(q.filters.length ? { filters: JSON.stringify(q.filters) } : {}),
+  };
+}
+
 export interface CatalogDataSource {
   readonly identity: string;
   readonly demo: boolean;
@@ -233,6 +319,7 @@ const productSchema = z.object({
       definitionId: z.string().uuid(),
       label: z.string(),
       unitSymbol: z.string().nullable(),
+      group: z.object({ id: z.string().uuid(), label: z.string() }).optional(),
       value: valueSchema,
     }),
   ),
@@ -297,21 +384,23 @@ export class ApiCatalogDataSource implements CatalogDataSource {
     query: ProductQuery,
     signal?: AbortSignal,
   ): Promise<CatalogPage<Product>> {
+    query = normalizeCatalogFilterState(query);
     const p = await this.client.get(
       '/api/v1/products',
       {
         locale: language,
         page: String(query.page ?? 1),
-        pageSize: '12',
+        pageSize: String(query.pageSize ?? PUBLIC_PAGE_SIZE),
         sort: query.sort ?? 'featured',
         ...(query.text?.trim() ? { search: query.text.trim() } : {}),
-        ...(query.categoryId ? { category: query.categoryId } : {}),
+        ...(query.categoryId ? { categoryId: query.categoryId } : {}),
         ...(query.filters?.length ? { filters: JSON.stringify(query.filters) } : {}),
       },
       z.object({
         items: z.array(productSchema).max(100),
         page: z.number().int(),
         pageSize: z.number().int(),
+        total: z.number().int().nonnegative(),
         hasNextPage: z.boolean(),
         filters: z.array(
           z.object({
@@ -330,7 +419,7 @@ export class ApiCatalogDataSource implements CatalogDataSource {
     return {
       items: p.items.map((item) => this.productModel(item, language)),
       nextCursor: p.hasNextPage ? String(p.page + 1) : null,
-      total: null,
+      total: p.total,
       filters: p.filters,
     };
   }
@@ -367,6 +456,7 @@ export class ApiCatalogDataSource implements CatalogDataSource {
         })),
       attributes: p.attributes.map((a) => ({
         id: a.definitionId,
+        ...(a.group ? { group: a.group } : {}),
         label: a.label,
         unit: a.unitSymbol,
         value:
@@ -439,7 +529,7 @@ export const catalogKeys = {
   category: (source: string, locale: Language, id: string) =>
     ['catalog', source, locale, 'category', id] as const,
   products: (source: string, locale: Language, q: ProductQuery) =>
-    ['catalog', source, locale, 'products', q] as const,
+    ['catalog', source, locale, 'products', normalizeCatalogFilterState(q)] as const,
   product: (source: string, locale: Language, id: string) =>
     ['catalog', source, locale, 'product', id] as const,
 };

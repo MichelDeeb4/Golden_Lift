@@ -21,7 +21,7 @@ for (const service of ['identity', 'catalog', 'media', 'inquiries']) {
     schema: JSON.parse(/@@schema\(("[^"]+")\)/.exec(m[2])?.[1] ?? '"public"'),
   }));
   const names = new Map(models.map((model) => [model.name, model]));
-  const expected = manifest.databases['golden_lift_' + service];
+  const expected = manifest.databases['business_platform_' + service];
   assert.equal(models.length, expected.length, service + ' model count');
   for (const model of models) {
     const name = model.schema + '.' + model.table;

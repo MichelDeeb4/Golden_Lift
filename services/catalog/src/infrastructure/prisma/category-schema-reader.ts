@@ -1,4 +1,4 @@
-import type { EffectiveCategorySchema, Uuid } from '@golden-lift/contracts';
+import type { EffectiveCategorySchema, Uuid } from '@business-platform/contracts';
 import type { CategorySchemaReader } from '../../application/ports/category-schema.js';
 import type { PrismaClient } from './client.js';
 import { mapFailure } from './unit-of-work.js';

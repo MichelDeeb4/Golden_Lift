@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   DeletionEntity,
@@ -7,8 +7,8 @@ import type {
   DeletionImpact,
   DeletionOperation,
   Uuid,
-} from '@golden-lift/contracts';
-import { retryTransaction } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { retryTransaction } from '@business-platform/platform';
 import type {
   CatalogDeletionRepository,
   CatalogDeletionUnitOfWork,

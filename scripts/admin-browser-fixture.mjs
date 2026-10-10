@@ -11,8 +11,8 @@ import {
   record,
   deletionEvent,
   directMediaDeletionRequest,
-} from '@golden-lift/contracts';
-import { httpConfig, IdentitySessionClient, runOutboxRelay } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { httpConfig, IdentitySessionClient, runOutboxRelay } from '@business-platform/platform';
 import { databaseFixture } from '../.local/test-build/packages/platform/tests/support/database-fixture.js';
 import { identityApplication } from '../services/identity/dist/composition/application.js';
 import { identityConfig } from '../services/identity/dist/infrastructure/config.js';
@@ -43,7 +43,7 @@ export async function adminBrowserFixture({
   catalogProfile = 'category',
   ports = { gateway: 3000, media: 3003, catalogEvents: 3102, mediaEvents: 3103 },
 } = {}) {
-  const native = process.env.GL_MEDIA_NATIVE_FIXTURE === 'true';
+  const native = process.env.BUSINESS_PLATFORM_MEDIA_NATIVE_FIXTURE === 'true';
   const nativeCommands = native
     ? JSON.parse(await readFile('.local/tools/commands.json', 'utf8')).commands
     : {};
@@ -350,11 +350,11 @@ export async function adminBrowserFixture({
       messages,
       image,
       assetId: upload.assetId,
-      newReadyImage: async () => {
+      newReadyImage: async (name = 'Independent deletion image.png') => {
         let item = await uploads.initiate(
           {
             kind: 'IMAGE',
-            name: 'Independent deletion image.png',
+            name,
             bytes: String(image.length),
             purpose: 'CATALOG',
             sha256: null,

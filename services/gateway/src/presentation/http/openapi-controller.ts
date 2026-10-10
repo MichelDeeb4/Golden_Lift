@@ -3,7 +3,7 @@ import { Controller, Get } from '@nestjs/common';
 const document = {
   openapi: '3.1.0',
   info: {
-    title: 'Golden Lift API',
+    title: 'Business Platform API',
     version: '0.9.0',
     description:
       'Identity, category administration, category-derived Catalog, B5 Media and Admin product management. Minimal inactive Product creation requires a live leaf category and Arabic name; Category and reusable group relationships are authoritative; legacy classification is absent from runtime contracts. Category schema revisions protect edits; publication separately requires complete values and a ready image cover. Live staff verification, optimistic versions, exact typed values, ordered Media and retained soft deletion remain. Production provider/isolation acceptance and deployment are separate. Public collections/search/category-derived filters are integrated; normal frontend defaults to real APIs.',
@@ -10234,6 +10234,7 @@ const document = {
               type: 'string',
               format: 'uuid',
             },
+            description: 'Compatibility alias for categoryId; cannot combine both.',
           },
           {
             name: 'search',
@@ -10257,7 +10258,7 @@ const document = {
             name: 'filters',
             in: 'query',
             description:
-              'JSON array, at most 10 distinct definition IDs and 4096 characters. NUMBER requires minimum or maximum; range must be ordered. Unsupported/private filters are rejected.',
+              'JSON array, at most 10 distinct definition IDs and 4096 characters. NUMBER requires minimum or maximum; range must be ordered. Unsupported/private filters are rejected. Different Attributes use AND; selected optionIds within CHOICE use OR. optionId remains a singleton compatibility input.',
             content: {
               'application/json': {
                 schema: {
@@ -10268,6 +10269,16 @@ const document = {
                   },
                 },
               },
+            },
+          },
+          {
+            name: 'categoryId',
+            in: 'query',
+            description:
+              'Leaf exact scope; parent resolves all active descendant leaves in Catalog.',
+            schema: {
+              type: 'string',
+              format: 'uuid',
             },
           },
         ],
@@ -12133,7 +12144,16 @@ const document = {
       StaffAccount: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'email', 'displayName', 'role', 'status', 'version', 'createdAt'],
+        required: [
+          'id',
+          'email',
+          'displayName',
+          'role',
+          'status',
+          'version',
+          'createdAt',
+          'updatedAt',
+        ],
         properties: {
           id: {
             type: 'string',
@@ -12159,6 +12179,10 @@ const document = {
             $ref: '#/components/schemas/Version',
           },
           createdAt: {
+            type: 'string',
+            format: 'date-time',
+          },
+          updatedAt: {
             type: 'string',
             format: 'date-time',
           },
@@ -12918,6 +12942,12 @@ const document = {
             items: {
               $ref: '#/components/schemas/Locale',
             },
+          },
+          attributeCount: {
+            type: 'string',
+            pattern: '^[0-9]+$',
+            description:
+              'Live Attribute definitions using this Unit; provided on collection pages.',
           },
         },
       },
@@ -13871,6 +13901,20 @@ const document = {
                 },
                 value: {
                   $ref: '#/components/schemas/PublicAttributeValue',
+                },
+                group: {
+                  type: 'object',
+                  additionalProperties: false,
+                  required: ['id', 'label'],
+                  properties: {
+                    id: {
+                      type: 'string',
+                      format: 'uuid',
+                    },
+                    label: {
+                      type: 'string',
+                    },
+                  },
                 },
               },
             },
@@ -15410,12 +15454,36 @@ const document = {
               },
             },
           },
+          {
+            type: 'object',
+            additionalProperties: false,
+            required: ['definitionId', 'kind', 'optionIds'],
+            properties: {
+              definitionId: {
+                type: 'string',
+                format: 'uuid',
+              },
+              kind: {
+                const: 'CHOICE',
+              },
+              optionIds: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 100,
+                uniqueItems: true,
+                items: {
+                  type: 'string',
+                  format: 'uuid',
+                },
+              },
+            },
+          },
         ],
       },
       PublicProductPage: {
         type: 'object',
         additionalProperties: false,
-        required: ['items', 'page', 'pageSize', 'hasNextPage', 'filters'],
+        required: ['items', 'page', 'pageSize', 'hasNextPage', 'filters', 'total'],
         properties: {
           items: {
             type: 'array',
@@ -15443,6 +15511,11 @@ const document = {
             items: {
               $ref: '#/components/schemas/PublicFilterDefinition',
             },
+          },
+          total: {
+            type: 'integer',
+            minimum: 0,
+            description: 'Matching published Product count before pagination.',
           },
         },
       },
@@ -16084,14 +16157,14 @@ const document = {
       staffSession: {
         type: 'apiKey',
         in: 'cookie',
-        name: '__Host-gl_staff',
+        name: '__Host-bp_staff',
         description:
           'Production HttpOnly, Secure, SameSite=Strict cookie. All protected mutations also require the session-bound X-CSRF-Token and approved Origin.',
       },
       staffLocalSession: {
         type: 'apiKey',
         in: 'cookie',
-        name: 'gl_staff',
+        name: 'bp_staff',
         description: 'Development-only cookie, never used in production.',
       },
     },

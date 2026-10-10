@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { ApplicationError, locales, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, locales, uuid, version } from '@business-platform/contracts';
 import type {
   AdminCategoryDto,
   BranchDeletionImpact,
   CategoryDto,
   Locale,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { CategoryNavigation, Sibling } from '../../application/ports/category-tree.js';
 import type { CategoryCursor } from '../../application/ports/catalog.js';
 import { categoryDto } from './category-repository.js';

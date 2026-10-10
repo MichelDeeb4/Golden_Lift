@@ -13,7 +13,7 @@ Category, product, translation and content ownership. Local port: 3002. The serv
 
 Category administration includes public browsing, protected metadata editing, recursive navigation, branch moves, atomic sibling ordering and reviewed retained branch deletion. Products use leaf-category schemas and real Media contracts. See the [Catalog operating guide](../../documentation/operations/catalog.md) and [concurrency decision](../../documentation/decisions/005-category-administration.md).
 
-Build from the root with npm run build; start with npm start --workspace=@golden-lift/catalog. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
+Build from the root with npm run build; start with npm start --workspace=@business-platform/catalog. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
 
 See [standing rules](../../AGENTS.md), [architecture/patterns](../../documentation/architecture.md) and [backend setup](../../documentation/operations/backend-local.md).
 

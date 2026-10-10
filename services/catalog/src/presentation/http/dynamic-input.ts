@@ -1,10 +1,10 @@
-import { ApplicationError, locale, uuid } from '@golden-lift/contracts';
+import { ApplicationError, locale, uuid } from '@business-platform/contracts';
 import type {
   AttributeValue,
   AttributeValueMutation,
   CatalogTranslation,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type {
   ConfigurationChange,
   ConfigurationTarget,

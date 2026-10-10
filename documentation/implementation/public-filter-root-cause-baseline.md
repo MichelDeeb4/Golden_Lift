@@ -1,0 +1,11 @@
+# Public catalog filter and presentation baseline
+
+Date: 2026-10-10.
+
+Current state: public products use exact Category equality; applicability repeats exact equality, so a root selector cannot reach leaf Products. CHOICE has a single option and repeated filters compose as AND. Facets are already deduplicated by definition ID, and numeric/boolean SQL predicates already use typed values. Collection responses omit total; the frontend requests twelve items but calculates pages using four. URL updates use setParams and search duplicates URL state. Root selection lists only roots. Public API mode has no failure-to-demo fallback; explicit demo mode is isolated.
+
+Presentation root causes: fixed editorial rows and first-card spanning cause inconsistent six-category layouts; featured Product and gallery frames use fixed heights; Category cover precedes the H1; filters are a horizontal toolbar without chips. Existing container, UI drawer, cards, tokens, media authorization and translations are reusable.
+
+Plan: (1) expand the public contract with multi-option CHOICE and totals, preserving singleton compatibility; resolve active descendant leaf scope once on the server and use it for results/facets/policy, validate options, and batch filter policy reads; (2) centralize normalized URL/API state and query keys, correct page size, add hierarchical selection, active chips and responsive filter rail/drawer; (3) replace fixed editorial composition with ratio-controlled reusable category/product grids and contextual hero, retain unified detail gallery and add contextual actions; (4) verify exact fixture cases, precision, boolean false, OR/AND, privacy, publication/value/category updates, URL refresh/back, responsive/RTL and visual regressions; (5) update OpenAPI, architecture and dated evidence, remove obsolete serializers/layout rules.
+
+Data impact: no destructive database migration needed; use existing normalized typed values and Category hierarchy. No business data changes outside disposable test fixtures. Risks: stale option IDs, unavailable categories, conflicting scopes, bounds, pagination consistency, signed image access and route history. Contract old singleton option requests remain supported and normalize into multi-option filters.

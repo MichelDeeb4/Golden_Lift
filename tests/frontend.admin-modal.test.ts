@@ -2,18 +2,22 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
-const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captureRoot =
+  process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT ??
+  process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR;
 const captures = captureRoot ? captureRoot + '/modals' : 'documentation/assets/admin-crud-modals';
 test.describe.configure({ mode: 'default' });
 test.beforeAll(async () => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
 });
 test.afterAll(async () => {
   await fixture?.dispose();
 });
 async function login(page: Page, superAdmin = false) {
   await page.goto('/admin/login');
-  await page.evaluate(() => localStorage.setItem('gl.locale', 'en'));
+  await page.evaluate(() => localStorage.setItem('bp.locale', 'en'));
   await page.reload();
   await page
     .getByLabel('Email', { exact: true })
@@ -108,7 +112,10 @@ test('configuration modal CRUD persists without document reload and keeps Create
       .getByRole('button', { name: /Actions/ })
       .click();
     await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
-    await apply(page);
+    await page
+      .getByRole('dialog', { name: 'Deletion impact' })
+      .getByRole('button', { name: 'Permanently delete', exact: true })
+      .click();
     await expect(page.getByRole('link', { name: name + ' updated', exact: true })).toHaveCount(0);
     await intact(page, deleteToken);
     await page.reload();
@@ -132,7 +139,7 @@ test('category modal create, edit and deletion update the tree without document 
   await page.getByRole('link', { name: 'Modal category', exact: true }).click();
   token = await marker(page);
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: /^Actions/ })
     .click();
   await page.getByRole('menuitem', { name: 'Edit', exact: true }).click();
@@ -150,14 +157,17 @@ test('category modal create, edit and deletion update the tree without document 
   ).toBeVisible();
   token = await marker(page);
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Modal category updated', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Deletion impact' })
+    .getByRole('button', { name: 'Permanently delete', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/categories$/);
   await intact(page, token);
   await expect(page.getByRole('link', { name: 'Modal category updated', exact: true })).toHaveCount(
@@ -213,15 +223,20 @@ test('product modal creation, editor navigation and deletion preserve the docume
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Modal product', exact: true })).toBeVisible();
   token = await marker(page);
+  await page.locator('main').getByRole('link', { name: 'Products', exact: true }).first().click();
   await page
-    .getByRole('navigation', { name: 'Editor sections', exact: true })
-    .getByRole('button', { name: /Visibility/ })
+    .locator('tbody tr')
+    .filter({ has: page.getByRole('link', { name: 'Modal product', exact: true }) })
+    .getByRole('button', { name: /Actions/ })
     .click();
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Deletion impact' })
+    .getByRole('button', { name: 'Permanently delete', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/products\?text=Modal$/);
   await intact(page, token);
-  expect((await fixture.persistence(id)).product?.deleted_at).not.toBeNull();
+  await expect.poll(async () => (await fixture.persistence(id)).product).toBeNull();
   await page.reload();
   await expect(page.getByRole('link', { name: 'Modal product', exact: true })).toHaveCount(0);
 });
@@ -330,7 +345,7 @@ test('mobile RTL modals retain drafts on Stay, discard on Leave and restore focu
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const labels = { en: 'Create Attribute', ar: 'إنشاء خاصية', ckb: 'دروستکردنی تایبەتمەندی' };
   for (const locale of ['en', 'ar', 'ckb'] as const) {
-    await page.evaluate((locale) => localStorage.setItem('gl.locale', locale), locale);
+    await page.evaluate((locale) => localStorage.setItem('bp.locale', locale), locale);
     await page.goto('/admin/attributes');
     const create = page.getByRole('button', { name: labels[locale], exact: true }).first();
     await create.click();
@@ -371,53 +386,55 @@ test('mobile RTL modals retain drafts on Stay, discard on Leave and restore focu
 });
 
 async function concurrentAttributeChange(page: Page, id: string) {
-  await page.evaluate(async (id) => {
-    const origin = 'http://localhost:3000/api/v1';
-    const session: { csrfToken: string } = await (
-      await fetch(origin + '/auth/session', { credentials: 'include' })
-    ).json();
-    const current: { version: string } = await (
-      await fetch(origin + '/admin/attributes/' + id, { credentials: 'include' })
-    ).json();
-    const change = {
-      kind: 'definition.update',
-      definition: {
-        code: 'modal-conflict',
-        kind: 'NUMBER',
-        unitCode: null,
-        minimum: null,
-        maximum: null,
-        allowMultiple: false,
-        public: false,
-        filterable: false,
-        textMultiline: false,
-        textMaxLength: 4000,
-        translations: [
-          { locale: 'ar', name: 'Conflict latest Arabic', description: null },
-          { locale: 'en', name: 'Conflict latest', description: null },
-        ],
-      },
-    };
-    const call = async (path: string, body: unknown) => {
-      const response = await fetch(origin + path, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json', 'x-csrf-token': session.csrfToken },
-        body: JSON.stringify(body),
+  await page.evaluate(
+    async ({ id, origin }) => {
+      const session: { csrfToken: string } = await (
+        await fetch(origin + '/auth/session', { credentials: 'include' })
+      ).json();
+      const current: { version: string } = await (
+        await fetch(origin + '/admin/attributes/' + id, { credentials: 'include' })
+      ).json();
+      const change = {
+        kind: 'definition.update',
+        definition: {
+          code: 'modal-conflict',
+          kind: 'NUMBER',
+          unitCode: null,
+          minimum: null,
+          maximum: null,
+          allowMultiple: false,
+          public: false,
+          filterable: false,
+          textMultiline: false,
+          textMaxLength: 4000,
+          translations: [
+            { locale: 'ar', name: 'Conflict latest Arabic', description: null },
+            { locale: 'en', name: 'Conflict latest', description: null },
+          ],
+        },
+      };
+      const call = async (path: string, body: unknown) => {
+        const response = await fetch(origin + path, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json', 'x-csrf-token': session.csrfToken },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) throw new Error('Concurrent fixture mutation failed: ' + response.status);
+        return response.json();
+      };
+      const preview: { precondition: string } = await call(
+        '/admin/attributes/' + id + '/changes/preview',
+        { change, expectedVersion: current.version, expectedSchemaRevision: null },
+      );
+      await call('/admin/attributes/' + id + '/changes', {
+        change,
+        expectedVersion: current.version,
+        expectedSchemaRevision: null,
+        precondition: preview.precondition,
+        confirm: true,
       });
-      if (!response.ok) throw new Error('Concurrent fixture mutation failed: ' + response.status);
-      return response.json();
-    };
-    const preview: { precondition: string } = await call(
-      '/admin/attributes/' + id + '/changes/preview',
-      { change, expectedVersion: current.version, expectedSchemaRevision: null },
-    );
-    await call('/admin/attributes/' + id + '/changes', {
-      change,
-      expectedVersion: current.version,
-      expectedSchemaRevision: null,
-      precondition: preview.precondition,
-      confirm: true,
-    });
-  }, id);
+    },
+    { id, origin: fixture.gatewayOrigin + '/api/v1' },
+  );
 }

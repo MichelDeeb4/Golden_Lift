@@ -1,4 +1,4 @@
-# Golden Lift visitor and Admin design
+# Business Platform visitor and Admin design
 
 The current illustrated guide is [Visitor and Administration Design](visitor-and-administration-design.md). It covers the visitor, Admin and Super Admin layouts, field order, responsive/RTL behavior and versioned screenshots.
 

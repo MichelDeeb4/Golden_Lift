@@ -1,4 +1,4 @@
-import type { Uuid } from '@golden-lift/contracts';
+import type { Uuid } from '@business-platform/contracts';
 import type { MediaUnitOfWork } from '../ports/media.js';
 import type { PrivateStorage } from '../ports/storage.js';
 export class ReconcileMedia {

@@ -1,7 +1,7 @@
-import { staffRequest } from '@golden-lift/platform';
+import { staffRequest } from '@business-platform/platform';
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, record, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, record, uuid, version } from '@business-platform/contracts';
 import type {
   DeleteMedia,
   GetMediaDeletionImpact,

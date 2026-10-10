@@ -1,4 +1,4 @@
-import { ApiError } from '@golden-lift/api';
+import { ApiError } from '@business-platform/api';
 import type {
   CatalogDataSource,
   Category,
@@ -8,7 +8,7 @@ import type {
   MediaReference,
   MediaResolver,
   CatalogPage,
-} from '@golden-lift/api';
+} from '@business-platform/api';
 type Localized = Record<Language, string>;
 const text = (ar: string, en: string, ckb: string): Localized => ({ ar, en, ckb });
 const categoryRecords = [
@@ -299,7 +299,9 @@ export class DemoCatalogDataSource implements CatalogDataSource {
       rows = rows.toSorted((a, b) => a.name[language].localeCompare(b.name[language], language));
     const page = q.page ?? 1;
     return {
-      items: rows.slice((page - 1) * 4, page * 4).map((r) => this.model(r, language)),
+      items: rows
+        .slice((page - 1) * (q.pageSize ?? 12), page * (q.pageSize ?? 12))
+        .map((r) => this.model(r, language)),
       total: rows.length,
       nextCursor: null,
     };

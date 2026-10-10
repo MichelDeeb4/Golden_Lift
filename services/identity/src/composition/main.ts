@@ -1,4 +1,4 @@
-import { databasePool, serviceConfig, startupFailed } from '@golden-lift/platform';
+import { databasePool, serviceConfig, startupFailed } from '@business-platform/platform';
 import { identityConfig } from '../infrastructure/config.js';
 import { identityApplication } from './application.js';
 const service = 'identity' as const;

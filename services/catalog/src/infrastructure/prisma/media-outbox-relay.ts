@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { retryTransaction } from '@golden-lift/platform';
-import type { OutboxRelayStore, RelayEvent } from '@golden-lift/platform';
+import { retryTransaction } from '@business-platform/platform';
+import type { OutboxRelayStore, RelayEvent } from '@business-platform/platform';
 import type { PrismaClient } from './client.js';
 export class CatalogMediaOutboxRelay implements OutboxRelayStore {
   constructor(private readonly database: PrismaClient) {}

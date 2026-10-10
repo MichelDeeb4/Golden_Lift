@@ -1,12 +1,12 @@
-import { Plus } from '@golden-lift/icons';
+import { Plus } from '@business-platform/icons';
 import { DeletionOperations } from './deletion';
 import { usePathname } from 'expo-router';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { GLAlert, GLPageHeader, GLButton } from '@golden-lift/ui';
-import { pageSchema, productRowSchema, mediaAssetSchema } from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
+import { BPAlert, BPPageHeader, BPButton } from '@business-platform/ui';
+import { pageSchema, productRowSchema, mediaAssetSchema } from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
 import { TableState } from './common';
 import { StaffShell, useStaffApi } from './context';
 import { Account, AdminAccounts } from './accounts';
@@ -58,18 +58,18 @@ function Dashboard() {
   });
   return (
     <>
-      <GLPageHeader title={t('dashboard')} description={t('operationalHelp')} />
+      <BPPageHeader title={t('dashboard')} description={t('operationalHelp')} />
       <CreateProduct open={creating} onClose={() => setCreating(false)} />
       <DeletionOperations />
-      <div className="gl-launchpad">
+      <div className="bp-launchpad">
         <div>
-          <h2 className="gl-launchpad-title">{t('createProductHelp')}</h2>
-          <GLButton onClick={() => setCreating(true)}>
+          <h2 className="bp-launchpad-title">{t('createProductHelp')}</h2>
+          <BPButton onClick={() => setCreating(true)}>
             <Plus size={18} aria-hidden="true" />
             {t('createProduct')}
-          </GLButton>
+          </BPButton>
         </div>
-        <div className="gl-launchpad-links">
+        <div className="bp-launchpad-links">
           <a href="/admin/products">
             {t('products')} <span aria-hidden="true">↗</span>
           </a>
@@ -82,10 +82,10 @@ function Dashboard() {
           <a href="/admin/attribute-groups">{t('groups')}</a>
         </div>
       </div>
-      <div className="gl-recent-work">
+      <div className="bp-recent-work">
         <section aria-label={t('products')}>
           <h2>{t('products')}</h2>
-          <p className="gl-feed-help">{t('boundedFeed')}</p>
+          <p className="bp-feed-help">{t('boundedFeed')}</p>
           <TableState
             presentation="content"
             pending={products.isPending}
@@ -108,7 +108,7 @@ function Dashboard() {
         </section>
         <section aria-label={t('media')}>
           <h2>{t('media')}</h2>
-          <p className="gl-feed-help">{t('boundedFeed')}</p>
+          <p className="bp-feed-help">{t('boundedFeed')}</p>
           <TableState
             presentation="content"
             pending={assets.isPending}
@@ -125,10 +125,10 @@ function Dashboard() {
             ))}
           </TableState>
           {media.isPending && <p>{t('loading')}</p>}
-          {media.error && <GLAlert tone="error">{t('error')}</GLAlert>}
+          {media.error && <BPAlert tone="error">{t('error')}</BPAlert>}
           {media.data && (
             <>
-              <div className="gl-operational-metric">
+              <div className="bp-operational-metric">
                 <span>{t('processing')}</span>
                 <strong>
                   <bdi>{media.data.pendingJobs}</bdi>

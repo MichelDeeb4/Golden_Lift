@@ -6,20 +6,20 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { after, before, test } from 'node:test';
 import pg from 'pg';
-import { ApplicationError, uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   StaffAccountDto,
   StaffSessionDto,
   CategoryDto,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import {
   databasePool,
   httpConfig,
   httpApplication,
   IdentitySessionClient,
-} from '@golden-lift/platform';
-import type { HttpConfig } from '@golden-lift/platform';
+} from '@business-platform/platform';
+import type { HttpConfig } from '@business-platform/platform';
 import { identityApplication } from '../src/composition/application.js';
 import { identityConfig } from '../src/infrastructure/config.js';
 import type { ActionMessage } from '../src/application/ports/identity.js';
@@ -171,7 +171,11 @@ const b4Routes: readonly (readonly [string, string, unknown?])[] = [
   ['GET', '/api/v1/admin/products/' + b4CategoryId + '/management'],
   ['POST', '/api/v1/admin/products/' + b4CategoryId + '/publication', {}],
   ['POST', '/api/v1/admin/products/' + b4CategoryId + '/media', {}],
-  ['DELETE', '/api/v1/admin/products/' + b4CategoryId, {}],
+  [
+    'DELETE',
+    '/api/v1/admin/products/' + b4CategoryId,
+    { expectedVersion: '1', impactRevision: 'd1-' + '0'.repeat(64), confirmed: true },
+  ],
   ['GET', '/api/v1/admin/products/' + b4CategoryId],
   ['GET', '/api/v1/admin/products/' + b4CategoryId + '/edit-schema'],
   ['PATCH', '/api/v1/admin/products/' + b4CategoryId, {}],
@@ -190,10 +194,14 @@ const b4Routes: readonly (readonly [string, string, unknown?])[] = [
   ['GET', '/api/v1/admin/categories/' + b4CategoryId],
   ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/breadcrumbs'],
   ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/move-destinations'],
-  ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/deletion-preview'],
+  ['GET', '/api/v1/admin/categories/' + b4CategoryId + '/deletion-impact'],
   ['POST', '/api/v1/admin/categories/' + b4CategoryId + '/move', {}],
   ['POST', '/api/v1/admin/categories/reorder', {}],
-  ['DELETE', '/api/v1/admin/categories/' + b4CategoryId, {}],
+  [
+    'DELETE',
+    '/api/v1/admin/categories/' + b4CategoryId,
+    { expectedVersion: '1', impactRevision: 'd1-' + '0'.repeat(64), confirmed: true },
+  ],
 ];
 async function assertB4Status(
   session: Session | undefined,
@@ -211,8 +219,8 @@ before(async () => {
   for (const service of ['identity', 'catalog'] as const) {
     const entry = scratch.services[service];
     if (!entry) throw new Error('Missing service config.');
-    const database = 'golden_lift_b3_' + service + '_' + randomUUID().replaceAll('-', '');
-    if (!/^golden_lift_b3_(identity|catalog)_[0-9a-f]{32}$/.test(database))
+    const database = 'business_platform_b3_' + service + '_' + randomUUID().replaceAll('-', '');
+    if (!/^business_platform_b3_(identity|catalog)_[0-9a-f]{32}$/.test(database))
       throw new Error('Unsafe scratch identifier.');
     entry.database = database;
     tools.sql(
@@ -345,7 +353,7 @@ test('concurrent operator bootstrap creates exactly one Super Admin and cannot b
   );
   superSession = await login(superAccount.email);
   const principal = await runtime.authentication.current(
-    superSession.cookie.slice('gl_staff='.length),
+    superSession.cookie.slice('bp_staff='.length),
   );
   superActor = principal.actor;
 });
@@ -371,6 +379,12 @@ test('invitation activates a fixed-role Admin through the gateway without exposi
   assert.equal(invited.body.delivery, 'SENT');
   assert.equal(invited.body.account.role, 'ADMIN');
   assert.equal(invited.body.account.status, 'INVITED');
+  const exactUpdated = await identityPool.query<{ updated: string }>(
+    `SELECT to_char(updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated FROM identity.staff_accounts WHERE id=$1`,
+    [invited.body.account.id],
+  );
+  assert.equal(invited.body.account.updatedAt, exactUpdated.rows[0]!.updated);
+  assert.match(invited.body.account.updatedAt, /\.\d{6}Z$/);
   const token = messages.at(-1)?.token;
   if (!token) throw new Error('No invitation mail.');
   assert.ok(!JSON.stringify(invited.body).includes(token));
@@ -410,7 +424,7 @@ test('sessions use hashed database credentials, HttpOnly cookies, and session-bo
   assert.match(result.cookie ?? '', /HttpOnly; SameSite=Strict/);
   assert.ok(!JSON.stringify(result.body).includes('passwordHash'));
   assert.ok(!JSON.stringify(result.body).includes('authVersion'));
-  const raw = (result.cookie ?? '').split(';')[0]?.slice('gl_staff='.length) ?? '';
+  const raw = (result.cookie ?? '').split(';')[0]?.slice('bp_staff='.length) ?? '';
   assert.match(raw, /^[A-Za-z0-9_-]{43}$/);
   assert.ok(!JSON.stringify(result.body).includes(raw));
   assert.notEqual(result.body.csrfToken, adminSession.csrf);
@@ -558,7 +572,7 @@ test('gateway and services reject spoofed principals, missing CSRF, and foreign 
   );
   assert.equal((await call('POST', '/internal/v1/sessions/introspect', {}, undefined)).status, 404);
   const payload = {
-    sessionToken: adminSession.cookie.slice('gl_staff='.length),
+    sessionToken: adminSession.cookie.slice('bp_staff='.length),
     csrfToken: adminSession.csrf,
     origin,
     mutation: false,
@@ -864,6 +878,17 @@ test('Admin edit, disable, and enable invalidate sessions immediately and enforc
   );
   assert.equal(enabled.status, 200);
   assert.equal(enabled.body.status, 'ACTIVE');
+  assert.ok(enabled.body.updatedAt > disabled.body.updatedAt);
+  const directory = await call<{ items: StaffAccountDto[] }>(
+    'GET',
+    '/api/v1/staff/admins?limit=100',
+    undefined,
+    superSession,
+  );
+  assert.equal(
+    directory.body.items.find((row) => row.id === target.id)?.updatedAt,
+    enabled.body.updatedAt,
+  );
   assert.equal((await call('GET', '/api/v1/auth/session', undefined, adminSession)).status, 401);
   adminSession = await login(target.email);
   adminAccount = enabled.body;

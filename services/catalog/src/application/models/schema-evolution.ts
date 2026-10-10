@@ -1,9 +1,9 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AttributeDefinitionDto,
   AttributeOptionDto,
   EffectiveCategorySchema,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { ConfigurationChange, SchemaChangeFacts } from '../ports/product-schema.js';
 const invalid = (message: string): never => {
   throw new ApplicationError('INVALID_STATE', message);

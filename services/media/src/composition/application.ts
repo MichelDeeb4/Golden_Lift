@@ -10,14 +10,14 @@ import {
   MEDIA_DELETION,
 } from '../presentation/http/deletion-controller.js';
 import type pg from 'pg';
-import type { SessionAuthenticator } from '@golden-lift/contracts';
+import type { SessionAuthenticator } from '@business-platform/contracts';
 import {
   httpApplication,
   closePersistence,
   IdentitySessionClient,
   identityClientConfig,
-} from '@golden-lift/platform';
-import type { HttpConfig } from '@golden-lift/platform';
+} from '@business-platform/platform';
+import type { HttpConfig } from '@business-platform/platform';
 import type { PrivateStorage } from '../application/ports/storage.js';
 import type { SecurityPrerequisites } from '../application/ports/processing.js';
 import { CheckReadiness } from '../application/use-cases/check-readiness.js';

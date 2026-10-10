@@ -13,7 +13,7 @@ Staff accounts, bootstrap, invitations, sessions, password recovery and Admin li
 
 Staff workflows are implemented. See [Identity operations](../../documentation/operations/identity.md).
 
-Build from the root with npm run build; start with npm start --workspace=@golden-lift/identity. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
+Build from the root with npm run build; start with npm start --workspace=@business-platform/identity. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
 
 See [standing rules](../../AGENTS.md), [architecture/patterns](../../documentation/architecture.md) and [backend setup](../../documentation/operations/backend-local.md).
 

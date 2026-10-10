@@ -18,7 +18,7 @@ DO $$ BEGIN
     RAISE EXCEPTION 'TEST FAILED: runtime can disable triggers';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   BEGIN
-    EXECUTE 'SET ROLE golden_lift_catalog_owner';
+    EXECUTE 'SET ROLE business_platform_catalog_owner';
     RAISE EXCEPTION 'TEST FAILED: runtime can become owner';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   BEGIN

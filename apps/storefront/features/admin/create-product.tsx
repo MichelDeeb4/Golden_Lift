@@ -1,12 +1,12 @@
-import { Plus, X } from '@golden-lift/icons';
+import { Plus, X } from '@business-platform/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { categorySchema, StaffApiError } from '@golden-lift/api';
-import { GLButton, GLInput, GLDrawer, GLActionBar, GLAlert } from '@golden-lift/ui';
+import { categorySchema, StaffApiError } from '@business-platform/api';
+import { BPButton, BPInput, BPDrawer, BPActionBar, BPAlert } from '@business-platform/ui';
 import { useStaffApi, useStaffFeedback, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
@@ -111,24 +111,24 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
             type="hidden"
             {...form.register('categoryId', { required: t('chooseLeafCategory') })}
           />
-          <GLButton
+          <BPButton
             variant="secondary"
             disabled={action.isPending}
             onClick={() => setCategoryOpen(true)}
           >
             {t('selectCategory')}: {category?.name ?? t('choose')}
-          </GLButton>
-          <GLInput label={t('code')} maxLength={128} {...form.register('modelCode')} />
+          </BPButton>
+          <BPInput label={t('code')} maxLength={128} {...form.register('modelCode')} />
           <TranslationFields form={form} labelsOnly />
           {action.error instanceof StaffApiError && action.error.code === 'INVALID_STATE' ? (
-            <GLAlert tone="error">{t('leafCategoryOnly')}</GLAlert>
+            <BPAlert tone="error">{t('leafCategoryOnly')}</BPAlert>
           ) : action.error instanceof StaffApiError && action.error.code === 'NOT_FOUND' ? (
-            <GLAlert tone="error">{t('categoryGone')}</GLAlert>
+            <BPAlert tone="error">{t('categoryGone')}</BPAlert>
           ) : action.error instanceof StaffApiError && action.error.code === 'CONFLICT' ? (
-            <GLAlert tone="error">{t('modelCodeTaken')}</GLAlert>
+            <BPAlert tone="error">{t('modelCodeTaken')}</BPAlert>
           ) : action.error instanceof StaffApiError &&
             action.error.code === 'DEPENDENCY_UNAVAILABLE' ? (
-            <GLAlert tone="error">{t('createUnavailable')}</GLAlert>
+            <BPAlert tone="error">{t('createUnavailable')}</BPAlert>
           ) : (
             <ActionFeedback action={action} />
           )}
@@ -139,8 +139,8 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
                 ? t('requiredArabic')
                 : t('draftHelp')}
           </p>
-          <GLActionBar>
-            <GLButton
+          <BPActionBar>
+            <BPButton
               type="submit"
               loading={action.isPending}
               disabled={!eligible || action.isPending}
@@ -148,8 +148,8 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
             >
               <Plus size={18} aria-hidden="true" />
               {t('createProduct')}
-            </GLButton>
-            <GLButton
+            </BPButton>
+            <BPButton
               variant="secondary"
               disabled={action.isPending}
               onClick={async () => {
@@ -158,11 +158,11 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
             >
               <X size={18} aria-hidden="true" />
               {t('cancel')}
-            </GLButton>
-          </GLActionBar>
+            </BPButton>
+          </BPActionBar>
         </form>
       </FocusedEditor>
-      <GLDrawer open={categoryOpen} title={t('category')} onClose={() => setCategoryOpen(false)}>
+      <BPDrawer open={categoryOpen} title={t('category')} onClose={() => setCategoryOpen(false)}>
         <CategoryPicker
           leaf
           onSelect={(selected) => {
@@ -174,7 +174,7 @@ export function CreateProduct({ open, onClose }: { open: boolean; onClose: () =>
             setCategoryOpen(false);
           }}
         />
-      </GLDrawer>
+      </BPDrawer>
     </>
   );
 }

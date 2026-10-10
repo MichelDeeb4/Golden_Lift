@@ -1,7 +1,7 @@
 export { validateDynamicValue } from './dynamic-values';
 import { z } from 'zod';
-import { fieldSchema, attributeValueSchema, categoryFormSchema } from '@golden-lift/api';
-import { GLCheckbox, GLInput, GLSelect, GLTextarea } from '@golden-lift/ui';
+import { fieldSchema, attributeValueSchema, categoryFormSchema } from '@business-platform/api';
+import { BPCheckbox, BPInput, BPSelect, BPTextarea } from '@business-platform/ui';
 import { useAdminTranslation } from './translations';
 export type AttributeField = z.infer<typeof fieldSchema>;
 export type AttributeValue = z.infer<typeof attributeValueSchema>;
@@ -26,13 +26,13 @@ export function DynamicAttributeFields({
       {sections.map((group) => {
         const fields = schema.fields.filter((field) => field.groupPlacementId === group.id);
         return fields.length ? (
-          <fieldset className="gl-attribute-group" key={group.id ?? 'ungrouped'}>
+          <fieldset className="bp-attribute-group" key={group.id ?? 'ungrouped'}>
             <legend>{group.label}</legend>
-            <div className="gl-admin-grid">
+            <div className="bp-admin-grid">
               {fields.map((field) => (
                 <div
                   className={
-                    field.kind === 'TEXT' && field.control === 'textarea' ? 'gl-field-wide' : ''
+                    field.kind === 'TEXT' && field.control === 'textarea' ? 'bp-field-wide' : ''
                   }
                   key={field.definitionId}
                 >
@@ -69,7 +69,7 @@ export function DynamicAttributeField({
   switch (field.kind) {
     case 'NUMBER':
       return (
-        <GLInput
+        <BPInput
           label={label}
           inputMode="decimal"
           value={value?.kind === 'NUMBER' ? value.number : ''}
@@ -82,7 +82,7 @@ export function DynamicAttributeField({
       );
     case 'BOOLEAN':
       return (
-        <GLSelect
+        <BPSelect
           label={label}
           error={error}
           value={value?.kind === 'BOOLEAN' ? String(value.boolean) : ''}
@@ -119,9 +119,9 @@ export function DynamicAttributeField({
               },
             };
             return field.control === 'textarea' ? (
-              <GLTextarea key={locale} {...props} />
+              <BPTextarea key={locale} {...props} />
             ) : (
-              <GLInput key={locale} {...props} />
+              <BPInput key={locale} {...props} />
             );
           })}
         </>
@@ -132,7 +132,7 @@ export function DynamicAttributeField({
         <fieldset>
           <legend>{label}</legend>
           {field.options.map((option) => (
-            <GLCheckbox
+            <BPCheckbox
               key={option.id}
               label={option.label + (option.deprecated ? ' · ' + t('deprecated') : '')}
               checked={selected.includes(option.id)}
@@ -149,7 +149,7 @@ export function DynamicAttributeField({
           ))}
         </fieldset>
       ) : (
-        <GLSelect
+        <BPSelect
           label={label}
           error={error}
           value={selected[0] ?? ''}

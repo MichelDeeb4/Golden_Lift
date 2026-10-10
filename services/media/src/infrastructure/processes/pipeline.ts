@@ -3,7 +3,7 @@ import { createReadStream } from 'node:fs';
 import { mkdir, mkdtemp, open, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ApplicationError, record } from '@golden-lift/contracts';
+import { ApplicationError, record } from '@business-platform/contracts';
 import type { MediaProcessor } from '../../application/ports/processing.js';
 import type {
   ProcessingClaim,

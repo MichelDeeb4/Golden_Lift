@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:golden-lift:media-event:v1",
+  "$id": "urn:business-platform:media-event:v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

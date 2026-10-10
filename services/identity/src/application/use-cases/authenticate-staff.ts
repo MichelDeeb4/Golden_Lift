@@ -1,5 +1,5 @@
 import { staffEvent } from '../ports/staff-event.js';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   PrincipalResult,
   LoginResult,

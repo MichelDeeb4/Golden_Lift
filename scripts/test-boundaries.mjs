@@ -70,7 +70,7 @@ probe(
 probe(
   {
     '-package-internals':
-      "export type Forbidden=import('@golden-lift/platform/src/config').HttpConfig;",
+      "export type Forbidden=import('@business-platform/platform/src/config').HttpConfig;",
   },
   'declared public exports',
   'services/catalog/src/infrastructure/prisma',
@@ -86,9 +86,12 @@ probe(
   },
   'domain cannot import infrastructure',
 );
-probe({ '-contract-type': "export type Allowed=import('@golden-lift/contracts').Uuid;" }, null);
 probe(
-  { '-frontend-backend': "export { ConfigurationError } from '@golden-lift/platform';" },
+  { '-contract-type': "export type Allowed=import('@business-platform/contracts').Uuid;" },
+  null,
+);
+probe(
+  { '-frontend-backend': "export { ConfigurationError } from '@business-platform/platform';" },
   'frontend cannot import backend platform adapters',
   'apps/storefront/features',
 );
@@ -101,7 +104,7 @@ probe(
   'apps/storefront/features',
 );
 probe(
-  { '-backend-ui': "export { GLButton } from '@golden-lift/ui';" },
+  { '-backend-ui': "export { BPButton } from '@business-platform/ui';" },
   'backend cannot import frontend packages',
   'services/catalog/src/presentation',
 );

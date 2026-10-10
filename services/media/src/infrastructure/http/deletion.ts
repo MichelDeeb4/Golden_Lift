@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { DeletionImpact, Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { DeletionImpact, Uuid } from '@business-platform/contracts';
 import type { CatalogDeletionImpact } from '../../application/use-cases/delete-media.js';
 export class HttpCatalogDeletionImpact implements CatalogDeletionImpact {
   constructor(

@@ -1,5 +1,5 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
-import type { DirectMediaDeletionRequest } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
+import type { DirectMediaDeletionRequest } from '@business-platform/contracts';
 import type { CatalogDeletionUnitOfWork } from '../ports/deletion.js';
 export class AcceptMediaDeletion {
   constructor(private readonly uow: CatalogDeletionUnitOfWork) {}

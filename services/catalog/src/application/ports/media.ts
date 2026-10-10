@@ -5,7 +5,7 @@ import type {
   Uuid,
   MediaKind,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface CatalogMediaRegistry {
   apply(event: MediaEvent): Promise<void>;
   registration(id: Uuid): Promise<{ registered: boolean; retired: boolean; blocked: boolean }>;

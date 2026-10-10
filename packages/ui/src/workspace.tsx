@@ -1,14 +1,14 @@
 import { createContext, useContext, useId, useState } from 'react';
 import type { ReactNode } from 'react';
-import { GLButton } from './primitives';
-import { GLDrawer } from './overlays';
+import { BPButton } from './primitives';
+import { BPDrawer } from './overlays';
 
 interface WorkspaceState {
   active: string;
   prefix: string;
 }
 const Context = createContext<WorkspaceState | null>(null);
-export function GLWorkspace({
+export function BPWorkspace({
   active,
   onChange,
   sections,
@@ -29,8 +29,8 @@ export function GLWorkspace({
     [open, setOpen] = useState(false);
   return (
     <Context.Provider value={{ active, prefix }}>
-      <div className="gl-workspace">
-        <nav className="gl-workspace-rail" aria-label={label}>
+      <div className="bp-workspace">
+        <nav className="bp-workspace-rail" aria-label={label}>
           {sections.map((section, index) => (
             <button
               type="button"
@@ -40,7 +40,7 @@ export function GLWorkspace({
               aria-controls={prefix + 'pane-' + section.id}
               onClick={() => onChange(section.id)}
             >
-              <span className="gl-workspace-index">0{index + 1}</span>
+              <span className="bp-workspace-index">0{index + 1}</span>
               <span>
                 {section.label}
                 {section.status && <small>{section.status}</small>}
@@ -48,37 +48,37 @@ export function GLWorkspace({
             </button>
           ))}
         </nav>
-        <div className="gl-workspace-canvas">
-          <GLButton
-            className="gl-inspector-trigger"
+        <div className="bp-workspace-canvas">
+          <BPButton
+            className="bp-inspector-trigger"
             variant="secondary"
             onClick={() => setOpen(true)}
           >
             {inspectorLabel}
-          </GLButton>
+          </BPButton>
           {children}
         </div>
-        <aside className="gl-workspace-inspector" aria-label={inspectorLabel}>
+        <aside className="bp-workspace-inspector" aria-label={inspectorLabel}>
           {inspector}
         </aside>
-        <GLDrawer
+        <BPDrawer
           open={open}
           onClose={() => setOpen(false)}
           title={inspectorLabel}
-          className="gl-admin-overlay"
+          className="bp-admin-overlay"
         >
-          <div className="gl-inspector-drawer">{open && inspector}</div>
-        </GLDrawer>
+          <div className="bp-inspector-drawer">{open && inspector}</div>
+        </BPDrawer>
       </div>
     </Context.Provider>
   );
 }
-export function GLWorkspacePanel({ id, children }: { id: string; children: ReactNode }) {
+export function BPWorkspacePanel({ id, children }: { id: string; children: ReactNode }) {
   const state = useContext(Context);
-  if (!state) throw new Error('Workspace panel requires GLWorkspace');
+  if (!state) throw new Error('Workspace panel requires BPWorkspace');
   return (
     <div
-      className="gl-workspace-pane"
+      className="bp-workspace-pane"
       id={state.prefix + 'pane-' + id}
       role="region"
       aria-labelledby={state.prefix + 'nav-' + id}

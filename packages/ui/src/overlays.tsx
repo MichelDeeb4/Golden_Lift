@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useGLTranslation } from '@golden-lift/i18n';
-import { GLHeading, GLCloseButton } from './primitives';
+import { useBPTranslation } from '@business-platform/i18n';
+import { BPHeading, BPCloseButton } from './primitives';
 interface OverlayProps {
   open: boolean;
   onClose: () => void;
@@ -20,7 +20,7 @@ function Overlay({
   keepMounted = false,
   drawer = false,
 }: OverlayProps & { drawer?: boolean }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   const ref = useRef<HTMLDialogElement>(null),
     id = useId();
   useEffect(() => {
@@ -42,7 +42,7 @@ function Overlay({
     <dialog
       ref={ref}
       aria-labelledby={id}
-      className={'gl-dialog ' + (drawer ? 'gl-drawer' : 'gl-modal') + ' ' + className}
+      className={'bp-dialog ' + (drawer ? 'bp-drawer' : 'bp-modal') + ' ' + className}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -60,27 +60,27 @@ function Overlay({
         }
       }}
     >
-      <div className="gl-dialog-heading">
-        <GLHeading level={2} role="heading4" id={id}>
+      <div className="bp-dialog-heading">
+        <BPHeading level={2} role="heading4" id={id}>
           {title}
-        </GLHeading>
-        <GLCloseButton label={t('close')} onClick={onClose} />
+        </BPHeading>
+        <BPCloseButton label={t('close')} onClick={onClose} />
       </div>
       {children}
     </dialog>,
     document.body,
   );
 }
-export function GLModal(props: OverlayProps) {
+export function BPModal(props: OverlayProps) {
   return <Overlay {...props} />;
 }
-export function GLDrawer(props: OverlayProps) {
+export function BPDrawer(props: OverlayProps) {
   return <Overlay {...props} drawer />;
 }
-export function GLTooltip({ label, children }: { label: string; children: ReactNode }) {
+export function BPTooltip({ label, children }: { label: string; children: ReactNode }) {
   const id = useId();
   return (
-    <span className="gl-tooltip" tabIndex={0} aria-describedby={id}>
+    <span className="bp-tooltip" tabIndex={0} aria-describedby={id}>
       {children}
       <span role="tooltip" id={id}>
         {label}
@@ -88,18 +88,18 @@ export function GLTooltip({ label, children }: { label: string; children: ReactN
     </span>
   );
 }
-export function GLToast({ message, onClose }: { message: string | null; onClose: () => void }) {
+export function BPToast({ message, onClose }: { message: string | null; onClose: () => void }) {
   useEffect(() => {
     if (message) {
       const timer = setTimeout(onClose, 5000);
       return () => clearTimeout(timer);
     }
   }, [message, onClose]);
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return message ? (
-    <div role="status" className="gl-toast">
+    <div role="status" className="bp-toast">
       {message}
-      <GLCloseButton label={t('close')} onClick={onClose} />
+      <BPCloseButton label={t('close')} onClick={onClose} />
     </div>
   ) : null;
 }

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { ApplicationError, uuid } from '@golden-lift/contracts';
-import type { AttributeOptionDto } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
+import type { AttributeOptionDto } from '@business-platform/contracts';
 import type {
   ConfigurationTarget,
   SchemaChangeFacts,

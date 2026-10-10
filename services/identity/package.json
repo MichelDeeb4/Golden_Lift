@@ -1,5 +1,5 @@
 {
-  "name": "@golden-lift/identity",
+  "name": "@business-platform/identity",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,8 +8,8 @@
     "start": "node dist/composition/main.js"
   },
   "dependencies": {
-    "@golden-lift/contracts": "0.1.0",
-    "@golden-lift/platform": "0.1.0",
+    "@business-platform/contracts": "0.1.0",
+    "@business-platform/platform": "0.1.0",
     "@nestjs/common": "12.1.2",
     "@nestjs/core": "12.1.2",
     "@nestjs/platform-express": "12.1.2",

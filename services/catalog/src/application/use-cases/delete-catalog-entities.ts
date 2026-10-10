@@ -1,10 +1,10 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   DeleteCommand,
   DeletionImpact,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import type { CatalogDeletionUnitOfWork } from '../ports/deletion.js';
 import type { Clock, IdGenerator } from '../ports/catalog.js';

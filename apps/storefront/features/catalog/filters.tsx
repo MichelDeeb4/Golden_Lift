@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { PublicFilterDefinition, PublicProductFilter } from '@golden-lift/api';
-import { GLAlert, GLButton, GLInput, GLSelect } from '@golden-lift/ui';
-import { useGLTranslation, useLocale } from '@golden-lift/i18n';
+import type { PublicFilterDefinition, PublicProductFilter } from '@business-platform/api';
+import { BPAlert, BPButton, BPInput, BPSelect } from '@business-platform/ui';
+import { useCategories } from './queries';
+import type { Category } from '@business-platform/api';
+import { useBPTranslation, useLocale } from '@business-platform/i18n';
 
 export function DynamicFilters({
   definitions,
@@ -12,7 +14,7 @@ export function DynamicFilters({
   value: readonly PublicProductFilter[];
   onApply: (value: readonly PublicProductFilter[]) => void;
 }) {
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     { locale } = useLocale();
   const [draft, setDraft] = useState<Record<string, string>>({}),
     [error, setError] = useState(false);
@@ -23,7 +25,11 @@ export function DynamicFilters({
       if (item.kind === 'NUMBER') {
         next[item.definitionId + ':min'] = item.minimum ?? '';
         next[item.definitionId + ':max'] = item.maximum ?? '';
-      } else next[item.definitionId] = item.kind === 'CHOICE' ? item.optionId : String(item.value);
+      } else
+        next[item.definitionId] =
+          item.kind === 'CHOICE'
+            ? JSON.stringify('optionIds' in item ? item.optionIds : [item.optionId])
+            : String(item.value);
     }
     setDraft(next);
     setError(false);
@@ -42,7 +48,7 @@ export function DynamicFilters({
         : { min: 'الحد الأدنى', max: 'الحد الأعلى', yes: 'نعم', no: 'لا' };
   return (
     <form
-      className="gl-dynamic-filters"
+      className="bp-dynamic-filters"
       onSubmit={(event) => {
         event.preventDefault();
         const filters: PublicProductFilter[] = [];
@@ -70,7 +76,11 @@ export function DynamicFilters({
               d.kind === 'BOOLEAN'
                 ? { definitionId: d.id, kind: 'BOOLEAN', value: draft[d.id] === 'true' }
                 : d.kind === 'CHOICE'
-                  ? { definitionId: d.id, kind: 'CHOICE', optionId: draft[d.id]! }
+                  ? {
+                      definitionId: d.id,
+                      kind: 'CHOICE',
+                      optionIds: JSON.parse(draft[d.id]!) as string[],
+                    }
                   : { definitionId: d.id, kind: 'TEXT', value: draft[d.id]!.trim() },
             );
           }
@@ -87,13 +97,35 @@ export function DynamicFilters({
                 {d.label}
                 {d.unitSymbol ? ' (' + d.unitSymbol + ')' : ''}
               </legend>
-              <GLInput label={words.min} inputMode="decimal" {...field(d.id + ':min')} />
-              <GLInput label={words.max} inputMode="decimal" {...field(d.id + ':max')} />
+              <BPInput label={words.min} inputMode="decimal" {...field(d.id + ':min')} />
+              <BPInput label={words.max} inputMode="decimal" {...field(d.id + ':max')} />
             </fieldset>
           ) : d.kind === 'TEXT' ? (
-            <GLInput label={d.label} maxLength={200} {...field(d.id)} />
+            <BPInput label={d.label} maxLength={200} {...field(d.id)} />
+          ) : d.kind === 'CHOICE' ? (
+            <fieldset className="bp-choice-options">
+              <legend>{d.label}</legend>
+              {d.options.map((o) => {
+                const selected = JSON.parse(draft[d.id] || '[]') as string[];
+                return (
+                  <label key={o.id}>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(o.id)}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...selected, o.id]
+                          : selected.filter((id) => id !== o.id);
+                        setDraft({ ...draft, [d.id]: next.length ? JSON.stringify(next) : '' });
+                      }}
+                    />
+                    {o.label}
+                  </label>
+                );
+              })}
+            </fieldset>
           ) : (
-            <GLSelect
+            <BPSelect
               label={d.label}
               value={draft[d.id] ?? ''}
               onChange={(v) => setDraft({ ...draft, [d.id]: v })}
@@ -110,11 +142,11 @@ export function DynamicFilters({
           )}
         </div>
       ))}
-      {error && <GLAlert tone="error">{t('errorBody')}</GLAlert>}
-      <GLButton type="submit" variant="secondary">
+      {error && <BPAlert tone="error">{t('errorBody')}</BPAlert>}
+      <BPButton type="submit" variant="secondary">
         {t('filter')}
-      </GLButton>
-      <GLButton
+      </BPButton>
+      <BPButton
         variant="text"
         onClick={() => {
           setDraft({});
@@ -123,7 +155,102 @@ export function DynamicFilters({
         }}
       >
         {t('clear')}
-      </GLButton>
+      </BPButton>
     </form>
+  );
+}
+
+export function CategoryFilterPanel({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const { t } = useBPTranslation(),
+    [cursor, setCursor] = useState<string | undefined>(),
+    q = useCategories(null, cursor);
+  return (
+    <fieldset className="bp-category-filter">
+      <legend>{t('categories')}</legend>
+      <BPButton variant="text" aria-pressed={!value} onClick={() => onChange('')}>
+        {t('allCategories')}
+      </BPButton>
+      {q.isError ? (
+        <BPAlert tone="error">
+          {t('errorBody')}
+          <BPButton onClick={() => void q.refetch()}>{t('retry')}</BPButton>
+        </BPAlert>
+      ) : (
+        <ul>
+          {q.data?.items.map((c) => (
+            <CategoryFilterNode key={c.id} category={c} value={value} onChange={onChange} />
+          ))}
+        </ul>
+      )}
+      {q.isPending && <p>{t('loading')}</p>}
+      {q.data?.nextCursor && (
+        <BPButton onClick={() => setCursor(q.data?.nextCursor ?? undefined)}>
+          {t('loadMore')}
+        </BPButton>
+      )}
+    </fieldset>
+  );
+}
+function CategoryFilterNode({
+  category,
+  value,
+  onChange,
+}: {
+  category: Category;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const { t } = useBPTranslation(),
+    [open, setOpen] = useState(false),
+    [cursor, setCursor] = useState<string | undefined>(),
+    q = useCategories(category.id, cursor, open);
+  return (
+    <li>
+      <div>
+        <button
+          type="button"
+          aria-pressed={value === category.id}
+          onClick={() => onChange(category.id)}
+        >
+          {category.name}
+        </button>
+        <button
+          type="button"
+          aria-label={t('viewCategories') + ' — ' + category.name}
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? '−' : '+'}
+        </button>
+      </div>
+      {open &&
+        (q.isPending ? (
+          <p>{t('loading')}</p>
+        ) : q.isError ? (
+          <BPAlert tone="error">
+            {t('errorBody')}
+            <BPButton onClick={() => void q.refetch()}>{t('retry')}</BPButton>
+          </BPAlert>
+        ) : (
+          <>
+            <ul>
+              {q.data?.items.map((c) => (
+                <CategoryFilterNode key={c.id} category={c} value={value} onChange={onChange} />
+              ))}
+            </ul>
+            {q.data?.nextCursor && (
+              <BPButton onClick={() => setCursor(q.data?.nextCursor ?? undefined)}>
+                {t('loadMore')}
+              </BPButton>
+            )}
+          </>
+        ))}
+    </li>
   );
 }

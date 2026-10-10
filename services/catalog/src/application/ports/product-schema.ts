@@ -8,7 +8,7 @@ import type {
   UnitDto,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface NamedDraft {
   readonly code: string;
   readonly translations: readonly CatalogTranslation[];
@@ -78,7 +78,7 @@ export interface ConfigurationPreconditions {
 export interface SchemaChangeFacts {
   readonly target: AttributeDefinitionDto | AttributeOptionDto | AttributeGroupDto | UnitDto;
   readonly schemas: readonly EffectiveCategorySchema[];
-  readonly products: readonly import('@golden-lift/contracts').ProductDto[];
+  readonly products: readonly import('@business-platform/contracts').ProductDto[];
   readonly retainedSemanticUse: boolean;
   readonly activeReferenceCount: string;
   readonly downloadableDocumentCount: string;

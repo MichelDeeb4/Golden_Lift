@@ -45,9 +45,9 @@ if (process.argv[2] === 'start') {
   const cfg = { port, adminUser: 'b5_disposable_admin', adminPassword: secret(), services: {} };
   for (const name of ['identity', 'catalog', 'media', 'inquiries'])
     cfg.services[name] = {
-      database: 'golden_lift_' + name,
-      owner: 'golden_lift_' + name + '_owner',
-      user: 'golden_lift_' + name + '_runtime',
+      database: 'business_platform_' + name,
+      owner: 'business_platform_' + name + '_owner',
+      user: 'business_platform_' + name + '_runtime',
       password: secret(),
     };
   const passwordFile = path.join(directory, 'init-password');
@@ -118,7 +118,7 @@ if (process.argv[2] === 'start') {
       env,
     );
   }
-  process.env.GL_DATABASE_CONFIG_FILE = configFile;
+  process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE = configFile;
   const tools = await import('../database/scripts/db.mjs');
   for (const [name, file] of Object.entries({
     identity: '01_identity.sql',

@@ -1,13 +1,13 @@
-# Golden Lift database implementation
+# Business Platform database implementation
 
 Implemented from [the supplied v1.1 design](docs/design-v1.1.md). The local PostgreSQL 18.6 server has all four service databases installed. Fresh installation, migration, integrity, permission and concurrency checks have been executed; see [validation-report.json](validation-report.json).
 
 | Database | Tables including ops | Ownership |
 | --- | ---: | --- |
-| golden_lift_identity | 5 | Staff accounts, sessions and action tokens |
-| golden_lift_catalog | 43 | Categories, products, translations, specifications, company content, technical sheets and the write gate |
-| golden_lift_media | 6 | Assets, variants, uploads and processing jobs |
-| golden_lift_inquiries | 5 | Inquiries, notification deliveries and settings |
+| business_platform_identity | 5 | Staff accounts, sessions and action tokens |
+| business_platform_catalog | 43 | Categories, products, translations, specifications, company content, technical sheets and the write gate |
+| business_platform_media | 6 | Assets, variants, uploads and processing jobs |
+| business_platform_inquiries | 5 | Inquiries, notification deliveries and settings |
 | **Total** | **59** | 50 business/support tables, eight messaging tables and one write gate |
 
 See the [backend implementation plan](../documentation/backend-implementation-plan.md) for the development sequence. The [backend setup guide](../documentation/operations/backend-local.md) describes the implemented foundation and [Identity operating guide](../documentation/operations/identity.md) covers staff authentication and bootstrap.
@@ -57,10 +57,10 @@ Each service owns a separate UTF-8 PostgreSQL database. Provision owners and run
 
 | Database | Fresh installation entry |
 | --- | --- |
-| golden_lift_identity | sql/01_identity.sql |
-| golden_lift_catalog | sql/02_catalog.sql |
-| golden_lift_media | sql/03_media.sql |
-| golden_lift_inquiries | sql/04_inquiries.sql |
+| business_platform_identity | sql/01_identity.sql |
+| business_platform_catalog | sql/02_catalog.sql |
+| business_platform_media | sql/03_media.sql |
+| business_platform_inquiries | sql/04_inquiries.sql |
 
 Entry scripts include common operations and their integrity routines. `02_catalog.sql` includes v1.1 automatically. Initial SQL is applied once, in one transaction per database. The local installer stores the version and SQL checksum in the database comment, without adding migration tables to the approved 59-table design.
 

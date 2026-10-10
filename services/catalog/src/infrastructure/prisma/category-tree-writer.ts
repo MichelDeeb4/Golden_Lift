@@ -1,5 +1,5 @@
-import { ApplicationError, eventEnvelope, version } from '@golden-lift/contracts';
-import type { EventEnvelope, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError, eventEnvelope, version } from '@business-platform/contracts';
+import type { EventEnvelope, Uuid, Version } from '@business-platform/contracts';
 import type { CategoryTreeWriter } from '../../application/ports/category-tree.js';
 import type { Database } from './client.js';
 import type { Prisma } from './generated/client.js';

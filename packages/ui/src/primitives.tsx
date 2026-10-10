@@ -1,34 +1,34 @@
-import { X } from '@golden-lift/icons';
+import { X } from '@business-platform/icons';
 import { YStack as Stack, XStack, YStack, Text } from 'tamagui';
-import { useGLTranslation, useLocale } from '@golden-lift/i18n';
-import { typography } from '@golden-lift/tokens';
-import type { TypographyRole } from '@golden-lift/tokens';
+import { useBPTranslation, useLocale } from '@business-platform/i18n';
+import { typography } from '@business-platform/tokens';
+import type { TypographyRole } from '@business-platform/tokens';
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { createElement } from 'react';
-export const GLStack = Stack,
-  GLXStack = XStack,
-  GLYStack = YStack;
-export function GLPageContainer({
+export const BPStack = Stack,
+  BPXStack = XStack,
+  BPYStack = YStack;
+export function BPPageContainer({
   children,
   className = '',
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <Stack asChild>
-      <div className={'gl-container ' + className} {...props}>
+      <div className={'bp-container ' + className} {...props}>
         {children}
       </div>
     </Stack>
   );
 }
-export function GLSection({ children, className = '', ...props }: HTMLAttributes<HTMLElement>) {
+export function BPSection({ children, className = '', ...props }: HTMLAttributes<HTMLElement>) {
   return (
-    <section className={'gl-section ' + className} {...props}>
+    <section className={'bp-section ' + className} {...props}>
       {children}
     </section>
   );
 }
-export function GLText({
+export function BPText({
   children,
   role = 'bodyMD',
   className = '',
@@ -44,13 +44,13 @@ export function GLText({
       lineHeight={r.size * r.line}
       fontWeight={String(r.weight) as '400' | '500' | '600'}
     >
-      <span className={'gl-text ' + className} {...props}>
+      <span className={'bp-text ' + className} {...props}>
         {children}
       </span>
     </Text>
   );
 }
-export function GLHeading({
+export function BPHeading({
   children,
   level = 2,
   role,
@@ -68,7 +68,7 @@ export function GLHeading({
   if (fluid)
     return createElement(
       'h' + level,
-      { ...props, className: 'gl-heading gl-heading-fluid ' + className },
+      { ...props, className: 'bp-heading bp-heading-fluid ' + className },
       children,
     );
   return (
@@ -79,16 +79,17 @@ export function GLHeading({
       lineHeight={r.size * r.line}
       fontWeight="600"
     >
-      {createElement('h' + level, { ...props, className: 'gl-heading ' + className }, children)}
+      {createElement('h' + level, { ...props, className: 'bp-heading ' + className }, children)}
     </Text>
   );
 }
-export function GLSeparator() {
-  return <hr className="gl-separator" />;
+export function BPSeparator() {
+  return <hr className="bp-separator" />;
 }
 export type ButtonVariant =
   | 'primary'
   | 'secondary'
+  | 'neutral'
   | 'dark'
   | 'light'
   | 'ghost'
@@ -97,7 +98,7 @@ export type ButtonVariant =
   | 'success'
   | 'warning';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export function GLButton({
+export function BPButton({
   children,
   variant = 'primary',
   size = 'md',
@@ -110,50 +111,61 @@ export function GLButton({
   size?: ButtonSize;
   loading?: boolean;
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
     <button
       {...props}
       type={props.type ?? 'button'}
-      className={`gl-button gl-button-${variant} gl-button-${size} ${className}`}
+      className={`bp-button bp-button-${variant} bp-button-${size} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
     >
-      <span className={loading ? 'gl-button-label loading' : ''}>{children}</span>
+      <span className={loading ? 'bp-button-label loading' : 'bp-button-label'}>{children}</span>
       {loading && (
-        <span className="gl-button-spinner">
-          <GLSpinner label={t('loading')} />
+        <span className="bp-button-spinner">
+          <BPSpinner label={t('loading')} />
         </span>
       )}
     </button>
   );
 }
-export function GLIconButton({
+export function BPIconButton({
   label,
   children,
   ...props
-}: Omit<Parameters<typeof GLButton>[0], 'children'> & { label: string; children: ReactNode }) {
+}: Omit<Parameters<typeof BPButton>[0], 'children'> & { label: string; children: ReactNode }) {
   return (
-    <GLButton
+    <BPButton
       {...props}
       title={props.title ?? label}
-      className={'gl-icon-button ' + (props.className ?? '')}
+      className={'bp-icon-button ' + (props.className ?? '')}
       aria-label={label}
     >
       {children}
-    </GLButton>
+    </BPButton>
   );
 }
-export function GLBadge({
+export function BPBadge({
   children,
   tone = 'neutral',
 }: {
   children: ReactNode;
-  tone?: 'neutral' | 'gold' | 'success' | 'error';
+  tone?: 'neutral' | 'gold' | 'success' | 'error' | 'warning' | 'info';
 }) {
-  return <span className={'gl-badge gl-tone-' + tone}>{children}</span>;
+  return <span className={'bp-badge bp-tone-' + tone}>{children}</span>;
 }
-export function GLChip({
+export function BPStatusBadge({ state, children }: { state: string; children?: ReactNode }) {
+  const status = state.toUpperCase();
+  const tone = ['ACTIVE', 'PUBLISHED', 'READY'].includes(status)
+    ? 'success'
+    : ['FAILED', 'BLOCKED'].includes(status)
+      ? 'error'
+      : ['PROCESSING', 'PENDING', 'INVITED'].includes(status)
+        ? 'warning'
+        : 'neutral';
+  return <BPBadge tone={tone}>{children ?? state}</BPBadge>;
+}
+export function BPChip({
   children,
   onRemove,
   label,
@@ -163,17 +175,17 @@ export function GLChip({
   label?: string;
 }) {
   return (
-    <span className="gl-chip">
+    <span className="bp-chip">
       {children}
       {onRemove && (
-        <GLIconButton label={label ?? ''} variant="ghost" size="xs" onClick={onRemove}>
+        <BPIconButton label={label ?? ''} variant="ghost" size="xs" onClick={onRemove}>
           ×
-        </GLIconButton>
+        </BPIconButton>
       )}
     </span>
   );
 }
-export function GLAlert({
+export function BPAlert({
   children,
   tone = 'info',
 }: {
@@ -181,19 +193,19 @@ export function GLAlert({
   tone?: 'info' | 'warning' | 'error' | 'success';
 }) {
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={'gl-alert gl-tone-' + tone}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={'bp-alert bp-tone-' + tone}>
       {children}
     </div>
   );
 }
-export function GLSkeleton({ className = '' }: { className?: string }) {
-  const { t } = useGLTranslation();
-  return <div className={'gl-skeleton ' + className} role="status" aria-label={t('loading')} />;
+export function BPSkeleton({ className = '' }: { className?: string }) {
+  const { t } = useBPTranslation();
+  return <div className={'bp-skeleton ' + className} role="status" aria-label={t('loading')} />;
 }
-export function GLSpinner({ label }: { label: string }) {
-  return <span className="gl-spinner" role="status" aria-label={label} />;
+export function BPSpinner({ label }: { label: string }) {
+  return <span className="bp-spinner" role="status" aria-label={label} />;
 }
-export function GLEmptyState({
+export function BPEmptyState({
   title,
   description,
   action,
@@ -203,14 +215,14 @@ export function GLEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="gl-empty">
-      <GLHeading level={3}>{title}</GLHeading>
+    <div className="bp-empty">
+      <BPHeading level={3}>{title}</BPHeading>
       {description && <p>{description}</p>}
       {action}
     </div>
   );
 }
-export function GLCard({
+export function BPCard({
   children,
   className = '',
   direction = 'column',
@@ -218,13 +230,13 @@ export function GLCard({
 }: HTMLAttributes<HTMLDivElement> & { direction?: 'column' | 'row' }) {
   return (
     <Stack asChild flexDirection={direction}>
-      <div className={'gl-card ' + className} {...props}>
+      <div className={'bp-card ' + className} {...props}>
         {children}
       </div>
     </Stack>
   );
 }
-export function GLTable({
+export function BPTable({
   columns,
   rows,
 }: {
@@ -232,8 +244,8 @@ export function GLTable({
   rows: readonly (readonly ReactNode[])[];
 }) {
   return (
-    <div className="gl-table-scroll">
-      <table className="gl-table">
+    <div className="bp-table-scroll">
+      <table className="bp-table">
         <thead>
           <tr>
             {columns.map((c) => (
@@ -263,10 +275,10 @@ export function GLTable({
   );
 }
 
-export function GLCloseButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function BPCloseButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <GLIconButton label={label} variant="ghost" className="gl-close-button" onClick={onClick}>
+    <BPIconButton label={label} variant="ghost" className="bp-close-button" onClick={onClick}>
       <X size={20} aria-hidden="true" />
-    </GLIconButton>
+    </BPIconButton>
   );
 }

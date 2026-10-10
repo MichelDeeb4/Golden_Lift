@@ -2,7 +2,7 @@ import { useStaffActionToken } from './action-token';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { GLButton, GLHeading, GLInput, GLLanguageSwitcher } from '@golden-lift/ui';
+import { BPButton, BPHeading, BPInput, BPLanguageSwitcher } from '@business-platform/ui';
 import { useStaffApi } from './context';
 import { ActionFeedback, useAction } from './common';
 import { useAdminTranslation } from './translations';
@@ -24,11 +24,11 @@ export function StaffAuthAction({
   const password = useForm<z.infer<typeof passwordForm>>({ resolver: zodResolver(passwordForm) });
   const email = useForm<z.infer<typeof emailForm>>({ resolver: zodResolver(emailForm) });
   return (
-    <main className="gl-admin-login">
-      <GLLanguageSwitcher />
-      <GLHeading level={1} role="heading3">
+    <main className="bp-admin-login">
+      <BPLanguageSwitcher />
+      <BPHeading level={1} role="heading3">
         {kind === 'invitation' ? t('invite') : t('changePassword')}
-      </GLHeading>
+      </BPHeading>
       <ActionFeedback action={action} />
       {kind === 'reset-request' ? (
         <form
@@ -43,16 +43,16 @@ export function StaffAuthAction({
             ),
           )}
         >
-          <GLInput
+          <BPInput
             label={t('email')}
             type="email"
             autoComplete="username"
             {...email.register('email')}
             error={email.formState.errors.email ? t('error') : undefined}
           />
-          <GLButton type="submit" loading={action.isPending}>
+          <BPButton type="submit" loading={action.isPending}>
             {t('apply')}
-          </GLButton>
+          </BPButton>
         </form>
       ) : (
         <form
@@ -74,23 +74,23 @@ export function StaffAuthAction({
             ),
           )}
         >
-          <GLInput
+          <BPInput
             label={t('newPassword')}
             type="password"
             autoComplete="new-password"
             {...password.register('password')}
             error={password.formState.errors.password ? t('error') : undefined}
           />
-          <GLInput
+          <BPInput
             label={t('confirm')}
             type="password"
             autoComplete="new-password"
             {...password.register('confirmation')}
             error={password.formState.errors.confirmation ? t('error') : undefined}
           />
-          <GLButton type="submit" disabled={!token || action.saved} loading={action.isPending}>
+          <BPButton type="submit" disabled={!token || action.saved} loading={action.isPending}>
             {t('apply')}
-          </GLButton>
+          </BPButton>
         </form>
       )}
       <a href="/admin/login">{t('login')}</a>

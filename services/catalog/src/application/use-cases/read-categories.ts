@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { CategoryDto, Locale, Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { CategoryDto, Locale, Uuid } from '@business-platform/contracts';
 import type { CategoryList, CategoryReader } from '../ports/catalog.js';
 export class ReadCategories {
   constructor(private readonly categories: CategoryReader) {}

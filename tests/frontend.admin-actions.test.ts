@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
-const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captureRoot =
+  process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT ??
+  process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR;
 const captures = captureRoot
   ? captureRoot + '/actions'
   : 'documentation/assets/admin-actions-dialogs-filters/after';
@@ -28,7 +30,7 @@ test.afterEach(async ({ page }) => {
   expect(browserErrors.get(page)).toEqual([]);
 });
 async function login(page: Page, superAdmin = false) {
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
   await page.goto('/admin/login');
   await page
     .locator('input[type=email]')
@@ -41,9 +43,9 @@ async function login(page: Page, superAdmin = false) {
 }
 async function request(page: Page, path: string, data?: unknown, method = data ? 'POST' : 'GET') {
   const { csrfToken } = await (
-    await page.request.get('http://localhost:3000/api/v1/auth/session')
+    await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session')
   ).json();
-  const response = await page.request.fetch('http://localhost:3000/api/v1' + path, {
+  const response = await page.request.fetch(fixture.gatewayOrigin + '/api/v1' + path, {
     method,
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
     ...(data ? { data } : {}),
@@ -54,7 +56,9 @@ async function request(page: Page, path: string, data?: unknown, method = data ?
 const translations = (name: string) =>
   ['ar', 'en', 'ckb'].map((locale) => ({ locale, name, description: null }));
 test.beforeAll(async ({ browser }) => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
   const page = await browser.newPage();
   await login(page);
   for (let i = 0; i < 26; i++)
@@ -102,7 +106,7 @@ test('Groups have one icon overflow, compact desktop filters, modal edit and no 
     ['Account', '/admin/account'],
   ]) {
     const group = navigation
-      .locator('.gl-nav-group')
+      .locator('.bp-nav-group')
       .filter({ has: page.locator('p').filter({ hasText: new RegExp('^' + title + '$') }) });
     await expect(group.locator('a')).toHaveCount(1);
     await expect(group.locator('a')).toHaveAttribute('href', href!);
@@ -112,12 +116,12 @@ test('Groups have one icon overflow, compact desktop filters, modal edit and no 
   await expect(
     page.locator('tbody').getByRole('button', { name: 'Edit', exact: true }),
   ).toHaveCount(0);
-  await expect(page.locator('tbody .gl-action-menu-trigger')).toHaveCount(25);
-  await expect(page.locator('.gl-configuration-details')).toHaveCount(0);
+  await expect(page.locator('tbody .bp-action-menu-trigger')).toHaveCount(25);
+  await expect(page.locator('.bp-configuration-details')).toHaveCount(0);
   expect(
-    await page.locator('.gl-filter-toolbar').evaluate((e) => getComputedStyle(e).display),
+    await page.locator('.bp-filter-toolbar').evaluate((e) => getComputedStyle(e).display),
   ).toBe('grid');
-  const controls = page.locator('.gl-filter-toolbar > .gl-field');
+  const controls = page.locator('.bp-filter-toolbar > .bp-field');
   const positions = await controls.evaluateAll((es) =>
     es.map((e) => e.getBoundingClientRect().top),
   );
@@ -135,7 +139,7 @@ test('Groups have one icon overflow, compact desktop filters, modal edit and no 
   const editor = page.getByRole('dialog', { name: 'Edit', exact: true });
   await expect(editor).toBeVisible();
   await expect(editor.getByRole('button', { name: 'Close', exact: true })).toHaveClass(
-    /gl-close-button/,
+    /bp-close-button/,
   );
   await editor.getByLabel('Name (ar)', { exact: true }).fill('Edited group');
   await editor.getByRole('button', { name: 'Save', exact: true }).click();
@@ -173,7 +177,7 @@ test('dirty modal Close, Cancel and Escape use branded Stay/Leave and preserve d
   await unsaved.getByRole('button', { name: 'Leave without saving', exact: true }).click();
   await expect(editor).not.toBeVisible();
   await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
-  await expect(page.locator('.gl-action-menu-trigger').first()).toBeFocused();
+  await expect(page.locator('.bp-action-menu-trigger').first()).toBeFocused();
   // A second edit retains a draft until the explicit navigation decision.
   await (await menu(page)).getByRole('menuitem', { name: 'Edit', exact: true }).click();
   await editor.getByLabel('Name (ar)', { exact: true }).fill('Navigation draft');
@@ -188,7 +192,7 @@ test('dirty sidebar navigation and browser Back wait for the application decisio
   await login(page, true);
   await page.getByLabel('Display name', { exact: true }).fill('Unsaved invitation');
   await page
-    .locator('.gl-admin-sidebar')
+    .locator('.bp-admin-sidebar')
     .getByRole('link', { name: 'Account', exact: true })
     .click();
   const unsaved = page.getByRole('dialog', { name: 'Unsaved changes', exact: true });
@@ -196,7 +200,7 @@ test('dirty sidebar navigation and browser Back wait for the application decisio
   await unsaved.getByRole('button', { name: 'Stay', exact: true }).click();
   await expect(page.getByLabel('Display name', { exact: true })).toHaveValue('Unsaved invitation');
   await page
-    .locator('.gl-admin-sidebar')
+    .locator('.bp-admin-sidebar')
     .getByRole('link', { name: 'Account', exact: true })
     .click();
   await unsaved.getByRole('button', { name: 'Leave without saving', exact: true }).click();
@@ -220,24 +224,24 @@ test('Delete opens named red/trash confirmation and preserves pagination after c
   await login(page);
   await page.goto('/admin/attribute-groups?page=2');
   await expect(page.locator('tbody tr')).toHaveCount(1);
-  const name = await page.locator('tbody tr a').innerText();
+  const code = await page.locator('tbody tr td').nth(1).innerText();
   await (await menu(page)).getByRole('menuitem', { name: 'Delete', exact: true }).click();
-  const confirmation = page.getByRole('dialog', { name: 'Review change impact', exact: true });
-  await expect(confirmation).toContainText(name);
-  await expect(confirmation.getByRole('button', { name: 'Apply reviewed change' })).toHaveClass(
-    /gl-button-destructive/,
+  const confirmation = page.getByRole('dialog', { name: 'Deletion impact', exact: true });
+  await expect(confirmation).toContainText(code);
+  await expect(confirmation.getByRole('button', { name: 'Permanently delete' })).toHaveClass(
+    /bp-button-destructive/,
   );
   await expect(
-    confirmation.getByRole('button', { name: 'Apply reviewed change' }).locator('svg'),
+    confirmation.getByRole('button', { name: 'Permanently delete' }).locator('svg'),
   ).toHaveCount(1);
   await expect(confirmation.getByRole('button', { name: 'Cancel' })).toHaveClass(
-    /gl-button-secondary/,
+    /bp-button-secondary/,
   );
   await page.screenshot({ animations: 'disabled', path: captures + '/delete-dialog.png' });
   await confirmation.getByRole('button', { name: 'Cancel' }).click();
   await expect(page.locator('tbody tr')).toHaveCount(1);
   await (await menu(page)).getByRole('menuitem', { name: 'Delete', exact: true }).click();
-  await confirmation.getByRole('button', { name: 'Apply reviewed change' }).click();
+  await confirmation.getByRole('button', { name: 'Permanently delete' }).click();
   await expect(page).toHaveURL(/page=1/);
   await expect(page.locator('tbody tr')).toHaveCount(25);
 });
@@ -256,18 +260,18 @@ test('responsive filters and RTL menus retain keyboard focus and bounded paginat
       ),
     ).toBe(true);
     const fields = await page
-      .locator('.gl-filter-toolbar > .gl-field')
+      .locator('.bp-filter-toolbar > .bp-field')
       .evaluateAll((es) => es.map((e) => e.getBoundingClientRect().top));
     expect(new Set(fields).size).toBe(fields.length);
     await page.screenshot({
       animations: 'disabled',
       path: captures + '/attributes-' + locale + '-mobile.png',
     });
-    await page.locator('.gl-action-menu-trigger').first().click();
+    await page.locator('.bp-action-menu-trigger').first().click();
     await page.keyboard.press('End');
     await page.keyboard.press('Home');
     await page.keyboard.press('Escape');
-    await expect(page.locator('.gl-action-menu-trigger').first()).toBeFocused();
+    await expect(page.locator('.bp-action-menu-trigger').first()).toBeFocused();
   }
 });
 test('Attributes, Units, Products and Media share actions and branded overlays', async ({
@@ -286,11 +290,11 @@ test('Attributes, Units, Products and Media share actions and branded overlays',
     });
   }
   await page.goto('/admin/products');
-  await expect(page.locator('.gl-filter-toolbar')).toBeVisible();
+  await expect(page.locator('.bp-filter-toolbar')).toBeVisible();
   await page.screenshot({ animations: 'disabled', path: captures + '/products-desktop.png' });
   await page.goto('/admin/media');
-  await expect(page.locator('.gl-asset-card').first()).toBeVisible();
-  await page.locator('.gl-asset-card .gl-action-menu-trigger').first().click();
+  await expect(page.locator('.bp-asset-card').first()).toBeVisible();
+  await page.locator('.bp-asset-card .bp-action-menu-trigger').first().click();
   await expect(
     page.getByRole('menu').getByRole('menuitem', { name: 'Usage', exact: true }),
   ).toBeVisible();
@@ -301,7 +305,7 @@ test('Super Admin overflow includes edit, semantic disable/enable and named dele
   page,
 }) => {
   await login(page, true);
-  await expect(page.locator('tbody .gl-action-menu-trigger')).toHaveCount(1);
+  await expect(page.locator('tbody .bp-action-menu-trigger')).toHaveCount(1);
   await expect(page.locator('tbody').getByRole('link', { name: 'Edit', exact: true })).toHaveCount(
     0,
   );
@@ -338,14 +342,14 @@ test('Super Admin overflow includes edit, semantic disable/enable and named dele
   await expect(page.locator('tbody')).toContainText('Browser Admin edited');
   actions = await menu(page);
   await expect(actions.getByRole('menuitem', { name: 'Disable', exact: true })).toHaveClass(
-    /gl-button-warning/,
+    /bp-button-warning/,
   );
   await actions.getByRole('menuitem', { name: 'Disable', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.locator('tbody')).toContainText('DISABLED');
   actions = await menu(page);
   await expect(actions.getByRole('menuitem', { name: 'Enable', exact: true })).toHaveClass(
-    /gl-button-success/,
+    /bp-button-success/,
   );
   await actions.getByRole('menuitem', { name: 'Enable', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();

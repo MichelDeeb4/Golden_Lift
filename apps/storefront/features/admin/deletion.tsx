@@ -1,11 +1,12 @@
+import { Trash2 } from '@business-platform/icons';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   deletionImpactSchema,
   deletionOperationSchema,
   deletionResultSchema,
-} from '@golden-lift/api';
-import { GLModal, GLButton, GLAlert, GLActionBar } from '@golden-lift/ui';
+} from '@business-platform/api';
+import { BPModal, BPButton, BPAlert, BPActionBar } from '@business-platform/ui';
 import type { z } from 'zod';
 import { StaffError, useStaffApi, useStaffFeedback, useStaffSession } from './context';
 import { useAction } from './common';
@@ -66,10 +67,10 @@ export function DeletionDialog({
     if (rejected) void cache.invalidateQueries({ queryKey: ['staff'] });
   }, [rejected]);
   return (
-    <GLModal
+    <BPModal
       open
       title={operation ? t('deletionStarted') : t('deletionImpact')}
-      className="gl-admin-overlay"
+      className="bp-admin-overlay"
       onClose={() => {
         if (!action.isPending) onClose();
       }}
@@ -85,9 +86,9 @@ export function DeletionDialog({
               <p>
                 <strong>{impact.entity.displayName}</strong>
               </p>
-              <GLAlert tone={impact.allowed ? 'warning' : 'error'}>
+              <BPAlert tone={impact.allowed ? 'warning' : 'error'}>
                 {impact.allowed ? t('permanentDeletion') : t('deletionBlocked')}
-              </GLAlert>
+              </BPAlert>
               {impact.blockingDependencies.map((item) => (
                 <section key={item.type}>
                   <p>
@@ -122,12 +123,12 @@ export function DeletionDialog({
           {action.error && (
             <StaffError error={action.error} reload={() => void preview.refetch()} />
           )}
-          <GLActionBar>
-            <GLButton variant="ghost" disabled={action.isPending} onClick={onClose}>
+          <BPActionBar>
+            <BPButton variant="secondary" disabled={action.isPending} onClick={onClose}>
               {impact && !impact.allowed ? t('close') : t('cancel')}
-            </GLButton>
+            </BPButton>
             {impact?.allowed && (
-              <GLButton
+              <BPButton
                 variant="destructive"
                 loading={action.isPending}
                 onClick={() =>
@@ -150,7 +151,7 @@ export function DeletionDialog({
                       if ('id' in result) {
                         setOperation(result);
                         if (session.data) {
-                          const key = 'gl.deletion-operations.' + session.data.account.id;
+                          const key = 'bp.deletion-operations.' + session.data.account.id;
                           const entry = { id: result.id, media: scope === 'media' };
                           try {
                             const history = readHistory(key);
@@ -178,10 +179,11 @@ export function DeletionDialog({
                   )
                 }
               >
+                <Trash2 size={18} aria-hidden="true" />
                 {action.isPending ? t('deleting') : t('permanentlyDelete')}
-              </GLButton>
+              </BPButton>
             )}
-          </GLActionBar>
+          </BPActionBar>
         </>
       )}
       {operation && (
@@ -199,12 +201,12 @@ export function DeletionDialog({
             <bdi>{operation.id}</bdi>
           </p>
           {status.error && <StaffError error={status.error} reload={() => void status.refetch()} />}
-          <GLButton variant="ghost" onClick={onClose}>
+          <BPButton variant="ghost" onClick={onClose}>
             {t('close')}
-          </GLButton>
+          </BPButton>
         </>
       )}
-    </GLModal>
+    </BPModal>
   );
 }
 
@@ -235,7 +237,7 @@ export function DeletionOperations() {
   const history = useQuery({
     queryKey: ['staff', 'deletion-history', session.data?.account.id],
     enabled: !!session.data,
-    queryFn: () => readHistory('gl.deletion-operations.' + session.data!.account.id),
+    queryFn: () => readHistory('bp.deletion-operations.' + session.data!.account.id),
   });
   const status = useQuery({
     queryKey: ['staff', 'deletion-history-status', selected?.id],
@@ -257,7 +259,7 @@ export function DeletionOperations() {
       <h2>{t('deletionOperations')}</h2>
       <p>{t('deletionHistoryHelp')}</p>
       {history.data.map((entry) => (
-        <GLButton
+        <BPButton
           key={entry.id}
           variant="ghost"
           onClick={() => {
@@ -266,7 +268,7 @@ export function DeletionOperations() {
           }}
         >
           <bdi>{entry.id}</bdi>
-        </GLButton>
+        </BPButton>
       ))}
       {status.data && (
         <p role="status">

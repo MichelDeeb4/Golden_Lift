@@ -6,6 +6,8 @@ export type Locale = 'ar' | 'en' | 'ckb';
 export const locales: readonly Locale[] = ['ar', 'en', 'ckb'];
 export const languageNames = { ar: 'العربية', en: 'English', ckb: 'کوردی' } as const;
 const en = {
+  clearAllFilters: 'Clear all filters',
+  activeFilters: 'Active filters',
   backToCategory: 'Back to Category',
   previousProduct: 'Previous Product',
   nextProduct: 'Next Product',
@@ -26,12 +28,11 @@ const en = {
   explore: 'Explore products',
   viewCategories: 'View categories',
   overline: 'PRECISION IN EVERY DETAIL',
-  heroTitle: 'Engineering movement.\nElevating spaces.',
-  heroBody:
-    'Explore a considered collection of elevator systems, components and architectural finishes.',
+  heroTitle: 'Explore products.\nDiscover possibilities.',
+  heroBody: 'Browse products, compare details and explore a structured catalog.',
   collection: 'THE COLLECTION',
   categoryTitle: 'Built around your vision',
-  categoryBody: 'From the cabin to the control system. Discover each part of the journey.',
+  categoryBody: 'Explore product categories and find the details you need.',
   featured: 'Selected products',
   featuredBody: 'A closer look at the materials, forms and technical details.',
   viewAll: 'View all products',
@@ -47,14 +48,14 @@ const en = {
   value3Body: 'Explore finishes through imagery and product details.',
   resources: 'Technical resources',
   resourcesBody: 'Illustrative documents accompanying this preview collection.',
-  brand: 'Elevator systems & components',
+  brand: 'Business Platform',
   footerBody: 'Explore the collection. Understand the details.',
   company: 'Company',
-  copyright: 'Golden Lift',
+  copyright: 'Business Platform',
   demo: 'Design preview · illustrative catalog data',
   demoAbout:
-    'This design preview presents the intended Golden Lift experience. Company history, certifications and commercial claims await approved content.',
-  aboutTitle: 'A considered approach\nto vertical movement.',
+    'This Business Platform preview uses illustrative catalog data. Business content and commercial claims require approved information.',
+  aboutTitle: 'A clear approach\nto product discovery.',
   aboutBody: 'Architectural precision. Technical clarity. A calm and focused catalog experience.',
   contactTitle: 'Contact information',
   contactPending: 'Approved contact information will be published here.',
@@ -85,7 +86,7 @@ const en = {
   errorTitle: 'Unable to load this content',
   errorBody: 'Check the connection and try again.',
   retry: 'Try again',
-  emptyTitle: 'No products found',
+  emptyTitle: 'No products match these filters.',
   emptyBody: 'Try a different search or clear the filters.',
   emptyCategories: 'No categories available',
   notFound: 'Page not found',
@@ -104,7 +105,7 @@ const en = {
   no: 'No',
   skip: 'Skip to main content',
   lab: 'Component lab',
-  labBody: 'Golden Lift shared interface reference',
+  labBody: 'Business Platform shared interface reference',
   palette: 'Palette',
   semantic: 'Semantic colors',
   type: 'Typography',
@@ -133,6 +134,8 @@ const en = {
   filled: 'Filled',
   default: 'Default',
   focused: 'Focused',
+  neutral: 'Neutral',
+  warning: 'Warning',
   success: 'Success',
   error: 'Error',
   loadingState: 'Loading',
@@ -173,6 +176,8 @@ const en = {
 type Messages = Record<keyof typeof en, string>;
 const ar: Messages = {
   ...en,
+  clearAllFilters: 'مسح جميع المرشحات',
+  activeFilters: 'المرشحات النشطة',
   backToCategory: 'العودة إلى التصنيف',
   previousProduct: 'المنتج السابق',
   nextProduct: 'المنتج التالي',
@@ -193,11 +198,11 @@ const ar: Messages = {
   explore: 'استكشف المنتجات',
   viewCategories: 'عرض الفئات',
   overline: 'الدقة في كل التفاصيل',
-  heroTitle: 'هندسة الحركة.\nارتقاء بالمساحات.',
-  heroBody: 'استكشف مجموعة منتقاة من أنظمة المصاعد والمكونات والتشطيبات المعمارية.',
+  heroTitle: 'استكشف المنتجات.\nاكتشف الإمكانات.',
+  heroBody: 'تصفح المنتجات وقارن التفاصيل واستكشف كتالوجاً منظماً.',
   collection: 'المجموعة',
   categoryTitle: 'مصممة حول رؤيتك',
-  categoryBody: 'من المقصورة إلى نظام التحكم. اكتشف كل جزء من الرحلة.',
+  categoryBody: 'استكشف تصنيفات المنتجات واعثر على التفاصيل التي تحتاجها.',
   featured: 'منتجات مختارة',
   featuredBody: 'نظرة أقرب إلى المواد والأشكال والتفاصيل التقنية.',
   viewAll: 'عرض جميع المنتجات',
@@ -212,13 +217,13 @@ const ar: Messages = {
   value3Body: 'استكشف التشطيبات بالصور والتفاصيل.',
   resources: 'الموارد التقنية',
   resourcesBody: 'وثائق توضيحية لهذه المجموعة التجريبية.',
-  brand: 'أنظمة المصاعد ومكوناتها',
+  brand: 'Business Platform',
   footerBody: 'استكشف المجموعة. تعرّف إلى التفاصيل.',
   company: 'الشركة',
   demo: 'معاينة التصميم · بيانات كتالوج توضيحية',
   demoAbout:
-    'تعرض هذه المعاينة تجربة غولدن لفت المقترحة. تاريخ الشركة والشهادات والادعاءات التجارية تنتظر محتوى معتمداً.',
-  aboutTitle: 'نهج مدروس\nللحركة العمودية.',
+    'تستخدم معاينة Business Platform بيانات كتالوج توضيحية. يتطلب المحتوى التجاري معلومات معتمدة.',
+  aboutTitle: 'نهج واضح\nلاكتشاف المنتجات.',
   aboutBody: 'دقة معمارية. وضوح تقني. تجربة كتالوج هادئة ومركّزة.',
   contactTitle: 'معلومات الاتصال',
   contactPending: 'ستُنشر معلومات الاتصال المعتمدة هنا.',
@@ -249,7 +254,7 @@ const ar: Messages = {
   errorTitle: 'تعذر تحميل المحتوى',
   errorBody: 'تحقق من الاتصال وحاول مرة أخرى.',
   retry: 'حاول مرة أخرى',
-  emptyTitle: 'لم تُعثر على منتجات',
+  emptyTitle: 'لا توجد منتجات تطابق هذه المرشحات.',
   emptyBody: 'جرّب بحثاً آخر أو امسح الفلاتر.',
   emptyCategories: 'لا توجد فئات متاحة',
   notFound: 'الصفحة غير موجودة',
@@ -268,7 +273,7 @@ const ar: Messages = {
   no: 'لا',
   skip: 'انتقل إلى المحتوى الرئيسي',
   lab: 'مختبر المكونات',
-  labBody: 'مرجع واجهة غولدن لفت المشتركة',
+  labBody: 'مرجع واجهة Business Platform المشتركة',
   palette: 'لوحة الألوان',
   semantic: 'الألوان الدلالية',
   type: 'الخطوط',
@@ -297,6 +302,8 @@ const ar: Messages = {
   filled: 'معبّأ',
   default: 'افتراضي',
   focused: 'تركيز',
+  neutral: 'محايد',
+  warning: 'تحذير',
   success: 'نجاح',
   error: 'خطأ',
   loadingState: 'جارٍ التحميل',
@@ -336,6 +343,8 @@ const ar: Messages = {
 };
 const ckb: Messages = {
   ...en,
+  clearAllFilters: 'پاککردنەوەی هەموو پاڵێوەکان',
+  activeFilters: 'پاڵێوە چالاکەکان',
   backToCategory: 'گەڕانەوە بۆ پۆل',
   previousProduct: 'بەرهەمی پێشوو',
   nextProduct: 'بەرهەمی داهاتوو',
@@ -356,11 +365,11 @@ const ckb: Messages = {
   explore: 'بەرهەمەکان ببینە',
   viewCategories: 'بینینی پۆلەکان',
   overline: 'وردی لە هەموو وردەکارییەکدا',
-  heroTitle: 'ئەندازیاریی جووڵە.\nبەرزکردنەوەی شوێنەکان.',
-  heroBody: 'کۆمەڵەیەکی هەڵبژێردراو لە سیستەمی ئاسانسۆر و پێکهاتە و ڕووکارە تەلارسازییەکان ببینە.',
+  heroTitle: 'بەرهەمەکان ببینە.\nدەرفەتەکان بدۆزەوە.',
+  heroBody: 'بەرهەمەکان ببینە، وردەکارییەکان بەراورد بکە و کاتەلۆگێکی ڕێکخراو بگەڕێ.',
   collection: 'کۆمەڵەکە',
   categoryTitle: 'دروستکراو بۆ دیدگای تۆ',
-  categoryBody: 'لە کابینەوە تا سیستەمی کۆنترۆڵ. هەموو بەشێکی گەشتەکە بدۆزەوە.',
+  categoryBody: 'پۆلەکانی بەرهەم ببینە و وردەکارییە پێویستەکان بدۆزەوە.',
   featured: 'بەرهەمە هەڵبژێردراوەکان',
   featuredBody: 'نیگایەکی نزیکتر لە ماددە و شێوە و وردەکارییە تەکنیکییەکان.',
   viewAll: 'هەموو بەرهەمەکان',
@@ -376,13 +385,13 @@ const ckb: Messages = {
   value3Body: 'ڕووکارەکان لە وێنە و وردەکارییەکاندا ببینە.',
   resources: 'سەرچاوە تەکنیکییەکان',
   resourcesBody: 'بەڵگەی نموونەیی بۆ ئەم کۆمەڵەیە.',
-  brand: 'سیستەمی ئاسانسۆر و پێکهاتەکان',
+  brand: 'Business Platform',
   footerBody: 'کۆمەڵەکە ببینە. وردەکارییەکان بناسە.',
   company: 'کۆمپانیا',
   demo: 'پێشبینینی دیزاین · داتای نموونەیی',
   demoAbout:
-    'ئەم پێشبینینە ئەزموونی پێشنیارکراوی گۆڵدن لیفت پیشان دەدات. مێژوو و بڕوانامە و بانگەشە بازرگانییەکان چاوەڕێی ناوەڕۆکی پەسەندکراون.',
-  aboutTitle: 'ڕێبازێکی ورد\nبۆ جووڵەی ستوونی.',
+    'ئەم پێشبینینەی Business Platform داتای کاتەلۆگی نموونەیی بەکاردەهێنێت. ناوەڕۆکی بازرگانی پێویستی بە زانیاریی پەسەندکراوە.',
+  aboutTitle: 'ڕێبازێکی ڕوون\nبۆ دۆزینەوەی بەرهەم.',
   aboutBody: 'وردی تەلارسازی. ڕوونی تەکنیکی. ئەزموونی کاتەلۆگی ئارام.',
   contactTitle: 'زانیاری پەیوەندی',
   contactPending: 'زانیاری پەسەندکراوی پەیوەندی لێرە بڵاو دەکرێتەوە.',
@@ -413,7 +422,7 @@ const ckb: Messages = {
   errorTitle: 'ناوەڕۆکەکە بار نەکرا',
   errorBody: 'پەیوەندی بپشکنە و دووبارە هەوڵ بدە.',
   retry: 'دووبارە هەوڵ بدە',
-  emptyTitle: 'بەرهەم نەدۆزرایەوە',
+  emptyTitle: 'هیچ بەرهەمێک لەگەڵ ئەم پاڵێوەکانە ناگونجێت.',
   emptyBody: 'گەڕانێکی تر بکە یان پاڵاوتنەکان بسڕەوە.',
   emptyCategories: 'هیچ پۆلێک بەردەست نییە',
   notFound: 'پەڕەکە نەدۆزرایەوە',
@@ -432,7 +441,7 @@ const ckb: Messages = {
   no: 'نەخێر',
   skip: 'بڕۆ بۆ ناوەڕۆکی سەرەکی',
   lab: 'تاقیگەی پێکهاتەکان',
-  labBody: 'سەرچاوەی ڕووکاری هاوبەشی گۆڵدن لیفت',
+  labBody: 'سەرچاوەی ڕووکاری هاوبەشی Business Platform',
   palette: 'ڕەنگەکان',
   semantic: 'ڕەنگی مانادار',
   type: 'نووسین',
@@ -461,6 +470,8 @@ const ckb: Messages = {
   filled: 'پڕکراو',
   default: 'بنەڕەت',
   focused: 'سەرنج',
+  neutral: 'بێلایەن',
+  warning: 'ئاگاداری',
   success: 'سەرکەوتوو',
   error: 'هەڵە',
   loadingState: 'بارکردن',
@@ -515,14 +526,14 @@ const LocaleContext = createContext<{ locale: Locale; setLocale: (locale: Locale
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>('ar');
   useEffect(() => {
-    const saved = window.localStorage.getItem('gl.locale');
+    const saved = window.localStorage.getItem('bp.locale');
     if (locales.includes(saved as Locale)) setLocale(saved as Locale);
   }, []);
   useEffect(() => {
     void instance.changeLanguage(locale);
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'en' ? 'ltr' : 'rtl';
-    window.localStorage.setItem('gl.locale', locale);
+    window.localStorage.setItem('bp.locale', locale);
   }, [locale]);
   return (
     <LocaleContext.Provider value={{ locale, setLocale }}>
@@ -533,6 +544,6 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 export function useLocale() {
   return useContext(LocaleContext);
 }
-export function useGLTranslation() {
+export function useBPTranslation() {
   return useTranslation();
 }

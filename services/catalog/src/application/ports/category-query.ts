@@ -1,4 +1,4 @@
-import type { Locale, Uuid } from '@golden-lift/contracts';
+import type { Locale, Uuid } from '@business-platform/contracts';
 export interface CategoryCursor {
   readonly sortOrder: string;
   readonly id: Uuid;

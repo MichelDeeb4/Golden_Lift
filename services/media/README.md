@@ -13,7 +13,7 @@ Media ownership with health and live staff access checks. Local port: 3003. The 
 
 Uploads, private storage, processing/variants and controlled delivery are implemented in B5; external processing/provider acceptance remains a separate gate.
 
-Build from the root with npm run build; start with npm start --workspace=@golden-lift/media. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
+Build from the root with npm run build; start with npm start --workspace=@business-platform/media. The entrypoint is src/composition/main.ts. Tests live under tests where applicable; domain/application do not import NestJS, Prisma, pg or other service implementations.
 
 See [standing rules](../../AGENTS.md), [architecture/patterns](../../documentation/architecture.md) and [backend setup](../../documentation/operations/backend-local.md).
 

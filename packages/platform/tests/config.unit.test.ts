@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ConfigurationError, httpConfig, serviceConfig, upstreams } from '../src/config.js';
 test('each service requires its own runtime connection and production never reads local credentials', () => {
-  const url = 'postgresql://golden_lift_catalog_runtime:synthetic@127.0.0.1:55432/test_catalog';
+  const url =
+    'postgresql://business_platform_catalog_runtime:synthetic@127.0.0.1:55432/test_catalog';
   assert.equal(
     serviceConfig('catalog', {
       NODE_ENV: 'production',

@@ -1,4 +1,4 @@
-import type { EventEnvelope, Version } from '@golden-lift/contracts';
+import type { EventEnvelope, Version } from '@business-platform/contracts';
 import type { Clock, IdGenerator } from '../ports/catalog.js';
 export function configurationEvent(
   ids: IdGenerator,

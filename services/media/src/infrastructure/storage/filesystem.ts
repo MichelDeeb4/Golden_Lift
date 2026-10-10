@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
 import { lstat, mkdir, open, realpath, link, unlink, readdir, rmdir } from 'node:fs/promises';
 import path from 'node:path';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type { DeletionStorage, StoredObject } from '../../application/ports/storage.js';
 
 export function objectKey(key: string): string {

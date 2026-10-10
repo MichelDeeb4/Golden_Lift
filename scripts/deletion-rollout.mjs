@@ -7,7 +7,7 @@ import { config, env, sql, file, grantRuntime } from '../database/scripts/db.mjs
 if (
   !process.argv.includes('--reviewed') ||
   process.env.NODE_ENV === 'production' ||
-  process.env.GL_DATABASE_CONFIG_FILE
+  process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE
 )
   throw Error(
     'Use --reviewed only for the default local profile, with application writers stopped.',

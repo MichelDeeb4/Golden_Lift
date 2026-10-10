@@ -1,5 +1,5 @@
 import { argon2, createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type { PasswordHasher, SecurityTokens } from '../../application/ports/identity.js';
 export class OpaqueTokens implements SecurityTokens {
   constructor(private readonly csrfSecret: string) {}

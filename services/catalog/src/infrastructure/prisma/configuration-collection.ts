@@ -1,4 +1,4 @@
-import { definitionMemberships, groupCounts } from './relationship-metadata.js';
+import { definitionMemberships, groupCounts, unitCounts } from './relationship-metadata.js';
 import type {
   ConfigurationCollectionQuery,
   ConfigurationCollectionReader,
@@ -99,6 +99,6 @@ export class PrismaConfigurationCollection implements ConfigurationCollectionRea
       skip,
       take: input.pageSize,
     });
-    return { ...metadata, items: rows.map(unitDto) };
+    return { ...metadata, items: await unitCounts(this.db, rows.map(unitDto)) };
   }
 }

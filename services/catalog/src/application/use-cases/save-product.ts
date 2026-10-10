@@ -1,11 +1,11 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
 import type {
   AttributeValueMutation,
   AuthenticatedActor,
   CatalogTranslation,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { applyValueMutations } from '../../domain/attribute-values.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';

@@ -43,7 +43,9 @@ function saveManifest(file, manifest) {
 }
 try {
   const catalog = new CatalogOwnerCopies(clients.catalog),
-    file = path.resolve(process.env.GL_OWNER_COPY_MANIFEST ?? '.local/deletion-owner-copies.json');
+    file = path.resolve(
+      process.env.BUSINESS_PLATFORM_OWNER_COPY_MANIFEST ?? '.local/deletion-owner-copies.json',
+    );
   let manifest;
   if (fs.existsSync(file)) manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
   else {

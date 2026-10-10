@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param, Query } from '@nestjs/common';
-import { ApplicationError, locale, record, uuid } from '@golden-lift/contracts';
-import type { CategoryDto, Locale, Page, Uuid } from '@golden-lift/contracts';
+import { ApplicationError, locale, record, uuid } from '@business-platform/contracts';
+import type { CategoryDto, Locale, Page, Uuid } from '@business-platform/contracts';
 import type { ReadCategories } from '../../application/use-cases/read-categories.js';
 import type { CategoryCursor } from '../../application/ports/catalog.js';
 export const READ_CATEGORIES = Symbol('ReadCategories');

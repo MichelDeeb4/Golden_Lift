@@ -1,20 +1,24 @@
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
-const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captureRoot =
+  process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT ??
+  process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR;
 const captures = captureRoot
   ? captureRoot + '/product-create'
   : 'documentation/assets/product-create';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
 });
 test.afterAll(async () => {
   await fixture?.dispose();
 });
 async function login(page: Page, locale = 'en') {
-  await page.addInitScript((value) => localStorage.setItem('gl.locale', value), locale);
+  await page.addInitScript((value) => localStorage.setItem('bp.locale', value), locale);
   await page.goto('/admin/login');
   await page.locator('input[type="email"]').fill(fixture.adminEmail);
   await page.locator('input[type="password"]').fill(fixture.password);
@@ -22,9 +26,9 @@ async function login(page: Page, locale = 'en') {
   await expect(page).toHaveURL(/\/admin\/?$/);
 }
 async function request(page: Page, route: string, data?: unknown) {
-  const session = await page.request.get('http://localhost:3000/api/v1/auth/session');
+  const session = await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session');
   const { csrfToken } = await session.json();
-  const response = await page.request.fetch('http://localhost:3000/api/v1' + route, {
+  const response = await page.request.fetch(fixture.gatewayOrigin + '/api/v1' + route, {
     method: data ? 'POST' : 'GET',
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
     ...(data ? { data } : {}),
@@ -136,27 +140,30 @@ test('live Identity requires a session, mutation CSRF and the approved Origin', 
 }) => {
   await login(page);
   const leaf = await category(page, 'Security Leaf');
-  const session = await page.request.get('http://localhost:3000/api/v1/auth/session');
+  const session = await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session');
   const { csrfToken } = await session.json();
   const data = {
     categoryId: leaf.id,
     translations: [{ locale: 'ar', name: 'مسودة محمية', description: null }],
   };
-  const missingCsrf = await page.request.post('http://localhost:3000/api/v1/admin/products', {
+  const missingCsrf = await page.request.post(fixture.gatewayOrigin + '/api/v1/admin/products', {
     data,
     headers: { origin: 'http://localhost:8082' },
   });
   expect(missingCsrf.status()).toBe(403);
-  const foreignOrigin = await page.request.post('http://localhost:3000/api/v1/admin/products', {
+  const foreignOrigin = await page.request.post(fixture.gatewayOrigin + '/api/v1/admin/products', {
     data,
     headers: { origin: 'http://untrusted.example.test', 'x-csrf-token': csrfToken },
   });
   expect(foreignOrigin.status()).toBe(403);
   await page.context().clearCookies();
-  const unauthenticated = await page.request.post('http://localhost:3000/api/v1/admin/products', {
-    data,
-    headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
-  });
+  const unauthenticated = await page.request.post(
+    fixture.gatewayOrigin + '/api/v1/admin/products',
+    {
+      data,
+      headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
+    },
+  );
   expect(unauthenticated.status()).toBe(401);
 });
 test('a leaf that gained children is rejected with useful feedback while preserving the draft', async ({

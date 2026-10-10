@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 const pointer = JSON.parse(fs.readFileSync('.local/b5-validation-pointer.json', 'utf8'));
-process.env.GL_DATABASE_CONFIG_FILE = pointer.configFile;
+process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE = pointer.configFile;
 const tools = await import('../database/scripts/db.mjs'),
   original = tools.config(),
   scratch = structuredClone(original),
@@ -31,7 +31,7 @@ try {
     for (const cfg of [fresh, upgrade]) {
       const s = cfg.services[name];
       s.database =
-        'golden_lift_b5_schema_' + name + '_' + randomUUID().replaceAll('-', '').slice(0, 16);
+        'business_platform_b5_schema_' + name + '_' + randomUUID().replaceAll('-', '').slice(0, 16);
       tools.sql(
         original,
         null,
@@ -46,7 +46,7 @@ try {
     tools.grantRuntime(upgrade, name);
     const reviewed = dictionary(fresh, name);
     assert.equal(reviewed, dictionary(upgrade, name), name + ' fresh/upgrade schema parity');
-    manifest.databases['golden_lift_' + name] = JSON.parse(reviewed);
+    manifest.databases['business_platform_' + name] = JSON.parse(reviewed);
     scratch.services[name] = fresh.services[name];
     console.log('PASS B5 fresh/upgrade columns, constraints, indexes and triggers: ' + name);
   }
@@ -58,7 +58,7 @@ try {
   // Prisma verification is read-only; its URLs resolve solely to this disposable cluster.
   const { spawnSync } = await import('node:child_process');
   const result = spawnSync(process.execPath, ['scripts/verify-orm.mjs'], {
-    env: { ...process.env, GL_DATABASE_CONFIG_FILE: cfgFile },
+    env: { ...process.env, BUSINESS_PLATFORM_DATABASE_CONFIG_FILE: cfgFile },
     encoding: 'utf8',
     windowsHide: true,
   });
@@ -67,7 +67,7 @@ try {
   assert.equal(result.status, 0, 'B5 Prisma/schema parity');
 } finally {
   for (const database of created) {
-    if (!/^golden_lift_b5_schema_(media|catalog)_[a-f0-9]{16}$/.test(database))
+    if (!/^business_platform_b5_schema_(media|catalog)_[a-f0-9]{16}$/.test(database))
       throw new Error('Unsafe schema fixture cleanup.');
     tools.sql(original, null, 'DROP DATABASE ' + database + ' WITH (FORCE)');
   }

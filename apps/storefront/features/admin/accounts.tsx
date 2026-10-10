@@ -1,20 +1,22 @@
-import { Plus, X, Save, Trash2, CircleCheck, CircleOff, Link } from '@golden-lift/icons';
+import { useLocale } from '@business-platform/i18n';
+import { Plus, X, Save, Trash2, CircleCheck, CircleOff, Link } from '@business-platform/icons';
 import { useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { pageSchema, staffAccountSchema } from '@golden-lift/api';
+import { pageSchema, staffAccountSchema } from '@business-platform/api';
 import {
-  GLAlert,
-  GLButton,
-  GLActionMenu,
-  GLModal,
-  GLPageHeader,
-  GLFormSection,
-  GLInput,
-  GLFilterToolbar,
-} from '@golden-lift/ui';
+  BPAlert,
+  BPStatusBadge,
+  BPButton,
+  BPActionMenu,
+  BPModal,
+  BPPageHeader,
+  BPFormSection,
+  BPInput,
+  BPFilterToolbar,
+} from '@business-platform/ui';
 import { useStaffApi, useStaffSession, useUnsaved, useConfirmDiscard, StaffError } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, TableState, FocusedEditor, jsonResponse, useAction } from './common';
@@ -28,6 +30,7 @@ export function AdminAccounts({ id }: { id?: string }) {
     null,
   );
   const api = useStaffApi(),
+    { locale } = useLocale(),
     t = useAdminTranslation(),
     [deliveryFailed, setDeliveryFailed] = useState(false),
     [reviewed, setReviewed] = useState<{
@@ -63,8 +66,9 @@ export function AdminAccounts({ id }: { id?: string }) {
   const records = id ? (detail.data ? [detail.data] : []) : (rows.data?.items ?? []);
   return (
     <>
-      <GLPageHeader
+      <BPPageHeader
         title={t('admins')}
+        description={t('accountHelp')}
         breadcrumbs={[
           { label: t('staff'), href: collectionHref },
           {
@@ -74,11 +78,11 @@ export function AdminAccounts({ id }: { id?: string }) {
         ]}
       />
       <ActionFeedback action={action} />
-      {deliveryFailed && <GLAlert tone="error">{t('deliveryFailed')}</GLAlert>}
+      {deliveryFailed && <BPAlert tone="error">{t('deliveryFailed')}</BPAlert>}
       {!id && (
-        <GLFormSection title={t('invite')}>
+        <BPFormSection title={t('invite')}>
           <form
-            className="gl-staff-invitation"
+            className="bp-staff-invitation"
             onSubmit={form.handleSubmit((v) =>
               action.mutate(
                 () =>
@@ -99,32 +103,32 @@ export function AdminAccounts({ id }: { id?: string }) {
               ),
             )}
           >
-            <div className="gl-admin-grid gl-invitation-grid">
-              <GLInput
+            <div className="bp-admin-grid bp-invitation-grid">
+              <BPInput
                 label={t('displayName')}
                 {...form.register('displayName')}
                 error={form.formState.errors.displayName ? t('error') : undefined}
               />
-              <GLInput
+              <BPInput
                 label={t('email')}
                 type="email"
                 {...form.register('email')}
                 error={form.formState.errors.email ? t('error') : undefined}
               />
             </div>
-            <GLButton type="submit" loading={action.isPending}>
+            <BPButton type="submit" loading={action.isPending}>
               <Plus size={18} aria-hidden="true" />
               {t('invite')}
-            </GLButton>
+            </BPButton>
           </form>
-        </GLFormSection>
+        </BPFormSection>
       )}
       {!id && (
-        <GLFilterToolbar label={t('admins')}>
+        <BPFilterToolbar label={t('admins')}>
           <span>
             {t('showing')}: {rows.data?.items.length ?? 0} {t('of')} {rows.data?.totalItems ?? '—'}
           </span>
-        </GLFilterToolbar>
+        </BPFilterToolbar>
       )}
       <TableState
         pending={id ? detail.isPending : rows.isPending}
@@ -137,8 +141,9 @@ export function AdminAccounts({ id }: { id?: string }) {
             <tr>
               <th>{t('name')}</th>
               <th>{t('email')}</th>
+              <th>{t('role')}</th>
               <th>{t('status')}</th>
-              <th>{t('version')}</th>
+              <th>{t('updated')}</th>
               <th>{t('actions')}</th>
             </tr>
           </thead>
@@ -150,11 +155,24 @@ export function AdminAccounts({ id }: { id?: string }) {
                     {row.displayName}
                   </a>
                 </td>
-                <td>{row.email}</td>
-                <td>{row.status}</td>
-                <td>{row.version}</td>
                 <td>
-                  <GLActionMenu
+                  <bdi>{row.email}</bdi>
+                </td>
+                <td>{row.role === 'SUPER_ADMIN' ? t('superAdminRole') : t('adminRole')}</td>
+                <td>
+                  <BPStatusBadge state={row.status} />
+                </td>
+                <td>
+                  <time dateTime={row.updatedAt} title={row.updatedAt}>
+                    <bdi>
+                      {new Date(row.updatedAt).toLocaleDateString(
+                        locale === 'ckb' ? 'ar-IQ' : locale,
+                      )}
+                    </bdi>
+                  </time>
+                </td>
+                <td>
+                  <BPActionMenu
                     label={t('actions')}
                     items={[
                       {
@@ -209,7 +227,7 @@ export function AdminAccounts({ id }: { id?: string }) {
           onClose={() => setEditingAccount(null)}
         />
       )}
-      <GLModal
+      <BPModal
         open={!!reviewed}
         title={reviewed?.label ?? t('confirm')}
         onClose={() => {
@@ -221,7 +239,7 @@ export function AdminAccounts({ id }: { id?: string }) {
         </p>
         <p>{t('confirmAction')}</p>
         <ActionFeedback action={action} />
-        <GLButton
+        <BPButton
           variant={
             reviewed?.operation === 'delete'
               ? 'destructive'
@@ -255,12 +273,12 @@ export function AdminAccounts({ id }: { id?: string }) {
             <CircleOff size={18} aria-hidden="true" />
           )}
           {t('confirm')}
-        </GLButton>
-        <GLButton variant="secondary" disabled={action.isPending} onClick={() => setReviewed(null)}>
+        </BPButton>
+        <BPButton variant="secondary" disabled={action.isPending} onClick={() => setReviewed(null)}>
           <X size={18} aria-hidden="true" />
           {t('cancel')}
-        </GLButton>
-      </GLModal>
+        </BPButton>
+      </BPModal>
       {!id && (
         <AdminPagination
           pagination={pagination}
@@ -330,13 +348,13 @@ function StaffAccountEditor({
           ),
         )}
       >
-        <GLInput
+        <BPInput
           label={t('displayName')}
           disabled={action.isPending || reloading}
           {...form.register('displayName')}
           error={form.formState.errors.displayName ? t('error') : undefined}
         />
-        <GLInput
+        <BPInput
           label={t('email')}
           disabled={action.isPending || reloading}
           type="email"
@@ -345,8 +363,8 @@ function StaffAccountEditor({
         />
         <ActionFeedback action={action} reload={() => void reload()} />
         {reloadError != null && <StaffError error={reloadError} reload={() => void reload()} />}
-        <div className="gl-dialog-actions">
-          <GLButton
+        <div className="bp-dialog-actions">
+          <BPButton
             variant="secondary"
             disabled={action.isPending || reloading}
             onClick={async () => {
@@ -355,11 +373,11 @@ function StaffAccountEditor({
           >
             <X size={18} aria-hidden="true" />
             {t('cancel')}
-          </GLButton>
-          <GLButton type="submit" loading={action.isPending || reloading}>
+          </BPButton>
+          <BPButton type="submit" loading={action.isPending || reloading}>
             <Save size={18} aria-hidden="true" />
             {t('save')}
-          </GLButton>
+          </BPButton>
         </div>
       </form>
     </FocusedEditor>
@@ -381,16 +399,16 @@ export function Account() {
   useUnsaved(form.formState.isDirty);
   return (
     <>
-      <GLPageHeader title={t('account')} />
-      <GLFormSection title={t('identity')}>
+      <BPPageHeader title={t('account')} />
+      <BPFormSection title={t('identity')}>
         <p>
           {session.data?.account.displayName} · {session.data?.account.email}
         </p>
         <p>
           {t('expires')}: {session.data?.expiresAt}
         </p>
-      </GLFormSection>
-      <GLFormSection title={t('changePassword')}>
+      </BPFormSection>
+      <BPFormSection title={t('changePassword')}>
         <form
           onSubmit={form.handleSubmit((v) =>
             action.mutate(() => api.request('/auth/password/change', jsonResponse, v, 'POST'), {
@@ -401,13 +419,13 @@ export function Account() {
             }),
           )}
         >
-          <GLInput
+          <BPInput
             label={t('oldPassword')}
             type="password"
             autoComplete="current-password"
             {...form.register('oldPassword')}
           />
-          <GLInput
+          <BPInput
             label={t('newPassword')}
             type="password"
             autoComplete="new-password"
@@ -416,11 +434,11 @@ export function Account() {
           />
           <ActionFeedback action={action} />
           <p role="status">{form.formState.isDirty ? t('dirty') : t('saved')}</p>
-          <GLButton type="submit" loading={action.isPending}>
+          <BPButton type="submit" loading={action.isPending}>
             {t('changePassword')}
-          </GLButton>
+          </BPButton>
         </form>
-      </GLFormSection>
+      </BPFormSection>
     </>
   );
 }

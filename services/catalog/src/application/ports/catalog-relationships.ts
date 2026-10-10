@@ -1,4 +1,4 @@
-import type { EffectiveCategorySchema, Uuid, Version } from '@golden-lift/contracts';
+import type { EffectiveCategorySchema, Uuid, Version } from '@business-platform/contracts';
 
 export type RelationshipTarget = {
   readonly resource: 'categories' | 'groups' | 'definitions';

@@ -1,11 +1,11 @@
-import { ArrowUpDown } from '@golden-lift/icons';
+import { ArrowUpDown } from '@business-platform/icons';
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, Dispatch, SetStateAction } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { categoryPageSchema } from '@golden-lift/api';
+import { categoryPageSchema } from '@business-platform/api';
 import type { z } from 'zod';
-import { useLocale } from '@golden-lift/i18n';
-import { GLActionMenu, GLButton, GLInput, GLSkeleton } from '@golden-lift/ui';
+import { useLocale } from '@business-platform/i18n';
+import { BPActionMenu, BPButton, BPInput, BPSkeleton } from '@business-platform/ui';
 import { useStaffApi } from './context';
 import { useAdminTranslation } from './translations';
 
@@ -179,18 +179,20 @@ export function CategoryTree(props: TreeProps) {
   };
   return (
     <>
-      <div className="gl-category-tree-heading">
-        <span className="gl-overline">{t('catalogStructure')}</span>
-        <GLInput
+      <div className="bp-category-tree-heading">
+        <span className="bp-overline">{t('catalogStructure')}</span>
+        <BPInput
           label={t('searchCategories')}
+          type="search"
+          onClear={() => setSearch('')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <div className="gl-category-tree-controls">
-          <GLButton variant="text" onClick={() => setAll(true)}>
+        <div className="bp-category-tree-controls">
+          <BPButton variant="text" onClick={() => setAll(true)}>
             {t('expandAll')}
-          </GLButton>
-          <GLButton
+          </BPButton>
+          <BPButton
             variant="text"
             onClick={() => {
               setAll(false);
@@ -199,16 +201,16 @@ export function CategoryTree(props: TreeProps) {
             }}
           >
             {t('collapseAll')}
-          </GLButton>
+          </BPButton>
         </div>
         {term && index.isFetching && <p role="status">{t('searchingCategories')}</p>}
         {term && index.error && (
           <div role="alert">
             <p>{index.error.message}</p>
-            <GLButton variant="text" onClick={() => void index.refetch()}>
+            <BPButton variant="text" onClick={() => void index.refetch()}>
               <ArrowUpDown size={18} aria-hidden="true" />
               {t('retry')}
-            </GLButton>
+            </BPButton>
           </div>
         )}
         {term && index.data?.size === 0 && <p role="status">{t('noMatchingCategories')}</p>}
@@ -216,7 +218,7 @@ export function CategoryTree(props: TreeProps) {
       <div
         role="tree"
         aria-label={t('catalogStructure')}
-        className="gl-category-tree"
+        className="bp-category-tree"
         ref={root}
         aria-busy={!!term && index.isFetching}
       >
@@ -280,30 +282,30 @@ function CategoryTreeBranch({
   ]);
   if (rows.isPending)
     return (
-      <div role="status" aria-label={t('loading')} className="gl-category-branch-feedback">
-        <GLSkeleton />
-        <GLSkeleton />
+      <div role="status" aria-label={t('loading')} className="bp-category-branch-feedback">
+        <BPSkeleton />
+        <BPSkeleton />
       </div>
     );
   if (rows.error && !items.length)
     return (
-      <div role="alert" className="gl-category-branch-feedback">
+      <div role="alert" className="bp-category-branch-feedback">
         {t('childrenLoadFailed')}{' '}
-        <GLButton variant="text" onClick={() => void rows.refetch()}>
+        <BPButton variant="text" onClick={() => void rows.refetch()}>
           <ArrowUpDown size={18} aria-hidden="true" />
           {t('retry')}
-        </GLButton>
+        </BPButton>
       </div>
     );
   return (
     <>
       {rows.error && items.length > 0 && (
-        <div role="alert" className="gl-category-branch-feedback">
+        <div role="alert" className="bp-category-branch-feedback">
           {t('childrenLoadFailed')}{' '}
-          <GLButton variant="text" onClick={() => void rows.refetch()}>
+          <BPButton variant="text" onClick={() => void rows.refetch()}>
             <ArrowUpDown size={18} aria-hidden="true" />
             {t('retry')}
-          </GLButton>
+          </BPButton>
         </div>
       )}
       {!parent && !items.length && <p>{t('emptyCategoryTree')}</p>}
@@ -326,14 +328,14 @@ function CategoryTreeBranch({
           ),
       )}
       {rows.hasNextPage && (
-        <div className="gl-category-branch-feedback">
-          <GLButton
+        <div className="bp-category-branch-feedback">
+          <BPButton
             variant="text"
             loading={rows.isFetchingNextPage}
             onClick={() => void rows.fetchNextPage()}
           >
             {t('moreCategories')}
-          </GLButton>
+          </BPButton>
         </div>
       )}
       {rows.isFetchNextPageError && <p role="alert">{t('childrenLoadFailed')}</p>}
@@ -369,18 +371,18 @@ function CategoryTreeNode({
       aria-expanded={children ? expanded : undefined}
       tabIndex={context.focused === category.id || (!context.focused && first) ? 0 : -1}
       data-category-id={category.id}
-      className="gl-category-node"
+      className="bp-category-node"
       onFocus={(event) => {
         if (event.target === event.currentTarget) context.setFocused(category.id);
       }}
       onKeyDown={(event) => context.keyboard(event, category, expanded)}
     >
-      <div className="gl-category-tree-row" style={{ paddingInlineStart: 8 + depth * 20 }}>
+      <div className="bp-category-tree-row" style={{ paddingInlineStart: 8 + depth * 20 }}>
         {children ? (
           <button
             type="button"
             tabIndex={-1}
-            className="gl-category-disclosure"
+            className="bp-category-disclosure"
             aria-label={(expanded ? t('collapse') : t('expand')) + ' ' + category.name}
             aria-expanded={expanded}
             onClick={() => context.toggle(category.id)}
@@ -388,7 +390,7 @@ function CategoryTreeNode({
             <span aria-hidden="true">›</span>
           </button>
         ) : (
-          <span className="gl-category-leaf-mark" aria-hidden="true">
+          <span className="bp-category-leaf-mark" aria-hidden="true">
             ·
           </span>
         )}
@@ -396,7 +398,7 @@ function CategoryTreeNode({
           href={'/admin/categories/' + category.id}
           data-local-selection
           tabIndex={-1}
-          className="gl-category-node-name"
+          className="bp-category-node-name"
           onClick={(event) => {
             event.preventDefault();
             context.onSelect(category);
@@ -410,7 +412,7 @@ function CategoryTreeNode({
           </small>
         )}
         {context.onAction && context.onReorder && (
-          <GLActionMenu
+          <BPActionMenu
             label={t('actions') + ' — ' + category.name}
             items={[
               {

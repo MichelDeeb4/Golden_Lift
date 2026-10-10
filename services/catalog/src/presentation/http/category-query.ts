@@ -4,8 +4,8 @@ import {
   record,
   uuid,
   revisionPrecondition,
-} from '@golden-lift/contracts';
-import type { Locale, Uuid } from '@golden-lift/contracts';
+} from '@business-platform/contracts';
+import type { Locale, Uuid } from '@business-platform/contracts';
 import type { CategoryCursor } from '../../application/ports/catalog.js';
 export function strictRecord(value: unknown, keys: readonly string[]): Record<string, unknown> {
   const item = record(value);

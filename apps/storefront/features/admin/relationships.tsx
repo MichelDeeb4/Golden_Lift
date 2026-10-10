@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { namedSchema, pageSchema } from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
-import { ArrowUp, ArrowDown, Save, Plus } from '@golden-lift/icons';
-import { GLButton, GLCheckbox, GLInput, GLFormSection, GLModal, GLAlert } from '@golden-lift/ui';
+import { namedSchema, pageSchema } from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
+import { ArrowUp, ArrowDown, Save, Plus } from '@business-platform/icons';
+import {
+  BPButton,
+  BPCheckbox,
+  BPInput,
+  BPFormSection,
+  BPModal,
+  BPAlert,
+} from '@business-platform/ui';
 import { useStaffApi, useUnsaved, StaffError, useConfirmDiscard } from './context';
 import { FocusedEditor, ActionFeedback, useAction, jsonResponse } from './common';
 import { useAdminTranslation } from './translations';
@@ -89,9 +96,14 @@ export function RelationshipSelection({
   }
   const SelectionList = ordered ? 'ol' : 'ul';
   return (
-    <GLFormSection title={resource === 'attributes' ? t('attributes') : t('groups')}>
-      <GLInput
+    <BPFormSection title={resource === 'attributes' ? t('attributes') : t('groups')}>
+      <BPInput
         label={t('search')}
+        type="search"
+        onClear={() => {
+          setSearch('');
+          setPage(1);
+        }}
         value={search}
         disabled={disabled}
         onChange={(e) => {
@@ -104,9 +116,9 @@ export function RelationshipSelection({
       {selected.error && (
         <StaffError error={selected.error} reload={() => void selected.refetch()} />
       )}
-      <div className="gl-membership-options">
+      <div className="bp-membership-options">
         {list.data?.items.map((row) => (
-          <GLCheckbox
+          <BPCheckbox
             key={row.id}
             label={labels[row.id] ?? row.code}
             checked={value.includes(row.id)}
@@ -118,61 +130,61 @@ export function RelationshipSelection({
         ))}
       </div>
       {list.data && (list.data.totalItems ?? 0) > 25 && (
-        <div className="gl-dialog-actions">
-          <GLButton
+        <div className="bp-dialog-actions">
+          <BPButton
             variant="secondary"
             disabled={page === 1 || disabled}
             onClick={() => setPage(page - 1)}
           >
             {t('previous')}
-          </GLButton>
+          </BPButton>
           <span>
             {page} / {Math.ceil((list.data.totalItems ?? 0) / 25)}
           </span>
-          <GLButton
+          <BPButton
             variant="secondary"
             disabled={page * 25 >= (list.data.totalItems ?? 0) || disabled}
             onClick={() => setPage(page + 1)}
           >
             {t('next')}
-          </GLButton>
+          </BPButton>
         </div>
       )}
-      <SelectionList className="gl-membership-order">
+      <SelectionList className="bp-membership-order">
         {value.map((id, index) => (
           <li key={id}>
             <span>{labels[id] ?? id}</span>
             {ordered && (
-              <GLButton
+              <BPButton
                 variant="ghost"
                 aria-label={t('previous') + ' — ' + (labels[id] ?? id)}
                 disabled={disabled || index === 0}
                 onClick={() => move(index, -1)}
               >
                 <ArrowUp size={18} />
-              </GLButton>
+              </BPButton>
             )}
             {ordered && (
-              <GLButton
+              <BPButton
                 variant="ghost"
                 aria-label={t('next') + ' — ' + (labels[id] ?? id)}
                 disabled={disabled || index === value.length - 1}
                 onClick={() => move(index, 1)}
               >
                 <ArrowDown size={18} />
-              </GLButton>
+              </BPButton>
             )}
-            <GLButton
+            <BPButton
               variant="ghost"
               disabled={disabled}
               onClick={() => onChange(value.filter((x) => x !== id))}
             >
               {t('detach')}
-            </GLButton>
+            </BPButton>
           </li>
         ))}
       </SelectionList>
-    </GLFormSection>
+    </BPFormSection>
   );
 }
 export function RelationshipEditor({
@@ -186,10 +198,10 @@ export function RelationshipEditor({
   const t = useAdminTranslation();
   return (
     <>
-      <GLButton variant="secondary" onClick={() => setOpen(true)}>
+      <BPButton variant="secondary" onClick={() => setOpen(true)}>
         <Plus size={18} />
         {resource === 'attribute-groups' ? t('attributes') : t('groups')}
-      </GLButton>
+      </BPButton>
       {open && (
         <RelationshipEditorBody resource={resource} id={id} onClose={() => setOpen(false)} />
       )}
@@ -270,7 +282,7 @@ function RelationshipEditorBody({
               }
             }}
           />
-          <GLButton
+          <BPButton
             variant="secondary"
             disabled={action.isPending}
             onClick={async () => {
@@ -278,8 +290,8 @@ function RelationshipEditorBody({
             }}
           >
             {t('cancel')}
-          </GLButton>
-          <GLButton
+          </BPButton>
+          <BPButton
             disabled={!dirty}
             loading={action.isPending}
             onClick={() =>
@@ -306,10 +318,10 @@ function RelationshipEditorBody({
           >
             <Save size={18} />
             {t('save')}
-          </GLButton>
+          </BPButton>
         </>
       )}
-      <GLModal
+      <BPModal
         open={!!review}
         title={t('impact')}
         onClose={() => {
@@ -327,18 +339,18 @@ function RelationshipEditorBody({
             </p>
             <p>{t('retainedValues')}</p>
             {review.impact.blockers.map((b) => (
-              <GLAlert key={b} tone="error">
+              <BPAlert key={b} tone="error">
                 {b}
-              </GLAlert>
+              </BPAlert>
             ))}
-            <GLButton
+            <BPButton
               variant="secondary"
               disabled={action.isPending}
               onClick={() => setReview(null)}
             >
               {t('cancel')}
-            </GLButton>
-            <GLButton
+            </BPButton>
+            <BPButton
               loading={action.isPending}
               disabled={review.impact.blockers.length > 0}
               onClick={() =>
@@ -368,11 +380,11 @@ function RelationshipEditorBody({
             >
               <Save size={18} />
               {t('confirm')}
-            </GLButton>
+            </BPButton>
             <ActionFeedback action={action} />
           </>
         )}
-      </GLModal>
+      </BPModal>
     </FocusedEditor>
   );
 }

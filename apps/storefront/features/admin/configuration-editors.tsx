@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUnsaved } from './context';
 import { useForm } from 'react-hook-form';
-import { GLButton, GLInput } from '@golden-lift/ui';
+import { BPButton, BPInput } from '@business-platform/ui';
 import { ReviewedChange } from './reviewed-change';
 import { TranslationFields, translationDefaults, translationInput } from './common';
 import type { TranslationForm } from './common';
@@ -28,7 +28,7 @@ export function OptionEditor({
         {t('edit')} — {option.code}
       </summary>
       <TranslationFields form={form} labelsOnly />
-      <GLInput label={t('order')} value={order} onChange={(e) => setOrder(e.target.value)} />
+      <BPInput label={t('order')} value={order} onChange={(e) => setOrder(e.target.value)} />
       <ReviewedChange
         path={`/admin/attribute-options/${option.id}`}
         version={option.version}

@@ -2,7 +2,7 @@ import type {
   AuthenticatedActor,
   SessionAuthenticator,
   StaffRequest,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 // Check capability before parsing editor input; use cases also enforce the policy
 // so non-HTTP callers cannot bypass authorization.

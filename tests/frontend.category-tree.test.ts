@@ -2,18 +2,20 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 const captureDirectory =
-  process.env.GL_CATEGORY_TREE_CAPTURE_DIR ?? 'documentation/assets/category-tree';
+  process.env.BUSINESS_PLATFORM_CATEGORY_TREE_CAPTURE_DIR ?? 'documentation/assets/category-tree';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
 });
 test.afterAll(async () => {
   await fixture?.dispose();
 });
 async function login(page: Page) {
   await page.addInitScript(() => {
-    if (!localStorage.getItem('gl.locale')) localStorage.setItem('gl.locale', 'en');
+    if (!localStorage.getItem('bp.locale')) localStorage.setItem('bp.locale', 'en');
   });
   await page.goto('/admin/login');
   await page.getByLabel('Email', { exact: true }).fill(fixture.adminEmail);
@@ -23,9 +25,9 @@ async function login(page: Page) {
   await page.goto('/admin/categories');
 }
 async function request(page: Page, route: string, data?: unknown, method = data ? 'POST' : 'GET') {
-  const session = await page.request.get('http://localhost:3000/api/v1/auth/session');
+  const session = await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session');
   const { csrfToken } = await session.json();
-  const response = await page.request.fetch('http://localhost:3000/api/v1' + route, {
+  const response = await page.request.fetch(fixture.gatewayOrigin + '/api/v1' + route, {
     method,
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
     ...(data ? { data } : {}),
@@ -96,7 +98,7 @@ test('four-level tree separates selection from disclosure, preserves drafts/expa
   await link(page, 'Tree Level 3').click();
   await expect(page.getByRole('heading', { name: 'Tree Level 3', exact: true })).toBeVisible();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: /^Actions/ })
     .click();
   await page.getByRole('menu').getByRole('menuitem', { name: 'Edit', exact: true }).click();
@@ -108,7 +110,7 @@ test('four-level tree separates selection from disclosure, preserves drafts/expa
   for (const name of ['Tree Root', 'Tree Level 1', 'Tree Level 2'])
     await expect(node(page, name)).toHaveAttribute('aria-expanded', 'true');
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: /^Actions/ })
     .click();
   await page.getByRole('menu').getByRole('menuitem', { name: 'Edit', exact: true }).click();
@@ -158,13 +160,13 @@ test('four-level tree separates selection from disclosure, preserves drafts/expa
   await expect(node(page, 'Tree Deep Edited')).toHaveAttribute('aria-selected', 'true');
   expect(
     await node(page, 'Tree Deep Edited')
-      .locator('.gl-category-tree-row')
+      .locator('.bp-category-tree-row')
       .first()
       .evaluate((element) => element.getBoundingClientRect().height),
   ).toBeLessThanOrEqual(44);
   await intact(page, token);
   await page
-    .locator('.gl-category-tree-panel')
+    .locator('.bp-category-tree-panel')
     .screenshot({ path: captureDirectory + '/tree-desktop.png' });
   await page.screenshot({
     path: captureDirectory + '/workspace-desktop.png',
@@ -230,11 +232,11 @@ test('move keeps selection/path, excludes cycles, recovers a branch outage and c
   await link(page, 'Tree Deep Edited').click();
   const token = await documentMarker(page);
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Tree Deep Edited', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Move', exact: true })
     .click();
   const dialog = page.getByRole('dialog', { name: 'Move Category', exact: true });
@@ -246,7 +248,7 @@ test('move keeps selection/path, excludes cycles, recovers a branch outage and c
   await dialog.getByRole('button', { name: 'Move Category', exact: true }).click();
   await expect(dialog).not.toBeVisible();
   await expect(node(page, 'Tree Deep Edited')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('.gl-category-detail-path')).toContainText('Tree Destination');
+  await expect(page.locator('.bp-category-detail-path')).toContainText('Tree Destination');
   const detail = await request(page, '/admin/categories/' + leafId + '?locale=en');
   expect(detail.parentId).toBe(destinationId);
   await intact(page, token);
@@ -268,14 +270,17 @@ test('move keeps selection/path, excludes cycles, recovers a branch outage and c
   await page.getByRole('button', { name: 'Expand Tree Level 1', exact: true }).click();
   await link(page, 'Tree Level 2').click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Tree Level 2', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Deletion impact' })
+    .getByRole('button', { name: 'Permanently delete', exact: true })
+    .click();
   await expect(link(page, 'Tree Level 2')).toHaveCount(0);
   await expect(page).toHaveURL(new RegExp(level1Id));
   await intact(page, recoveryToken);
@@ -300,7 +305,7 @@ test('product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani
   await blocked.getByRole('button', { name: 'Close', exact: true }).last().click();
   const latest = await request(page, '/admin/categories/' + leaf.id + '?locale=en');
   const session = await request(page, '/auth/session');
-  const rejected = await page.request.post('http://localhost:3000/api/v1/admin/categories', {
+  const rejected = await page.request.post(fixture.gatewayOrigin + '/api/v1/admin/categories', {
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': session.csrfToken },
     data: {
       parentId: leaf.id,
@@ -326,8 +331,8 @@ test('product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani
   for (const locale of ['ar', 'ckb']) {
     await page.locator('header select').selectOption(locale);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await page.locator('.gl-category-browse').click();
-    drawer = page.locator('.gl-category-tree-drawer');
+    await page.locator('.bp-category-browse').click();
+    drawer = page.locator('.bp-category-tree-drawer');
     await expect(drawer).toBeVisible();
     await drawer.getByRole('treeitem').first().focus();
     await page.keyboard.press('ArrowDown');
@@ -349,7 +354,7 @@ test('product leaf is blocked in UI and backend; mobile drawer and Arabic/Sorani
     await drawer.screenshot({
       path: captureDirectory + '/tree-mobile-' + locale + '.png',
     });
-    await drawer.locator('.gl-dialog-heading button').click();
+    await drawer.locator('.bp-dialog-heading button').click();
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
     true,

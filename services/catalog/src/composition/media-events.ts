@@ -1,15 +1,15 @@
-import { directMediaDeletionRequest } from '@golden-lift/contracts';
+import { directMediaDeletionRequest } from '@business-platform/contracts';
 import { AcceptMediaDeletion } from '../application/use-cases/accept-media-deletion.js';
-import { deletionEvent, record } from '@golden-lift/contracts';
+import { deletionEvent, record } from '@business-platform/contracts';
 import { PrismaCatalogDeletionUnitOfWork } from '../infrastructure/prisma/deletion.js';
-import { mediaEvent } from '@golden-lift/contracts';
+import { mediaEvent } from '@business-platform/contracts';
 import {
   databasePool,
   serviceConfig,
   runOutboxRelay,
   closePersistence,
   startupFailed,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { orm } from '../infrastructure/prisma/client.js';
 import { PrismaMediaRegistry } from '../infrastructure/prisma/media-registry.js';
 import { MediaCoordination } from '../application/use-cases/media-coordination.js';

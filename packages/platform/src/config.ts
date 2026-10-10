@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { BusinessService, ServiceName } from '@golden-lift/contracts';
+import type { BusinessService, ServiceName } from '@business-platform/contracts';
 export class ConfigurationError extends Error {}
 export interface HttpConfig {
   readonly service: ServiceName;
@@ -95,7 +95,7 @@ export function serviceConfig(
   }
   if (
     !['postgres:', 'postgresql:'].includes(url.protocol) ||
-    decodeURIComponent(url.username) !== 'golden_lift_' + service + '_runtime' ||
+    decodeURIComponent(url.username) !== 'business_platform_' + service + '_runtime' ||
     !url.password ||
     !url.hostname ||
     url.pathname.length < 2

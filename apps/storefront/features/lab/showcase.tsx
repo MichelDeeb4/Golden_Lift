@@ -1,56 +1,56 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { colors, palette, space, radius, shadows, typography } from '@golden-lift/tokens';
-import type { TypographyRole } from '@golden-lift/tokens';
+import { colors, palette, space, radius, shadows, typography } from '@business-platform/tokens';
+import type { TypographyRole } from '@business-platform/tokens';
 import {
-  GLPageContainer,
-  GLHeading,
-  GLText,
-  GLButton,
-  GLIconButton,
-  GLInput,
-  GLTextarea,
-  GLSelect,
-  GLCombobox,
-  GLCheckbox,
-  GLRadio,
-  GLSwitch,
-  GLBreadcrumb,
-  GLTabs,
-  GLPagination,
-  GLModal,
-  GLDrawer,
-  GLAlert,
-  GLToast,
-  GLTooltip,
-  GLSkeleton,
-  GLEmptyState,
-  GLBadge,
-  GLChip,
-  GLCard,
-  GLTable,
-  GLSearchField,
-  GLCategoryNavigation,
-  GLXStack,
-  GLYStack,
-} from '@golden-lift/ui';
-import type { ButtonSize, ButtonVariant } from '@golden-lift/ui';
-import { GLProductCard, GLCategoryCard, GLSpecificationTable } from '@golden-lift/catalog-ui';
-import { Search, Layers } from '@golden-lift/icons';
-import { useGLTranslation } from '@golden-lift/i18n';
+  BPPageContainer,
+  BPHeading,
+  BPText,
+  BPButton,
+  BPIconButton,
+  BPInput,
+  BPTextarea,
+  BPSelect,
+  BPCombobox,
+  BPCheckbox,
+  BPRadio,
+  BPSwitch,
+  BPBreadcrumb,
+  BPTabs,
+  BPPagination,
+  BPModal,
+  BPDrawer,
+  BPAlert,
+  BPToast,
+  BPTooltip,
+  BPSkeleton,
+  BPEmptyState,
+  BPBadge,
+  BPChip,
+  BPCard,
+  BPTable,
+  BPSearchField,
+  BPCategoryNavigation,
+  BPXStack,
+  BPYStack,
+} from '@business-platform/ui';
+import type { ButtonSize, ButtonVariant } from '@business-platform/ui';
+import { BPProductCard, BPCategoryCard, BPSpecificationTable } from '@business-platform/catalog-ui';
+import { Search, Layers, Plus } from '@business-platform/icons';
+import { useBPTranslation } from '@business-platform/i18n';
 import { useProducts, useCategories } from '../catalog/queries';
 import { useTitle } from '../catalog/pages';
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="gl-lab-section">
-      <GLHeading>{title}</GLHeading>
+    <section className="bp-lab-section">
+      <BPHeading>{title}</BPHeading>
       {children}
     </section>
   );
 }
 export function ComponentLab() {
   useTitle('lab');
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     [select, setSelect] = useState('one'),
     [combo, setCombo] = useState(''),
     [tab, setTab] = useState('overview'),
@@ -67,6 +67,9 @@ export function ComponentLab() {
   const variants: ButtonVariant[] = [
       'primary',
       'secondary',
+      'neutral',
+      'success',
+      'warning',
       'dark',
       'light',
       'ghost',
@@ -75,24 +78,24 @@ export function ComponentLab() {
     ],
     sizes: ButtonSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
   return (
-    <GLPageContainer>
-      <GLBreadcrumb
+    <BPPageContainer>
+      <BPBreadcrumb
         items={[
           { href: '/', label: t('home') },
           { href: '/component-lab', label: t('lab') },
         ]}
       />
-      <div className="gl-section-heading">
+      <div className="bp-section-heading">
         <div>
-          <GLHeading level={1}>{t('lab')}</GLHeading>
+          <BPHeading level={1}>{t('lab')}</BPHeading>
           <p>{t('labBody')}</p>
         </div>
       </div>
       <Section title={t('palette')}>
-        <div className="gl-lab-palette">
+        <div className="bp-lab-palette">
           {Object.entries(palette).map(([name, value]) => (
-            <div key={name} className="gl-swatch">
-              <div className="gl-swatch-color" style={{ background: value }} />
+            <div key={name} className="bp-swatch">
+              <div className="bp-swatch-color" style={{ background: value }} />
               <code>{name}</code>
               <code>{value}</code>
             </div>
@@ -100,11 +103,11 @@ export function ComponentLab() {
         </div>
       </Section>
       <Section title={t('semantic')}>
-        <div className="gl-lab-palette">
+        <div className="bp-lab-palette">
           {Object.entries(colors).flatMap(([group, values]) =>
             Object.entries(values).map(([name, value]) => (
-              <div key={group + name} className="gl-swatch">
-                <div className="gl-swatch-color" style={{ background: value }} />
+              <div key={group + name} className="bp-swatch">
+                <div className="bp-swatch-color" style={{ background: value }} />
                 <code>
                   {group}.{name}
                 </code>
@@ -114,40 +117,42 @@ export function ComponentLab() {
         </div>
       </Section>
       <Section title={t('type')}>
-        <GLYStack gap="$space4">
+        <BPYStack gap="$space4">
           {Object.keys(typography).map((role) => (
             <div key={role}>
               <code>{role} / </code>
-              <GLText role={role as TypographyRole}>{t('example')} — Golden Lift / ١٢٣</GLText>
+              <BPText role={role as TypographyRole}>
+                {t('example')} — Business Platform / ١٢٣
+              </BPText>
             </div>
           ))}
-        </GLYStack>
+        </BPYStack>
       </Section>
       <Section title={t('spacing')}>
-        <GLYStack gap="$space3">
+        <BPYStack gap="$space3">
           {Object.entries(space).map(([name, value]) => (
-            <div className="gl-row" key={name}>
+            <div className="bp-row" key={name}>
               <code>
                 {name}: {value}
               </code>
               <div style={{ width: value, height: 16, background: colors.action.primary }} />
             </div>
           ))}
-        </GLYStack>
+        </BPYStack>
       </Section>
       <Section title={t('radii')}>
-        <div className="gl-lab-row">
+        <div className="bp-lab-row">
           {Object.entries(radius).map(([name, value]) => (
-            <div key={name} className="gl-lab-surface" style={{ borderRadius: value }}>
+            <div key={name} className="bp-lab-surface" style={{ borderRadius: value }}>
               <code>{name}</code>
             </div>
           ))}
         </div>
       </Section>
       <Section title={t('shadows')}>
-        <div className="gl-lab-row">
+        <div className="bp-lab-row">
           {Object.entries(shadows).map(([name, value]) => (
-            <div className="gl-lab-surface" style={{ boxShadow: value }} key={name}>
+            <div className="bp-lab-surface" style={{ boxShadow: value }} key={name}>
               <code>{name}</code>
             </div>
           ))}
@@ -156,93 +161,95 @@ export function ComponentLab() {
       <Section title={t('buttons')}>
         {variants.map((variant) => (
           <div key={variant}>
-            <GLHeading level={3} role="heading6">
+            <BPHeading level={3} role="heading6">
               {t(variant)}
-            </GLHeading>
+            </BPHeading>
             {sizes.map((size) => (
-              <div className="gl-lab-row" key={size}>
+              <div className="bp-lab-row" key={size}>
                 <code>{size}</code>
-                <GLButton variant={variant} size={size}>
+                <BPButton variant={variant} size={size}>
+                  <Plus size={18} aria-hidden="true" />
                   {t('default')}
-                </GLButton>
-                <GLButton variant={variant} size={size} className="lab-hover">
+                </BPButton>
+                <BPButton variant={variant} size={size} className="lab-hover">
                   {t('example')}
-                </GLButton>
-                <GLButton variant={variant} size={size} className="lab-focus">
+                </BPButton>
+                <BPButton variant={variant} size={size} className="lab-focus">
                   {t('focused')}
-                </GLButton>
-                <GLButton variant={variant} size={size} className="lab-pressed">
+                </BPButton>
+                <BPButton variant={variant} size={size} className="lab-pressed">
                   {t('filled')}
-                </GLButton>
-                <GLButton variant={variant} size={size} loading>
+                </BPButton>
+                <BPButton variant={variant} size={size} loading>
+                  <Plus size={18} aria-hidden="true" />
                   {t('loadingState')}
-                </GLButton>
-                <GLButton variant={variant} size={size} disabled>
+                </BPButton>
+                <BPButton variant={variant} size={size} disabled>
                   {t('disabled')}
-                </GLButton>
+                </BPButton>
               </div>
             ))}
           </div>
         ))}
-        <GLIconButton label={t('search')} variant="dark">
+        <BPIconButton label={t('search')} variant="dark">
           <Search size={20} />
-        </GLIconButton>
+        </BPIconButton>
       </Section>
       <Section title={t('fields')}>
-        <div className="gl-lab-fields">
-          <GLInput label={t('default')} help={t('help')} />
-          <GLInput label={t('focused')} className="lab-focus" />
-          <GLInput label={t('filled')} defaultValue={t('example')} />
-          <GLInput label={t('disabled')} disabled />
-          <GLInput label={t('readonly')} readOnly value={t('example')} />
-          <GLInput label={t('error')} error={t('invalid')} />
-          <GLInput label={t('success')} success={t('valid')} defaultValue={t('example')} />
-          <GLTextarea label={t('notes')} help={t('help')} />
-          <GLSelect label={t('select')} value={select} onChange={setSelect} options={options} />
-          <GLCombobox label={t('search')} value={combo} onChange={setCombo} options={options} />
-          <GLSearchField label={t('searchHelp')} />
+        <div className="bp-lab-fields">
+          <BPInput label={t('default')} help={t('help')} />
+          <BPInput label={t('focused')} className="lab-focus" />
+          <BPInput label={t('filled')} defaultValue={t('example')} />
+          <BPInput label={t('disabled')} disabled />
+          <BPInput label={t('readonly')} readOnly value={t('example')} />
+          <BPInput label={t('error')} error={t('invalid')} />
+          <BPInput label={t('success')} success={t('valid')} defaultValue={t('example')} />
+          <BPTextarea label={t('notes')} help={t('help')} />
+          <BPSelect label={t('select')} value={select} onChange={setSelect} options={options} />
+          <BPCombobox label={t('search')} value={combo} onChange={setCombo} options={options} />
+          <BPSearchField label={t('searchHelp')} />
         </div>
       </Section>
       <Section title={t('controls')}>
-        <GLXStack gap="$space6" flexWrap="wrap">
-          <GLCheckbox label={t('checkbox')} />
-          <GLCheckbox label={t('checked')} defaultChecked />
-          <GLRadio label={t('choice1')} name="lab-radio" defaultChecked />
-          <GLRadio label={t('choice2')} name="lab-radio" />
-          <GLSwitch label={t('switch')} />
-        </GLXStack>
+        <BPXStack gap="$space6" flexWrap="wrap">
+          <BPCheckbox label={t('checkbox')} />
+          <BPCheckbox label={t('checked')} defaultChecked />
+          <BPRadio label={t('choice1')} name="lab-radio" defaultChecked />
+          <BPRadio label={t('choice2')} name="lab-radio" />
+          <BPSwitch label={t('switch')} />
+        </BPXStack>
       </Section>
       <Section title={t('cards')}>
-        <div className="gl-grid">
+        <div className="bp-grid">
           {products.data?.items.slice(0, 2).map((p) => (
-            <GLProductCard key={p.id} product={p} />
+            <BPProductCard key={p.id} product={p} />
           ))}
           {categories.data?.items.slice(0, 2).map((c) => (
-            <GLCategoryCard key={c.id} category={c} />
+            <BPCategoryCard key={c.id} category={c} />
           ))}
         </div>
-        <GLCard>
-          <GLText>{t('example')}</GLText>
-        </GLCard>
+        <BPCard>
+          <BPText>{t('example')}</BPText>
+        </BPCard>
         {products.data?.items[0] && (
-          <GLSpecificationTable attributes={products.data.items[0].attributes} />
+          <BPSpecificationTable attributes={products.data.items[0].attributes} />
         )}
       </Section>
       <Section title={t('navigation')}>
-        <GLBreadcrumb
+        <BPBreadcrumb
           items={[
             { href: '/', label: t('home') },
             { href: '/products', label: t('products') },
             { href: '/component-lab', label: t('lab') },
           ]}
         />
-        <GLCategoryNavigation
+        <BPCategoryNavigation
           links={[
             { href: '/products', label: t('products') },
             { href: '/categories', label: t('categories') },
           ]}
         />
-        <GLTabs
+        <BPTabs
           value={tab}
           onChange={setTab}
           tabs={[
@@ -253,51 +260,51 @@ export function ComponentLab() {
         <div role="tabpanel" id={'panel-' + tab} aria-labelledby={'tab-' + tab} tabIndex={0}>
           {t(tab === 'overview' ? 'tab1' : 'tab2')}
         </div>
-        <GLPagination page={page} total={4} onChange={setPage} />
+        <BPPagination page={page} total={4} onChange={setPage} />
       </Section>
       <Section title={t('overlays')}>
-        <div className="gl-lab-row">
-          <GLButton onClick={() => setModal(true)}>{t('showModal')}</GLButton>
-          <GLButton variant="secondary" onClick={() => setDrawer(true)}>
+        <div className="bp-lab-row">
+          <BPButton onClick={() => setModal(true)}>{t('showModal')}</BPButton>
+          <BPButton variant="secondary" onClick={() => setDrawer(true)}>
             {t('showDrawer')}
-          </GLButton>
-          <GLTooltip label={t('tooltip')}>
+          </BPButton>
+          <BPTooltip label={t('tooltip')}>
             <Layers size={24} />
-          </GLTooltip>
+          </BPTooltip>
         </div>
-        <GLModal open={modal} onClose={() => setModal(false)} title={t('modalTitle')}>
+        <BPModal open={modal} onClose={() => setModal(false)} title={t('modalTitle')}>
           <p>{t('modalBody')}</p>
-          <GLInput label={t('name')} />
-          <GLButton onClick={() => setModal(false)}>{t('close')}</GLButton>
-        </GLModal>
-        <GLDrawer open={drawer} onClose={() => setDrawer(false)} title={t('drawerTitle')}>
+          <BPInput label={t('name')} />
+          <BPButton onClick={() => setModal(false)}>{t('close')}</BPButton>
+        </BPModal>
+        <BPDrawer open={drawer} onClose={() => setDrawer(false)} title={t('drawerTitle')}>
           <a href="/products">{t('products')}</a>
-        </GLDrawer>
+        </BPDrawer>
       </Section>
       <Section title={t('feedback')}>
-        <div className="gl-lab-row">
-          <GLBadge>{t('example')}</GLBadge>
-          <GLBadge tone="gold">{t('notice')}</GLBadge>
-          <GLChip onRemove={() => setToast(t('toastBody'))} label={t('close')}>
+        <div className="bp-lab-row">
+          <BPBadge>{t('example')}</BPBadge>
+          <BPBadge tone="gold">{t('notice')}</BPBadge>
+          <BPChip onRemove={() => setToast(t('toastBody'))} label={t('close')}>
             {t('example')}
-          </GLChip>
+          </BPChip>
         </div>
-        <div className="gl-lab-fields">
+        <div className="bp-lab-fields">
           {(['info', 'warning', 'success', 'error'] as const).map((tone) => (
-            <GLAlert tone={tone} key={tone}>
+            <BPAlert tone={tone} key={tone}>
               {t('alertBody')}
-            </GLAlert>
+            </BPAlert>
           ))}
         </div>
-        <GLButton variant="secondary" onClick={() => setToast(t('toastBody'))}>
+        <BPButton variant="secondary" onClick={() => setToast(t('toastBody'))}>
           {t('showToast')}
-        </GLButton>
-        <GLToast message={toast} onClose={() => setToast(null)} />
-        <GLSkeleton />
-        <GLEmptyState title={t('emptyTitle')} description={t('emptyBody')} />
+        </BPButton>
+        <BPToast message={toast} onClose={() => setToast(null)} />
+        <BPSkeleton />
+        <BPEmptyState title={t('emptyTitle')} description={t('emptyBody')} />
       </Section>
       <Section title={t('responsive')}>
-        <GLTable
+        <BPTable
           columns={[t('name'), t('technical')]}
           rows={[
             [t('small'), '4 / 16px'],
@@ -306,6 +313,6 @@ export function ComponentLab() {
           ]}
         />
       </Section>
-    </GLPageContainer>
+    </BPPageContainer>
   );
 }

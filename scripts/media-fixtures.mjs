@@ -15,7 +15,8 @@ await sharp({
 })
   .png()
   .toFile(path.join(directory, 'image.png'));
-const text = 'BT /F1 14 Tf 40 100 Td (Synthetic Golden Lift B5 fixture - no company data) Tj ET\n';
+const text =
+  'BT /F1 14 Tf 40 100 Td (Synthetic Business Platform B5 fixture - no company data) Tj ET\n';
 const objects = [
   '<< /Type /Catalog /Pages 2 0 R >>',
   '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',

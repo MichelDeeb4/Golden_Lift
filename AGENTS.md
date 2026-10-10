@@ -1,4 +1,4 @@
-# Golden Lift project rules
+# Business Platform project rules
 
 These standing rules were requested by the user on 2026-10-04. Apply them to every future change in this repository: follow established engineering best practices and choose appropriate design patterns, with clear reasons and verified behavior. The user reinforced this requirement on 2026-10-04: use durable, maintainable solutions; do not take shortcuts or apply ad hoc workarounds. This rule persists across future tasks.
 

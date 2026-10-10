@@ -1,4 +1,4 @@
-import { GLSelect, GLCheckbox, GLInput, GLFormSection } from '@golden-lift/ui';
+import { BPSelect, BPCheckbox, BPInput, BPFormSection } from '@business-platform/ui';
 import { useAdminTranslation } from './translations';
 import { MoreOptions } from './common';
 
@@ -11,7 +11,7 @@ export function AttributeKind({
 }) {
   const t = useAdminTranslation();
   return (
-    <GLSelect
+    <BPSelect
       label={t('type')}
       value={kind}
       onChange={setKind}
@@ -61,11 +61,11 @@ export function AttributeConstraints({
 }) {
   const t = useAdminTranslation();
   return (
-    <GLFormSection title={t('constraints')}>
-      <div className="gl-admin-grid">
+    <BPFormSection title={t('constraints')}>
+      <div className="bp-admin-grid">
         {kind === 'NUMBER' && (
           <>
-            <GLSelect
+            <BPSelect
               label={t('unit')}
               value={unit}
               onChange={setUnit}
@@ -78,12 +78,12 @@ export function AttributeConstraints({
               ]}
             />
             <MoreOptions query={units} label={t('unit')} />
-            <GLInput
+            <BPInput
               label={t('minimum')}
               value={minimum}
               onChange={(e) => setMinimum(e.target.value)}
             />
-            <GLInput
+            <BPInput
               label={t('maximum')}
               value={maximum}
               onChange={(e) => setMaximum(e.target.value)}
@@ -91,7 +91,7 @@ export function AttributeConstraints({
           </>
         )}
         {kind === 'CHOICE' && (
-          <GLCheckbox
+          <BPCheckbox
             label={t('multiple')}
             checked={multiple}
             onChange={(e) => setMultiple(e.target.checked)}
@@ -99,12 +99,12 @@ export function AttributeConstraints({
         )}
         {kind === 'TEXT' && (
           <>
-            <GLCheckbox
+            <BPCheckbox
               label={t('multiline')}
               checked={multiline}
               onChange={(e) => setMultiline(e.target.checked)}
             />
-            <GLInput
+            <BPInput
               label={t('maxLength')}
               value={maxLength}
               onChange={(e) => setMaxLength(e.target.value)}
@@ -113,7 +113,7 @@ export function AttributeConstraints({
         )}
         {kind === 'BOOLEAN' && <p>{t('boolean')}</p>}
       </div>
-    </GLFormSection>
+    </BPFormSection>
   );
 }
 
@@ -130,15 +130,15 @@ export function AttributeVisibility({
 }) {
   const t = useAdminTranslation();
   return (
-    <GLFormSection title={t('visibility')}>
-      <div className="gl-admin-grid">
-        <GLCheckbox label={t('public')} checked={pub} onChange={(e) => setPub(e.target.checked)} />
-        <GLCheckbox
+    <BPFormSection title={t('visibility')}>
+      <div className="bp-admin-grid">
+        <BPCheckbox label={t('public')} checked={pub} onChange={(e) => setPub(e.target.checked)} />
+        <BPCheckbox
           label={t('filterable')}
           checked={filterable}
           onChange={(e) => setFilterable(e.target.checked)}
         />
       </div>
-    </GLFormSection>
+    </BPFormSection>
   );
 }

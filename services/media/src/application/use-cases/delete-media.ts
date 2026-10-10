@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   DeleteCommand,
@@ -6,7 +6,7 @@ import type {
   DeletionOperation,
   DirectMediaDeletionRequest,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { MediaIds, MediaUnitOfWork } from '../ports/media.js';
 import { requireAdmin } from '../../domain/staff-access.js';
 

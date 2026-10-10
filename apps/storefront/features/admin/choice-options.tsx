@@ -1,8 +1,8 @@
-import { Save, X } from '@golden-lift/icons';
+import { Save, X } from '@business-platform/icons';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StaffApiError } from '@golden-lift/api';
-import { GLAlert, GLButton, GLInput, GLModal } from '@golden-lift/ui';
+import { StaffApiError } from '@business-platform/api';
+import { BPAlert, BPButton, BPInput, BPModal } from '@business-platform/ui';
 import { useStaffApi, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
@@ -32,8 +32,8 @@ export function AddChoiceOption({
   useUnsaved(form.formState.isDirty || !!code);
   return (
     <>
-      <GLButton onClick={() => setOpen(true)}>{t('addOption')}</GLButton>
-      <GLModal
+      <BPButton onClick={() => setOpen(true)}>{t('addOption')}</BPButton>
+      <BPModal
         open={open}
         title={t('addOption')}
         onClose={() => {
@@ -85,7 +85,7 @@ export function AddChoiceOption({
             );
           })}
         >
-          <GLInput
+          <BPInput
             label={t('code')}
             required
             value={code}
@@ -96,23 +96,23 @@ export function AddChoiceOption({
               action.reset();
             }}
           />
-          <p className="gl-muted">{t('optionCodeHelp')}</p>
+          <p className="bp-muted">{t('optionCodeHelp')}</p>
           <TranslationFields form={form} labelsOnly />
           {action.error instanceof StaffApiError && action.error.code === 'CONFLICT' ? (
-            <GLAlert tone="error">{t('duplicateOption')}</GLAlert>
+            <BPAlert tone="error">{t('duplicateOption')}</BPAlert>
           ) : (
             <ActionFeedback action={action} />
           )}
-          <GLButton type="submit" loading={action.isPending}>
+          <BPButton type="submit" loading={action.isPending}>
             <Save size={18} aria-hidden="true" />
             {t('save')}
-          </GLButton>
-          <GLButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
+          </BPButton>
+          <BPButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
             <X size={18} aria-hidden="true" />
             {t('cancel')}
-          </GLButton>
+          </BPButton>
         </form>
-      </GLModal>
+      </BPModal>
     </>
   );
 }

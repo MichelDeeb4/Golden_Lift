@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { AuthenticatedActor, CategoryDto, EventEnvelope } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { AuthenticatedActor, CategoryDto, EventEnvelope } from '@business-platform/contracts';
 import { categoryDraft, requireContentAdmin } from '../../domain/category.js';
 import { orderBetween } from '../../domain/category-order.js';
 import type { CategoryDraft } from '../../domain/category.js';

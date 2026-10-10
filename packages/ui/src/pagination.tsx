@@ -1,5 +1,5 @@
-import { GLButton } from './primitives';
-import { GLSelect } from './fields';
+import { BPButton } from './primitives';
+import { BPSelect } from './fields';
 export interface PaginationLabels {
   readonly navigation: string;
   readonly previous: string;
@@ -8,7 +8,7 @@ export interface PaginationLabels {
   readonly loading: string;
   readonly range: (first: number, last: number, total: number | undefined) => string;
 }
-export function GLDataPagination({
+export function BPDataPagination({
   currentPage,
   pageSize,
   totalItems,
@@ -48,39 +48,39 @@ export function GLDataPagination({
       ).sort((a, b) => a - b)
     : [];
   return (
-    <nav className="gl-data-pagination" aria-label={labels.navigation} aria-busy={isLoading}>
-      <p className="gl-data-pagination-range" role="status" aria-live="polite">
+    <nav className="bp-data-pagination" aria-label={labels.navigation} aria-busy={isLoading}>
+      <p className="bp-data-pagination-range" role="status" aria-live="polite">
         {labels.range(start, end, totalItems)}
         {isLoading ? ' · ' + labels.loading : ''}
       </p>
-      <div className="gl-data-pagination-controls">
-        <GLButton
+      <div className="bp-data-pagination-controls">
+        <BPButton
           variant="secondary"
           disabled={isLoading || currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
         >
           {labels.previous}
-        </GLButton>
+        </BPButton>
         {mode === 'numbered' && (
-          <div className="gl-data-pagination-pages" dir="ltr">
+          <div className="bp-data-pagination-pages" dir="ltr">
             {pages.map((p, i) => (
               <span key={p}>
                 {i > 0 && p > pages[i - 1]! + 1 && <span aria-hidden="true">…</span>}
-                <GLButton
+                <BPButton
                   variant={p === currentPage ? 'primary' : 'ghost'}
                   aria-current={p === currentPage ? 'page' : undefined}
                   disabled={isLoading}
                   onClick={() => onPageChange(p)}
                 >
                   {p}
-                </GLButton>
+                </BPButton>
               </span>
             ))}
           </div>
         )}
         <span
           className={
-            'gl-data-pagination-current' + (mode === 'numbered' ? ' gl-data-pagination-mobile' : '')
+            'bp-data-pagination-current' + (mode === 'numbered' ? ' bp-data-pagination-mobile' : '')
           }
           dir="ltr"
           aria-current="page"
@@ -90,15 +90,15 @@ export function GLDataPagination({
             {totalPages ? ' / ' + totalPages : ''}
           </bdi>
         </span>
-        <GLButton
+        <BPButton
           variant="secondary"
           disabled={isLoading || !next}
           onClick={() => onPageChange(currentPage + 1)}
         >
           {labels.next}
-        </GLButton>
+        </BPButton>
       </div>
-      <GLSelect
+      <BPSelect
         label={labels.rows}
         value={String(pageSize)}
         disabled={isLoading}

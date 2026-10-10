@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   Locale,
@@ -6,7 +6,7 @@ import type {
   PublicProductQuery,
   PublicProductPage,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { exactQuantity } from '../../domain/attribute-values.js';
 import { publicAttribute, publicValue, translated } from '../../domain/effective-schema.js';
@@ -28,7 +28,17 @@ export class ReadProducts {
     }));
   }
   async collection(input: PublicProductQuery): Promise<PublicProductPage> {
+    const seen = new Set<string>();
     for (const filter of input.filters) {
+      if (seen.has(filter.definitionId))
+        throw new ApplicationError('VALIDATION_FAILED', 'Attribute filters must be unique.');
+      seen.add(filter.definitionId);
+      if (filter.kind === 'CHOICE') {
+        const options = 'optionIds' in filter ? filter.optionIds : [filter.optionId];
+        if (!options.length || options.length > 100 || new Set(options).size !== options.length)
+          throw new ApplicationError('VALIDATION_FAILED', 'Invalid choice filter.');
+      }
+
       if (filter.kind !== 'NUMBER') continue;
       const minimum = filter.minimum === undefined ? undefined : exactQuantity(filter.minimum);
       const maximum = filter.maximum === undefined ? undefined : exactQuantity(filter.maximum);
@@ -71,7 +81,10 @@ export class ReadProducts {
       }
       return {
         items,
-        filters,
+        total: page.total,
+        filters: filters.toSorted(
+          (a, b) => a.label.localeCompare(b.label, input.locale) || a.id.localeCompare(b.id),
+        ),
         page: input.page,
         pageSize: input.pageSize,
         hasNextPage: page.hasNextPage,
@@ -107,6 +120,18 @@ export class ReadProducts {
             definitionId: v.definitionId,
             label: translated(field.definition.translations, language).name,
             unitSymbol: field.definition.unit?.symbol ?? null,
+            ...(schema.groups.find((g) => g.id === field.groupPlacementId)
+              ? {
+                  group: {
+                    id: field.groupPlacementId!,
+                    label: translated(
+                      schema.groups.find((g) => g.id === field.groupPlacementId)!.group
+                        .translations,
+                      language,
+                    ).name,
+                  },
+                }
+              : {}),
             value: publicValue(v.value, field.definition, language),
           },
         ];

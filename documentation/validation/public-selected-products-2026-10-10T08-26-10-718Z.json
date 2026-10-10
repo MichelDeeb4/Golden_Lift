@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-10T08:26:10.718Z",
+  "result": "PASS",
+  "origin": "http://localhost:8081",
+  "rootCause": "Running Catalog loaded the older collection contract without total; updated frontend rejected that HTTP 200 response.",
+  "resolution": "Restarted the identified Golden Lift local development application through scripts/dev.mjs --web, rebuilding the backend without schema migrations.",
+  "verification": {
+    "gatewayProductsStatus": 200,
+    "total": 10,
+    "selectedCards": 4,
+    "refreshPreservesResults": true,
+    "browserPageErrors": [],
+    "command": "node .local/check-selected-products.mjs"
+  },
+  "dataSafety": "Read-only normal Catalog verification; startup performs no database migrations. No Product data modified.",
+  "documentation": "documentation/operations/admin-local.md"
+}

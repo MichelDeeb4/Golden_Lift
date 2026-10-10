@@ -1,5 +1,5 @@
 import { createFont, createTamagui, createTokens } from 'tamagui';
-import { colors, palette, radius, space, typography, zIndex } from '@golden-lift/tokens';
+import { colors, palette, radius, space, typography, zIndex } from '@business-platform/tokens';
 const font = (family: string, bold: string) =>
   createFont({
     family,
@@ -54,7 +54,7 @@ export const config = createTamagui({
   },
   settings: { defaultFont: 'body', allowedStyleValues: 'somewhat-strict' },
 });
-type GLConfig = typeof config;
+type BPConfig = typeof config;
 declare module 'tamagui' {
-  interface TamaguiCustomConfig extends GLConfig {}
+  interface TamaguiCustomConfig extends BPConfig {}
 }

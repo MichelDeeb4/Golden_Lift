@@ -7,7 +7,7 @@ import {
   startupFailed,
   IdentitySessionClient,
   identityClientConfig,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { CheckReadiness } from '../application/use-cases/check-readiness.js';
 import { CheckStaffAccess } from '../application/use-cases/check-staff-access.js';
 import { PrismaReadiness } from '../infrastructure/prisma/readiness.js';

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { uuid, version } from '@golden-lift/contracts';
+import { uuid, version } from '@business-platform/contracts';
 import { categoryDraft, requireContentAdmin } from '../src/domain/category.js';
 const ar = {
   locale: 'ar' as const,

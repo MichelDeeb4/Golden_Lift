@@ -37,7 +37,7 @@ const objects = [
   '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
 ];
 const stream =
-  'BT /F1 22 Tf 60 750 Td (GOLDEN LIFT - DESIGN PREVIEW) Tj 0 -48 Td /F1 12 Tf (Illustrative document only. Not a certification or product specification.) Tj 0 -24 Td (No commercial or performance claims are established by this fixture.) Tj ET';
+  'BT /F1 22 Tf 60 750 Td (BUSINESS PLATFORM - DESIGN PREVIEW) Tj 0 -48 Td /F1 12 Tf (Illustrative document only. Not a certification or product specification.) Tj 0 -24 Td (No commercial or performance claims are established by this fixture.) Tj ET';
 objects.push(`<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`);
 let pdf = '%PDF-1.4\n',
   offsets = [0];

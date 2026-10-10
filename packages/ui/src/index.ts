@@ -7,4 +7,4 @@ export * from './composition';
 export * from './workspace';
 export * from './pagination';
 export * from './admin-controls';
-export { GLTokenStyles } from './styles';
+export { BPTokenStyles } from './styles';

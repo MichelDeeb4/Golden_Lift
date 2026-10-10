@@ -1,4 +1,8 @@
-import type { AttributeDefinitionDto, AttributeGroupDto } from '@golden-lift/contracts';
+import type {
+  AttributeDefinitionDto,
+  AttributeGroupDto,
+  UnitDto,
+} from '@business-platform/contracts';
 import type { Database } from './client.js';
 import { groupDto, groupInclude } from './configuration-mapping.js';
 /** Bounded metadata for current page only; no per-row cross-service reads. */
@@ -26,4 +30,16 @@ export async function groupCounts(db: Database, rows: readonly AttributeGroupDto
     attributeCount: counts.find((c) => c.id === row.id)?.attributes ?? '0',
     categoryCount: counts.find((c) => c.id === row.id)?.categories ?? '0',
   }));
+}
+
+export async function unitCounts(
+  db: Database,
+  rows: readonly UnitDto[],
+): Promise<readonly UnitDto[]> {
+  if (!rows.length) return [];
+  const counts = await db.$queryRaw<
+    { code: string; attributes: string }[]
+  >`SELECT unit_code AS code, count(*)::text AS attributes FROM catalog.specification_definitions WHERE unit_code=ANY(${rows.map((row) => row.code)}::text[]) AND deleted_at IS NULL GROUP BY unit_code`;
+  const byCode = new Map(counts.map((row) => [row.code, row.attributes]));
+  return rows.map((row) => ({ ...row, attributeCount: byCode.get(row.code) ?? '0' }));
 }

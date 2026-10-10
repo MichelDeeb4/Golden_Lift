@@ -1,5 +1,5 @@
 {
-  "name": "golden-lift",
+  "name": "business-platform",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
   "scripts": {
     "start": "node scripts/dev.mjs --web",
     "build": "node scripts/build.mjs",
-    "typecheck": "tsc -p tsconfig.check.json --noEmit && npm run typecheck --workspace @golden-lift/storefront",
+    "typecheck": "tsc -p tsconfig.check.json --noEmit && npm run typecheck --workspace @business-platform/storefront",
     "lint": "npm run format:check && node scripts/check-boundaries.mjs && node scripts/test-boundaries.mjs && npm run orm:check",
     "test": "npm run build && node scripts/test.mjs unit",
     "test:integration": "npm run build && node scripts/test.mjs integration",
@@ -39,8 +39,8 @@
     "db:media": "node database/scripts/media-core.mjs",
     "db:admin": "node database/scripts/admin-core.mjs",
     "smoke:media": "npm run build && node scripts/media-smoke.mjs",
-    "storefront:dev": "npm run dev --workspace @golden-lift/storefront",
-    "storefront:build": "npm run build --workspace @golden-lift/storefront",
+    "storefront:dev": "npm run dev --workspace @business-platform/storefront",
+    "storefront:build": "npm run build --workspace @business-platform/storefront",
     "storefront:preview": "node scripts/storefront-preview.mjs",
     "test:frontend": "tsx --test tests/frontend.unit.test.ts",
     "test:storefront": "playwright test --config tests/frontend.playwright.config.ts",
@@ -48,7 +48,8 @@
     "media:tools": "node scripts/media-tools.mjs",
     "media:setup": "node scripts/media-local.mjs",
     "demo:seed": "node scripts/seed-demo-catalog.mjs",
-    "doctor": "node scripts/doctor.mjs"
+    "doctor": "node scripts/doctor.mjs",
+    "db:rename": "node scripts/rename-platform-database.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -67,5 +68,6 @@
     "react-native": "0.86.3",
     "tsx": "4.23.15",
     "typescript": "6.0.3"
-  }
+  },
+  "description": "Multi-Tenant ERP and E-Commerce Platform"
 }

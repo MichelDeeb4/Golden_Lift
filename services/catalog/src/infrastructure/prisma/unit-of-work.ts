@@ -1,5 +1,5 @@
-import { retryTransaction, sqlState } from '@golden-lift/platform';
-import { ApplicationError } from '@golden-lift/contracts';
+import { retryTransaction, sqlState } from '@business-platform/platform';
+import { ApplicationError } from '@business-platform/contracts';
 import type { CatalogRepositories, CatalogUnitOfWork } from '../../application/ports/catalog.js';
 import type { PrismaClient } from './client.js';
 import { PrismaCategoryRepository } from './category-repository.js';

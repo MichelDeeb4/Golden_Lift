@@ -1,4 +1,4 @@
-import type { EventEnvelope } from '@golden-lift/contracts';
+import type { EventEnvelope } from '@business-platform/contracts';
 import type { StaffAccount } from '../../domain/staff.js';
 import type { Ids, Clock } from './identity.js';
 export function staffEvent(

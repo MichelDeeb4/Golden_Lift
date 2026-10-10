@@ -9,7 +9,7 @@ const pointer = JSON.parse(fs.readFileSync('.local/b5-validation-pointer.json', 
 const directory = path.resolve(pointer.directory);
 assert.equal(path.dirname(directory), path.resolve('.local'));
 assert.match(path.basename(directory), /^b5-validation-/);
-process.env.GL_DATABASE_CONFIG_FILE = pointer.configFile;
+process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE = pointer.configFile;
 const tools = await import('../database/scripts/db.mjs');
 const cfg = tools.config();
 assert.equal(cfg.adminUser, 'b5_disposable_admin');
@@ -40,7 +40,8 @@ function run(binary, args, profile) {
 }
 try {
   for (const profile of [source, restored]) {
-    profile.services.media.database = 'golden_lift_b5_recovery_' + randomUUID().replaceAll('-', '');
+    profile.services.media.database =
+      'business_platform_b5_recovery_' + randomUUID().replaceAll('-', '');
     tools.sql(
       cfg,
       null,
@@ -125,7 +126,7 @@ try {
   );
 } finally {
   for (const database of created) {
-    assert.match(database, /^golden_lift_b5_recovery_[a-f0-9]{32}$/);
+    assert.match(database, /^business_platform_b5_recovery_[a-f0-9]{32}$/);
     tools.sql(cfg, null, 'DROP DATABASE ' + database + ' WITH (FORCE)');
   }
   assert.equal(path.dirname(area), directory);

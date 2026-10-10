@@ -1,11 +1,11 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AttributeValue,
   AttributeValueMutation,
   EffectiveCategorySchema,
   ProductAttributeValue,
   EffectiveAttributeDto,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export function exactQuantity(value: string): bigint {
   if (!/^-?(?:0|[1-9][0-9]{0,13})(?:\.[0-9]{1,6})?$/.test(value))
     throw new ApplicationError(

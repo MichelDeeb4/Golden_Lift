@@ -192,6 +192,7 @@ export interface StaffAccountDto {
   readonly status: StaffStatus;
   readonly version: Version;
   readonly createdAt: string;
+  readonly updatedAt: string;
 }
 export interface StaffSessionDto {
   readonly account: StaffAccountDto;

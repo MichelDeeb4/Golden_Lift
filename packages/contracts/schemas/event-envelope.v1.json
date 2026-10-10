@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:golden-lift:event-envelope:v1",
-  "title": "Golden Lift event envelope v1",
+  "$id": "urn:business-platform:event-envelope:v1",
+  "title": "Business Platform event envelope v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

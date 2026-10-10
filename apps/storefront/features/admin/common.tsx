@@ -1,24 +1,24 @@
-import { X, ArrowUpDown, Trash2 } from '@golden-lift/icons';
+import { X, ArrowUpDown, Trash2 } from '@business-platform/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useId, useState } from 'react';
-import { languageNames } from '@golden-lift/i18n';
+import { languageNames } from '@business-platform/i18n';
 import type { ReactNode } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { pageSchema } from '@golden-lift/api';
+import { pageSchema } from '@business-platform/api';
 import { z } from 'zod';
 import {
-  GLButton,
-  GLHeading,
-  GLInput,
-  GLTextarea,
-  GLModal,
-  GLAlert,
-  GLSpinner,
-  GLTabs,
-  GLFormSection,
-  GLSkeleton,
-  GLEmptyState,
-} from '@golden-lift/ui';
+  BPButton,
+  BPHeading,
+  BPInput,
+  BPTextarea,
+  BPModal,
+  BPAlert,
+  BPSpinner,
+  BPTabs,
+  BPFormSection,
+  BPSkeleton,
+  BPEmptyState,
+} from '@business-platform/ui';
 import type { UseFormReturn } from 'react-hook-form';
 import { useStaffApi, StaffError, useStaffFeedback } from './context';
 import { useAdminTranslation } from './translations';
@@ -45,23 +45,23 @@ export function FocusedEditor({
   const confirmDiscard = useConfirmDiscard();
   if (dialog)
     return (
-      <GLModal
+      <BPModal
         open={open}
         keepMounted
-        className="gl-admin-modal"
+        className="bp-admin-modal"
         title={title}
         onClose={async () => {
           if (!pending && (!dirty || (await confirmDiscard()))) onClose();
         }}
       >
-        <div className="gl-admin-modal-body">{children}</div>
-      </GLModal>
+        <div className="bp-admin-modal-body">{children}</div>
+      </BPModal>
     );
   return open ? (
-    <section className="gl-inline-editor" aria-labelledby={id}>
-      <GLHeading level={2} role="heading4" id={id}>
+    <section className="bp-inline-editor" aria-labelledby={id}>
+      <BPHeading level={2} role="heading4" id={id}>
         {title}
-      </GLHeading>
+      </BPHeading>
       {children}
     </section>
   ) : null;
@@ -99,13 +99,13 @@ export function MoreOptions({
   const t = useAdminTranslation();
 
   return query.hasNextPage ? (
-    <GLButton
+    <BPButton
       variant="secondary"
       loading={query.isFetchingNextPage}
       onClick={() => void query.fetchNextPage()}
     >
       {t('next')} — {label}
-    </GLButton>
+    </BPButton>
   ) : null;
 }
 export function useAction(scope = 'account', feedback = true) {
@@ -219,7 +219,7 @@ export function Confirm({
     t = useAdminTranslation();
   return (
     <>
-      <GLButton
+      <BPButton
         variant={variant}
         disabled={disabled}
         onClick={() => {
@@ -229,8 +229,8 @@ export function Confirm({
       >
         {icon ?? <Trash2 size={18} aria-hidden="true" />}
         {label ?? title}
-      </GLButton>
-      <GLModal
+      </BPButton>
+      <BPModal
         open={open}
         onClose={() => {
           if (!action.isPending) setOpen(false);
@@ -244,19 +244,19 @@ export function Confirm({
         )}
         <p>{children ?? t('confirmAction')}</p>
         <ActionFeedback action={action} />
-        <GLButton
+        <BPButton
           variant={variant}
           loading={action.isPending}
           onClick={() => action.mutate(reviewedWork!, { onSuccess: () => setOpen(false) })}
         >
           {icon ?? <Trash2 size={18} aria-hidden="true" />}
           {t('confirm')}
-        </GLButton>
-        <GLButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
+        </BPButton>
+        <BPButton variant="secondary" disabled={action.isPending} onClick={() => setOpen(false)}>
           <X size={18} aria-hidden="true" />
           {t('cancel')}
-        </GLButton>
-      </GLModal>
+        </BPButton>
+      </BPModal>
     </>
   );
 }
@@ -304,12 +304,12 @@ export function TranslationFields({
     if (arabicError) setLanguage('ar');
   }, [arabicError]);
   return (
-    <GLFormSection
+    <BPFormSection
       title={t('translations')}
       description={t('requiredArabic')}
-      className="gl-translation-section"
+      className="bp-translation-section"
     >
-      <GLTabs
+      <BPTabs
         idPrefix={prefix}
         value={language}
         onChange={(value) => setLanguage(value as typeof language)}
@@ -323,9 +323,9 @@ export function TranslationFields({
           id={prefix + 'panel-' + locale}
           aria-labelledby={prefix + 'tab-' + locale}
           dir={locale === 'en' ? 'ltr' : 'rtl'}
-          className="gl-translation-panel"
+          className="bp-translation-panel"
         >
-          <GLInput
+          <BPInput
             label={`${t('name')} (${locale})`}
             required={locale === 'ar' && language === 'ar'}
             error={form.formState.errors.names?.[locale]?.message}
@@ -337,14 +337,14 @@ export function TranslationFields({
             )}
           />
           {!labelsOnly && (
-            <GLTextarea
+            <BPTextarea
               label={`${t('description')} (${locale})`}
               {...form.register(`descriptions.${locale}`)}
             />
           )}
         </div>
       ))}
-    </GLFormSection>
+    </BPFormSection>
   );
 }
 export function TableState({
@@ -372,9 +372,9 @@ export function TableState({
 
   if (pending)
     return (
-      <div className="gl-admin-skeleton" role="status" aria-label={t('loading')}>
+      <div className="bp-admin-skeleton" role="status" aria-label={t('loading')}>
         {[0, 1, 2].map((row) => (
-          <GLSkeleton key={row} className="gl-admin-skeleton-row" />
+          <BPSkeleton key={row} className="bp-admin-skeleton-row" />
         ))}
       </div>
     );
@@ -383,25 +383,25 @@ export function TableState({
       <>
         <StaffError error={error} />
         {onRetry && (
-          <GLButton variant="secondary" onClick={onRetry}>
+          <BPButton variant="secondary" onClick={onRetry}>
             <ArrowUpDown size={18} aria-hidden="true" />
             {t('retry')}
-          </GLButton>
+          </BPButton>
         )}
       </>
     );
   if (empty)
     return (
-      <GLEmptyState
+      <BPEmptyState
         title={emptyTitle ?? t('empty')}
-        description={emptyDescription}
+        description={emptyDescription ?? t('emptyHelp')}
         action={emptyAction}
       />
     );
   return (
-    <div className={presentation === 'table' ? 'gl-admin-table' : 'gl-admin-content-state'}>
+    <div className={presentation === 'table' ? 'bp-admin-table' : 'bp-admin-content-state'}>
       {presentation === 'table' ? (
-        <div className="gl-admin-table-scroll" tabIndex={0}>
+        <div className="bp-admin-table-scroll" tabIndex={0}>
           {children}
         </div>
       ) : (

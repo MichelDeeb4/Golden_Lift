@@ -1,6 +1,6 @@
 import net from 'node:net';
 import { once } from 'node:events';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type { SecurityPrerequisites } from '../../application/ports/processing.js';
 
 export class ClamAvScanner implements SecurityPrerequisites {

@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Locale, Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { AuthenticatedActor, Locale, Uuid } from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { requireRevision } from '../../domain/category-order.js';
 import type { CatalogUnitOfWork, CategoryCursor } from '../ports/catalog.js';

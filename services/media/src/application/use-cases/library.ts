@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { AuthenticatedActor, Uuid, Version } from '@business-platform/contracts';
 import { requireAdmin } from '../../domain/staff-access.js';
 import type { MediaUnitOfWork, CatalogMedia, MediaRepository } from '../ports/media.js';
 

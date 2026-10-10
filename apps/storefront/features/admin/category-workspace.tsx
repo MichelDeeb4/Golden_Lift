@@ -1,26 +1,26 @@
 import { DeletionDialog } from './deletion';
 import { RelationshipSelection, RelationshipEditor } from './relationships';
-import { ArrowUpDown, FolderPlus, Plus, Save, X } from '@golden-lift/icons';
+import { ArrowUpDown, FolderPlus, Plus, Save, X } from '@business-platform/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { categoryPageSchema, categorySchema, categoryFormSchema } from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
+import { categoryPageSchema, categorySchema, categoryFormSchema } from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
 import {
-  GLAlert,
-  GLButton,
-  GLHeading,
-  GLModal,
-  GLDrawer,
-  GLFormSection,
-  GLActionBar,
-  GLActionMenu,
-  GLPageHeader,
-  GLInput,
-} from '@golden-lift/ui';
+  BPAlert,
+  BPButton,
+  BPHeading,
+  BPModal,
+  BPDrawer,
+  BPFormSection,
+  BPActionBar,
+  BPActionMenu,
+  BPPageHeader,
+  BPInput,
+} from '@business-platform/ui';
 import { StaffError, useStaffApi, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
@@ -266,14 +266,14 @@ export function Categories({ id }: { id?: string }) {
   const leaf = detail.data && detail.data.activeChildCount === '0';
   return (
     <>
-      <GLPageHeader
+      <BPPageHeader
         title={t('categories')}
         description={t('categoryTreeHelp')}
-        actions={<GLButton onClick={() => create(null)}>{t('createRootCategory')}</GLButton>}
+        actions={<BPButton onClick={() => create(null)}>{t('createRootCategory')}</BPButton>}
       />
-      <GLButton variant="secondary" className="gl-category-browse" onClick={() => setBrowse(true)}>
+      <BPButton variant="secondary" className="bp-category-browse" onClick={() => setBrowse(true)}>
         {t('browseCategories')}
-      </GLButton>
+      </BPButton>
       <ActionFeedback
         action={action}
         reload={() => {
@@ -281,36 +281,36 @@ export function Categories({ id }: { id?: string }) {
           void detail.refetch();
         }}
       />
-      <div className="gl-category-tree-workspace">
-        <aside className="gl-category-tree-panel" aria-label={t('categories')}>
+      <div className="bp-category-tree-workspace">
+        <aside className="bp-category-tree-panel" aria-label={t('categories')}>
           {!browse && tree}
         </aside>
-        <section className="gl-category-detail" aria-label={t('selectedCategory')}>
+        <section className="bp-category-detail" aria-label={t('selectedCategory')}>
           {detail.isPending && id && <p role="status">{t('loading')}</p>}
           {detail.error && (
-            <GLAlert tone="error">
+            <BPAlert tone="error">
               {t('error')}
-              <GLButton variant="text" onClick={() => void detail.refetch()}>
+              <BPButton variant="text" onClick={() => void detail.refetch()}>
                 <ArrowUpDown size={18} aria-hidden="true" />
                 {t('retry')}
-              </GLButton>
-            </GLAlert>
+              </BPButton>
+            </BPAlert>
           )}
           {!id && (
-            <div className="gl-category-no-selection">
-              <GLHeading level={2} role="heading4">
+            <div className="bp-category-no-selection">
+              <BPHeading level={2} role="heading4">
                 {t('selectCategory')}
-              </GLHeading>
+              </BPHeading>
               <p>{t('categorySelectionHelp')}</p>
             </div>
           )}
           {detail.data && (
             <>
-              <span className="gl-overline">{leaf ? t('leafCategory') : t('branchCategory')}</span>
-              <GLHeading level={2} role="heading3">
+              <span className="bp-overline">{leaf ? t('leafCategory') : t('branchCategory')}</span>
+              <BPHeading level={2} role="heading3">
                 {detail.data.name}
-              </GLHeading>
-              <nav aria-label={t('location')} className="gl-category-detail-path">
+              </BPHeading>
+              <nav aria-label={t('location')} className="bp-category-detail-path">
                 <a href="/admin/categories">{t('root')}</a>
                 {ancestors.map((category) => (
                   <span key={category.id}>
@@ -324,29 +324,29 @@ export function Categories({ id }: { id?: string }) {
                 ))}
               </nav>
               {path.hasNextPage && (
-                <GLButton
+                <BPButton
                   variant="text"
                   loading={path.isFetchingNextPage}
                   onClick={() => void path.fetchNextPage()}
                 >
                   {t('morePath')}
-                </GLButton>
+                </BPButton>
               )}
               {path.error && (
-                <GLAlert tone="error">
+                <BPAlert tone="error">
                   {t('error')}
-                  <GLButton variant="text" onClick={() => void path.refetch()}>
+                  <BPButton variant="text" onClick={() => void path.refetch()}>
                     <ArrowUpDown size={18} aria-hidden="true" />
                     {t('retry')}
-                  </GLButton>
-                </GLAlert>
+                  </BPButton>
+                </BPAlert>
               )}
-              <div className="gl-category-detail-actions">
-                <GLButton disabled={action.isPending} onClick={() => create(detail.data!)}>
+              <div className="bp-category-detail-actions">
+                <BPButton disabled={action.isPending} onClick={() => create(detail.data!)}>
                   <FolderPlus size={18} aria-hidden="true" />
                   {t('addSubcategory')}
-                </GLButton>
-                <GLActionMenu
+                </BPButton>
+                <BPActionMenu
                   label={t('actions') + ' — ' + detail.data.name}
                   items={[
                     {
@@ -368,7 +368,7 @@ export function Categories({ id }: { id?: string }) {
                   ]}
                 />
               </div>
-              <dl className="gl-category-facts">
+              <dl className="bp-category-facts">
                 <div>
                   <dt>{t('state')}</dt>
                   <dd>{t('active')}</dd>
@@ -388,11 +388,11 @@ export function Categories({ id }: { id?: string }) {
               </dl>
               {detail.data.description && <p>{detail.data.description}</p>}
               {detail.data.coverAssetId && (
-                <div className="gl-category-detail-cover">
+                <div className="bp-category-detail-cover">
                   <MediaPreview asset={{ id: detail.data.coverAssetId, kind: 'IMAGE' }} />
                 </div>
               )}
-              <GLFormSection title={t('groups')}>
+              <BPFormSection title={t('groups')}>
                 {leaf ? (
                   <RelationshipEditor resource="categories" id={detail.data.id} />
                 ) : (
@@ -413,9 +413,9 @@ export function Categories({ id }: { id?: string }) {
                     ))}
                   </ul>
                 )}
-              </GLFormSection>
+              </BPFormSection>
               {leaf && (
-                <GLButton
+                <BPButton
                   variant="secondary"
                   onClick={() =>
                     router.push({
@@ -425,20 +425,20 @@ export function Categories({ id }: { id?: string }) {
                   }
                 >
                   {t('browseCategoryProducts')}
-                </GLButton>
+                </BPButton>
               )}
             </>
           )}
         </section>
       </div>
-      <GLDrawer
-        className="gl-admin-overlay gl-category-tree-drawer"
+      <BPDrawer
+        className="bp-admin-overlay bp-category-tree-drawer"
         open={browse}
         title={t('browseCategories')}
         onClose={() => setBrowse(false)}
       >
         {tree}
-      </GLDrawer>
+      </BPDrawer>
       <FocusedEditor
         dialog
         open={!!editor}
@@ -499,7 +499,7 @@ export function Categories({ id }: { id?: string }) {
             );
           })}
         >
-          <GLFormSection title={t('parent')}>
+          <BPFormSection title={t('parent')}>
             <p>
               {editor?.category && editor.kind === 'create'
                 ? editor.category.name
@@ -507,7 +507,7 @@ export function Categories({ id }: { id?: string }) {
                   ? t('useMoveForParent')
                   : t('root')}
             </p>
-          </GLFormSection>
+          </BPFormSection>
           <TranslationFields form={form} />
           {editor?.kind === 'create' && (
             <RelationshipSelection
@@ -517,19 +517,19 @@ export function Categories({ id }: { id?: string }) {
               disabled={action.isPending}
             />
           )}
-          <GLFormSection title={t('cover')}>
-            <div className="gl-cover-editor">
+          <BPFormSection title={t('cover')}>
+            <div className="bp-cover-editor">
               {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} />}
-              <GLButton variant="secondary" onClick={() => setCoverOpen(true)}>
+              <BPButton variant="secondary" onClick={() => setCoverOpen(true)}>
                 {t('cover')}
-              </GLButton>
+              </BPButton>
               {cover && (
-                <GLButton variant="secondary" onClick={() => setCover(null)}>
+                <BPButton variant="secondary" onClick={() => setCover(null)}>
                   {t('detach')}
-                </GLButton>
+                </BPButton>
               )}
             </div>
-          </GLFormSection>
+          </BPFormSection>
           <ActionFeedback
             action={action}
             reload={async () => {
@@ -554,8 +554,8 @@ export function Categories({ id }: { id?: string }) {
             }}
           />
           {reloadError != null && <StaffError error={reloadError} />}
-          <GLActionBar>
-            <GLButton
+          <BPActionBar>
+            <BPButton
               variant="ghost"
               disabled={action.isPending}
               onClick={async () => {
@@ -564,8 +564,8 @@ export function Categories({ id }: { id?: string }) {
             >
               <X size={18} aria-hidden="true" />
               {t('cancel')}
-            </GLButton>
-            <GLButton type="submit" loading={action.isPending}>
+            </BPButton>
+            <BPButton type="submit" loading={action.isPending}>
               {editor?.kind === 'create' ? (
                 <Plus size={18} aria-hidden="true" />
               ) : (
@@ -576,8 +576,8 @@ export function Categories({ id }: { id?: string }) {
                   ? t('createSubcategory')
                   : t('createRootCategory')
                 : t('save')}
-            </GLButton>
-          </GLActionBar>
+            </BPButton>
+          </BPActionBar>
         </form>
       </FocusedEditor>
       <MediaPicker
@@ -586,8 +586,8 @@ export function Categories({ id }: { id?: string }) {
         allowedKind="IMAGE"
         onSelect={(asset) => setCover(asset.id)}
       />
-      <GLModal
-        className="gl-admin-overlay"
+      <BPModal
+        className="bp-admin-overlay"
         open={!!blocked}
         title={t('cannotAddSubcategory')}
         onClose={() => setBlocked(null)}
@@ -597,11 +597,11 @@ export function Categories({ id }: { id?: string }) {
           {t('products')}: <bdi>{blocked?.activeProductCount}</bdi>
         </p>
         <p>{t('leafRule')}</p>
-        <GLButton onClick={() => setBlocked(null)}>
+        <BPButton onClick={() => setBlocked(null)}>
           <X size={18} aria-hidden="true" />
           {t('close')}
-        </GLButton>
-      </GLModal>
+        </BPButton>
+      </BPModal>
       {deleteTarget && (
         <DeletionDialog
           path={'/admin/categories/' + deleteTarget.id}
@@ -614,8 +614,8 @@ export function Categories({ id }: { id?: string }) {
         />
       )}
 
-      <GLModal
-        className="gl-admin-overlay"
+      <BPModal
+        className="bp-admin-overlay"
         open={!!moveTarget}
         title={t('moveCategory')}
         onClose={() => {
@@ -630,13 +630,13 @@ export function Categories({ id }: { id?: string }) {
             .join(' / ') || moveTarget?.name}
         </p>
         {movePath.hasNextPage && (
-          <GLButton
+          <BPButton
             variant="text"
             loading={movePath.isFetchingNextPage}
             onClick={() => void movePath.fetchNextPage()}
           >
             {t('morePath')}
-          </GLButton>
+          </BPButton>
         )}
         <p>
           {t('newLocation')}:{' '}
@@ -644,8 +644,8 @@ export function Categories({ id }: { id?: string }) {
             ' / ',
           )}
         </p>
-        <div className="gl-category-destination-path">
-          <GLButton
+        <div className="bp-category-destination-path">
+          <BPButton
             variant="text"
             onClick={() => {
               setDestination(null);
@@ -655,9 +655,9 @@ export function Categories({ id }: { id?: string }) {
             }}
           >
             {t('root')}
-          </GLButton>
+          </BPButton>
           {destinationTrail.map((category, index) => (
-            <GLButton
+            <BPButton
               key={category.id}
               variant="text"
               onClick={() => {
@@ -668,15 +668,15 @@ export function Categories({ id }: { id?: string }) {
               }}
             >
               {category.name}
-            </GLButton>
+            </BPButton>
           ))}
         </div>
-        <GLInput
+        <BPInput
           label={t('searchDestinationBranch')}
           value={destinationSearch}
           onChange={(event) => setDestinationSearch(event.target.value)}
         />
-        <div className="gl-category-destinations">
+        <div className="bp-category-destinations">
           {destinations.isPending && <p role="status">{t('loading')}</p>}
           {destinations.data?.items
             .filter((category) =>
@@ -685,7 +685,7 @@ export function Categories({ id }: { id?: string }) {
                 .includes(destinationSearch.toLocaleLowerCase(locale)),
             )
             .map((category) => (
-              <GLButton
+              <BPButton
                 key={category.id}
                 variant="ghost"
                 disabled={!category.canAddChildren}
@@ -700,25 +700,25 @@ export function Categories({ id }: { id?: string }) {
                 }}
               >
                 {category.name}
-              </GLButton>
+              </BPButton>
             ))}
         </div>
         {destinations.error && (
-          <GLAlert tone="error">
+          <BPAlert tone="error">
             {t('error')}
-            <GLButton variant="text" onClick={() => void destinations.refetch()}>
+            <BPButton variant="text" onClick={() => void destinations.refetch()}>
               <ArrowUpDown size={18} aria-hidden="true" />
               {t('retry')}
-            </GLButton>
-          </GLAlert>
+            </BPButton>
+          </BPAlert>
         )}
         {destinations.data?.nextCursor && (
-          <GLButton
+          <BPButton
             variant="text"
             onClick={() => setDestinationCursor(destinations.data!.nextCursor!)}
           >
             {t('moreCategories')}
-          </GLButton>
+          </BPButton>
         )}
         <ActionFeedback
           action={action}
@@ -741,12 +741,12 @@ export function Categories({ id }: { id?: string }) {
           }}
         />
         {reloadError != null && <StaffError error={reloadError} />}
-        <GLActionBar>
-          <GLButton variant="ghost" disabled={action.isPending} onClick={() => setMoveTarget(null)}>
+        <BPActionBar>
+          <BPButton variant="ghost" disabled={action.isPending} onClick={() => setMoveTarget(null)}>
             <X size={18} aria-hidden="true" />
             {t('cancel')}
-          </GLButton>
-          <GLButton
+          </BPButton>
+          <BPButton
             disabled={!source.data || !destinations.data || destination === moveTarget?.parentId}
             loading={action.isPending}
             onClick={() => {
@@ -782,9 +782,9 @@ export function Categories({ id }: { id?: string }) {
             }}
           >
             {t('moveCategory')}
-          </GLButton>
-        </GLActionBar>
-      </GLModal>
+          </BPButton>
+        </BPActionBar>
+      </BPModal>
     </>
   );
 }

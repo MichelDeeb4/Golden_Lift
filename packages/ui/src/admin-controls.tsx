@@ -1,9 +1,9 @@
 import type { ReactNode, CSSProperties } from 'react';
-import { X, Trash2 } from '@golden-lift/icons';
-import { GLButton } from './primitives';
-import { GLModal } from './overlays';
+import { X, Trash2 } from '@business-platform/icons';
+import { BPButton } from './primitives';
+import { BPModal } from './overlays';
 
-export function GLFilterToolbar({
+export function BPFilterToolbar({
   children,
   label,
   fields = 1,
@@ -14,15 +14,15 @@ export function GLFilterToolbar({
 }) {
   return (
     <section
-      className="gl-filter-toolbar"
+      className="bp-filter-toolbar"
       aria-label={label}
-      style={{ '--gl-filter-count': fields } as CSSProperties}
+      style={{ '--bp-filter-count': fields } as CSSProperties}
     >
       {children}
     </section>
   );
 }
-export function GLConfirmDialog({
+export function BPConfirmDialog({
   open,
   title,
   children,
@@ -46,28 +46,29 @@ export function GLConfirmDialog({
   icon?: ReactNode;
 }) {
   return (
-    <GLModal
+    <BPModal
       open={open}
+      className="bp-confirm-dialog"
       title={title}
       onClose={() => {
         if (!pending) onClose();
       }}
     >
       {children}
-      <div className="gl-dialog-actions">
-        <GLButton variant="secondary" disabled={pending} onClick={onClose}>
+      <div className="bp-dialog-actions">
+        <BPButton variant="secondary" disabled={pending} onClick={onClose}>
           <X size={18} aria-hidden="true" />
           {cancelLabel}
-        </GLButton>
-        <GLButton variant={variant} loading={pending} onClick={onConfirm}>
+        </BPButton>
+        <BPButton variant={variant} loading={pending} onClick={onConfirm}>
           {icon ?? <Trash2 size={18} aria-hidden="true" />}
           {confirmLabel}
-        </GLButton>
+        </BPButton>
       </div>
-    </GLModal>
+    </BPModal>
   );
 }
-export function GLUnsavedChangesDialog({
+export function BPUnsavedChangesDialog({
   open,
   title,
   description,
@@ -85,7 +86,7 @@ export function GLUnsavedChangesDialog({
   onLeave: () => void;
 }) {
   return (
-    <GLConfirmDialog
+    <BPConfirmDialog
       open={open}
       title={title}
       onClose={onStay}
@@ -95,6 +96,6 @@ export function GLUnsavedChangesDialog({
       icon={<X size={18} aria-hidden="true" />}
     >
       <p>{description}</p>
-    </GLConfirmDialog>
+    </BPConfirmDialog>
   );
 }

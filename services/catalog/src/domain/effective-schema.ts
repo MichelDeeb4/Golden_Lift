@@ -9,7 +9,7 @@ import type {
   SchemaGroupDto,
   FormField,
   Locale,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export function translated(items: readonly CatalogTranslation[], language: Locale) {
   const selected = items.find((t) => t.locale === language),
     ar = items.find((t) => t.locale === 'ar');

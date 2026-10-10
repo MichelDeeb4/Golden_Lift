@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Save, Trash2, Archive, X } from '@golden-lift/icons';
+import { Save, Trash2, Archive, X } from '@business-platform/icons';
 import { z } from 'zod';
-import { GLButton, GLModal } from '@golden-lift/ui';
+import { BPButton, BPModal } from '@business-platform/ui';
 import { useStaffApi, useStaffFeedback } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, jsonResponse, useAction } from './common';
@@ -95,18 +95,18 @@ export function ReviewedChange({
     <>
       {!autoOpen && (
         <>
-          <GLButton
+          <BPButton
             variant={destructive ? 'destructive' : warning ? 'warning' : 'primary'}
             loading={action.isPending}
             onClick={preview}
           >
             <Icon size={18} aria-hidden="true" />
             {label}
-          </GLButton>
+          </BPButton>
         </>
       )}
       {!open && <ActionFeedback action={action} reload={reloadLatest} />}
-      <GLModal
+      <BPModal
         open={open}
         onClose={() => {
           if (!action.isPending) {
@@ -128,7 +128,7 @@ export function ReviewedChange({
         </p>
         {impact?.blockers.length ? <p role="alert">{t('error')}</p> : null}
         <ActionFeedback action={action} reload={reloadLatest} />
-        <GLButton
+        <BPButton
           variant={destructive ? 'destructive' : warning ? 'warning' : 'primary'}
           disabled={!impact || !!impact.blockers.length}
           loading={action.isPending}
@@ -162,8 +162,8 @@ export function ReviewedChange({
         >
           <Icon size={18} aria-hidden="true" />
           {t('apply')}
-        </GLButton>
-        <GLButton
+        </BPButton>
+        <BPButton
           variant="secondary"
           disabled={action.isPending}
           onClick={() => {
@@ -173,8 +173,8 @@ export function ReviewedChange({
         >
           <X size={18} aria-hidden="true" />
           {t('cancel')}
-        </GLButton>
-      </GLModal>
+        </BPButton>
+      </BPModal>
     </>
   );
 }

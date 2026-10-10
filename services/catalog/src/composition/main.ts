@@ -4,7 +4,7 @@ import {
   startupFailed,
   IdentitySessionClient,
   identityClientConfig,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { catalogApplication } from './application.js';
 try {
   const config = serviceConfig('catalog'),

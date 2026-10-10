@@ -5,8 +5,8 @@ import {
   serviceConfig,
   closePersistence,
   startupFailed,
-} from '@golden-lift/platform';
-import type { MediaKind } from '@golden-lift/contracts';
+} from '@business-platform/platform';
+import type { MediaKind } from '@business-platform/contracts';
 import { mediaConfig } from '../infrastructure/config.js';
 import { ClamAvScanner } from '../infrastructure/scanning/clamav.js';
 import { SystemMediaProcessor } from '../infrastructure/processes/pipeline.js';
@@ -88,7 +88,7 @@ try {
     }
   }
   const reconciliation = new ReconcileMedia(transactions, storage, settings.policy.maxAttempts);
-  let cursor: import('@golden-lift/contracts').Uuid | null = null,
+  let cursor: import('@business-platform/contracts').Uuid | null = null,
     reconciling = false;
   const timer = setInterval(() => {
     if (reconciling) return;

@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 export class BoundedRateLimiter {
   private readonly entries = new Map<string, { count: number; expires: number }>();
   constructor(

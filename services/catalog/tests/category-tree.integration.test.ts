@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
   CategoryCollectionPage,
   AdminCategoryDto,
   BreadcrumbPage,
   DeletionImpact,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import pg from 'pg';
-import { httpConfig } from '@golden-lift/platform';
+import { httpConfig } from '@business-platform/platform';
 import { databaseFixture } from '../../../packages/platform/tests/support/database-fixture.js';
 import type { CatalogUnitOfWork } from '../src/application/ports/catalog.js';
 import { orm } from '../src/infrastructure/prisma/client.js';

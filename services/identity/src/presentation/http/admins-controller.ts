@@ -12,7 +12,7 @@ import {
   Query,
   HttpCode,
 } from '@nestjs/common';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type { DirectoryCursor } from '../../application/ports/identity.js';
 import { IDENTITY_HTTP, body, principal } from './context.js';
 import type { IdentityHttp } from './context.js';

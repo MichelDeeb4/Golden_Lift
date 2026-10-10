@@ -3,7 +3,7 @@ import type {
   CategorySchemaResponse,
   Locale,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { categoryFormSchema } from '../../domain/effective-schema.js';
 import type { CategorySchemaReader } from '../ports/category-schema.js';

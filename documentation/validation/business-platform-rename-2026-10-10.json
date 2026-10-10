@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-10",
+  "scope": "Business Platform identity rename",
+  "checks": {
+    "workspaceInstall": {
+      "result": "passed",
+      "command": "npm install --offline --ignore-scripts --no-audit --no-fund",
+      "workspaces": 14
+    },
+    "dependencyIntegrity": {
+      "result": "passed",
+      "externalIntegrityDifferences": 0
+    },
+    "backendBuild": {
+      "result": "passed",
+      "prismaClients": 4
+    },
+    "typecheck": {
+      "result": "passed"
+    },
+    "lint": {
+      "result": "passed",
+      "sourceFiles": 245,
+      "enforcementProbes": 14,
+      "prismaSchemas": 4
+    },
+    "backendUnit": {
+      "result": "passed",
+      "tests": 43
+    },
+    "frontendUnit": {
+      "result": "passed",
+      "tests": 10
+    },
+    "postgresHttpIntegration": {
+      "result": "passed",
+      "tests": 105
+    },
+    "installedOrmParity": {
+      "result": "passed",
+      "models": 71,
+      "columns": 714,
+      "foreignKeys": 76
+    },
+    "dataPreservation": {
+      "result": "passed",
+      "tables": 71,
+      "rowCountAndSha256": "identical before/after"
+    },
+    "catalogMigration": {
+      "result": "passed",
+      "tests": 22
+    },
+    "freshUpgrade": {
+      "result": "passed",
+      "catalogProfile": "v1.2",
+      "services": 4,
+      "crossDatabaseDenials": 12,
+      "concurrencyScenarios": 4
+    },
+    "backendProcesses": {
+      "result": "passed",
+      "services": 5
+    },
+    "publicDemoBrowser": {
+      "result": "passed",
+      "tests": 5,
+      "snapshots": 7,
+      "comparisonAfterUpdate": "passed"
+    },
+    "adminBrowser": {
+      "result": "passed",
+      "tests": 46,
+      "visualComparisonAfterUpdate": "passed",
+      "snapshots": 24
+    },
+    "nativeMedia": {
+      "result": "passed",
+      "kinds": ["IMAGE", "VIDEO", "PDF"],
+      "scanner": "ClamAV",
+      "processors": ["Sharp", "FFmpeg", "Poppler"],
+      "transport": "signed local HTTP",
+      "physicalDeletion": "verified"
+    },
+    "restoredDevelopment": {
+      "result": "passed",
+      "services": 5,
+      "frontend": true,
+      "scanner": true
+    },
+    "livePublicBrowser": {
+      "result": "passed",
+      "tests": 3,
+      "comparisonAfterUpdate": "passed",
+      "snapshots": 7
+    },
+    "rabbitBroker": {
+      "result": "not available",
+      "cutoverUnitGateTests": 2
+    },
+    "hostedProviders": {
+      "result": "not executed"
+    },
+    "finalSearch": {
+      "result": "passed",
+      "unexplained": 0,
+      "oldActiveWorkspaceNamespace": 0,
+      "oldActiveUiIdentifiers": 0,
+      "retainedLines": 146
+    },
+    "diffWhitespace": {
+      "result": "passed",
+      "note": "Git warned about configured Windows LF/CRLF conversion; exit 0."
+    },
+    "workspaceTree": {
+      "result": "passed",
+      "command": "npm ls --workspaces --depth=0",
+      "workspaces": 14
+    }
+  },
+  "knownLegacyFailures": [
+    {
+      "command": "node database/scripts/db.mjs verify",
+      "reason": "Defaults to Catalog v1.1; incompatible with existing migrated category schema. Disposable explicit v1.2 verifier passed."
+    },
+    {
+      "command": "node scripts/identity-smoke.mjs",
+      "reason": "Historical /deletion-preview route returns 404. Current auth/unit/integration/Admin browser scenarios passed; no assertions removed."
+    }
+  ],
+  "manualActions": [
+    "Rename GitHub MichelDeeb4/Golden_Lift to business-platform and update origin.",
+    "After stopping processes/cluster and closing IDE, rename physical folder and regenerate absolute local Media tool/profile paths."
+  ],
+  "completion": {
+    "implementation": "complete",
+    "currentLocalAcceptance": "passed",
+    "legacyCommands": "two documented failures",
+    "hostingDirectoryRename": "manual",
+    "nextArchitecturePhase": "ready for decision/baseline work; no tenancy approval implied"
+  }
+}

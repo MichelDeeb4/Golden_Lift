@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 
 /** Argument arrays only. POSIX process groups / Windows taskkill terminate the complete child tree. */
 export function run(

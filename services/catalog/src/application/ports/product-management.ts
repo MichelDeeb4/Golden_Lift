@@ -8,7 +8,7 @@ import type {
   ProductMediaDto,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface ProductListInput {
   readonly locale: Locale;
   readonly categoryId?: Uuid;

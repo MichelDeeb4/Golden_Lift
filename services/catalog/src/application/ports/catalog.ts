@@ -1,4 +1,10 @@
-import type { CategoryDto, EventEnvelope, Locale, Uuid, Version } from '@golden-lift/contracts';
+import type {
+  CategoryDto,
+  EventEnvelope,
+  Locale,
+  Uuid,
+  Version,
+} from '@business-platform/contracts';
 import type { ConfigurationCollectionReader } from './configuration-collection.js';
 import type { CatalogRelationships } from './catalog-relationships.js';
 import type { Translation } from '../../domain/category.js';

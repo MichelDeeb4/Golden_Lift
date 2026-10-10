@@ -1,11 +1,11 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   BranchDeletionPreview,
   BranchDeletionResult,
   DeleteBranchInput,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { requireRevision } from '../../domain/category-order.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';

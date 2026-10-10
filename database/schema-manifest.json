@@ -2,7 +2,7 @@
   "schemaVersion": "1.5",
   "physicalTables": 71,
   "databases": {
-    "golden_lift_identity": [
+    "business_platform_identity": [
       {
         "table": "staff_accounts",
         "schema": "identity",
@@ -498,7 +498,7 @@
         ]
       }
     ],
-    "golden_lift_catalog": [
+    "business_platform_catalog": [
       {
         "table": "attribute_group_attributes",
         "schema": "catalog",
@@ -5858,7 +5858,7 @@
         ]
       }
     ],
-    "golden_lift_media": [
+    "business_platform_media": [
       {
         "table": "asset_variants",
         "schema": "media",
@@ -6807,7 +6807,7 @@
         ]
       }
     ],
-    "golden_lift_inquiries": [
+    "business_platform_inquiries": [
       {
         "table": "inquiries",
         "schema": "inquiries",

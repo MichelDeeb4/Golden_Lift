@@ -1,6 +1,11 @@
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { ManagedProductDto, ProductMediaDto, Uuid, Version } from '@golden-lift/contracts';
-import { retryTransaction } from '@golden-lift/platform';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type {
+  ManagedProductDto,
+  ProductMediaDto,
+  Uuid,
+  Version,
+} from '@business-platform/contracts';
+import { retryTransaction } from '@business-platform/platform';
 import type {
   ProductListInput,
   ProductManagementRepository,

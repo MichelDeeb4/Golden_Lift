@@ -25,7 +25,7 @@ After source edits, rebuild and restart the dev command. Keep the dev command ru
 | Media     | http://127.0.0.1:3003 |
 | Inquiries | http://127.0.0.1:3004 |
 
-Start just one service with npm run dev -- catalog, or use npm start --workspace=@golden-lift/catalog after building. Each service checks its runtime role, database and owning schema before listening. Production requires an explicit runtime URL and never falls back to local credentials. Configuration failures log safe field names rather than connection strings.
+Start just one service with npm run dev -- catalog, or use npm start --workspace=@business-platform/catalog after building. Each service checks its runtime role, database and owning schema before listening. Production requires an explicit runtime URL and never falls back to local credentials. Configuration failures log safe field names rather than connection strings.
 
 ## Available HTTP endpoints
 
@@ -59,7 +59,7 @@ Smoke checks start the five actual entrypoints on temporary loopback ports, exer
 Build a service image when Docker is available:
 
 ```text
-docker build -f infrastructure/containers/Dockerfile --build-arg SERVICE_NAME=catalog -t golden-lift/catalog:local .
+docker build -f infrastructure/containers/Dockerfile --build-arg SERVICE_NAME=catalog -t business-platform/catalog:local .
 ```
 
 Supply CATALOG_DATABASE_URL, IDENTITY_SERVICE_URL and CATALOG_IDENTITY_SERVICE_TOKEN for Catalog, plus the approved origin configuration. The container runs as node with production configuration and HOST=0.0.0.0. Do not point a container at its own 127.0.0.1 to reach the Windows PostgreSQL host; use the appropriate container-network host address. Containers need reachable databases and gateway upstreams, secret injection and TLS routing. The recipe and hosted CI configuration have been added but not executed locally.

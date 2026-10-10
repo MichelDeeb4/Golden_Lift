@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { ConfigurationError } from '@golden-lift/platform';
+import { ConfigurationError } from '@business-platform/platform';
 import type { MediaPolicy } from '../domain/media-policy.js';
 
 function number(env: NodeJS.ProcessEnv, key: string, fallback: number, max: number) {

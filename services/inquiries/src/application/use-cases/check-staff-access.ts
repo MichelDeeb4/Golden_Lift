@@ -2,7 +2,7 @@ import type {
   AuthenticatedActor,
   SessionAuthenticator,
   StaffRequest,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireAdmin } from '../../domain/staff-access.js';
 export class CheckStaffAccess {
   constructor(private readonly authentication: SessionAuthenticator) {}

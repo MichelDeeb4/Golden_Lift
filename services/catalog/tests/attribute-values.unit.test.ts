@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { uuid, version } from '@golden-lift/contracts';
+import { uuid, version } from '@business-platform/contracts';
 import type {
   AttributeKind,
   EffectiveCategorySchema,
   EffectiveAttributeDto,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import {
   applyValueMutations,
   exactQuantity,

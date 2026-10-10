@@ -1,4 +1,4 @@
-import type { CatalogTranslation, Uuid } from '@golden-lift/contracts';
+import type { CatalogTranslation, Uuid } from '@business-platform/contracts';
 import type {
   AttributeGroupRepository,
   NamedDraft,

@@ -2,7 +2,9 @@ import { expect, test } from '@playwright/test';
 import type { Page, Locator } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
-const captureRoot = process.env.GL_ADMIN_CAPTURE_ROOT ?? process.env.GL_STAFF_CAPTURE_DIR;
+const captureRoot =
+  process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT ??
+  process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR;
 const captures = captureRoot
   ? captureRoot + '/pagination'
   : 'documentation/assets/admin-actions-dialogs-filters/pagination-regression';
@@ -25,7 +27,7 @@ async function select(page: Page, control: Locator, name: string) {
 }
 async function login(page: Page, superAdmin = false, locale = 'en') {
   await page.addInitScript((value) => {
-    if (!localStorage.getItem('gl.locale')) localStorage.setItem('gl.locale', value);
+    if (!localStorage.getItem('bp.locale')) localStorage.setItem('bp.locale', value);
   }, locale);
   await page.goto('/admin/login');
   await page
@@ -38,9 +40,9 @@ async function login(page: Page, superAdmin = false, locale = 'en') {
   browserFailures.get(page)?.splice(0);
 }
 async function request(page: Page, path: string, data?: unknown, method = data ? 'POST' : 'GET') {
-  const session = await page.request.get('http://localhost:3000/api/v1/auth/session');
+  const session = await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session');
   const { csrfToken } = await session.json();
-  const response = await page.request.fetch('http://localhost:3000/api/v1' + path, {
+  const response = await page.request.fetch(fixture.gatewayOrigin + '/api/v1' + path, {
     method,
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
     ...(data ? { data } : {}),
@@ -52,7 +54,9 @@ function translations(name: string) {
   return ['ar', 'en', 'ckb'].map((locale) => ({ locale, name, description: null }));
 }
 test.beforeAll(async ({ browser }) => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
   const page = await browser.newPage({ baseURL: 'http://localhost:8082' });
   await login(page);
   for (let i = 0; i < 63; i++)
@@ -157,8 +161,10 @@ test('owning APIs validate bounds, filtered totals, stable ordering and role sep
     '/admin/media/assets?limit=101',
     '/admin/media/assets?search=' + 'x'.repeat(121),
   ])
-    expect((await page.request.get('http://localhost:3000/api/v1' + route)).status()).toBe(400);
-  expect((await page.request.get('http://localhost:3000/api/v1/staff/admins')).status()).toBe(403);
+    expect((await page.request.get(fixture.gatewayOrigin + '/api/v1' + route)).status()).toBe(400);
+  expect((await page.request.get(fixture.gatewayOrigin + '/api/v1/staff/admins')).status()).toBe(
+    403,
+  );
   const media = await request(
     page,
     '/admin/media/assets?limit=25&kind=IMAGE&status=READY&search=Paged%20Media',
@@ -169,7 +175,7 @@ test('owning APIs validate bounds, filtered totals, stable ordering and role sep
   await page.context().clearCookies();
   await login(page, true);
   expect(
-    (await page.request.get('http://localhost:3000/api/v1/admin/attributes?page=1')).status(),
+    (await page.request.get(fixture.gatewayOrigin + '/api/v1/admin/attributes?page=1')).status(),
   ).toBe(403);
 });
 test('63 attributes use bounded server pages, URL history, page size and normalized out-of-range pages', async ({
@@ -244,7 +250,9 @@ test('slow collection requests retain rows and disabled controls; a real outage 
   await page.getByRole('button', { name: 'Retry', exact: true }).click();
   await expect(nav(page)).toContainText('26–45 of 45');
   await expect(page).toHaveURL(/kind=NUMBER.*page=2.*q=PAGE-ATTR/);
-  await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue('PAGE-ATTR');
+  await expect(page.getByRole('searchbox', { name: 'Search', exact: true })).toHaveValue(
+    'PAGE-ATTR',
+  );
   await intact(page, retryToken);
 });
 
@@ -292,13 +300,13 @@ test('deleting the only group on page two returns to page one without losing fil
     .click();
   await page.getByRole('menu').getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await page
-    .getByRole('dialog', { name: 'Review change impact', exact: true })
-    .getByRole('button', { name: 'Apply reviewed change', exact: true })
+    .getByRole('dialog', { name: 'Deletion impact', exact: true })
+    .getByRole('button', { name: 'Permanently delete', exact: true })
     .click();
   await expect(page).toHaveURL(/page=1/);
   await expect(page.locator('tbody tr')).toHaveCount(25);
   await expect(nav(page)).toContainText('1–25 of 25');
-  await expect(page.getByRole('textbox', { name: 'Search', exact: true })).toHaveValue(
+  await expect(page.getByRole('searchbox', { name: 'Search', exact: true })).toHaveValue(
     'PAGE-GROUP',
   );
   await intact(page, token);
@@ -320,7 +328,7 @@ test('Attributes and Groups scroll in document flow without crossing rows, at de
         const check = async () => {
           expect(
             await page
-              .locator('.gl-configuration-table')
+              .locator('.bp-configuration-table')
               .evaluate((e) => getComputedStyle(e).position),
           ).toBe('static');
           await expect(
@@ -331,12 +339,12 @@ test('Attributes and Groups scroll in document flow without crossing rows, at de
           ).toHaveCount(0);
           expect(
             await page
-              .locator('.gl-admin-table-scroll')
+              .locator('.bp-admin-table-scroll')
               .evaluate((e) => ({ height: e.clientHeight, scroll: e.scrollHeight })),
           ).toMatchObject({ height: expect.any(Number), scroll: expect.any(Number) });
           expect(
             await page
-              .locator('.gl-admin-table-scroll')
+              .locator('.bp-admin-table-scroll')
               .evaluate((e) => e.scrollHeight - e.clientHeight),
           ).toBeLessThanOrEqual(1);
           expect(
@@ -416,9 +424,9 @@ test('Arabic/Sorani mobile pagination is keyboard usable, bounded horizontally a
     await page.goto('/admin/' + resource + '?pageSize=10');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('tbody tr')).toHaveCount(10);
-    const pagination = page.locator('.gl-data-pagination');
+    const pagination = page.locator('.bp-data-pagination');
     await pagination.scrollIntoViewIfNeeded();
-    const next = pagination.locator('.gl-data-pagination-controls > button').last();
+    const next = pagination.locator('.bp-data-pagination-controls > button').last();
     await next.focus();
     await next.press('Enter');
     await expect(page).toHaveURL(/page=2/);
@@ -427,12 +435,12 @@ test('Arabic/Sorani mobile pagination is keyboard usable, bounded horizontally a
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)).toBe(
       false,
     );
-    await expect(pagination.locator('.gl-data-pagination-pages')).not.toBeVisible();
+    await expect(pagination.locator('.bp-data-pagination-pages')).not.toBeVisible();
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/admin/categories');
   await expect(page.getByRole('tree')).toBeVisible();
-  await expect(page.locator('.gl-data-pagination')).toHaveCount(0);
+  await expect(page.locator('.bp-data-pagination')).toHaveCount(0);
 });
 
 test('Media final-page detection and server filename filter; Super Admin directory uses the same controls', async ({
@@ -440,27 +448,27 @@ test('Media final-page detection and server filename filter; Super Admin directo
 }) => {
   await login(page);
   await page.goto('/admin/media');
-  await expect(page.locator('.gl-asset-card')).toHaveCount(25);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(25);
   const mediaToken = await marker(page);
   await nav(page).getByRole('button', { name: 'Next page', exact: true }).click();
-  await expect(page.locator('.gl-asset-card')).toHaveCount(1);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(1);
   await intact(page, mediaToken);
   await page.reload();
-  await expect(page.locator('.gl-asset-card')).toHaveCount(1);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(1);
   await expect(nav(page).getByRole('button', { name: 'Next page', exact: true })).toBeDisabled();
   await page.getByLabel('Search', { exact: true }).fill('not-present-name');
-  await expect(page.locator('.gl-asset-card')).toHaveCount(0);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(0);
   await expect(nav(page)).toContainText('0–0 of 0');
   await page.getByLabel('Search', { exact: true }).fill('');
-  await expect(page.locator('.gl-asset-card')).toHaveCount(25);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(25);
   await nav(page).getByRole('button', { name: 'Next page', exact: true }).click();
-  await expect(page.locator('.gl-asset-card')).toHaveCount(1);
+  await expect(page.locator('.bp-asset-card')).toHaveCount(1);
   await nav(page).scrollIntoViewIfNeeded();
-  await expect(page.locator('.gl-asset-card img')).toBeVisible();
+  await expect(page.locator('.bp-asset-card img')).toBeVisible();
   await expect
     .poll(() =>
       page
-        .locator('.gl-asset-card img')
+        .locator('.bp-asset-card img')
         .evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0),
     )
     .toBe(true);

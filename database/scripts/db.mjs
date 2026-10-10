@@ -6,7 +6,7 @@ import { verifyFresh } from './verify.mjs';
 import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const local = path.join(root, '.local');
-const configFile = process.env.GL_DATABASE_CONFIG_FILE ? path.resolve(process.env.GL_DATABASE_CONFIG_FILE) : path.join(local, 'database.json');
+const configFile = process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE ? path.resolve(process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE) : path.join(local, 'database.json');
 const pgBin = process.env.PG_BIN || 'C:/Program Files/PostgreSQL/18/bin';
 const exe = name => path.join(pgBin, `${name}${process.platform === 'win32' ? '.exe' : ''}`);
 const services = { identity: ['01_identity.sql', 5], catalog: ['20_catalog_media_legacy_fresh.sql', 43], media: ['18_media_core_fresh.sql', 6], inquiries: ['04_inquiries.sql', 5] };
@@ -44,8 +44,8 @@ export function schemaHash() {
 function init() {
   fs.mkdirSync(local, { recursive: true });
   if (fs.existsSync(configFile)) { start(); return; }
-  const cfg = { port: 55432, adminUser: 'golden_lift_local_admin', adminPassword: secret(), services: {} };
-  for (const name of Object.keys(services)) cfg.services[name] = { database: `golden_lift_${name}`, owner: `golden_lift_${name}_owner`, user: `golden_lift_${name}_runtime`, password: secret() };
+  const cfg = { port: 55432, adminUser: 'business_platform_local_admin', adminPassword: secret(), services: {} };
+  for (const name of Object.keys(services)) cfg.services[name] = { database: `business_platform_${name}`, owner: `business_platform_${name}_owner`, user: `business_platform_${name}_runtime`, password: secret() };
   const probe = spawnSync(exe('pg_isready'), ['-h', '127.0.0.1', '-p', String(cfg.port)], { windowsHide: true });
   if (probe.status === 0) throw new Error('Port 55432 is already in use; refusing to change another server.');
   const pwfile = path.join(local, 'initdb-password');
@@ -80,20 +80,20 @@ function setup() {
   for (const [name, [entry, expectedTables]] of Object.entries(services)) {
     const svc = cfg.services[name];
     // Role names are fixed application identifiers; credentials travel through psql variables.
-    const createRoles = `\\\getenv runtime_password GL_RUNTIME_PASSWORD\n` +
+    const createRoles = `\\\getenv runtime_password BUSINESS_PLATFORM_RUNTIME_PASSWORD\n` +
       `SELECT 'CREATE ROLE ${svc.owner} NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS' WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname='${svc.owner}') \\gexec\n` +
       `SELECT format('CREATE ROLE ${svc.user} LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS', :'runtime_password') WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname='${svc.user}') \\gexec\n` +
       `SELECT 'CREATE DATABASE ${svc.database} OWNER ${svc.owner} TEMPLATE template0 ENCODING ''UTF8''' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='${svc.database}') \\gexec\n`;
-    run('psql', ['-X','-w','-q','-v','ON_ERROR_STOP=1'], { input: createRoles, env: { ...env(cfg), GL_RUNTIME_PASSWORD: svc.password } });
+    run('psql', ['-X','-w','-q','-v','ON_ERROR_STOP=1'], { input: createRoles, env: { ...env(cfg), BUSINESS_PLATFORM_RUNTIME_PASSWORD: svc.password } });
     const marker = sql(cfg, name, `SELECT coalesce(shobj_description(oid,'pg_database'),'') FROM pg_database WHERE datname=current_database()`);
     if (marker) {
-      if (marker !== `Golden Lift schema v1.1 ${hash}`) throw new Error(`${svc.database}: installed schema differs; apply a reviewed migration instead of reapplying initial SQL.`);
+      if (marker !== `Business Platform schema v1.1 ${hash}` && marker !== `Golden Lift schema v1.1 ${hash}`) throw new Error(`${svc.database}: installed schema differs; apply a reviewed migration instead of reapplying initial SQL.`);
       console.log(`${svc.database}: schema v1.1 already installed.`);
     } else {
       const existing = sql(cfg, name, `SELECT count(*) FROM pg_tables WHERE schemaname IN ('identity','catalog','media','inquiries','ops')`);
       if (existing !== '0') throw new Error(`${svc.database}: untracked existing tables; refusing to overwrite them.`);
       file(cfg, name, 'sql/' + entry, { owner: true, atomic: true });
-      sql(cfg, name, `COMMENT ON DATABASE ${svc.database} IS 'Golden Lift schema v1.1 ${hash}'`);
+      sql(cfg, name, `COMMENT ON DATABASE ${svc.database} IS 'Business Platform schema v1.1 ${hash}'`);
       console.log(`${svc.database}: installed.`);
     }
     grantRuntime(cfg,name);
@@ -138,7 +138,7 @@ function manifest() {
   const cfg=config();
   const databases={};
   for(const name of Object.keys(services)) {
-    databases['golden_lift_'+name]=JSON.parse(sql(cfg,name,`
+    databases['business_platform_'+name]=JSON.parse(sql(cfg,name,`
       SELECT jsonb_agg(jsonb_build_object('schema',n.nspname,'table',c.relname,
         'columns',(SELECT jsonb_agg(jsonb_build_object('name',a.attname,'type',format_type(a.atttypid,a.atttypmod),'nullable',NOT a.attnotnull,'generated',a.attgenerated,'default',pg_get_expr(d.adbin,d.adrelid)) ORDER BY a.attnum) FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum WHERE a.attrelid=c.oid AND a.attnum>0 AND NOT a.attisdropped),
         'constraints',(SELECT coalesce(jsonb_agg(pg_get_constraintdef(k.oid) ORDER BY k.conname),'[]'::jsonb) FROM pg_constraint k WHERE k.conrelid=c.oid),
@@ -147,7 +147,7 @@ function manifest() {
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND n.nspname IN ('${name}','ops')
     `));
   }
-  const schemaVersion=databases.golden_lift_catalog.some(t=>t.table==='deletion_operations')?'1.5':databases.golden_lift_catalog.some(t=>t.table==='products'&&t.columns.some(c=>c.name==='is_active'))?'1.4':databases.golden_lift_media.some(t=>t.columns.some(c=>c.name==='pipeline_version'))?'1.3':databases.golden_lift_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
+  const schemaVersion=databases.business_platform_catalog.some(t=>t.table==='deletion_operations')?'1.5':databases.business_platform_catalog.some(t=>t.table==='products'&&t.columns.some(c=>c.name==='is_active'))?'1.4':databases.business_platform_media.some(t=>t.columns.some(c=>c.name==='pipeline_version'))?'1.3':databases.business_platform_catalog.some(t=>t.table==='product_types')?'1.2':'1.1';
   fs.writeFileSync(path.join(root,'database/schema-manifest.json'),JSON.stringify({schemaVersion,physicalTables:Object.values(databases).reduce((sum,t)=>sum+t.length,0),databases},null,2)+'\n');
   console.log('Exported the installed column, constraint, index and trigger dictionary.');
 }

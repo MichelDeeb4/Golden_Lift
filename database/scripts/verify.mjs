@@ -26,8 +26,8 @@ function client(cfg,service,label) {
   };
 }
 async function conflict(cfg,aMutation,bMutation,staleRetry) {
-  const a=client(cfg,'catalog','golden_lift_test_a');
-  const b=client(cfg,'catalog','golden_lift_test_b');
+  const a=client(cfg,'catalog','business_platform_test_a');
+  const b=client(cfg,'catalog','business_platform_test_b');
   try {
     a.write(`BEGIN ISOLATION LEVEL SERIALIZABLE; ${aMutation}\n\\echo A_LOCKED`);
     await a.wait('A_LOCKED');
@@ -37,7 +37,7 @@ async function conflict(cfg,aMutation,bMutation,staleRetry) {
     // Observe actual contention, rather than treating sequential calls as a concurrency test.
     let blocked=false;
     for(let i=0;i<100;i++) {
-      if(sql(cfg,'catalog',"SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='golden_lift_test_b' AND wait_event_type='Lock')")==='t') {blocked=true;break;}
+      if(sql(cfg,'catalog',"SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE application_name='business_platform_test_b' AND wait_event_type='Lock')")==='t') {blocked=true;break;}
       await new Promise(resolve=>setTimeout(resolve,20));
     }
     assert(blocked,'second independent connection waited on the Catalog write gate');
@@ -49,7 +49,7 @@ async function conflict(cfg,aMutation,bMutation,staleRetry) {
       const count=sql(cfg,'catalog','BEGIN ISOLATION LEVEL SERIALIZABLE; '+staleRetry+' COMMIT;',true);
       assert(count.split(/\r?\n/).includes('0'),'stale expected version updates zero rows');
     } else {
-      const retry=client(cfg,'catalog','golden_lift_test_retry');
+      const retry=client(cfg,'catalog','business_platform_test_retry');
       retry.end('BEGIN ISOLATION LEVEL SERIALIZABLE; '+bMutation+' COMMIT;');
       const rr=await retry.done;
       assert(rr.code!==0 && rr.error.includes('23514'),'retried incompatible operation is rejected: '+rr.error);
@@ -84,8 +84,8 @@ async function concurrency(cfg) {
     INSERT INTO media.processing_jobs(id,asset_id,job_type) VALUES('d6000000-0000-4000-8000-000000000001','d5000000-0000-4000-8000-000000000001','VALIDATE');`,true);
   const claim=`WITH picked AS (SELECT id FROM media.processing_jobs WHERE status='QUEUED' AND deleted_at IS NULL ORDER BY next_attempt_at,id LIMIT 1 FOR UPDATE SKIP LOCKED)
     UPDATE media.processing_jobs j SET status='RUNNING',locked_until=clock_timestamp()+interval '1 minute',lease_token=gen_random_uuid() FROM picked p WHERE j.id=p.id RETURNING j.id;`;
-  const a=client(cfg,'media','golden_lift_worker_a');
-  const b=client(cfg,'media','golden_lift_worker_b');
+  const a=client(cfg,'media','business_platform_worker_a');
+  const b=client(cfg,'media','business_platform_worker_b');
   try {
     a.write('BEGIN; '+claim+'\n\\echo WORKER_LOCKED'); await a.wait('WORKER_LOCKED');
     b.end('BEGIN; '+claim+' COMMIT;'); const br=await b.done;
@@ -113,7 +113,7 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
     const mediaCore=sql(cfg,'media',"SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='media' AND column_name='pipeline_version')")==='t';
     for(const [name,entry] of Object.entries({identity:'01_identity.sql',catalog:catalogProfile==='v1.2'?(catalogMedia?'19_catalog_media_core_fresh.sql':'15_catalog_dynamic.sql'):(catalogMedia?'20_catalog_media_legacy_fresh.sql':'02_catalog.sql'),media:mediaCore?'18_media_core_fresh.sql':'03_media.sql',inquiries:'04_inquiries.sql'})) {
       const s=scratch.services[name];
-      s.database=`golden_lift_test_${suffix}_${name}`;
+      s.database=`business_platform_test_${suffix}_${name}`;
       sql(cfg,null,`CREATE DATABASE ${s.database} OWNER ${s.owner} TEMPLATE template0 ENCODING 'UTF8'`);
       created.push(s.database);
       file(scratch,name,'sql/'+entry,{owner:true,atomic:true});
@@ -126,7 +126,7 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
     // Confirm actual server CONNECT isolation for every pair of service roles.
     for(const name of Object.keys(scratch.services)) for(const other of Object.keys(scratch.services)) {
       if(name===other)continue;
-      const denial=client({...scratch,services:{...scratch.services,[other]:{...scratch.services[other],user:scratch.services[name].user,password:scratch.services[name].password}}},other,'golden_lift_isolation');
+      const denial=client({...scratch,services:{...scratch.services,[other]:{...scratch.services[other],user:scratch.services[name].user,password:scratch.services[name].password}}},other,'business_platform_isolation');
       denial.end('SELECT 1;');
       const result=await denial.done;
       assert(result.code!==0 && (result.error.includes('42501') || result.error.includes('permission denied for database')),'cross-database CONNECT must be denied: '+result.error);
@@ -134,7 +134,7 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
     console.log('PASS service isolation: all 12 cross-database connection attempts denied.');
     // Independently verify the additive migration against the original v1.0 Catalog.
     const upgrade=structuredClone(scratch);
-    upgrade.services.catalog.database=`golden_lift_test_${suffix}_upgrade`;
+    upgrade.services.catalog.database=`business_platform_test_${suffix}_upgrade`;
     const u=upgrade.services.catalog;
     sql(cfg,null,`CREATE DATABASE ${u.database} OWNER ${u.owner} TEMPLATE template0 ENCODING 'UTF8'`);
     created.push(u.database);
@@ -155,7 +155,7 @@ export async function verifyFresh(cfg, { reportPath = path.join(root,'database/v
   } finally {
     // Delete only unique disposable databases created by this verification run, never application databases.
     for(const database of created.reverse()) {
-      assert(database.startsWith(`golden_lift_test_${suffix}_`),'test cleanup namespace');
+      assert(database.startsWith(`business_platform_test_${suffix}_`),'test cleanup namespace');
       sql(cfg,null,`DROP DATABASE ${database}`);
     }
   }

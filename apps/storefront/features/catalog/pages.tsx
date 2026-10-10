@@ -3,55 +3,61 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ApiError, publicProductFilterSchema } from '@golden-lift/api';
-import type { PublicProductFilter } from '@golden-lift/api';
-import { DynamicFilters } from './filters';
 import {
-  GLAlert,
-  GLButton,
-  GLBreadcrumb,
-  GLHeading,
-  GLPageContainer,
-  GLSection,
-  GLText,
-  GLEmptyState,
-  GLPagination,
-  GLInput,
-  GLSelect,
-  GLDrawer,
-  GLPageHeader,
-  GLSkeleton,
-  GLTabs,
-} from '@golden-lift/ui';
+  ApiError,
+  parseCatalogFilterState,
+  normalizeCatalogFilterState,
+  serializeCatalogFilterState,
+} from '@business-platform/api';
+import type { ProductQuery } from '@business-platform/api';
+import { DynamicFilters, CategoryFilterPanel } from './filters';
 import {
-  GLMediaImage,
-  GLCategoryCard,
-  GLProductCard,
-  GLProductCardSkeleton,
-  GLCategoryCardSkeleton,
-  GLProductGallery,
-  GLSpecificationList,
-  GLTechnicalDocumentCard,
-} from '@golden-lift/catalog-ui';
-import { useGLTranslation, useLocale } from '@golden-lift/i18n';
-import { ArrowUpRight, Layers, Ruler, ShieldCheck } from '@golden-lift/icons';
+  BPAlert,
+  BPButton,
+  BPBreadcrumb,
+  BPHeading,
+  BPPageContainer,
+  BPSection,
+  BPText,
+  BPEmptyState,
+  BPPagination,
+  BPInput,
+  BPSelect,
+  BPDrawer,
+  BPSkeleton,
+  BPTabs,
+} from '@business-platform/ui';
+import {
+  BPMediaImage,
+  BPCategoryGrid,
+  BPCategoryHero,
+  BPProductGrid,
+  BPGroupedSpecifications,
+  BPProductCardSkeleton,
+  BPCategoryCardSkeleton,
+  BPProductGallery,
+  BPSpecificationList,
+  BPTechnicalDocumentCard,
+} from '@business-platform/catalog-ui';
+import { useBPTranslation, useLocale } from '@business-platform/i18n';
+import { ArrowUpRight, Layers, Ruler, ShieldCheck } from '@business-platform/icons';
 import { useCategories, useCategory, useProducts, useProduct } from './queries';
 import { useCatalog } from '../../providers/storefront';
 export function useTitle(key: string) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   useEffect(() => {
-    document.title = t(key) + ' | Golden Lift';
+    document.title = t(key) + ' | Business Platform';
   }, [t, key]);
 }
 export function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLAlert tone="error">
+    <BPAlert tone="error">
       {error instanceof ApiError && error.code === 'unsupported' ? t('apiListing') : t('errorBody')}{' '}
-      <GLButton variant="text" onClick={retry}>
+      <BPButton variant="text" onClick={retry}>
         {t('retry')}
-      </GLButton>
-    </GLAlert>
+      </BPButton>
+    </BPAlert>
   );
 }
 function SectionHeading({
@@ -67,18 +73,18 @@ function SectionHeading({
   link?: boolean;
   level?: 1 | 2;
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <div className="gl-section-heading">
+    <div className="bp-section-heading">
       <div>
-        {overline && <div className="gl-overline">{overline}</div>}
-        <GLHeading fluid level={level}>
+        {overline && <div className="bp-overline">{overline}</div>}
+        <BPHeading fluid level={level}>
           {title}
-        </GLHeading>
+        </BPHeading>
         {description && <p>{description}</p>}
       </div>
       {link && (
-        <a className="gl-button gl-button-text gl-button-md" href="/products">
+        <a className="bp-button bp-button-text bp-button-md" href="/products">
           {t('viewAll')} <ArrowUpRight size={18} />
         </a>
       )}
@@ -86,96 +92,89 @@ function SectionHeading({
   );
 }
 export function Values() {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLSection className="gl-dark gl-values">
-      <GLPageContainer>
-        <div className="gl-values-header">
-          <div className="gl-overline">03 / {t('values')}</div>
-          <GLHeading fluid>{t('valueTitle')}</GLHeading>
+    <BPSection className="bp-dark bp-values">
+      <BPPageContainer>
+        <div className="bp-values-header">
+          <div className="bp-overline">03 / {t('values')}</div>
+          <BPHeading fluid>{t('valueTitle')}</BPHeading>
           <p>{t('valueBody')}</p>
         </div>
-        <div className="gl-grid gl-grid-three">
+        <div className="bp-grid bp-grid-three">
           {[
             { icon: Ruler, key: 'value1' },
             { icon: Layers, key: 'value2' },
             { icon: ShieldCheck, key: 'value3' },
           ].map((v, index) => (
-            <div className="gl-value" key={v.key}>
-              <span className="gl-value-index">0{index + 1}</span>
-              <GLHeading fluid level={3} role="heading5">
+            <div className="bp-value" key={v.key}>
+              <span className="bp-value-index">0{index + 1}</span>
+              <BPHeading fluid level={3} role="heading5">
                 {t(v.key)}
-              </GLHeading>
+              </BPHeading>
               <p>{t(v.key + 'Body')}</p>
             </div>
           ))}
         </div>
-      </GLPageContainer>
-    </GLSection>
+      </BPPageContainer>
+    </BPSection>
   );
 }
 export function HomePage() {
   useTitle('home');
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     categories = useCategories(),
     products = useProducts(),
     source = useCatalog();
   return (
     <>
-      <section className="gl-hero">
-        <div className="gl-hero-layout">
-          <div className="gl-hero-content">
-            <div className="gl-overline">GOLDEN LIFT / {t('brand')}</div>
-            <GLHeading fluid level={1} role="displayXL">
+      <section className="bp-hero">
+        <div className="bp-hero-layout">
+          <div className="bp-hero-content">
+            <div className="bp-overline">BUSINESS PLATFORM / {t('brand')}</div>
+            <BPHeading fluid level={1} role="displayXL">
               {t('heroTitle')}
-            </GLHeading>
+            </BPHeading>
             <p>{t('heroBody')}</p>
-            <div className="gl-row">
-              <a href="/products" className="gl-button gl-button-primary gl-button-lg">
+            <div className="bp-row">
+              <a href="/products" className="bp-button bp-button-primary bp-button-lg">
                 {t('explore')} <ArrowUpRight size={18} />
               </a>
-              <a href="/categories" className="gl-button gl-button-ghost gl-button-lg">
+              <a href="/categories" className="bp-button bp-button-ghost bp-button-lg">
                 {t('viewCategories')}
               </a>
             </div>
           </div>
-          <div className="gl-hero-illustration">
+          <div className="bp-hero-illustration">
             <img src="/demo/hero.svg" alt={t('gallery')} fetchPriority="high" />
-            <span className="gl-hero-image-label">GOLDEN LIFT / 01</span>
+            <span className="bp-hero-image-label">BUSINESS PLATFORM / 01</span>
           </div>
-          <span className="gl-hero-number" aria-hidden="true">
-            01 / GL
-          </span>
         </div>
       </section>
-      <GLSection>
-        <GLPageContainer>
+      <BPSection>
+        <BPPageContainer>
           <SectionHeading
             overline={'01 / ' + t('collection')}
             title={t('categoryTitle')}
             description={t('categoryBody')}
           />
           {categories.isPending ? (
-            <div className="gl-category-editorial">
+            <div className="bp-category-grid">
               {[1, 2, 3].map((i) => (
-                <GLCategoryCardSkeleton key={i} />
+                <BPCategoryCardSkeleton key={i} />
               ))}
             </div>
           ) : categories.isError ? (
             <QueryError error={categories.error} retry={() => void categories.refetch()} />
           ) : categories.data.items.length ? (
-            <div className="gl-category-editorial">
-              {categories.data.items.map((c) => (
-                <GLCategoryCard key={c.id} category={c} />
-              ))}
-            </div>
+            <BPCategoryGrid categories={categories.data.items} />
           ) : (
-            <GLEmptyState title={t('emptyCategories')} />
+            <BPEmptyState title={t('emptyCategories')} />
           )}
-        </GLPageContainer>
-      </GLSection>
-      <GLSection className="gl-featured-system">
-        <GLPageContainer>
+        </BPPageContainer>
+      </BPSection>
+      <BPSection className="bp-featured-system">
+        <BPPageContainer>
           <SectionHeading
             overline={'02 / ' + t('featured')}
             title={t('featured')}
@@ -187,47 +186,16 @@ export function HomePage() {
           ) : products.isError ? (
             <QueryError error={products.error} retry={() => void products.refetch()} />
           ) : products.data.items.length ? (
-            <>
-              <div className="gl-featured-stage">
-                <a className="gl-featured-visual" href={'/products/' + products.data.items[0]!.id}>
-                  <GLMediaImage
-                    reference={
-                      products.data.items[0]!.media.find((m) => m.kind === 'image') ?? null
-                    }
-                  />
-                </a>
-                <div className="gl-featured-copy">
-                  <span className="gl-overline">{products.data.items[0]!.categoryName}</span>
-                  <GLHeading fluid level={3}>
-                    {products.data.items[0]!.name}
-                  </GLHeading>
-                  <bdi>{products.data.items[0]!.model}</bdi>
-                  <GLSpecificationList
-                    attributes={products.data.items[0]!.attributes.slice(0, 2)}
-                  />
-                  <a
-                    href={'/products/' + products.data.items[0]!.id}
-                    className="gl-button gl-button-dark gl-button-lg"
-                  >
-                    {t('details')} ↗
-                  </a>
-                </div>
-              </div>
-              <div className="gl-supporting-products">
-                {products.data.items.slice(1, 4).map((p) => (
-                  <GLProductCard key={p.id} product={p} />
-                ))}
-              </div>
-            </>
+            <BPProductGrid products={products.data.items.slice(0, 4)} />
           ) : (
-            <GLEmptyState title={t('emptyTitle')} />
+            <BPEmptyState title={t('emptyTitle')} />
           )}
-        </GLPageContainer>
-      </GLSection>
+        </BPPageContainer>
+      </BPSection>
       <Values />
       {source.demo && products.data?.items.some((p) => p.documents.length > 0) && (
-        <GLSection>
-          <GLPageContainer>
+        <BPSection>
+          <BPPageContainer>
             <SectionHeading
               overline={'04 / ' + t('resources')}
               title={t('resources')}
@@ -236,39 +204,39 @@ export function HomePage() {
             {products.data.items
               .flatMap((p) => p.documents)
               .map((d) => (
-                <GLTechnicalDocumentCard key={d.id} document={d} />
+                <BPTechnicalDocumentCard key={d.id} document={d} />
               ))}
-          </GLPageContainer>
-        </GLSection>
+          </BPPageContainer>
+        </BPSection>
       )}
     </>
   );
 }
 function ProductSkeleton() {
   return (
-    <div className="gl-grid" aria-busy="true">
+    <div className="bp-product-grid" aria-busy="true">
       {[1, 2, 3, 4].map((i) => (
-        <GLProductCardSkeleton key={i} />
+        <BPProductCardSkeleton key={i} />
       ))}
     </div>
   );
 }
 export function CategoriesPage() {
   useTitle('categories');
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     [cursor, setCursor] = useState<string | undefined>(),
     q = useCategories(null, cursor);
   const { locale } = useLocale();
   useEffect(() => setCursor(undefined), [locale]);
   return (
-    <GLPageContainer>
-      <GLBreadcrumb
+    <BPPageContainer>
+      <BPBreadcrumb
         items={[
           { href: '/', label: t('home') },
           { href: '/categories', label: t('categories') },
         ]}
       />
-      <GLSection>
+      <BPSection>
         <SectionHeading level={1} title={t('categories')} description={t('categoryBody')} />
         {q.isPending ? (
           <ProductSkeleton />
@@ -276,80 +244,65 @@ export function CategoriesPage() {
           <QueryError error={q.error} retry={() => void q.refetch()} />
         ) : q.data.items.length ? (
           <>
-            <div className="gl-category-editorial">
-              {q.data.items.map((c) => (
-                <GLCategoryCard key={c.id} category={c} />
-              ))}
-            </div>
+            <BPCategoryGrid categories={q.data.items} />
             {q.data.nextCursor && (
-              <GLButton onClick={() => setCursor(q.data.nextCursor ?? undefined)}>
+              <BPButton onClick={() => setCursor(q.data.nextCursor ?? undefined)}>
                 {t('loadMore')}
-              </GLButton>
+              </BPButton>
             )}
           </>
         ) : (
-          <GLEmptyState title={t('emptyCategories')} />
+          <BPEmptyState title={t('emptyCategories')} />
         )}
-      </GLSection>
-    </GLPageContainer>
+      </BPSection>
+    </BPPageContainer>
   );
 }
 export function CategoryPage() {
   const { id } = useLocalSearchParams<{ id: string }>(),
-    { t } = useGLTranslation(),
+    { t } = useBPTranslation(),
     [cursor, setCursor] = useState<string | undefined>(),
     category = useCategory(id),
     children = useCategories(id, cursor);
   const { locale } = useLocale();
   useEffect(() => setCursor(undefined), [locale, id]);
   useEffect(() => {
-    if (category.data) document.title = category.data.name + ' | Golden Lift';
+    if (category.data) document.title = category.data.name + ' | Business Platform';
   }, [category.data]);
   if (category.error instanceof ApiError && category.error.code === 'not-found')
     return <NotFoundPage />;
   return (
-    <GLPageContainer>
-      <GLBreadcrumb
+    <BPPageContainer>
+      <BPBreadcrumb
         items={[
           { href: '/', label: t('home') },
           { href: '/categories', label: t('categories') },
           { href: '/categories/' + id, label: category.data?.name ?? t('loading') },
         ]}
       />
-      <GLSection className="gl-category-intro">
-        {category.data?.image && (
-          <GLMediaImage reference={category.data.image} className="gl-category-cover" priority />
-        )}
+      <BPSection className="bp-category-intro">
         {category.isPending ? (
-          <GLSkeleton />
+          <BPSkeleton />
         ) : category.isError ? (
           <QueryError error={category.error} retry={() => void category.refetch()} />
         ) : (
-          <SectionHeading
-            level={1}
-            title={category.data.name}
-            description={category.data.description ?? undefined}
-          />
+          <BPCategoryHero category={category.data} />
         )}
         <CategoryContents id={id} query={children} />
         {children.data?.nextCursor && (
-          <GLButton onClick={() => setCursor(children.data?.nextCursor ?? undefined)}>
+          <BPButton onClick={() => setCursor(children.data?.nextCursor ?? undefined)}>
             {t('loadMore')}
-          </GLButton>
+          </BPButton>
         )}
-      </GLSection>
-    </GLPageContainer>
+      </BPSection>
+    </BPPageContainer>
   );
 }
 function CategoryContents({ id, query }: { id: string; query: ReturnType<typeof useCategories> }) {
   if (query.isPending) return <ProductSkeleton />;
   if (query.isError) return <QueryError error={query.error} retry={() => void query.refetch()} />;
   return query.data.items.length ? (
-    <div className="gl-grid gl-grid-three">
-      {query.data.items.map((c) => (
-        <GLCategoryCard key={c.id} category={c} />
-      ))}
-    </div>
+    <BPCategoryGrid categories={query.data.items} />
   ) : (
     <ListingGrid categoryId={id} />
   );
@@ -357,11 +310,11 @@ function CategoryContents({ id, query }: { id: string; query: ReturnType<typeof 
 const searchSchema = z.object({ text: z.string().trim().max(120) });
 export function ListingPage({ search = false }: { search?: boolean }) {
   useTitle(search ? 'searchResults' : 'products');
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     params = useLocalSearchParams<{ q?: string }>();
   return (
-    <GLPageContainer>
-      <GLBreadcrumb
+    <BPPageContainer>
+      <BPBreadcrumb
         items={[
           { href: '/', label: t('home') },
           {
@@ -370,7 +323,7 @@ export function ListingPage({ search = false }: { search?: boolean }) {
           },
         ]}
       />
-      <GLSection>
+      <BPSection>
         <SectionHeading
           level={1}
           overline={t('collection')}
@@ -378,8 +331,8 @@ export function ListingPage({ search = false }: { search?: boolean }) {
           description={t(search ? 'searchHelp' : 'featuredBody')}
         />
         <ListingGrid initialText={params.q ?? ''} search={search} />
-      </GLSection>
-    </GLPageContainer>
+      </BPSection>
+    </BPPageContainer>
   );
 }
 function ListingGrid({
@@ -393,63 +346,39 @@ function ListingGrid({
 }) {
   const params = useLocalSearchParams<{
     category?: string;
+    categoryId?: string;
     sort?: string;
     page?: string;
     filters?: string;
     q?: string;
   }>();
-  const filterText = params.filters || '[]';
-  const queryText = params.q ?? initialText;
-  let dynamicFilters: readonly PublicProductFilter[] = [];
-  let invalidFilters = false;
-  try {
-    const parsed: unknown = JSON.parse(filterText);
-    const result = z.array(publicProductFilterSchema).max(10).safeParse(parsed);
-    if (result.success) dynamicFilters = result.data as readonly PublicProductFilter[];
-    else invalidFilters = true;
-  } catch {
-    invalidFilters = true;
-  }
-  const { t } = useGLTranslation(),
-    { locale } = useLocale(),
-    [text, setText] = useState(queryText),
+  const parsed = parseCatalogFilterState({ ...params, q: params.q ?? initialText }),
+    state = normalizeCatalogFilterState({
+      ...parsed.state,
+      categoryId: categoryId ?? parsed.state.categoryId,
+    });
+  const { t } = useBPTranslation(),
     [filtersOpen, setFiltersOpen] = useState(false),
     [compact, setCompact] = useState(false),
-    category = categoryId ?? params.category ?? '',
-    sort: 'featured' | 'name' = params.sort === 'name' ? 'name' : 'featured',
-    page = /^[1-9][0-9]{0,3}$/.test(params.page ?? '') ? Number(params.page) : 1,
-    categories = useCategories(),
-    products = useProducts({
-      text,
-      categoryId: category || undefined,
-      sort,
-      page,
-      filters: dynamicFilters,
-    }),
+    products = useProducts(state),
+    selectedCategory = useCategory(state.categoryId ?? ''),
     router = useRouter();
-  const setPage = (value: number) => router.setParams({ page: String(value) });
-  const setCategory = (value: string) =>
-    router.setParams({ category: value, page: '1', filters: '' });
-  const setSort = (value: 'featured' | 'name') => router.setParams({ sort: value, page: '1' });
-  const filters = (
-    <DynamicFilters
-      definitions={products.data?.filters ?? []}
-      value={dynamicFilters}
-      onApply={(value) => {
-        router.setParams({ filters: JSON.stringify(value), page: '1' });
-        setFiltersOpen(false);
-      }}
-    />
-  );
+  const change = (next: ProductQuery) =>
+    router.push(
+      categoryId
+        ? {
+            pathname: '/categories/[id]',
+            params: { id: categoryId, ...serializeCatalogFilterState(next) },
+          }
+        : { pathname: search ? '/search' : '/products', params: serializeCatalogFilterState(next) },
+    );
+  const clear = () => change({ categoryId, page: 1 });
   const form = useForm<{ text: string }>({
-    defaultValues: { text: queryText },
+    defaultValues: { text: state.text ?? '' },
     resolver: zodResolver(searchSchema),
   });
-  const resetSearch = form.reset;
-  useEffect(() => {
-    setText(queryText);
-    resetSearch({ text: queryText });
-  }, [queryText, resetSearch]);
+  const reset = form.reset;
+  useEffect(() => reset({ text: state.text ?? '' }), [state.text, reset]);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 767px)');
     const update = () => {
@@ -460,209 +389,209 @@ function ListingGrid({
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
-  return (
+  const controls = (
     <>
-      {compact ? (
-        <>
-          <GLButton variant="secondary" onClick={() => setFiltersOpen(true)}>
-            {t('filter')} / {t('sort')}
-          </GLButton>
-          <GLDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t('filter')}>
-            {' '}
-            <form
-              className="gl-list-toolbar"
-              onSubmit={form.handleSubmit((v) => {
-                setText(v.text);
-                setPage(1);
-                router.setParams({ q: v.text });
-                setFiltersOpen(false);
-              })}
-            >
-              <GLInput
-                label={t('search')}
-                placeholder={t('searchPlaceholder')}
-                {...form.register('text')}
-                error={form.formState.errors.text ? t('searchTooLong') : undefined}
-              />
-              {!categoryId && (
-                <GLSelect
-                  label={t('filter')}
-                  value={category}
-                  onChange={(v) => {
-                    setCategory(v);
-                    setPage(1);
-                  }}
-                  options={[
-                    { value: '', label: t('allCategories') },
-                    ...(categories.data?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
-                  ]}
-                />
-              )}
-              <GLSelect
-                label={t('sort')}
-                value={sort}
-                onChange={(v) => {
-                  setSort(v as typeof sort);
-                  setPage(1);
-                }}
-                options={[
-                  { value: 'featured', label: t('sortFeatured') },
-                  { value: 'name', label: t('sortName') },
-                ]}
-              />
-              <GLButton type="submit" variant="dark">
-                {t('submit')}
-              </GLButton>
-            </form>
-            {filters}
-          </GLDrawer>
-        </>
-      ) : (
-        <form
-          className="gl-list-toolbar"
-          onSubmit={form.handleSubmit((v) => {
-            setText(v.text);
-            setPage(1);
-            router.setParams({ q: v.text });
-            setFiltersOpen(false);
-          })}
-        >
-          <GLInput
-            label={t('search')}
-            placeholder={t('searchPlaceholder')}
-            {...form.register('text')}
-            error={form.formState.errors.text ? t('searchTooLong') : undefined}
-          />
-          {!categoryId && (
-            <GLSelect
-              label={t('filter')}
-              value={category}
-              onChange={(v) => {
-                setCategory(v);
-                setPage(1);
-              }}
-              options={[
-                { value: '', label: t('allCategories') },
-                ...(categories.data?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
-              ]}
-            />
-          )}
-          <GLSelect
-            label={t('sort')}
-            value={sort}
-            onChange={(v) => {
-              setSort(v as typeof sort);
-              setPage(1);
-            }}
-            options={[
-              { value: 'featured', label: t('sortFeatured') },
-              { value: 'name', label: t('sortName') },
-            ]}
-          />
-          <GLButton type="submit" variant="dark">
-            {t('submit')}
-          </GLButton>
-        </form>
-      )}
-      {!compact && filters}
-      {products.data?.total != null && (
-        <p className="gl-result-count">{t('results', { count: products.data.total })}</p>
-      )}
-      {invalidFilters ? (
-        <GLAlert tone="error">
-          {t('errorBody')}{' '}
-          <GLButton variant="text" onClick={() => router.setParams({ filters: '', page: '1' })}>
-            {t('clear')}
-          </GLButton>
-        </GLAlert>
-      ) : products.isPending ? (
-        <ProductSkeleton />
-      ) : products.isError ? (
-        <QueryError error={products.error} retry={() => void products.refetch()} />
-      ) : products.data.items.length ? (
-        <>
-          <div className="gl-grid">
-            {products.data.items.map((p) => (
-              <GLProductCard key={p.id} product={p} />
-            ))}
-          </div>
-          {((products.data.total ?? 0) > 4 || page > 1 || products.data.nextCursor) && (
-            <GLPagination
-              page={page}
-              total={
-                products.data.total !== null
-                  ? Math.ceil(products.data.total / 4)
-                  : page + (products.data.nextCursor ? 1 : 0)
-              }
-              onChange={setPage}
-            />
-          )}
-        </>
-      ) : (
-        <GLEmptyState
-          title={t('emptyTitle')}
-          description={t('emptyBody')}
-          action={
-            <GLButton
-              variant="secondary"
-              onClick={() => {
-                setText('');
-                setCategory(categoryId ?? '');
-                form.reset({ text: '' });
-                setPage(1);
-                router.setParams({ q: '' });
-              }}
-            >
-              {t('clear')}
-            </GLButton>
+      <form
+        className="bp-list-toolbar"
+        onSubmit={form.handleSubmit((v) => {
+          change({ ...state, text: v.text, page: 1 });
+          setFiltersOpen(false);
+        })}
+      >
+        <BPInput
+          label={t('search')}
+          placeholder={t('searchPlaceholder')}
+          {...form.register('text')}
+          error={form.formState.errors.text ? t('searchTooLong') : undefined}
+        />
+        <BPSelect
+          label={t('sort')}
+          value={state.sort}
+          onChange={(value) =>
+            change({ ...state, sort: value === 'name' ? 'name' : 'featured', page: 1 })
           }
+          options={[
+            { value: 'featured', label: t('sortFeatured') },
+            { value: 'name', label: t('sortName') },
+          ]}
+        />
+        <BPButton type="submit" variant="dark">
+          {t('submit')}
+        </BPButton>
+      </form>
+      {!categoryId && (
+        <CategoryFilterPanel
+          value={state.categoryId ?? ''}
+          onChange={(id) => change({ ...state, categoryId: id, filters: [], page: 1 })}
         />
       )}
+      <DynamicFilters
+        definitions={products.data?.filters ?? []}
+        value={state.filters}
+        onApply={(filters) => {
+          change({ ...state, filters, page: 1 });
+          setFiltersOpen(false);
+        }}
+      />
+      <BPButton variant="text" onClick={clear}>
+        {t('clearAllFilters')}
+      </BPButton>
     </>
+  );
+  return (
+    <div className="bp-catalog-listing">
+      {compact ? (
+        <>
+          <BPButton variant="secondary" onClick={() => setFiltersOpen(true)}>
+            {t('filter')} / {t('sort')}
+          </BPButton>
+          <BPDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t('filter')}>
+            {controls}
+          </BPDrawer>
+        </>
+      ) : (
+        <aside className="bp-filter-rail" aria-label={t('filter')}>
+          <BPHeading level={2} role="heading5">
+            {t('filter')}
+          </BPHeading>
+          {controls}
+        </aside>
+      )}
+      <div className="bp-catalog-results" aria-busy={products.isFetching}>
+        <div className="bp-active-filters" aria-label={t('activeFilters')}>
+          {state.categoryId && !categoryId && (
+            <BPButton
+              variant="secondary"
+              onClick={() => change({ ...state, categoryId: undefined, filters: [], page: 1 })}
+            >
+              {selectedCategory.data?.name ?? t('categories')} ×
+            </BPButton>
+          )}
+          {state.text && (
+            <BPButton
+              variant="secondary"
+              onClick={() => change({ ...state, text: undefined, page: 1 })}
+            >
+              {t('search')}: {state.text} ×
+            </BPButton>
+          )}
+          {state.filters.map((f) => {
+            const d = products.data?.filters?.find((d) => d.id === f.definitionId);
+            const label = d?.label ?? t('filter');
+            const value =
+              f.kind === 'NUMBER'
+                ? [
+                    f.minimum !== undefined ? '≥ ' + f.minimum : '',
+                    f.maximum !== undefined ? '≤ ' + f.maximum : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' – ') + (d?.unitSymbol ? ' ' + d.unitSymbol : '')
+                : f.kind === 'CHOICE'
+                  ? ('optionIds' in f ? f.optionIds : [f.optionId])
+                      .map((id) => d?.options.find((o) => o.id === id)?.label ?? t('filter'))
+                      .join(' / ')
+                  : f.kind === 'BOOLEAN'
+                    ? t(f.value ? 'yes' : 'no')
+                    : f.value;
+            return (
+              <BPButton
+                key={f.definitionId}
+                variant="secondary"
+                onClick={() =>
+                  change({
+                    ...state,
+                    filters: state.filters.filter((x) => x.definitionId !== f.definitionId),
+                    page: 1,
+                  })
+                }
+              >
+                {label}: {value} ×
+              </BPButton>
+            );
+          })}
+        </div>
+        <p className="bp-result-count" role="status" aria-live="polite">
+          {products.isFetching
+            ? t('loading')
+            : products.data?.total != null
+              ? t('results', { count: products.data.total })
+              : ''}
+        </p>
+        {parsed.invalid ? (
+          <BPAlert tone="error">
+            {t('errorBody')}{' '}
+            <BPButton variant="text" onClick={clear}>
+              {t('clearAllFilters')}
+            </BPButton>
+          </BPAlert>
+        ) : products.isPending ? (
+          <ProductSkeleton />
+        ) : products.isError ? (
+          <QueryError error={products.error} retry={() => void products.refetch()} />
+        ) : products.data.items.length ? (
+          <>
+            <BPProductGrid products={products.data.items} />
+            {products.data.total !== null && products.data.total > state.pageSize && (
+              <BPPagination
+                page={state.page}
+                total={Math.ceil(products.data.total / state.pageSize)}
+                onChange={(page) => change({ ...state, page })}
+              />
+            )}
+          </>
+        ) : (
+          <BPEmptyState
+            title={t('emptyTitle')}
+            description={t(search ? 'searchHelp' : 'emptyBody')}
+            action={<BPButton onClick={clear}>{t('clearAllFilters')}</BPButton>}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 export function ProductPage() {
   const { id } = useLocalSearchParams<{ id: string }>(),
     q = useProduct(id),
     related = useProducts({ categoryId: q.data?.categoryId }),
-    { t } = useGLTranslation(),
+    { t } = useBPTranslation(),
     [tab, setTab] = useState('overview');
   useEffect(() => {
-    if (q.data) document.title = q.data.name + ' | Golden Lift';
+    if (q.data) document.title = q.data.name + ' | Business Platform';
   }, [q.data]);
   if (q.error instanceof ApiError && q.error.code === 'not-found') return <NotFoundPage />;
   if (q.isPending)
     return (
-      <GLPageContainer>
-        <GLSection>
-          <div className="gl-grid gl-grid-two">
-            <GLSkeleton className="gl-gallery-main" />
+      <BPPageContainer>
+        <BPSection>
+          <div className="bp-grid bp-grid-two">
+            <BPSkeleton className="bp-gallery-main" />
             <div>
-              <GLSkeleton />
-              <GLSkeleton />
-              <GLSkeleton />
+              <BPSkeleton />
+              <BPSkeleton />
+              <BPSkeleton />
             </div>
           </div>
-        </GLSection>
-      </GLPageContainer>
+        </BPSection>
+      </BPPageContainer>
     );
   if (q.isError)
     return (
-      <GLPageContainer>
-        <GLSection>
+      <BPPageContainer>
+        <BPSection>
           <QueryError error={q.error} retry={() => void q.refetch()} />
-        </GLSection>
-      </GLPageContainer>
+        </BPSection>
+      </BPPageContainer>
     );
   const p = q.data;
   return (
     <>
-      <GLPageContainer>
-        <GLSection className="gl-product-detail">
-          <div className="gl-product-columns">
-            <GLProductGallery media={p.media} />
-            <div className="gl-product-info">
-              <GLBreadcrumb
+      <BPPageContainer>
+        <BPSection className="bp-product-detail">
+          <div className="bp-product-columns">
+            <BPProductGallery media={p.media} />
+            <div className="bp-product-info">
+              <BPBreadcrumb
                 items={[
                   { href: '/', label: t('home') },
                   ...(p.navigation?.breadcrumbs.map((c) => ({
@@ -672,33 +601,36 @@ export function ProductPage() {
                   { href: '/products/' + p.id, label: p.name },
                 ]}
               />
-              <span className="gl-overline">{p.categoryName}</span>
-              <GLHeading fluid level={1}>
+              <span className="bp-overline">{p.categoryName}</span>
+              <BPHeading fluid level={1}>
                 {p.name}
-              </GLHeading>
+              </BPHeading>
               {p.model && (
-                <GLText role="technicalLabel" className="gl-muted">
+                <BPText role="technicalLabel" className="bp-muted">
                   {t('model')} / <bdi>{p.model}</bdi>
-                </GLText>
+                </BPText>
               )}
-              <p className="gl-product-description">{p.description}</p>
-              <GLSpecificationList attributes={p.attributes.slice(0, 2)} />
-              <div className="gl-product-media-actions">
+              <p className="bp-product-description">{p.description}</p>
+              <BPSpecificationList attributes={p.attributes.slice(0, 2)} />
+              <div className="bp-product-media-actions">
+                <a href="/contact" className="bp-button bp-button-primary bp-button-md">
+                  {t('contact')}
+                </a>
                 {p.documents.length > 0 && (
-                  <a href="#product-documents" className="gl-button gl-button-dark gl-button-md">
+                  <a href="#product-documents" className="bp-button bp-button-dark bp-button-md">
                     {t('documents')} ↗
                   </a>
                 )}
                 {p.media.some((m) => m.kind === 'video') && (
-                  <a href="#product-gallery" className="gl-button gl-button-secondary gl-button-md">
+                  <a href="#product-gallery" className="bp-button bp-button-secondary bp-button-md">
                     {t('video')}
                   </a>
                 )}
               </div>
             </div>
           </div>
-        </GLSection>
-        <nav className="gl-product-neighbors" aria-label={t('productNavigation')}>
+        </BPSection>
+        <nav className="bp-product-neighbors" aria-label={t('productNavigation')}>
           <a href={'/categories/' + p.categoryId}>{t('backToCategory')}</a>
           {p.navigation?.previous && (
             <a href={'/products/' + p.navigation.previous.id}>
@@ -711,13 +643,13 @@ export function ProductPage() {
             </a>
           )}
         </nav>
-        <GLSection className="gl-product-dossier">
-          <div className="gl-dossier-heading">
-            <span className="gl-overline">01 / {t('overview')}</span>
-            <GLHeading fluid>{t('technical')}</GLHeading>
+        <BPSection className="bp-product-dossier">
+          <div className="bp-dossier-heading">
+            <span className="bp-overline">01 / {t('overview')}</span>
+            <BPHeading fluid>{t('technical')}</BPHeading>
           </div>
           <div>
-            <GLTabs
+            <BPTabs
               value={tab}
               onChange={setTab}
               tabs={[
@@ -727,111 +659,104 @@ export function ProductPage() {
             />
             <div role="tabpanel" id={'panel-' + tab} aria-labelledby={'tab-' + tab} tabIndex={0}>
               {tab === 'overview' ? (
-                <p className="gl-dossier-description">{p.description}</p>
+                <p className="bp-dossier-description">{p.description}</p>
               ) : (
                 <>
-                  <span className="gl-overline">02 / {t('specifications')}</span>
-                  <GLSpecificationList attributes={p.attributes} />
+                  <span className="bp-overline">02 / {t('specifications')}</span>
+                  <BPGroupedSpecifications attributes={p.attributes} />
                 </>
               )}
             </div>
           </div>
-        </GLSection>
+        </BPSection>
         {p.documents.length > 0 && (
-          <GLSection id="product-documents">
+          <BPSection id="product-documents">
             <SectionHeading overline={'04 / ' + t('documents')} title={t('documents')} />
-            <div className="gl-grid gl-grid-two">
+            <div className="bp-grid bp-grid-two bp-document-grid">
               {p.documents.map((d) => (
-                <GLTechnicalDocumentCard key={d.id} document={d} />
+                <BPTechnicalDocumentCard key={d.id} document={d} />
               ))}
             </div>
-          </GLSection>
+          </BPSection>
         )}
         {related.data?.items.some((r) => r.id !== p.id) && (
-          <GLSection>
+          <BPSection>
             <SectionHeading overline={'05 / ' + t('related')} title={t('moreFromCategory')} />
             <a href={'/categories/' + p.categoryId}>{t('viewAll')} →</a>
-            <div className="gl-grid">
-              {related.data.items
-                .filter((r) => r.id !== p.id)
-                .slice(0, 3)
-                .map((r) => (
-                  <GLProductCard key={r.id} product={r} />
-                ))}
-            </div>
-          </GLSection>
+            <BPProductGrid products={related.data.items.filter((r) => r.id !== p.id).slice(0, 3)} />
+          </BPSection>
         )}
-      </GLPageContainer>
+      </BPPageContainer>
     </>
   );
 }
 export function AboutPage() {
   useTitle('about');
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
     <>
-      <GLPageContainer>
-        <GLBreadcrumb
+      <BPPageContainer>
+        <BPBreadcrumb
           items={[
             { href: '/', label: t('home') },
             { href: '/about', label: t('about') },
           ]}
         />
-        <GLSection>
-          <div className="gl-about-layout">
+        <BPSection>
+          <div className="bp-about-layout">
             <div>
-              <div className="gl-overline">GOLDEN LIFT</div>
-              <GLHeading fluid level={1}>
+              <div className="bp-overline">BUSINESS PLATFORM</div>
+              <BPHeading fluid level={1}>
                 {t('aboutTitle')}
-              </GLHeading>
+              </BPHeading>
               <p>{t('aboutBody')}</p>
-              <GLAlert>{t('demoAbout')}</GLAlert>
+              <BPAlert>{t('demoAbout')}</BPAlert>
             </div>
             <img src="/demo/silver.svg" alt={t('gallery')} loading="lazy" />
           </div>
-        </GLSection>
-      </GLPageContainer>
+        </BPSection>
+      </BPPageContainer>
       <Values />
     </>
   );
 }
 export function ContactPage() {
   useTitle('contact');
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLPageContainer>
-      <GLBreadcrumb
+    <BPPageContainer>
+      <BPBreadcrumb
         items={[
           { href: '/', label: t('home') },
           { href: '/contact', label: t('contact') },
         ]}
       />
-      <GLSection>
+      <BPSection>
         <SectionHeading level={1} title={t('contactTitle')} />
-        <GLEmptyState title={t('contactPending')} description={t('contactBody')} />
-      </GLSection>
-    </GLPageContainer>
+        <BPEmptyState title={t('contactPending')} description={t('contactBody')} />
+      </BPSection>
+    </BPPageContainer>
   );
 }
 export function NotFoundPage() {
   useTitle('notFound');
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLPageContainer>
-      <GLSection>
-        <div className="gl-error-number" aria-hidden="true">
+    <BPPageContainer>
+      <BPSection>
+        <div className="bp-error-number" aria-hidden="true">
           404
         </div>
-        <GLEmptyState
+        <BPEmptyState
           title={t('notFound')}
           description={t('notFoundBody')}
           action={
-            <a href="/" className="gl-button gl-button-primary gl-button-lg">
+            <a href="/" className="bp-button bp-button-primary bp-button-lg">
               {t('backHome')}
             </a>
           }
         />
-      </GLSection>
-    </GLPageContainer>
+      </BPSection>
+    </BPPageContainer>
   );
 }

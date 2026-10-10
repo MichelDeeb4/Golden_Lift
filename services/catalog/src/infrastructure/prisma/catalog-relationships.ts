@@ -1,5 +1,5 @@
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { Uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { Uuid } from '@business-platform/contracts';
 import type {
   CatalogRelationships,
   RelationshipTarget,

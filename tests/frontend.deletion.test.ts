@@ -35,7 +35,7 @@ test('blocked Category dialog has no delete action; Product deletion converges t
     dialogs.push(d.type());
     await d.dismiss();
   });
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
   await page.goto('/admin/login');
   await page.locator('input[type=email]').fill(fixture.adminEmail);
   await page.locator('input[type=password]').fill(fixture.password);
@@ -143,7 +143,7 @@ test('shared dialogs delete Group, Attribute, unused Unit and empty Category whi
   page,
 }) => {
   test.setTimeout(120000);
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
   await page.goto('/admin/login');
   await page.locator('input[type=email]').fill(fixture.adminEmail);
   await page.locator('input[type=password]').fill(fixture.password);
@@ -265,7 +265,7 @@ test('shared dialogs delete Group, Attribute, unused Unit and empty Category whi
 test('mobile deletion dialogs support English, Arabic and Kurdish without viewport overflow', async ({
   page,
 }) => {
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
   await page.goto('/admin/login');
   await page.locator('input[type=email]').fill(fixture.adminEmail);
   await page.locator('input[type=password]').fill(fixture.password);

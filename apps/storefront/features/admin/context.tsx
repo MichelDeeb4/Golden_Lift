@@ -10,19 +10,28 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
-import { StaffApiClient, StaffApiError } from '@golden-lift/api';
+import { StaffApiClient, StaffApiError } from '@business-platform/api';
 import {
-  GLAlert,
-  GLButton,
-  GLDrawer,
-  GLHeading,
-  GLInput,
-  GLLanguageSwitcher,
-  GLSpinner,
-  GLToast,
-  GLUnsavedChangesDialog,
-} from '@golden-lift/ui';
-import { Menu } from '@golden-lift/icons';
+  BPAlert,
+  BPButton,
+  BPIconButton,
+  BPDrawer,
+  BPHeading,
+  BPInput,
+  BPLanguageSwitcher,
+  BPSpinner,
+  BPToast,
+  BPUnsavedChangesDialog,
+} from '@business-platform/ui';
+import {
+  Menu,
+  Layers,
+  FileText,
+  Ruler,
+  SlidersHorizontal,
+  ShieldCheck,
+  Eye,
+} from '@business-platform/icons';
 import { usePathname, useRouter, useNavigation } from 'expo-router';
 import type { Href } from 'expo-router';
 import { registerStaffBackGuard } from './router';
@@ -209,7 +218,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
             <DirtyContext.Provider value={dirtyEditors.size > 0}>
               <UnsavedContext.Provider value={registerDirty}>{children}</UnsavedContext.Provider>
             </DirtyContext.Provider>
-            <GLUnsavedChangesDialog
+            <BPUnsavedChangesDialog
               open={discardOpen}
               title={t('unsavedTitle')}
               description={t('unsavedDescription')}
@@ -219,7 +228,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
               onLeave={() => settleDiscard(true)}
             />
           </DiscardContext.Provider>
-          <GLToast key={feedback?.id} message={feedback?.message ?? null} onClose={clearFeedback} />
+          <BPToast key={feedback?.id} message={feedback?.message ?? null} onClose={clearFeedback} />
         </FeedbackContext.Provider>
       </Context.Provider>
     </QueryClientProvider>
@@ -237,7 +246,7 @@ export function useStaffSession() {
 export function StaffError({ error, reload }: { error: unknown; reload?: () => void }) {
   const t = useAdminTranslation();
   return (
-    <GLAlert tone="error">
+    <BPAlert tone="error">
       {error instanceof StaffApiError && error.code === 'VERSION_CONFLICT'
         ? t('conflict')
         : error instanceof StaffApiError && error.code === 'CONFLICT'
@@ -250,11 +259,11 @@ export function StaffError({ error, reload }: { error: unknown; reload?: () => v
                 ? error.validationMessage
                 : t('error')}
       {reload && (
-        <GLButton variant="secondary" onClick={reload}>
+        <BPButton variant="secondary" onClick={reload}>
           {t('reload')}
-        </GLButton>
+        </BPButton>
       )}
-    </GLAlert>
+    </BPAlert>
   );
 }
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(1).max(512) });
@@ -308,11 +317,11 @@ export function StaffShell({ children }: { children: ReactNode }) {
   }, [session.data, api, query, router]);
   if (pathname === '/admin/login')
     return (
-      <main className="gl-admin-login">
-        <GLLanguageSwitcher />
-        <GLHeading level={1} role="heading3">
+      <main className="bp-admin-login">
+        <BPLanguageSwitcher />
+        <BPHeading level={1} role="heading3">
           {t('login')}
-        </GLHeading>
+        </BPHeading>
         <form
           onSubmit={form.handleSubmit(async (v) => {
             setError(null);
@@ -325,14 +334,14 @@ export function StaffShell({ children }: { children: ReactNode }) {
             }
           })}
         >
-          <GLInput
+          <BPInput
             label={t('email')}
             type="email"
             autoComplete="username"
             {...form.register('email')}
             error={form.formState.errors.email ? t('error') : undefined}
           />
-          <GLInput
+          <BPInput
             label={t('password')}
             type="password"
             autoComplete="current-password"
@@ -340,22 +349,22 @@ export function StaffShell({ children }: { children: ReactNode }) {
             error={form.formState.errors.password ? t('error') : undefined}
           />
           {error != null && <StaffError error={error} />}
-          <GLButton type="submit" loading={form.formState.isSubmitting}>
+          <BPButton type="submit" loading={form.formState.isSubmitting}>
             {t('login')}
-          </GLButton>
+          </BPButton>
         </form>
         <a href="/admin/reset-request">{t('changePassword')}</a>
       </main>
     );
   if (session.isPending)
     return (
-      <main className="gl-admin-content">
-        <GLSpinner label={t('loading')} />
+      <main className="bp-admin-content">
+        <BPSpinner label={t('loading')} />
       </main>
     );
   if (!session.data)
     return (
-      <main className="gl-admin-content">
+      <main className="bp-admin-content">
         <StaffError error={session.error} reload={() => void session.refetch()} />
       </main>
     );
@@ -375,67 +384,107 @@ export function StaffShell({ children }: { children: ReactNode }) {
           items: [
             ['/admin/categories', t('categories')],
             ['/admin/products', t('products')],
-            ['/admin/attributes', t('attributes')],
+          ],
+        },
+        {
+          title: t('specifications'),
+          items: [
             ['/admin/attribute-groups', t('groups')],
+            ['/admin/attributes', t('attributes')],
             ['/admin/units', t('units')],
           ],
         },
         { title: t('media'), items: [['/admin/media', t('media')]] },
         { title: t('account'), items: [['/admin/account', t('account')]] },
       ];
+  const navIcons = {
+    '/admin': Layers,
+    '/admin/categories': Layers,
+    '/admin/products': FileText,
+    '/admin/attribute-groups': Layers,
+    '/admin/attributes': SlidersHorizontal,
+    '/admin/units': Ruler,
+    '/admin/media': Eye,
+    '/admin/account': ShieldCheck,
+    '/super-admin/admins': ShieldCheck,
+    '/super-admin/account': ShieldCheck,
+  };
+  const currentPage =
+    groups
+      .flatMap((group) => group.items)
+      .find(
+        ([href]) => pathname === href || (href !== '/admin' && pathname.startsWith(href + '/')),
+      )?.[1] ?? t('dashboard');
   const nav = (
     <nav aria-label={t('dashboard')}>
       {groups.map((group) => (
-        <div className="gl-nav-group" key={group.title}>
+        <div className="bp-nav-group" key={group.title}>
           <p>{group.title}</p>
-          {group.items.map(([href, label]) => (
-            <a
-              key={href}
-              href={href}
-              aria-current={
-                pathname === href || (href !== '/admin' && pathname.startsWith(href + '/'))
-                  ? 'page'
-                  : undefined
-              }
-              onClick={() => setDrawer(false)}
-            >
-              {label}
-            </a>
-          ))}
+          {group.items.map(([href, label]) => {
+            const Icon = navIcons[href as keyof typeof navIcons] ?? Layers;
+            return (
+              <a
+                key={href}
+                href={href}
+                aria-current={
+                  pathname === href || (href !== '/admin' && pathname.startsWith(href + '/'))
+                    ? 'page'
+                    : undefined
+                }
+                onClick={() => setDrawer(false)}
+              >
+                <span className="bp-nav-icon">
+                  <Icon size={18} aria-hidden="true" />
+                </span>
+                <span>{label}</span>
+              </a>
+            );
+          })}
         </div>
       ))}
     </nav>
   );
   return (
-    <div className="gl-admin">
-      <header className="gl-admin-top">
-        <GLButton
+    <div className="bp-admin">
+      <header className="bp-admin-top">
+        <BPIconButton
           variant="ghost"
-          className="gl-admin-menu"
+          label={t('dashboard')}
+          className="bp-admin-menu"
           aria-label={t('dashboard')}
           onClick={() => setDrawer(true)}
         >
           <Menu size={20} />
-        </GLButton>
-        <strong>GOLDEN LIFT</strong>
-        <span>{session.data.account.displayName}</span>
-        <GLLanguageSwitcher />
-        <GLButton variant="ghost" onClick={() => void api.logout().catch(() => {})}>
+        </BPIconButton>
+        <a className="bp-admin-brand" href={home}>
+          <strong>BUSINESS PLATFORM</strong>
+        </a>
+        <span className="bp-admin-page-context">{currentPage}</span>
+        <a
+          className="bp-admin-account"
+          href={isSuper ? '/super-admin/account' : '/admin/account'}
+          aria-label={t('account') + ' — ' + session.data.account.displayName}
+        >
+          <ShieldCheck size={18} aria-hidden="true" />
+          <span>{session.data.account.displayName}</span>
+        </a>
+        <BPLanguageSwitcher />
+        <BPButton variant="ghost" onClick={() => void api.logout().catch(() => {})}>
           {t('logout')}
-        </GLButton>
+        </BPButton>
       </header>
-      <aside className="gl-admin-sidebar">{nav}</aside>
-      <GLDrawer open={drawer} onClose={() => setDrawer(false)} title={t('dashboard')}>
+      <aside className="bp-admin-sidebar">{nav}</aside>
+      <BPDrawer open={drawer} onClose={() => setDrawer(false)} title={t('dashboard')}>
         {nav}
-      </GLDrawer>
-      <main className="gl-admin-content" id="main">
+      </BPDrawer>
+      <main className="bp-admin-content" id="main" tabIndex={-1}>
         {permitted ? (
           children
         ) : (
-          <GLAlert tone="error">
+          <BPAlert tone="error">
             {t('forbidden')}
             <a href={home}>{t('open')}</a>
-          </GLAlert>
+          </BPAlert>
         )}
       </main>
     </div>

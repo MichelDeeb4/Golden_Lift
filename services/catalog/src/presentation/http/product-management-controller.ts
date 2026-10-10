@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, locale, uuid, version } from '@golden-lift/contracts';
-import type { ProductMediaDto, SessionAuthenticator, Uuid } from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+import { ApplicationError, locale, uuid, version } from '@business-platform/contracts';
+import type { ProductMediaDto, SessionAuthenticator, Uuid } from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { ManageProducts } from '../../application/use-cases/manage-products.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import { strictRecord } from './category-query.js';

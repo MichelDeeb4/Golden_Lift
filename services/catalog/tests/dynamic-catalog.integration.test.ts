@@ -4,22 +4,24 @@ import fs from 'node:fs';
 import pg from 'pg';
 import { performance } from 'node:perf_hooks';
 import { after, before, test } from 'node:test';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
+  PublicProductQuery,
   AttributeKind,
   AttributeValue,
   AttributeDefinitionDto,
   ProductDto,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { databaseFixture } from '../../../packages/platform/tests/support/database-fixture.js';
 import { orm } from '../src/infrastructure/prisma/client.js';
 import type { PrismaClient } from '../src/infrastructure/prisma/client.js';
+import { PrismaConfigurationCollection } from '../src/infrastructure/prisma/configuration-collection.js';
 import { PrismaCatalogUnitOfWork } from '../src/infrastructure/prisma/unit-of-work.js';
 import type { CatalogUnitOfWork } from '../src/application/ports/catalog.js';
 import { catalogApplication } from '../src/composition/application.js';
 import { gatewayApplication } from '../../gateway/src/composition/application.js';
-import { httpConfig } from '@golden-lift/platform';
+import { httpConfig } from '@business-platform/platform';
 import {
   CreateAttributeDefinition,
   CreateAttributeGroup,
@@ -955,4 +957,156 @@ test('reviewed category moves retain values, reject stale impact and resolve the
     actor,
   );
   assert.equal(saved.values.length, 3);
+});
+
+test('parent scope resolves descendant leaves and dynamic filters compose OR within CHOICE and AND across Attributes', async () => {
+  const root = await classification();
+  const leaf = async () =>
+    new CreateCategory(uow, ids, clock).execute(
+      {
+        parentId: root.id,
+        expectedParentVersion: version(
+          String((await db.categories.findUniqueOrThrow({ where: { id: root.id } })).version),
+        ),
+        translations: translations.map((t) => ({ ...t, slug: null })),
+      },
+      actor,
+    );
+  const a1 = await leaf(),
+    a2 = await leaf(),
+    material = await attribute('CHOICE'),
+    width = await attribute('NUMBER'),
+    bool = await attribute('BOOLEAN');
+  const option = async () =>
+    new CreateAttributeOption(uow, ids, clock).execute(
+      material.id,
+      { code: 'filter-option-' + randomUUID(), sortOrder: '0', translations: labelTranslations },
+      actor,
+    );
+  const gold = await option(),
+    silver = await option();
+  assert.ok(gold);
+  assert.ok(silver);
+  for (const category of [a1, a2])
+    for (const d of [material, width, bool]) await assign(category.id, d.id);
+  await assign(a1.id, material.id);
+  const p = async (c: Uuid, o: Uuid, w: string, b: boolean) =>
+    product(c, [
+      { definitionId: material.id, value: { kind: 'CHOICE', optionIds: [o] } },
+      { definitionId: width.id, value: { kind: 'NUMBER', number: w } },
+      { definitionId: bool.id, value: { kind: 'BOOLEAN', boolean: b } },
+    ]);
+  const p1 = await p(a1.id, gold.id, '1100', false),
+    p2 = await p(a1.id, silver.id, '1400', true),
+    p3 = await p(a2.id, gold.id, '1600', false);
+  const read = new ReadProducts(uow),
+    base = publicProductQuery({ locale: 'en', categoryId: root.id });
+  const check = async (
+    categoryId: Uuid,
+    filters: PublicProductQuery['filters'],
+    expected: readonly Uuid[],
+  ) => {
+    const page = await read.collection({ ...base, categoryId, filters });
+    assert.deepEqual(page.items.map((p) => p.id).sort(), [...expected].sort());
+    assert.equal(page.total, expected.length);
+    return page;
+  };
+  const all = await check(root.id, [], [p1.id, p2.id, p3.id]);
+  assert.equal(all.filters.filter((f) => f.id === material.id).length, 1);
+  assert.deepEqual(
+    all.filters.map((f) => f.label),
+    all.filters.map((f) => f.label).toSorted((a, b) => a.localeCompare(b, 'en')),
+  );
+  await check(a1.id, [], [p1.id, p2.id]);
+  const choices: PublicProductQuery['filters'] = [
+    { definitionId: material.id, kind: 'CHOICE', optionIds: [gold.id] },
+  ];
+  const globalGold = await read.collection({
+    ...publicProductQuery({ locale: 'en' }),
+    filters: choices,
+  });
+  assert.deepEqual(globalGold.items.map((p) => p.id).sort(), [p1.id, p3.id].sort());
+  assert.equal(globalGold.total, 2);
+  await check(root.id, choices, [p1.id, p3.id]);
+  await check(
+    root.id,
+    [{ definitionId: material.id, kind: 'CHOICE', optionIds: [gold.id, silver.id] }],
+    [p1.id, p2.id, p3.id],
+  );
+  await check(root.id, [{ definitionId: width.id, kind: 'NUMBER', minimum: '1500' }], [p3.id]);
+  await check(a1.id, [...choices, { definitionId: width.id, kind: 'NUMBER', minimum: '1200' }], []);
+  await check(root.id, [{ definitionId: bool.id, kind: 'BOOLEAN', value: false }], [p1.id, p3.id]);
+  const paged = await read.collection({ ...base, pageSize: 1, page: 2 });
+  assert.equal(paged.total, 3);
+  assert.equal(paged.items.length, 1);
+  assert.equal(paged.hasNextPage, true);
+  await assert.rejects(
+    check(root.id, [{ definitionId: material.id, kind: 'CHOICE', optionIds: [ids.newUuid()] }], []),
+    isCode('VALIDATION_FAILED'),
+  );
+  assert.deepEqual(
+    publicProductQuery({
+      filters: JSON.stringify([{ definitionId: material.id, kind: 'CHOICE', optionId: gold.id }]),
+    }).filters,
+    choices,
+  );
+});
+
+test('Unit collection usage counts include deprecated live definitions, exclude deleted definitions and remain decimal strings', async () => {
+  const unit = await new CreateCanonicalUnit(uow, ids, clock).execute(
+    {
+      code: 'usage-' + randomUUID(),
+      symbol: 'mm',
+      dimension: 'length',
+      translations: labelTranslations,
+    },
+    actor,
+  );
+  const collection = new PrismaConfigurationCollection(db);
+  const count = async () => {
+    const page = await collection.page({
+      resource: 'units',
+      page: 1,
+      pageSize: 25,
+      search: unit.code,
+    });
+    assert.equal(page.items.length, 1);
+    return 'attributeCount' in page.items[0]! ? page.items[0]!.attributeCount : undefined;
+  };
+  assert.equal(await count(), '0');
+  const definition = await new CreateAttributeDefinition(uow, ids, clock).execute(
+    {
+      code: 'usage-definition-' + randomUUID(),
+      translations,
+      kind: 'NUMBER',
+      unitCode: unit.code,
+      minimum: null,
+      maximum: null,
+      allowMultiple: false,
+      public: true,
+      filterable: true,
+      textMultiline: false,
+      textMaxLength: 4000,
+    },
+    actor,
+  );
+  assert.equal(await count(), '1');
+  await db.$transaction(
+    (tx) =>
+      tx.specificationDefinitions.update({
+        where: { id: definition.id },
+        data: { deprecated_at: new Date() },
+      }),
+    { isolationLevel: 'Serializable' },
+  );
+  assert.equal(await count(), '1');
+  await db.$transaction(
+    (tx) =>
+      tx.specificationDefinitions.update({
+        where: { id: definition.id },
+        data: { deleted_at: new Date() },
+      }),
+    { isolationLevel: 'Serializable' },
+  );
+  assert.equal(await count(), '0');
 });

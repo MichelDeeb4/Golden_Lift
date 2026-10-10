@@ -1,23 +1,31 @@
 import { DeletionDialog } from './deletion';
-import { ArrowUpDown, Upload as UploadIcon, FilterX } from '@golden-lift/icons';
+import {
+  ArrowUpDown,
+  Upload as UploadIcon,
+  FilterX,
+  Play,
+  FileText,
+} from '@business-platform/icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { mediaAssetSchema, uploadSchema } from '@golden-lift/api';
+import { mediaAssetSchema, uploadSchema } from '@business-platform/api';
 import {
-  GLAlert,
-  GLButton,
-  GLFilterToolbar,
-  GLActionMenu,
-  GLHeading,
-  GLInput,
-  GLModal,
-  GLSelect,
-  GLPageHeader,
-  GLDrawer,
-  GLConfirmDialog,
-} from '@golden-lift/ui';
+  BPAlert,
+  BPButton,
+  BPBadge,
+  BPStatusBadge,
+  BPFilterToolbar,
+  BPActionMenu,
+  BPHeading,
+  BPInput,
+  BPModal,
+  BPSelect,
+  BPPageHeader,
+  BPDrawer,
+  BPConfirmDialog,
+} from '@business-platform/ui';
 import { StaffError, useStaffApi } from './context';
 import { useAdminTranslation } from './translations';
 import { ActionFeedback, Confirm, TableState, jsonResponse, useAction } from './common';
@@ -60,7 +68,7 @@ export function PdfDownload({ assetId }: { assetId: string }) {
   }, [grant]);
   return (
     <>
-      <GLButton
+      <BPButton
         variant="secondary"
         onClick={() =>
           action.mutate(
@@ -74,7 +82,7 @@ export function PdfDownload({ assetId }: { assetId: string }) {
         }
       >
         {t('open')} — PDF
-      </GLButton>
+      </BPButton>
       <ActionFeedback action={action} />
       {grant && (
         <a
@@ -139,9 +147,9 @@ export function MediaPreview({
     if (grant.error) return <StaffError error={grant.error} reload={() => void grant.refetch()} />;
     if (failed)
       return (
-        <GLAlert tone="error">
+        <BPAlert tone="error">
           {t('error')}
-          <GLButton
+          <BPButton
             variant="secondary"
             onClick={() =>
               void grant.refetch().then((result) => {
@@ -154,11 +162,11 @@ export function MediaPreview({
           >
             <ArrowUpDown size={18} aria-hidden="true" />
             {t('retry')}
-          </GLButton>
-        </GLAlert>
+          </BPButton>
+        </BPAlert>
       );
     if (!grant.data || Date.parse(grant.data.expiresAt) <= Date.now())
-      return <GLAlert>{t(asset.status === 'READY' ? 'preview' : 'processing')}</GLAlert>;
+      return <BPAlert>{t(asset.status === 'READY' ? 'preview' : 'processing')}</BPAlert>;
     return selected === 'playback' ? (
       <video controls preload="metadata" src={grant.data.url} aria-label={t('preview')} />
     ) : (
@@ -174,7 +182,7 @@ export function MediaPreview({
     );
   }
   return (
-    <div ref={host} className="gl-admin-preview">
+    <div ref={host} className="bp-admin-preview">
       {content()}
     </div>
   );
@@ -297,7 +305,7 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
   return (
     <section>
       <p>{t('scanner')}</p>
-      <GLInput
+      <BPInput
         label={t('selectFile')}
         type="file"
         accept={
@@ -326,18 +334,18 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
         <StaffError error={capabilities.error} reload={() => void capabilities.refetch()} />
       )}
       {capabilities.data && !capabilities.data.scannerAvailable && (
-        <GLAlert tone="error">{t('scannerUnavailable')}</GLAlert>
+        <BPAlert tone="error">{t('scannerUnavailable')}</BPAlert>
       )}
-      {fileProblem && <GLAlert tone="error">{fileProblem}</GLAlert>}
+      {fileProblem && <BPAlert tone="error">{fileProblem}</BPAlert>}
       {processing.error && (
         <StaffError error={processing.error} reload={() => void processing.refetch()} />
       )}
       {processing.data?.asset.status === 'FAILED' && (
-        <GLAlert tone="error">{t('processingFailed')}</GLAlert>
+        <BPAlert tone="error">{t('processingFailed')}</BPAlert>
       )}
       <ActionFeedback action={action} />
-      <div className="gl-admin-toolbar">
-        <GLButton
+      <div className="bp-admin-toolbar">
+        <BPButton
           disabled={
             !file ||
             !!fileProblem ||
@@ -348,9 +356,9 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
           onClick={() => action.mutate(send)}
         >
           {session ? t('resume') : t('upload')}
-        </GLButton>
+        </BPButton>
         {session?.status === 'COMPLETED' && (
-          <GLButton
+          <BPButton
             variant="secondary"
             onClick={() => {
               setSession(null);
@@ -359,10 +367,10 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
             }}
           >
             {t('create')} — {t('upload')}
-          </GLButton>
+          </BPButton>
         )}
         {session && session.status === 'OPEN' && (
-          <GLButton
+          <BPButton
             variant="secondary"
             onClick={() => {
               abort.current?.abort();
@@ -390,7 +398,7 @@ export function Upload({ allowedKind }: { allowedKind?: MediaAsset['kind'] }) {
             }}
           >
             {t('cancelUpload')}
-          </GLButton>
+          </BPButton>
         )}
       </div>
     </section>
@@ -485,16 +493,16 @@ export function MediaLibrary({
     return (
       <>
         <MediaLibrary />
-        <GLDrawer
+        <BPDrawer
           open
           title={t('media')}
-          className="gl-admin-overlay gl-asset-inspector"
+          className="bp-admin-overlay bp-asset-inspector"
           onClose={() =>
             router.replace(('/admin/media' + window.location.search) as '/admin/media')
           }
         >
           <MediaLibrary id={id} inspecting />
-        </GLDrawer>
+        </BPDrawer>
       </>
     );
   return (
@@ -506,7 +514,7 @@ export function MediaLibrary({
           onClose={() => setReviewedMedia(null)}
         />
       )}
-      <GLConfirmDialog
+      <BPConfirmDialog
         open={Boolean(reviewedMedia && reviewedMedia.operation !== 'retire')}
         title={reviewedMedia?.operation === 'retire' ? t('retire') : t('retry')}
         variant={reviewedMedia?.operation === 'retire' ? 'destructive' : 'secondary'}
@@ -542,36 +550,38 @@ export function MediaLibrary({
         </p>
         <p>{t('confirmAction')}</p>
         <ActionFeedback action={lifecycle} />
-      </GLConfirmDialog>
+      </BPConfirmDialog>
       {!inspecting && (
-        <div className="gl-media-header">
-          <GLPageHeader title={t('media')} description={t('mediaHelp')} />
+        <div className="bp-media-header">
+          <BPPageHeader title={t('media')} description={t('mediaHelp')} />
           {!inspecting && (
-            <GLButton onClick={() => setUploadOpen(true)}>
+            <BPButton onClick={() => setUploadOpen(true)}>
               <UploadIcon size={18} aria-hidden="true" />
               {t('uploadMedia')}
-            </GLButton>
+            </BPButton>
           )}
         </div>
       )}
-      <GLDrawer
+      <BPDrawer
         keepMounted
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         title={t('upload')}
-        className="gl-admin-overlay"
+        className="bp-admin-overlay"
       >
         <Upload allowedKind={allowedKind} />
-      </GLDrawer>
+      </BPDrawer>
       {!inspecting && (
-        <GLFilterToolbar label={t('filters')} fields={2}>
-          <GLInput
+        <BPFilterToolbar label={t('filters')} fields={2}>
+          <BPInput
             label={t('search')}
+            type="search"
+            onClear={() => filter({ search: '' })}
             value={search}
             onChange={(event) => filter({ search: event.target.value })}
           />
-          <div className="gl-media-filter-fields">
-            <GLSelect
+          <div className="bp-media-filter-fields">
+            <BPSelect
               label={t('kind')}
               disabled={!!allowedKind}
               value={kind}
@@ -583,7 +593,7 @@ export function MediaLibrary({
                 ...['IMAGE', 'VIDEO', 'PDF'].map((value) => ({ value, label: value })),
               ]}
             />
-            <GLSelect
+            <BPSelect
               label={t('status')}
               value={status}
               onChange={(value) => {
@@ -595,14 +605,14 @@ export function MediaLibrary({
               ]}
             />
           </div>
-          <GLButton
+          <BPButton
             variant="ghost"
             onClick={() => filter({ search: '', kind: allowedKind ?? '', status: '' })}
           >
             <FilterX size={18} aria-hidden="true" />
             {t('clear')}
-          </GLButton>
-        </GLFilterToolbar>
+          </BPButton>
+        </BPFilterToolbar>
       )}
       <TableState
         presentation="content"
@@ -611,22 +621,30 @@ export function MediaLibrary({
         empty={!assets.length}
         onRetry={() => void (id ? detail.refetch() : list.refetch())}
       >
-        <div className="gl-admin-media">
+        <div className="bp-admin-media">
           {assets.map((asset) =>
             !inspecting ? (
-              <section key={asset.id} className="gl-asset-card">
+              <section key={asset.id} className="bp-asset-card">
                 <a
                   href={'/admin/media/' + asset.id + window.location.search}
                   aria-label={asset.name}
                 >
                   <MediaPreview asset={asset} />
-                  <span className="gl-asset-kind">
-                    {asset.kind} / {asset.status}
+                  <span className="bp-asset-kind">
+                    <BPBadge>
+                      {asset.kind === 'VIDEO' ? (
+                        <Play size={14} aria-hidden="true" />
+                      ) : asset.kind === 'PDF' ? (
+                        <FileText size={14} aria-hidden="true" />
+                      ) : null}
+                      {asset.kind}
+                    </BPBadge>
+                    <BPStatusBadge state={asset.status} />
                   </span>
-                  <h2 className="gl-asset-name">{asset.name}</h2>
+                  <h2 className="bp-asset-name">{asset.name}</h2>
                 </a>
                 {!onSelect && (
-                  <GLActionMenu
+                  <BPActionMenu
                     label={t('actions') + ' — ' + asset.name}
                     items={[
                       {
@@ -664,14 +682,14 @@ export function MediaLibrary({
                   />
                 )}
                 {onSelect && (
-                  <GLButton
+                  <BPButton
                     disabled={
                       asset.status !== 'READY' || asset.security === 'BLOCKED' || asset.deleted
                     }
                     onClick={() => onSelect(asset)}
                   >
                     {t('select')}
-                  </GLButton>
+                  </BPButton>
                 )}
               </section>
             ) : (
@@ -699,14 +717,14 @@ export function MediaLibrary({
                   </time>
                 </p>
                 {onSelect ? (
-                  <GLButton
+                  <BPButton
                     disabled={
                       asset.status !== 'READY' || asset.security === 'BLOCKED' || asset.deleted
                     }
                     onClick={() => onSelect(asset)}
                   >
                     {t('select')}
-                  </GLButton>
+                  </BPButton>
                 ) : id ? (
                   <>
                     <p>
@@ -714,9 +732,9 @@ export function MediaLibrary({
                       {asset.width ?? '—'} × {asset.height ?? '—'} · {asset.duration ?? '—'}
                     </p>
                     {asset.failureCode && (
-                      <GLAlert tone="error">
+                      <BPAlert tone="error">
                         {t('failed')}: {asset.failureCode}
-                      </GLAlert>
+                      </BPAlert>
                     )}
                     <ul>
                       {[...asset.variants]
@@ -731,7 +749,7 @@ export function MediaLibrary({
                     {asset.kind === 'PDF' &&
                       asset.status === 'READY' &&
                       asset.security === 'VERIFIED' && <PdfDownload assetId={asset.id} />}
-                    <GLActionMenu
+                    <BPActionMenu
                       label={t('actions')}
                       items={[
                         {
@@ -742,7 +760,7 @@ export function MediaLibrary({
                         },
                       ]}
                     />
-                    <div className="gl-admin-toolbar">
+                    <div className="bp-admin-toolbar">
                       {(['retry', 'reprocess', 'block'] as const)
                         .filter(
                           (operation) =>
@@ -795,9 +813,9 @@ export function MediaLibrary({
       </TableState>
       {id && usage.data != null && (
         <section>
-          <GLHeading level={2} role="heading5">
+          <BPHeading level={2} role="heading5">
             {t('usage')}
-          </GLHeading>
+          </BPHeading>
           {!usage.data.length && <p>{t('empty')}</p>}
           <ul>
             {usage.data.map((owner, index) => (
@@ -854,7 +872,7 @@ export function MediaPicker({
 }) {
   const t = useAdminTranslation();
   return (
-    <GLDrawer className="gl-admin-overlay" open={open} onClose={onClose} title={t('media')}>
+    <BPDrawer className="bp-admin-overlay" open={open} onClose={onClose} title={t('media')}>
       <MediaLibrary
         allowedKind={allowedKind}
         onSelect={(asset) => {
@@ -862,6 +880,6 @@ export function MediaPicker({
           onClose();
         }}
       />
-    </GLDrawer>
+    </BPDrawer>
   );
 }

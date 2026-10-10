@@ -1,8 +1,8 @@
 import type { IncomingMessage } from 'node:http';
 import { Controller, Get, Inject, Param, Query, Req } from '@nestjs/common';
-import { locale, uuid } from '@golden-lift/contracts';
-import type { CategorySchemaResponse, SessionAuthenticator } from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+import { locale, uuid } from '@business-platform/contracts';
+import type { CategorySchemaResponse, SessionAuthenticator } from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { ReadCategorySchema } from '../../application/use-cases/read-category-schema.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import { strictRecord } from './category-query.js';

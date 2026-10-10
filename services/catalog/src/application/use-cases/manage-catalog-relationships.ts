@@ -1,5 +1,5 @@
-import { ApplicationError, uuid } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
+import type { AuthenticatedActor, Uuid, Version } from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { validateValues } from '../../domain/attribute-values.js';
 import type {

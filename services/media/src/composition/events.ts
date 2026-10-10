@@ -1,18 +1,18 @@
-import { deletionEvent, record } from '@golden-lift/contracts';
+import { deletionEvent, record } from '@business-platform/contracts';
 import { CompleteMediaDeletion } from '../application/use-cases/complete-media-deletion.js';
 import { PrismaMediaDeletionStore } from '../infrastructure/prisma/deletion.js';
 import { OwnedMediaDeletionFiles } from '../infrastructure/storage/deletion.js';
 import { FencedStorage } from '../infrastructure/storage/fenced.js';
 import { privateStorage } from './dependencies.js';
 import { mediaConfig } from '../infrastructure/config.js';
-import { mediaEvent, ApplicationError } from '@golden-lift/contracts';
+import { mediaEvent, ApplicationError } from '@business-platform/contracts';
 import {
   databasePool,
   serviceConfig,
   runOutboxRelay,
   closePersistence,
   startupFailed,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { orm } from '../infrastructure/prisma/client.js';
 import { PrismaMediaUnitOfWork } from '../infrastructure/prisma/media-repository.js';
 import { MediaOutboxRelay } from '../infrastructure/prisma/outbox-relay.js';

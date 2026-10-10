@@ -56,7 +56,7 @@ test('dependency outages show errors, preserve login input and never substitute 
       }
       await expect(page.getByRole('alert').first()).toBeVisible();
       await expect(page.getByText(/Demonstration content/)).toHaveCount(0);
-      await expect(page.locator('.gl-product-card')).toHaveCount(0);
+      await expect(page.locator('.bp-product-card')).toHaveCount(0);
       if (service === 'media') {
         await page.getByRole('button', { name: 'Upload Media', exact: true }).click();
         await expect(
@@ -79,7 +79,7 @@ async function openCreate(page: Page) {
   await page.getByRole('button', { name: label[resource!], exact: true }).first().click();
 }
 async function english(page: Page) {
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
 }
 test('attribute creation normalizes changed types and preserves drafts after validation failures', async ({
   page,
@@ -122,7 +122,7 @@ test('interaction states retain keyboard focus, stable geometry and reduced moti
   await expect(trigger).toBeFocused();
   const before = await trigger.boundingBox();
   await trigger.press('Enter');
-  const actions = row.locator('.gl-action-menu-panel button:not(:disabled)');
+  const actions = row.locator('.bp-action-menu-panel button:not(:disabled)');
   await expect(actions.first()).toBeFocused();
   await page.keyboard.press('End');
   await expect(actions.last()).toBeFocused();
@@ -176,46 +176,46 @@ async function translation(scope: Page | Locator, language: 'ar' | 'en' | 'ckb',
 }
 async function reviewSnapshot(page: Page, name: string, target?: Locator) {
   await page.evaluate(() => document.fonts.ready);
-  await expect(page.locator('.gl-admin-skeleton')).toHaveCount(0);
-  if (await page.locator('.gl-toast').isVisible()) {
+  await expect(page.locator('.bp-admin-skeleton')).toHaveCount(0);
+  if (await page.locator('.bp-toast').isVisible()) {
     if (await page.getByRole('dialog').count())
-      await expect(page.locator('.gl-toast')).not.toBeVisible({ timeout: 7000 });
-    else await page.locator('.gl-toast button').click();
+      await expect(page.locator('.bp-toast')).not.toBeVisible({ timeout: 7000 });
+    else await page.locator('.bp-toast button').click();
   }
   const surface = target ?? page;
   if (!target) await page.evaluate(() => window.scrollTo(0, 0));
   await page.locator('dialog[open]').evaluateAll((dialogs) => {
     for (const dialog of dialogs) dialog.scrollTop = 0;
   });
-  if (process.env.GL_MODAL_CAPTURE) {
+  if (process.env.BUSINESS_PLATFORM_MODAL_CAPTURE) {
     await surface.screenshot({
       path: `documentation/assets/admin-crud-modals/${name}.png`,
       animations: 'disabled',
-      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+      mask: [page.locator('.bp-media-caption small'), page.locator('time'), page.locator('video')],
     });
     return;
   }
-  if (process.env.GL_STAFF_CAPTURE_DIR) {
+  if (process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR) {
     await surface.screenshot({
-      path: `${process.env.GL_STAFF_CAPTURE_DIR}/${name}.png`,
+      path: `${process.env.BUSINESS_PLATFORM_STAFF_CAPTURE_DIR}/${name}.png`,
       animations: 'disabled',
-      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+      mask: [page.locator('.bp-media-caption small'), page.locator('time'), page.locator('video')],
     });
     return;
   }
-  if (process.env.GL_FUNCTIONAL_CAPTURE) {
+  if (process.env.BUSINESS_PLATFORM_FUNCTIONAL_CAPTURE) {
     await surface.screenshot({
       path: `documentation/assets/functional-integration/${name}.png`,
       animations: 'disabled',
-      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+      mask: [page.locator('.bp-media-caption small'), page.locator('time'), page.locator('video')],
     });
     return;
   }
-  if (process.env.GL_REDESIGN_CAPTURE) {
+  if (process.env.BUSINESS_PLATFORM_REDESIGN_CAPTURE) {
     await surface.screenshot({
-      path: `documentation/assets/major-redesign/${process.env.GL_REDESIGN_CAPTURE}/${name}.png`,
+      path: `documentation/assets/major-redesign/${process.env.BUSINESS_PLATFORM_REDESIGN_CAPTURE}/${name}.png`,
       animations: 'disabled',
-      mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+      mask: [page.locator('.bp-media-caption small'), page.locator('time'), page.locator('video')],
     });
     return;
   }
@@ -223,7 +223,7 @@ async function reviewSnapshot(page: Page, name: string, target?: Locator) {
   console.info('[visual comparison] ' + test.info().snapshotPath(name + '.png'));
   await expect(surface).toHaveScreenshot(name + '.png', {
     animations: 'disabled',
-    mask: [page.locator('.gl-media-caption small'), page.locator('time'), page.locator('video')],
+    mask: [page.locator('.bp-media-caption small'), page.locator('time'), page.locator('video')],
     maxDiffPixelRatio: 0.002,
   });
 }
@@ -232,8 +232,8 @@ test('anonymous redirect, real login, role separation and logout', async ({ page
   await page.goto('/admin/products');
   await expect(page).toHaveURL(/\/admin\/login$/);
   await login(page, fixture.adminEmail);
-  await expect(page.locator('.gl-launchpad')).toBeVisible();
-  await expect(page.locator('.gl-operational-metric')).toBeVisible();
+  await expect(page.locator('.bp-launchpad')).toBeVisible();
+  await expect(page.locator('.bp-operational-metric')).toBeVisible();
   await reviewSnapshot(page, 'admin-dashboard');
   await page.goto('/super-admin/admins');
   await expect(page.getByRole('alert')).toContainText('permission');
@@ -251,10 +251,10 @@ test('category groups create, independent translations, product editor, publicat
 }) => {
   await login(page, fixture.adminEmail);
   await page.goto('/admin/media');
-  await expect(page.locator('.gl-admin-media img')).toBeVisible();
+  await expect(page.locator('.bp-admin-media img')).toBeVisible();
   await expect
     .poll(() =>
-      page.locator('.gl-admin-media img').evaluate((image: HTMLImageElement) => image.naturalWidth),
+      page.locator('.bp-admin-media img').evaluate((image: HTMLImageElement) => image.naturalWidth),
     )
     .toBeGreaterThan(0);
   await reviewSnapshot(page, 'admin-media-library');
@@ -311,7 +311,7 @@ test('category groups create, independent translations, product editor, publicat
   await editorSection(page, 'Specifications');
   await page.getByLabel('Browser capacity English', { exact: true }).fill('0.000001');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await setFixtureCover(page);
   await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}(?:\?.*)?$/);
   await expect(page.getByLabel('Name (en)', { exact: true })).toHaveValue(
@@ -319,7 +319,7 @@ test('category groups create, independent translations, product editor, publicat
   );
   await editorSection(page, 'Translations');
   await page.getByRole('tab', { name: 'English', exact: true }).click();
-  await expect(page.locator('main .gl-form-section-heading h2')).toHaveText([
+  await expect(page.locator('main .bp-form-section-heading h2')).toHaveText([
     'Identity',
     'Translations',
     'Specifications',
@@ -340,7 +340,7 @@ test('category groups create, independent translations, product editor, publicat
   await editorSection(page, 'Visibility');
   await page.getByLabel('Active', { exact: true }).check();
   await page.getByRole('button', { name: 'Save — Publication', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   const productId = new URL(page.url()).pathname.split('/').at(-1)!;
   productHref = '/admin/products/' + productId;
   const publicResponse = await page.request.get(
@@ -387,7 +387,7 @@ test('category groups create, independent translations, product editor, publicat
   await expect
     .poll(() =>
       page
-        .locator('.gl-collection-cover img')
+        .locator('.bp-collection-cover img')
         .evaluate((image: HTMLImageElement) => image.naturalWidth),
     )
     .toBeGreaterThan(0);
@@ -448,7 +448,7 @@ test('real upload parts, completion, processing feedback and controlled private 
     )
     .toBeGreaterThan(0);
   const uploaded = page
-    .locator('.gl-admin-media section')
+    .locator('.bp-admin-media section')
     .filter({ hasText: 'Browser upload.png' });
   const assetHref = await uploaded.getByRole('link').first().getAttribute('href');
   const assetId = assetHref!.split('/').at(-1)!;
@@ -461,12 +461,12 @@ test('real upload parts, completion, processing feedback and controlled private 
   await page
     .getByRole('dialog')
     .last()
-    .locator('.gl-admin-media section')
+    .locator('.bp-admin-media section')
     .filter({ hasText: 'Browser upload.png' })
     .getByRole('button', { name: 'Select', exact: true })
     .click();
   const association = media
-    .locator('.gl-admin-toolbar')
+    .locator('.bp-admin-toolbar')
     .filter({ has: page.locator('bdi').filter({ hasText: assetId }) });
   await association.getByRole('button', { name: 'Actions', exact: true }).click();
   await association.getByRole('menuitem', { name: 'Move earlier', exact: true }).click();
@@ -559,7 +559,7 @@ test('video playback and PDF preview/download use private Media grants and Catal
     await page.getByRole('button', { name: 'Upload Media', exact: true }).click();
     await page.getByLabel('Choose file', { exact: true }).setInputFiles(file);
     await page.getByRole('button', { name: 'Upload', exact: true }).click();
-    const card = page.locator('.gl-admin-media section').filter({ hasText: file.name });
+    const card = page.locator('.bp-admin-media section').filter({ hasText: file.name });
     await expect(page.getByRole('dialog').last().getByText('READY', { exact: true })).toBeVisible({
       timeout: 30000,
     });
@@ -606,7 +606,7 @@ test('video playback and PDF preview/download use private Media grants and Catal
     await page
       .getByRole('dialog')
       .last()
-      .locator('.gl-admin-media section')
+      .locator('.bp-admin-media section')
       .filter({ hasText: asset.name })
       .getByRole('button', { name: 'Select', exact: true })
       .click();
@@ -667,25 +667,25 @@ test('published Admin content is real on public pages, filters persist and Media
     ).toBeVisible();
     await expect(
       page
-        .locator('.gl-breadcrumb')
+        .locator('.bp-breadcrumb')
         .getByRole('link', { name: 'Browser category English', exact: true }),
     ).toBeVisible();
     await expect
       .poll(() =>
         page
-          .locator('.gl-gallery-main img')
+          .locator('.bp-gallery-main img')
           .evaluate((image) => (image as HTMLImageElement).naturalWidth),
       )
       .toBeGreaterThan(0);
     await page.getByRole('tab', { name: 'Specifications', exact: true }).click();
-    await expect(page.locator('.gl-product-dossier .gl-specifications')).toContainText('0.000001');
+    await expect(page.locator('.bp-product-dossier .bp-specifications')).toContainText('0.000001');
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
       ),
     ).toBe(true);
     await expect(page.getByText(/Demonstration content/)).toHaveCount(0);
-    if (process.env.GL_FUNCTIONAL_CAPTURE)
+    if (process.env.BUSINESS_PLATFORM_FUNCTIONAL_CAPTURE)
       await page.screenshot({
         path: `documentation/assets/functional-integration/public-product-${width}.png`,
         animations: 'disabled',
@@ -699,7 +699,7 @@ test('published Admin content is real on public pages, filters persist and Media
       response.url().includes('TECHNICAL_SOURCE'),
   );
   await page
-    .locator('.gl-document-card')
+    .locator('.bp-document-card')
     .getByRole('button', { name: 'Open', exact: true })
     .click();
   expect((await documentGrant).status()).toBe(200);
@@ -714,14 +714,14 @@ test('published Admin content is real on public pages, filters persist and Media
     .toBe(80);
   await page.goto('/products');
   await expect(page.getByRole('link', { name: /Browser product English/ }).first()).toBeVisible();
-  const filters = page.locator('.gl-dynamic-filters');
+  const filters = page.locator('.bp-dynamic-filters');
   await expect(filters).toContainText('Browser capacity English');
   await filters.getByLabel('Minimum', { exact: true }).fill('0.000001');
   await filters.getByLabel('Maximum', { exact: true }).fill('0.000001');
   await filters.getByRole('button', { name: 'Filter', exact: true }).click();
   await page.reload();
   await expect(filters.getByLabel('Minimum', { exact: true })).toHaveValue('0.000001');
-  await expect(page.locator('.gl-product-card')).toHaveCount(1);
+  await expect(page.locator('.bp-product-card')).toHaveCount(1);
   await filters.getByLabel('Minimum', { exact: true }).fill('1');
   await filters.getByLabel('Maximum', { exact: true }).fill('2');
   await filters.getByRole('button', { name: 'Filter', exact: true }).click();
@@ -765,14 +765,14 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
       ? earlier
       : childRow.getByRole('menuitem', { name: 'Move later', exact: true })
   ).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await page.goto(child);
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Browser child', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Edit', exact: true })
     .click();
   await page.getByRole('dialog').last().getByRole('tab', { name: 'English', exact: true }).click();
@@ -786,11 +786,11 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
     page.getByRole('heading', { name: 'Browser child edited', exact: true }),
   ).toBeVisible();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Browser child edited', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Move', exact: true })
     .click();
   await page
@@ -808,11 +808,11 @@ test('recursive category edit, sibling reorder, move and confirmed branch deleti
   await page.getByRole('button', { name: 'Expand Browser parent', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Browser child edited', exact: true })).toBeVisible();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('button', { name: 'Actions — Browser parent', exact: true })
     .click();
   await page
-    .locator('.gl-category-detail')
+    .locator('.bp-category-detail')
     .getByRole('menuitem', { name: 'Delete', exact: true })
     .click();
   await expect(page.getByRole('dialog').last()).toContainText('Categories: 2');
@@ -923,7 +923,7 @@ test('Arabic and Sorani RTL, mobile navigation and page scrolling', async ({ pag
   for (const locale of ['ar', 'ckb']) {
     await page.locator('header select').selectOption(locale);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.locator('.gl-admin-sidebar')).toBeVisible();
+    await expect(page.locator('.bp-admin-sidebar')).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -934,11 +934,11 @@ test('Arabic and Sorani RTL, mobile navigation and page scrolling', async ({ pag
     await page.screenshot({ path: `.local/admin-${locale}-desktop.png`, fullPage: true });
   }
   await page.setViewportSize({ width: 1024, height: 1000 });
-  await expect(page.locator('.gl-admin-sidebar')).not.toBeVisible();
+  await expect(page.locator('.bp-admin-sidebar')).not.toBeVisible();
   await reviewSnapshot(page, 'admin-product-editor-tablet');
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('.gl-admin-sidebar')).not.toBeVisible();
-  await page.locator('.gl-admin-menu').click();
+  await expect(page.locator('.bp-admin-sidebar')).not.toBeVisible();
+  await page.locator('.bp-admin-menu').click();
   await expect(page.getByRole('dialog').last()).toBeVisible();
   expect(
     await page
@@ -974,9 +974,9 @@ test('Arabic and Sorani RTL, mobile navigation and page scrolling', async ({ pag
     await editorSection(page, 'Media');
     await page.getByRole('button', { name: 'Cover image', exact: true }).click();
     const picker = page.getByRole('dialog').last();
-    await expect(picker.locator('.gl-admin-media img').first()).toBeVisible();
+    await expect(picker.locator('.bp-admin-media img').first()).toBeVisible();
     await picker
-      .locator('.gl-admin-media section')
+      .locator('.bp-admin-media section')
       .filter({ hasText: 'Browser upload.png' })
       .getByRole('button', { name: 'Select', exact: true })
       .click();
@@ -1147,12 +1147,12 @@ test('units, groups and three translated choice options persist through assignme
   await page.getByRole('combobox', { name: 'Workflow choice English', exact: true }).click();
   await page.getByRole('option', { name: 'Workflow option 3 en', exact: true }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await setFixtureCover(page);
   await editorSection(page, 'Visibility');
   await page.getByLabel('Active', { exact: true }).check();
   await page.getByRole('button', { name: 'Save — Publication', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   const href = new URL(page.url()).pathname,
     id = href.split('/').at(-1)!;
   await page.reload();
@@ -1165,7 +1165,7 @@ test('units, groups and three translated choice options persist through assignme
   await editorSection(page, 'Visibility');
   await page.getByLabel('Active', { exact: true }).check();
   await page.getByRole('button', { name: 'Save — Publication', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   const response = await page.request.get(`http://localhost:3000/api/v1/products/${id}?locale=en`);
   expect(response.status()).toBe(200);
   const projected = await response.json();
@@ -1190,7 +1190,7 @@ test('units, groups and three translated choice options persist through assignme
     'Workflow option 3 en',
   );
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await createDraftProduct(
     page,
     'Workflow category English',
@@ -1223,7 +1223,7 @@ test('invitation, single-use action tokens, password recovery and own password c
     await page.getByRole('button', { name: 'Apply reviewed change', exact: true }).click();
   }
   await consume('invitation', invitation, fixture.password);
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await consume('invitation', invitation, fixture.password);
   await expect(page.getByRole('alert')).toContainText('Action token is invalid or expired');
   await login(page, email);
@@ -1241,7 +1241,7 @@ test('invitation, single-use action tokens, password recovery and own password c
   const reset = fixture.messages.at(-1).token;
   const resetPassword = fixture.password + ' reset';
   await consume('password-reset', reset, resetPassword);
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
   await login(page, email, resetPassword);
   await page.goto('/admin/account');
   await page.getByLabel('Current password', { exact: true }).fill(resetPassword);
@@ -1362,10 +1362,10 @@ async function setFixtureCover(page: Page) {
   await page
     .getByRole('dialog')
     .last()
-    .locator('.gl-admin-media section')
+    .locator('.bp-admin-media section')
     .filter({ hasText: 'Browser fixture image.png' })
     .getByRole('button', { name: 'Select', exact: true })
     .click();
   await page.getByRole('button', { name: 'Save — Media', exact: true }).click();
-  await expect(page.locator('.gl-toast')).toContainText('Saved');
+  await expect(page.locator('.bp-toast')).toContainText('Saved');
 }

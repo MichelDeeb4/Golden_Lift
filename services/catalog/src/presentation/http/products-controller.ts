@@ -11,9 +11,9 @@ import {
   Req,
 } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, locale, uuid, version } from '@golden-lift/contracts';
-import type { SessionAuthenticator } from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+import { ApplicationError, locale, uuid, version } from '@business-platform/contracts';
+import type { SessionAuthenticator } from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { ReadProducts } from '../../application/use-cases/read-products.js';
 import type { CreateProduct, EditProduct } from '../../application/use-cases/save-product.js';
 import type { ReadCatalogConfiguration } from '../../application/use-cases/read-catalog-configuration.js';

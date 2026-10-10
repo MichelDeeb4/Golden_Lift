@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, record } from '@golden-lift/contracts';
+import { ApplicationError, record } from '@business-platform/contracts';
 import type { PrincipalResult, SecurityTokens } from '../../application/ports/identity.js';
 import type { AuthenticateStaff } from '../../application/use-cases/authenticate-staff.js';
 import type { ManageAdmins } from '../../application/use-cases/manage-admins.js';

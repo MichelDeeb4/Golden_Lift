@@ -1,0 +1,198 @@
+{
+  "checkedAt": "2026-10-10T10:07:33.389Z",
+  "result": "PASS",
+  "scope": "Local Admin UI redesign; no hosted CI or production acceptance claimed",
+  "rootCauses": [
+    "Normal GLButton labels lacked the shared flex alignment class",
+    "Overlapping Admin stylesheet rules produced inconsistent layout and density"
+  ],
+  "dataSafety": {
+    "schemaMigration": false,
+    "mutationPolicyChanged": false,
+    "authorizationPolicyChanged": false,
+    "deletionPolicyChanged": false,
+    "readMetadata": [
+      "Unit attributeCount string from owning Catalog repository",
+      "Staff updatedAt exact timestamp from owning Identity repository"
+    ],
+    "fixtures": "Disposable PostgreSQL databases and isolated HTTP services; independent Media ownership"
+  },
+  "checks": [
+    {
+      "command": "node scripts/build.mjs",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "PASS"
+    },
+    {
+      "command": "npm run format:check",
+      "result": "PASS"
+    },
+    {
+      "command": "node scripts/check-boundaries.mjs",
+      "result": "PASS",
+      "sources": 245
+    },
+    {
+      "command": "node scripts/test-boundaries.mjs",
+      "result": "PASS",
+      "tests": 14
+    },
+    {
+      "command": "node scripts/prisma.mjs validate",
+      "result": "PASS",
+      "schemas": 4
+    },
+    {
+      "command": "node scripts/test.mjs unit",
+      "result": "PASS",
+      "tests": 41
+    },
+    {
+      "command": "node node_modules/tsx/dist/cli.mjs --test tests/frontend.unit.test.ts",
+      "result": "PASS",
+      "tests": 10
+    },
+    {
+      "command": "node --test --test-concurrency=1 <compiled Catalog integration files and Identity identity.integration.test.js>",
+      "result": "PASS",
+      "tests": 85,
+      "files": [
+        "services/catalog/tests/catalog.integration.test.ts",
+        "services/catalog/tests/category-tree.integration.test.ts",
+        "services/catalog/tests/deletion.integration.test.ts",
+        "services/catalog/tests/product-draft.integration.test.ts",
+        "services/catalog/tests/dynamic-migration.integration.test.ts",
+        "services/catalog/tests/dynamic-catalog.integration.test.ts",
+        "services/identity/tests/identity.integration.test.ts"
+      ],
+      "evidence": ".local/admin-pg-verification.log"
+    },
+    {
+      "command": "playwright test --config tests/frontend.admin-ui.config.ts --update-snapshots",
+      "result": "PASS",
+      "stats": {
+        "startTime": "2026-10-10T09:53:01.735Z",
+        "duration": 317099.305,
+        "expected": 46,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    {
+      "command": "playwright test --config tests/frontend.admin-ui.config.ts frontend.admin-ui.test.ts",
+      "result": "PASS",
+      "stats": {
+        "startTime": "2026-10-10T09:59:14.642Z",
+        "duration": 78710.45099999999,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "note": "Final ordinary comparison of all 24 Admin snapshots, without updates"
+    },
+    {
+      "command": "playwright test --config tests/frontend.public-catalog.config.ts",
+      "result": "PASS",
+      "stats": {
+        "startTime": "2026-10-10T10:01:19.166Z",
+        "duration": 52522.496,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "note": "Final ordinary public comparison, without updates"
+    }
+  ],
+  "browserCoverage": {
+    "distinctAdminScenarios": 46,
+    "distinctPublicScenarios": 3,
+    "widths": [
+      1440,
+      1280,
+      1024,
+      768,
+      390
+    ],
+    "locales": [
+      "en",
+      "ar",
+      "ckb"
+    ],
+    "majorRouteChecks": 81,
+    "behavior": [
+      "real create/edit/delete persistence and reload",
+      "dirty-state stay/leave and focus restoration",
+      "authorization and conflicts",
+      "server pagination and filters",
+      "independent Media upload and Product galleries",
+      "loading, safe HTTP errors, retry and empty results",
+      "126 normal/loading semantic button cases"
+    ]
+  },
+  "visualReview": {
+    "adminSnapshots": [
+      "admin-accounts-win32.png",
+      "attributes-ar-mobile-win32.png",
+      "attributes-ckb-mobile-win32.png",
+      "attributes-win32.png",
+      "categories-ar-win32.png",
+      "categories-ckb-win32.png",
+      "categories-win32.png",
+      "create-modal-win32.png",
+      "delete-dialog-win32.png",
+      "edit-modal-win32.png",
+      "editor-ar-mobile-win32.png",
+      "editor-ckb-mobile-win32.png",
+      "empty-mobile-win32.png",
+      "error-mobile-win32.png",
+      "groups-win32.png",
+      "landing-win32.png",
+      "loading-mobile-win32.png",
+      "media-win32.png",
+      "mobile-navigation-win32.png",
+      "product-editor-win32.png",
+      "product-specifications-win32.png",
+      "products-win32.png",
+      "units-win32.png",
+      "unsaved-dialog-win32.png"
+    ],
+    "publicSnapshots": [
+      "home-1024-win32.png",
+      "home-1440-win32.png",
+      "home-390-win32.png",
+      "products-1440-win32.png",
+      "products-390-win32.png",
+      "products-ar-mobile-win32.png",
+      "products-ckb-mobile-win32.png"
+    ],
+    "reviewed": true,
+    "reviewMethod": "Direct images and contact sheets; final Playwright comparison without snapshot updates"
+  },
+  "normalRuntime": {
+    "web": "http://localhost:8081",
+    "exportResult": "PASS",
+    "apiOrigin": "http://localhost:3000",
+    "mediaOrigin": "http://localhost:3003",
+    "fixtureOriginsAbsentFromExport": true,
+    "selectedProducts": {
+      "cards": 4,
+      "total": 10,
+      "imagesLoaded": true,
+      "refreshPreserved": true,
+      "pageErrors": 0
+    },
+    "openApiReadMetadataVerified": true
+  },
+  "limitations": [
+    "Historical frontend.admin.test.ts combined suite was not executed; current 46-scenario phase runner is documented separately",
+    "Deterministic fixture previews are plain images, not production photography",
+    "Local keyboard/focus/contrast checks are not formal accessibility certification",
+    "Hosted CI, production providers, deployment, load tests and full ORM verification were not executed"
+  ]
+}

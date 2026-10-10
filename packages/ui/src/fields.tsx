@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { InputHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'react';
-import { useGLTranslation } from '@golden-lift/i18n';
-import { Search } from '@golden-lift/icons';
-import { GLIconButton } from './primitives';
+import { useBPTranslation } from '@business-platform/i18n';
+import { Search, X } from '@business-platform/icons';
+import { BPIconButton } from './primitives';
 interface FieldProps {
   label: string;
   help?: string;
@@ -15,43 +15,71 @@ function Field({
   help,
   error,
   success,
+  required,
   children,
-}: { id: string; children: ReactNode } & FieldProps) {
+}: { id: string; children: ReactNode; required?: boolean } & FieldProps) {
   return (
-    <div className={'gl-field ' + (error ? 'is-error' : success ? 'is-success' : '')}>
-      <label htmlFor={id}>{label}</label>
+    <div className={'bp-field ' + (error ? 'is-error' : success ? 'is-success' : '')}>
+      <label htmlFor={id}>
+        {label}
+        {required && <span className="bp-required" aria-hidden="true" />}
+      </label>
       {children}
       {(help || error || success) && (
-        <span id={id + '-help'} className="gl-field-help" role={error ? 'alert' : undefined}>
+        <span id={id + '-help'} className="bp-field-help" role={error ? 'alert' : undefined}>
           {error ?? success ?? help}
         </span>
       )}
     </div>
   );
 }
-export function GLInput({
+export function BPInput({
   label,
   help,
   error,
   success,
   id: given,
+  onClear,
+  clearLabel,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & FieldProps) {
+}: InputHTMLAttributes<HTMLInputElement> &
+  FieldProps & { onClear?: () => void; clearLabel?: string }) {
+  const { t } = useBPTranslation();
   const generated = useId(),
     id = given ?? generated;
   return (
-    <Field {...{ id, label, help, error, success }}>
-      <input
-        {...props}
-        id={id}
-        className={'gl-input ' + (props.className ?? '')}
-        aria-invalid={!!error}
-        aria-describedby={help || error || success ? id + '-help' : undefined}
-      />
+    <Field {...{ id, label, help, error, success }} required={props.required}>
+      <div
+        className={
+          props.type === 'search' ? 'bp-input-control bp-input-search' : 'bp-input-control'
+        }
+      >
+        {props.type === 'search' && (
+          <Search size={18} className="bp-input-adornment" aria-hidden="true" />
+        )}
+        <input
+          {...props}
+          id={id}
+          className={'bp-input ' + (props.className ?? '')}
+          aria-invalid={!!error}
+          aria-describedby={help || error || success ? id + '-help' : undefined}
+        />
+        {onClear && String(props.value ?? '') && (
+          <BPIconButton
+            className="bp-input-clear"
+            label={clearLabel ?? t('clear')}
+            variant="ghost"
+            disabled={props.disabled}
+            onClick={onClear}
+          >
+            <X size={16} aria-hidden="true" />
+          </BPIconButton>
+        )}
+      </div>
     </Field>
   );
 }
-export function GLTextarea({
+export function BPTextarea({
   label,
   help,
   error,
@@ -66,7 +94,7 @@ export function GLTextarea({
       <textarea
         {...props}
         id={id}
-        className="gl-input gl-textarea"
+        className="bp-input bp-textarea"
         aria-invalid={!!error}
         aria-describedby={help || error || success ? id + '-help' : undefined}
       />
@@ -77,7 +105,7 @@ export interface SelectOption {
   readonly value: string;
   readonly label: string;
 }
-export function GLSelect({
+export function BPSelect({
   label,
   options,
   value,
@@ -115,7 +143,7 @@ export function GLSelect({
   }
   return (
     <Field {...{ id, label, error, help }}>
-      <div className="gl-combobox" ref={container}>
+      <div className="bp-combobox" ref={container}>
         <button
           type="button"
           role="combobox"
@@ -123,7 +151,7 @@ export function GLSelect({
           aria-controls={id + '-list'}
           aria-activedescendant={open && options[active] ? id + '-' + active : undefined}
           id={id}
-          className="gl-input gl-select"
+          className="bp-input bp-select"
           onClick={() => (open ? setOpen(false) : show())}
           onKeyDown={(e) => {
             if (e.key === 'Tab') {
@@ -166,14 +194,14 @@ export function GLSelect({
           {selected?.label ?? label}
         </button>
         {open && (
-          <ul id={id + '-list'} role="listbox" className="gl-options">
+          <ul id={id + '-list'} role="listbox" className="bp-options">
             {options.map((o, i) => (
               <li
                 key={o.value}
                 id={id + '-' + i}
                 role="option"
                 aria-selected={o.value === value}
-                className={i === active ? 'gl-option-active' : ''}
+                className={i === active ? 'bp-option-active' : ''}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onChange(o.value);
@@ -189,7 +217,7 @@ export function GLSelect({
     </Field>
   );
 }
-export function GLCombobox({
+export function BPCombobox({
   label,
   options,
   value,
@@ -205,10 +233,10 @@ export function GLCombobox({
   const matches = options.filter((o) => o.label.toLowerCase().includes(value.toLowerCase()));
   return (
     <Field id={id} label={label}>
-      <div className="gl-combobox">
+      <div className="bp-combobox">
         <input
           id={id}
-          className="gl-input"
+          className="bp-input"
           role="combobox"
           aria-expanded={open}
           aria-controls={id + '-list'}
@@ -247,7 +275,7 @@ export function GLCombobox({
           }}
         />
         {open && (
-          <ul id={id + '-list'} role="listbox" className="gl-options">
+          <ul id={id + '-list'} role="listbox" className="bp-options">
             {matches.map((o, i) => (
               <li
                 key={o.value}
@@ -269,48 +297,48 @@ export function GLCombobox({
     </Field>
   );
 }
-export function GLCheckbox({
+export function BPCheckbox({
   label,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="gl-choice">
+    <label className="bp-choice">
       <input {...props} type="checkbox" />
       {label}
     </label>
   );
 }
-export function GLRadio({
+export function BPRadio({
   label,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="gl-choice">
+    <label className="bp-choice">
       <input {...props} type="radio" />
       {label}
     </label>
   );
 }
-export function GLSwitch({
+export function BPSwitch({
   label,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="gl-choice gl-switch">
+    <label className="bp-choice bp-switch">
       <input {...props} type="checkbox" role="switch" />
       {label}
     </label>
   );
 }
-export function GLSearchField({
+export function BPSearchField({
   label,
   onSubmit,
   ...props
-}: Omit<Parameters<typeof GLInput>[0], 'type'> & { onSubmit?: () => void }) {
-  const { t } = useGLTranslation();
+}: Omit<Parameters<typeof BPInput>[0], 'type'> & { onSubmit?: () => void }) {
+  const { t } = useBPTranslation();
   return (
-    <div className="gl-search-field">
-      <GLInput
+    <div className="bp-search-field">
+      <BPInput
         {...props}
         label={label}
         type="search"
@@ -319,9 +347,9 @@ export function GLSearchField({
           if (e.key === 'Enter') onSubmit?.();
         }}
       />
-      <GLIconButton label={t('search')} variant="dark" onClick={onSubmit}>
+      <BPIconButton label={t('search')} variant="dark" onClick={onSubmit}>
         <Search size={18} />
-      </GLIconButton>
+      </BPIconButton>
     </div>
   );
 }

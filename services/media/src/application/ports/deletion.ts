@@ -1,4 +1,4 @@
-import type { DeletionEvent, Uuid } from '@golden-lift/contracts';
+import type { DeletionEvent, Uuid } from '@business-platform/contracts';
 export interface MediaDeletionStore {
   prepare(
     event: DeletionEvent,

@@ -1,5 +1,5 @@
-import { ApplicationError, mediaEvent, record } from '@golden-lift/contracts';
-import type { MediaAction, MediaContext, Uuid } from '@golden-lift/contracts';
+import { ApplicationError, mediaEvent, record } from '@business-platform/contracts';
+import type { MediaAction, MediaContext, Uuid } from '@business-platform/contracts';
 import type { CatalogMedia, MediaAsset } from '../../application/ports/media.js';
 
 export class HttpCatalogMedia implements CatalogMedia {

@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { BusinessService } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { BusinessService } from '@business-platform/contracts';
 import type {
   StaffProxy,
   StaffProxyRequest,

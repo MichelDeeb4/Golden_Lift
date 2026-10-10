@@ -1,12 +1,12 @@
 import { orm } from '../infrastructure/prisma/client.js';
 import { randomUUID } from 'node:crypto';
-import { ApplicationError, uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
 import {
   closePersistence,
   databasePool,
   serviceConfig,
   startupFailed,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { BootstrapSuperAdmin } from '../application/use-cases/bootstrap-super-admin.js';
 import { PrismaIdentityUnitOfWork } from '../infrastructure/prisma/unit-of-work.js';
 import { NodeArgon2 } from '../infrastructure/security/crypto.js';

@@ -1,4 +1,4 @@
-import { httpConfig, startupFailed, upstreams } from '@golden-lift/platform';
+import { httpConfig, startupFailed, upstreams } from '@business-platform/platform';
 import { gatewayApplication } from './application.js';
 try {
   const config = httpConfig('gateway'),

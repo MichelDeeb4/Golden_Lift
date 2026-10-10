@@ -2,7 +2,7 @@ interface Entry {
   session: string;
   index: number;
 }
-const key = '__goldenLiftStaffHistory';
+const key = '__businessPlatformStaffHistory';
 let activePopGuard: ((event: PopStateEvent) => void) | null = null;
 // Install before Expo's linking effects. On window, existing target listeners can
 // reset the root synchronously before a later listener sees the dirty editor.

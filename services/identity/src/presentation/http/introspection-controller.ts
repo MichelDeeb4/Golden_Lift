@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { Controller, Post, Inject, Body, Req, HttpCode } from '@nestjs/common';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import { IDENTITY_HTTP, body, requireOrigin } from './context.js';
 import type { IdentityHttp } from './context.js';
 @Controller('internal/v1/sessions')

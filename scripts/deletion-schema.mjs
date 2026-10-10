@@ -17,7 +17,7 @@ try {
   fs.writeFileSync(file, JSON.stringify(configuration), { mode: 0o600 });
   for (const args of [['database/scripts/db.mjs', 'manifest'], ['scripts/verify-orm.mjs']]) {
     const result = spawnSync(process.execPath, args, {
-      env: { ...process.env, GL_DATABASE_CONFIG_FILE: file },
+      env: { ...process.env, BUSINESS_PLATFORM_DATABASE_CONFIG_FILE: file },
       encoding: 'utf8',
       windowsHide: true,
     });

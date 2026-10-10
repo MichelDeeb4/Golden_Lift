@@ -8,18 +8,18 @@ import type {
   MediaCapability,
   TechnicalAttribute,
   TechnicalDocument,
-} from '@golden-lift/api';
+} from '@business-platform/api';
 import {
-  GLButton,
-  GLCard,
-  GLHeading,
-  GLText,
-  GLIconButton,
-  GLModal,
-  GLSkeleton,
-  GLAlert,
-  GLTable,
-} from '@golden-lift/ui';
+  BPButton,
+  BPCard,
+  BPHeading,
+  BPText,
+  BPIconButton,
+  BPModal,
+  BPSkeleton,
+  BPAlert,
+  BPTable,
+} from '@business-platform/ui';
 import {
   ArrowUpRight,
   Play,
@@ -28,8 +28,8 @@ import {
   ChevronRight,
   FileText,
   Download,
-} from '@golden-lift/icons';
-import { useGLTranslation, useLocale } from '@golden-lift/i18n';
+} from '@business-platform/icons';
+import { useBPTranslation, useLocale } from '@business-platform/i18n';
 const ResolverContext = createContext<MediaResolver | null>(null);
 export function MediaProvider({
   resolver,
@@ -75,7 +75,7 @@ function useCapability(
   }, [resolver, reference?.id, reference?.profile, reference?.ownerId, action, refresh]);
   return { capability, failed, retry: () => setRefresh((v) => v + 1) };
 }
-export function GLMediaImage({
+export function BPMediaImage({
   reference,
   className = '',
   priority = false,
@@ -84,20 +84,20 @@ export function GLMediaImage({
   className?: string;
   priority?: boolean;
 }) {
-  const { t } = useGLTranslation(),
+  const { t } = useBPTranslation(),
     { capability, failed, retry } = useCapability(reference),
     [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [capability?.url]);
   if (!reference || failed || broken)
     return (
       <div
-        className={'gl-image-placeholder ' + className}
+        className={'bp-image-placeholder ' + className}
         role="img"
         aria-label={reference?.alt ?? t('missingImage')}
       >
         <span>{t('missingImage')}</span>
         {reference && (
-          <GLButton
+          <BPButton
             variant="text"
             onClick={() => {
               setBroken(false);
@@ -105,33 +105,44 @@ export function GLMediaImage({
             }}
           >
             {t('refresh')}
-          </GLButton>
+          </BPButton>
         )}
       </div>
     );
-  if (!capability) return <GLSkeleton className={'gl-media ' + className} />;
+  if (!capability) return <BPSkeleton className={'bp-media ' + className} />;
   return (
     <img
       src={capability.url}
       alt={reference.alt}
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
-      className={'gl-media ' + className}
+      className={'bp-media ' + className}
       onError={() => setBroken(true)}
     />
   );
 }
-export function GLCategoryCard({ category }: { category: Category }) {
-  const { t } = useGLTranslation();
+export function BPCategoryCard({ category }: { category: Category }) {
+  const { t } = useBPTranslation();
   return (
-    <article className="gl-category-card">
+    <article className="bp-category-card">
       <a href={'/categories/' + category.id}>
-        <GLMediaImage reference={category.image} />
-        <div className="gl-category-card-body">
+        <div className="bp-category-card-image">
+          <BPMediaImage
+            reference={
+              category.image
+                ? {
+                    ...category.image,
+                    profile: category.image.demoUrl ? category.image.profile : 'card',
+                  }
+                : null
+            }
+          />
+        </div>
+        <div className="bp-category-card-body">
           <div>
-            <GLHeading fluid level={3} role="heading5">
+            <BPHeading fluid level={3} role="heading5">
               {category.name}
-            </GLHeading>
+            </BPHeading>
             {category.description && <p>{category.description}</p>}
           </div>
           <ArrowUpRight aria-hidden="true" size={20} />
@@ -141,57 +152,59 @@ export function GLCategoryCard({ category }: { category: Category }) {
     </article>
   );
 }
-export function GLTechnicalValue({ value, unit }: { value: string; unit?: string | null }) {
+export function BPTechnicalValue({ value, unit }: { value: string; unit?: string | null }) {
   return (
-    <GLText role="technicalValue">
+    <BPText role="technicalValue">
       <bdi>
         {value}
         {unit ? ' ' + unit : ''}
       </bdi>
-    </GLText>
+    </BPText>
   );
 }
-export function GLProductCard({
+export function BPProductCard({
   product,
   summaryAttributes = product.attributes.slice(0, 2),
 }: {
   product: Product;
   summaryAttributes?: readonly TechnicalAttribute[];
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   const image = product.media.find((m) => m.kind === 'image');
   return (
-    <article className="gl-product-card">
+    <article className="bp-product-card">
       <a href={'/products/' + product.id}>
-        <div className="gl-product-card-image">
-          <GLMediaImage reference={image ? { ...image, profile: 'card' } : null} />
-          <span className="gl-card-arrow">
+        <div className="bp-product-card-image">
+          <BPMediaImage reference={image ? { ...image, profile: 'card' } : null} />
+          <span className="bp-card-arrow">
             <ArrowUpRight size={20} />
           </span>
         </div>
-        <div className="gl-product-card-body">
-          <GLText role="overline" className="gl-muted">
+        <div className="bp-product-card-body">
+          <BPText role="overline" className="bp-muted">
             {product.categoryName}
-          </GLText>
-          <GLHeading fluid level={3} role="heading5">
+          </BPText>
+          <BPHeading fluid level={3} role="heading5">
             {product.name}
-          </GLHeading>
+          </BPHeading>
           {product.model && (
-            <GLText role="caption" className="gl-muted">
+            <BPText role="caption" className="bp-muted">
               {product.model}
-            </GLText>
+            </BPText>
           )}
-          <dl className="gl-summary">
-            {summaryAttributes.map((a) => (
-              <div key={a.id}>
-                <dt>{a.label}</dt>
-                <dd>
-                  <GLTechnicalValue value={a.value} unit={a.unit} />
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <span className="gl-detail-link">
+          {summaryAttributes.length > 0 && (
+            <dl className="bp-summary">
+              {summaryAttributes.map((a) => (
+                <div key={a.id}>
+                  <dt>{a.label}</dt>
+                  <dd>
+                    <BPTechnicalValue value={a.value} unit={a.unit} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <span className="bp-detail-link">
             {t('details')} <ArrowUpRight size={16} />
           </span>
         </div>
@@ -199,38 +212,38 @@ export function GLProductCard({
     </article>
   );
 }
-export function GLSpecificationList({ attributes }: { attributes: readonly TechnicalAttribute[] }) {
+export function BPSpecificationList({ attributes }: { attributes: readonly TechnicalAttribute[] }) {
   return (
-    <dl className="gl-specifications">
+    <dl className="bp-specifications">
       {attributes.map((a) => (
         <div key={a.id}>
           <dt>{a.label}</dt>
           <dd>
-            <GLTechnicalValue value={a.value} unit={a.unit} />
+            <BPTechnicalValue value={a.value} unit={a.unit} />
           </dd>
         </div>
       ))}
     </dl>
   );
 }
-export function GLSpecificationTable({
+export function BPSpecificationTable({
   attributes,
 }: {
   attributes: readonly TechnicalAttribute[];
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLTable
+    <BPTable
       columns={[t('technical'), t('specifications')]}
       rows={attributes.map((a) => [
         a.label,
-        <GLTechnicalValue key={a.id} value={a.value} unit={a.unit} />,
+        <BPTechnicalValue key={a.id} value={a.value} unit={a.unit} />,
       ])}
     />
   );
 }
-export function GLTechnicalDocumentCard({ document: doc }: { document: TechnicalDocument }) {
-  const { t } = useGLTranslation();
+export function BPTechnicalDocumentCard({ document: doc }: { document: TechnicalDocument }) {
+  const { t } = useBPTranslation();
   const resolver = useContext(ResolverContext),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(false);
@@ -252,57 +265,57 @@ export function GLTechnicalDocumentCard({ document: doc }: { document: Technical
     }
   }
   return (
-    <GLCard className="gl-document-card" direction="row">
+    <BPCard className="bp-document-card" direction="row">
       <FileText size={28} />
       <div>
-        <GLHeading fluid level={3} role="heading6">
+        <BPHeading fluid level={3} role="heading6">
           {doc.title}
-        </GLHeading>
-        <GLText role="caption">{doc.type}</GLText>
+        </BPHeading>
+        <BPText role="caption">{doc.type}</BPText>
       </div>
-      <GLButton
+      <BPButton
         variant="secondary"
         loading={loading}
         disabled={!doc.permitted}
         onClick={() => void open()}
       >
         <Download size={16} /> {t('open')}
-      </GLButton>
-      {error && <GLAlert tone="error">{t('mediaError')}</GLAlert>}
-    </GLCard>
+      </BPButton>
+      {error && <BPAlert tone="error">{t('mediaError')}</BPAlert>}
+    </BPCard>
   );
 }
-export function GLVideo({ reference }: { reference: MediaReference }) {
-  const { t } = useGLTranslation(),
+export function BPVideo({ reference }: { reference: MediaReference }) {
+  const { t } = useBPTranslation(),
     { capability, failed, retry } = useCapability(reference),
     [broken, setBroken] = useState(false);
   return failed || broken ? (
-    <GLAlert tone="error">
+    <BPAlert tone="error">
       {t('mediaError')}{' '}
-      <GLButton
+      <BPButton
         onClick={() => {
           setBroken(false);
           retry();
         }}
       >
         {t('refresh')}
-      </GLButton>
-    </GLAlert>
+      </BPButton>
+    </BPAlert>
   ) : capability ? (
     <video
       src={capability.url}
       controls
       preload="metadata"
-      className="gl-video"
+      className="bp-video"
       aria-label={reference.alt}
       onError={() => setBroken(true)}
     />
   ) : (
-    <GLSkeleton className="gl-video" />
+    <BPSkeleton className="bp-video" />
   );
 }
-export function GLProductGallery({ media }: { media: readonly MediaReference[] }) {
-  const { t } = useGLTranslation(),
+export function BPProductGallery({ media }: { media: readonly MediaReference[] }) {
+  const { t } = useBPTranslation(),
     { locale } = useLocale(),
     [selected, setSelected] = useState(0),
     [open, setOpen] = useState(false);
@@ -312,17 +325,17 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
   };
   function content() {
     return item?.kind === 'video' ? (
-      <GLVideo reference={item} />
+      <BPVideo reference={item} />
     ) : item?.kind === 'image' ? (
-      <GLMediaImage reference={item} priority />
+      <BPMediaImage reference={item} priority />
     ) : (
-      <GLAlert>{t('unsupported')}</GLAlert>
+      <BPAlert>{t('unsupported')}</BPAlert>
     );
   }
   return (
     <div
       id="product-gallery"
-      className="gl-gallery"
+      className="bp-gallery"
       role="region"
       tabIndex={0}
       aria-label={t('gallery')}
@@ -335,7 +348,7 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
       }}
     >
       <div
-        className="gl-gallery-main"
+        className="bp-gallery-main"
         onTouchStart={(e) => {
           e.currentTarget.dataset.touch = String(e.touches[0]?.clientX);
         }}
@@ -347,16 +360,16 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
         }}
       >
         {content()}
-        <GLIconButton
-          className="gl-zoom"
+        <BPIconButton
+          className="bp-zoom"
           label={t('fullscreen')}
           variant="light"
           onClick={() => setOpen(true)}
         >
           <Maximize2 size={20} />
-        </GLIconButton>
+        </BPIconButton>
       </div>
-      <div className="gl-gallery-thumbnails">
+      <div className="bp-gallery-thumbnails">
         {media.map((m, i) => (
           <button
             key={m.id}
@@ -365,12 +378,12 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
             aria-pressed={i === selected}
           >
             {m.kind === 'video' && (
-              <span className="gl-video-thumbnail-badge">
+              <span className="bp-video-thumbnail-badge">
                 <Play size={18} aria-hidden="true" />
                 {t('videoBadge')}
               </span>
             )}
-            <GLMediaImage
+            <BPMediaImage
               reference={
                 m.kind === 'image'
                   ? { ...m, profile: 'thumbnail' }
@@ -383,38 +396,103 @@ export function GLProductGallery({ media }: { media: readonly MediaReference[] }
         ))}
       </div>
       {media.length > 1 && (
-        <div className="gl-gallery-controls">
-          <GLIconButton label={t('previous')} variant="secondary" onClick={() => change(-1)}>
+        <div className="bp-gallery-controls">
+          <BPIconButton label={t('previous')} variant="secondary" onClick={() => change(-1)}>
             {locale === 'en' ? <ChevronLeft /> : <ChevronRight />}
-          </GLIconButton>
+          </BPIconButton>
           <span>
             {selected + 1} / {media.length}
           </span>
-          <GLIconButton label={t('next')} variant="secondary" onClick={() => change(1)}>
+          <BPIconButton label={t('next')} variant="secondary" onClick={() => change(1)}>
             {locale === 'en' ? <ChevronRight /> : <ChevronLeft />}
-          </GLIconButton>
+          </BPIconButton>
         </div>
       )}
-      <GLModal open={open} onClose={() => setOpen(false)} title={item?.alt ?? t('gallery')}>
-        <div className="gl-gallery-fullscreen">{content()}</div>
-      </GLModal>
+      <BPModal open={open} onClose={() => setOpen(false)} title={item?.alt ?? t('gallery')}>
+        <div className="bp-gallery-fullscreen">{content()}</div>
+      </BPModal>
     </div>
   );
 }
-export function GLProductCardSkeleton() {
+export function BPProductCardSkeleton() {
   return (
-    <GLCard>
-      <GLSkeleton className="gl-card-skeleton" />
-      <GLSkeleton />
-      <GLSkeleton />
-    </GLCard>
+    <BPCard>
+      <BPSkeleton className="bp-card-skeleton" />
+      <BPSkeleton />
+      <BPSkeleton />
+    </BPCard>
   );
 }
-export function GLCategoryCardSkeleton() {
+export function BPCategoryCardSkeleton() {
   return (
-    <GLCard>
-      <GLSkeleton className="gl-card-skeleton" />
-      <GLSkeleton />
-    </GLCard>
+    <BPCard>
+      <BPSkeleton className="bp-card-skeleton" />
+      <BPSkeleton />
+    </BPCard>
+  );
+}
+
+export function BPCategoryGrid({ categories }: { categories: readonly Category[] }) {
+  return (
+    <div className="bp-category-grid">
+      {categories.map((category) => (
+        <BPCategoryCard key={category.id} category={category} />
+      ))}
+    </div>
+  );
+}
+export function BPProductGrid({ products }: { products: readonly Product[] }) {
+  return (
+    <div className="bp-product-grid">
+      {products.map((product) => (
+        <BPProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  );
+}
+export function BPCategoryHero({ category }: { category: Category }) {
+  const { t } = useBPTranslation();
+  return (
+    <div className="bp-category-hero">
+      <div>
+        <span className="bp-overline">{t('collection')}</span>
+        <BPHeading level={1} fluid>
+          {category.name}
+        </BPHeading>
+        <p>{category.description || t('categoryBody')}</p>
+        <a
+          href={'/products?categoryId=' + encodeURIComponent(category.id)}
+          className="bp-button bp-button-dark bp-button-md"
+        >
+          {t('explore')} <ArrowUpRight size={18} />
+        </a>
+      </div>
+      <div className="bp-category-hero-image">
+        <BPMediaImage reference={category.image} priority />
+      </div>
+    </div>
+  );
+}
+
+export function BPGroupedSpecifications({
+  attributes,
+}: {
+  attributes: readonly TechnicalAttribute[];
+}) {
+  const { t } = useBPTranslation();
+  const groups = [...new Set(attributes.map((a) => a.group?.id ?? 'ungrouped'))];
+  return (
+    <div className="bp-specification-groups">
+      {groups.map((id) => (
+        <section key={id}>
+          <BPHeading level={3} role="heading5">
+            {attributes.find((a) => a.group?.id === id)?.group?.label ?? t('specifications')}
+          </BPHeading>
+          <BPSpecificationList
+            attributes={attributes.filter((a) => (a.group?.id ?? 'ungrouped') === id)}
+          />
+        </section>
+      ))}
+    </div>
   );
 }

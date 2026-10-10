@@ -1,4 +1,4 @@
-# Golden Lift — Visitor and Administration Design
+# Business Platform — Visitor and Administration Design
 
 Updated catalog experience, 2026-10-08: leaf creation includes searchable, ordered group selection. Attributes and groups support multiple memberships and reviewed edits. The recursive category tree remains the browsing context. Product creation needs only a leaf category and Arabic name; generated specifications render each unique attribute once. Visitor detail combines images/videos in one gallery and exposes ancestors, Back to Category, eligible same-category Previous/Next and More from this Category.
 
@@ -26,7 +26,7 @@ Admin and Super Admin have different responsibilities. Super Admin manages staff
 
 ```mermaid
 flowchart TD
-    Entry[Golden Lift website] --> Visitor[Public visitor pages]
+    Entry[Business Platform website] --> Visitor[Public visitor pages]
     Entry --> Login[Staff login]
     Login --> Role{Authenticated role}
     Role -->|ADMIN| Catalog[Catalog and Media workspace]
@@ -135,7 +135,7 @@ Below 1100px, the sidebar becomes a drawer opened by the menu button. Below 768p
 ```text
 ADMIN — simplified desktop layout shown in English/LTR
 ┌──────────────────────────────────────────────────────────┐
-│ GOLDEN LIFT                 Staff name · Language · Exit │
+│ BUSINESS PLATFORM                 Staff name · Language · Exit │
 ├──────────────────┬───────────────────────────────────────┤
 │ Dashboard        │ Page heading / Breadcrumbs            │
 │ Categories       │                                       │
@@ -243,12 +243,12 @@ Directional navigation and spacing adapt to RTL. Technical identifiers/numbers r
 
 | Shared package | Responsibility |
 | --- | --- |
-| `@golden-lift/tokens` | Palette, semantic colors, spacing, typography, layout and motion |
-| `@golden-lift/ui` | Buttons, fields, table, headings, breadcrumbs, tabs, modal/drawer and feedback |
-| `@golden-lift/icons` | Shared Lucide icon family |
-| `@golden-lift/i18n` | Locale, translations and direction |
-| `@golden-lift/catalog-ui` | Visitor category/product cards, gallery, documents and specifications |
-| `@golden-lift/api` | Typed public/staff API interfaces and validated data boundaries |
+| `@business-platform/tokens` | Palette, semantic colors, spacing, typography, layout and motion |
+| `@business-platform/ui` | Buttons, fields, table, headings, breadcrumbs, tabs, modal/drawer and feedback |
+| `@business-platform/icons` | Shared Lucide icon family |
+| `@business-platform/i18n` | Locale, translations and direction |
+| `@business-platform/catalog-ui` | Visitor category/product cards, gallery, documents and specifications |
+| `@business-platform/api` | Typed public/staff API interfaces and validated data boundaries |
 
 The application uses Expo Router, React Native Web and Tamagui. Screen CSS consumes the shared token variables. The current interfaces are web implementations; native applications remain deferred.
 
@@ -298,3 +298,10 @@ Media drag/drop and earlier/later actions both operate on the actual global asso
 | Media | [Previous composition](assets/major-redesign/before/admin-media-library.png) | [Grid-first library](assets/major-redesign/after/admin-media-library.png) |
 
 Historical redesign visitor captures use labeled demo content; staff captures use disposable real HTTP/PostgreSQL fixtures. The redesign itself changed no backend/database/API. The subsequent functional phase adds public collection/search/filter contracts and actual native scanner/codec/PDF acceptance with signed local event relays; its live product captures are in `assets/functional-integration`. Production mail/RabbitMQ/S3/Linux isolation remain separate gates. Global totals, separate short-description fields and public specification group labels remain outside current contracts.
+
+
+## Visitor filter and public composition correction — 2026-10-10
+
+The current public model is Category → descendant leaves → assigned Groups → deduplicated Attributes → typed Product values. Catalog resolves parent scope; visitors never load all Products to filter locally. CHOICE option IDs combine with OR, different Attributes with AND, decimal bounds retain precision and boolean false remains valid. Shared URL state drives API queries, cache identity, history and twelve-item pagination with exact result totals.
+
+Home uses proportion-controlled root Category and selected Product grids. Category pages pair their H1/context with a cover image and child/Product continuation. Listings provide a hierarchical Category rail/mobile drawer, dynamic fields, removable active chips and explicit loading/error/empty states. Product detail presents localized schema Group specifications with each Attribute once. See [public filtering architecture](architecture/public-catalog-filtering.md) for implemented policy and compatibility.

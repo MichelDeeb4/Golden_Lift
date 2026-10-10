@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { AuthenticatedActor, Uuid, Version } from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';
 import { configurationEvent } from '../models/configuration-event.js';

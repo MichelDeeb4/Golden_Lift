@@ -1,7 +1,11 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ConfigurationError, identitySecurityConfig, staffCookieName } from '@golden-lift/platform';
-import type { HttpConfig, IdentitySecurityConfig } from '@golden-lift/platform';
+import {
+  ConfigurationError,
+  identitySecurityConfig,
+  staffCookieName,
+} from '@business-platform/platform';
+import type { HttpConfig, IdentitySecurityConfig } from '@business-platform/platform';
 import type { IdentityPolicy } from '../application/ports/identity.js';
 export interface MailConfig {
   readonly mode: 'local' | 'smtp';
@@ -105,7 +109,7 @@ export function identityConfig(http: HttpConfig, env = process.env): IdentityCon
         env['IDENTITY_MAILBOX_DIRECTORY'] ??
         path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../.local/mailbox'),
       staffAppUrl: url.href.endsWith('/') ? url.href : url.href + '/',
-      sender: env['SMTP_FROM'] ?? 'no-reply@golden-lift.local',
+      sender: env['SMTP_FROM'] ?? 'no-reply@business-platform.local',
       host: env['SMTP_HOST'] ?? '127.0.0.1',
       port,
       secure: port === 465,

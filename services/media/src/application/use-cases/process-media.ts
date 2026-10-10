@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { MediaKind } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { MediaKind } from '@business-platform/contracts';
 import { mandatoryVariants } from '../../domain/media-policy.js';
 import type { MediaUnitOfWork, MediaIds, ProcessingClaim } from '../ports/media.js';
 import type { MediaProcessor } from '../ports/processing.js';

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import {
   ConfigurationError,
   httpConfig,
   identityClientConfig,
   identitySecurityConfig,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import {
   emailAddress,
   newPassword,
@@ -48,6 +48,7 @@ test('staff inputs normalize email and preserve Unicode password content', () =>
         authVersion: actor.authVersion,
         version: version('1'),
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }),
     isCode('FORBIDDEN'),
   );
@@ -119,7 +120,7 @@ test('production has no local security or mail fallback and requires HTTPS', () 
     SMTP_FROM: 'staff@example.test',
   };
   const config = identityConfig(httpConfig('identity', env), env);
-  assert.equal(config.cookieName, '__Host-gl_staff');
+  assert.equal(config.cookieName, '__Host-bp_staff');
   assert.equal(config.mail.requireTls, true);
   assert.equal(config.secureCookie, true);
   assert.throws(

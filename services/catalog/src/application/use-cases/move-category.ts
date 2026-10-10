@@ -1,10 +1,10 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   MoveCategoryInput,
   CategoryMoveResult,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { maximumReorderSize, orderBetween, requireRevision } from '../../domain/category-order.js';
 import type { CatalogUnitOfWork, Clock, IdGenerator } from '../ports/catalog.js';

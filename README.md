@@ -1,10 +1,16 @@
-# Golden Lift
+# Business Platform
+
+Multi-Tenant ERP and E-Commerce Platform — the target architecture. Currently implemented: Catalog, staff Identity, Media and Gateway; Inquiries remains pending. Multi-tenancy and other ERP modules are planned, not implemented.
+
+Identity rename and local infrastructure cutover: [rename report](documentation/implementation/01-business-platform-rename.md).
 
 Current catalog: Product → leaf Category → reusable Attribute Groups → unique Attributes → typed Product values. Creation includes initial relationships atomically; edits and category moves require impact review. Runtime Product Type is removed and local product bindings have been archived/retired after parity rehearsal. See [model](documentation/architecture/catalog-classification-model.md), [migration](documentation/operations/product-type-migration.md) and [current phase report](documentation/implementation/final-catalog-admin-visitor-completed-work.md).
 
 See [completed work and current project status](documentation/project-progress.md) for the implemented features, architecture, recorded checks and remaining milestones.
 
 The [visitor and administration design guide](documentation/visitor-and-administration-design.md) illustrates the current visual identity, page layouts, routes and workflows for visitors, Admins and Super Admins.
+
+The [2026-10-10 Admin refinement](documentation/implementation/admin-ui-redesign-completed-work.md) consolidates shell, controls, tables, forms and overlays, with real Unit usage and staff update metadata.
 
 Admin collection pages share server-backed pagination and preserve page/filter state in the URL. See [dashboard operations](documentation/admin-dashboard.md) and the [scrolling/pagination decision](documentation/decisions/018-admin-scroll-and-pagination.md).
 

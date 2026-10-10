@@ -1,5 +1,5 @@
 import { FencedStorage } from '../infrastructure/storage/fenced.js';
-import { databasePool, serviceConfig, startupFailed } from '@golden-lift/platform';
+import { databasePool, serviceConfig, startupFailed } from '@business-platform/platform';
 import { mediaConfig } from '../infrastructure/config.js';
 import { mediaApplication } from './application.js';
 import { privateStorage } from './dependencies.js';

@@ -5,8 +5,8 @@ import { Catch, Controller, Get, HttpException, Module } from '@nestjs/common';
 import type { ArgumentsHost, ExceptionFilter, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { ApplicationError } from '@golden-lift/contracts';
-import type { ApiError, ErrorCode } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { ApiError, ErrorCode } from '@business-platform/contracts';
 import { ConfigurationError } from './config.js';
 import type { HttpConfig } from './config.js';
 const statuses: Record<ErrorCode, number> = {

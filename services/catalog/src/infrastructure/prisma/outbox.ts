@@ -1,5 +1,5 @@
-import { eventEnvelope } from '@golden-lift/contracts';
-import type { EventEnvelope } from '@golden-lift/contracts';
+import { eventEnvelope } from '@business-platform/contracts';
+import type { EventEnvelope } from '@business-platform/contracts';
 import type { Outbox } from '../../application/ports/catalog.js';
 import type { Database } from './client.js';
 import type { Prisma } from './generated/client.js';

@@ -8,7 +8,7 @@ import { verifyFresh } from './verify.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const original = config(),
   reference = structuredClone(original),
-  name = 'golden_lift_test_dynamic_' + crypto.randomBytes(8).toString('hex');
+  name = 'business_platform_test_dynamic_' + crypto.randomBytes(8).toString('hex');
 reference.services.catalog.database = name;
 const reportPath = path.resolve(
   process.argv[2] ?? path.join(root, '.local/dynamic-database-validation.json'),
@@ -32,6 +32,6 @@ try {
     'disposable final Catalog versus fresh/upgrade; other installed schemas read-only';
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
 } finally {
-  assert(/^golden_lift_test_dynamic_[0-9a-f]{16}$/.test(name));
+  assert(/^business_platform_test_dynamic_[0-9a-f]{16}$/.test(name));
   sql(original, null, 'DROP DATABASE ' + name + ' WITH (FORCE)');
 }

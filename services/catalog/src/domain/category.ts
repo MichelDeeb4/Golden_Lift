@@ -1,5 +1,5 @@
-import { ApplicationError, locale, locales, uuid, version } from '@golden-lift/contracts';
-import type { AuthenticatedActor, Locale, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError, locale, locales, uuid, version } from '@business-platform/contracts';
+import type { AuthenticatedActor, Locale, Uuid, Version } from '@business-platform/contracts';
 export interface Translation {
   readonly locale: Locale;
   readonly name: string;

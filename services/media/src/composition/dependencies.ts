@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { S3Client } from '@aws-sdk/client-s3';
-import { uuid } from '@golden-lift/contracts';
+import { uuid } from '@business-platform/contracts';
 import type { MediaIds } from '../application/ports/media.js';
 import { FilesystemStorage } from '../infrastructure/storage/filesystem.js';
 import { S3Storage } from '../infrastructure/storage/s3.js';

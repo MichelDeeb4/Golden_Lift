@@ -1,5 +1,5 @@
-import { ApplicationError, locale, uuid } from '@golden-lift/contracts';
-import type { PublicProductFilter, PublicProductQuery } from '@golden-lift/contracts';
+import { ApplicationError, locale, uuid } from '@business-platform/contracts';
+import type { PublicProductFilter, PublicProductQuery } from '@business-platform/contracts';
 import { strictRecord } from './category-query.js';
 
 const invalid = (): never => {
@@ -34,6 +34,7 @@ function filters(value: unknown): readonly PublicProductFilter[] {
       'maximum',
       'value',
       'optionId',
+      'optionIds',
     ]);
     const definitionId = uuid(v['definitionId']);
     if (seen.has(definitionId)) return invalid();
@@ -58,9 +59,15 @@ function filters(value: unknown): readonly PublicProductFilter[] {
       case 'TEXT':
         strictRecord(v, ['definitionId', 'kind', 'value']);
         return { definitionId, kind: 'TEXT', value: text(v['value'], 200) };
-      case 'CHOICE':
-        strictRecord(v, ['definitionId', 'kind', 'optionId']);
-        return { definitionId, kind: 'CHOICE', optionId: uuid(v['optionId']) };
+      case 'CHOICE': {
+        strictRecord(v, ['definitionId', 'kind', 'optionId', 'optionIds']);
+        if ((v['optionId'] === undefined) === (v['optionIds'] === undefined)) return invalid();
+        const options = v['optionIds'] ?? [v['optionId']];
+        if (!Array.isArray(options) || !options.length || options.length > 100) return invalid();
+        const optionIds = options.map(uuid);
+        if (new Set(optionIds).size !== optionIds.length) return invalid();
+        return { definitionId, kind: 'CHOICE', optionIds };
+      }
       default:
         return invalid();
     }
@@ -72,10 +79,12 @@ export function publicProductQuery(value: unknown): PublicProductQuery {
     'page',
     'pageSize',
     'category',
+    'categoryId',
     'search',
     'sort',
     'filters',
   ]);
+  if (q['category'] !== undefined && q['categoryId'] !== undefined) return invalid();
   if (q['sort'] !== undefined && !['featured', 'name'].includes(String(q['sort'])))
     return invalid();
   return {
@@ -84,7 +93,9 @@ export function publicProductQuery(value: unknown): PublicProductQuery {
     pageSize: bounded(q['pageSize'], 12, 100),
     sort: q['sort'] === 'name' ? 'name' : 'featured',
     filters: filters(q['filters']),
-    ...(q['category'] !== undefined ? { categoryId: uuid(q['category']) } : {}),
+    ...((q['categoryId'] ?? q['category']) !== undefined
+      ? { categoryId: uuid(q['categoryId'] ?? q['category']) }
+      : {}),
     ...(q['search'] !== undefined ? { search: text(q['search'], 200) } : {}),
   };
 }

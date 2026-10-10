@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { uuid } from '@golden-lift/contracts';
+import { uuid } from '@business-platform/contracts';
 import { sqlState } from '../src/transactions.js';
 import { databaseFixture } from './support/database-fixture.js';
 import { orm as identityOrm } from '../../../services/identity/src/infrastructure/prisma/client.js';

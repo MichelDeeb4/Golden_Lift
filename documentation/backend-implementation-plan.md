@@ -1,4 +1,4 @@
-# Golden Lift Backend Implementation Plan
+# Business Platform Backend Implementation Plan
 
 Prepared on 2026-10-03; updated 2026-10-04. Status: B1/B2 foundation, B3 Identity, Prisma integration and B4 category administration implemented locally. This plan retains the microservice ownership and Clean Architecture baseline. B4 completes editor reads/saved translations, bounded deep navigation/breadcrumbs/destinations, branch moves, atomic root/nested ordering and confirmed soft deletion with scope-bound preview protection. See the [Catalog operating guide](operations/catalog.md), [category decision](decisions/005-category-administration.md), [B4 validation](validation/b4-2026-10-04T09-14-07-069Z.json) and [current progress](project-progress.md). Media/product/inquiry and application workflows remain later milestones.
 
@@ -105,7 +105,7 @@ CI checks import boundaries, circular dependencies and service-to-service implem
 Retain `database/` as the SQL source of truth and extend the repository as follows:
 
 ```text
-Golden_Lift/
+business-platform/
   apps/
     public/
     admin/

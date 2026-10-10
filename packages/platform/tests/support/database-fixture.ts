@@ -37,9 +37,9 @@ export async function databaseFixture(
   const original = tools.config(),
     scratch = structuredClone(original),
     entry = scratch.services[service];
-  const database = 'golden_lift_orm_' + service + '_' + randomUUID().replaceAll('-', '');
+  const database = 'bp_test_orm_' + service + '_' + randomUUID().replaceAll('-', '');
   if (
-    !/^golden_lift_orm_(identity|catalog|media|inquiries)_[0-9a-f]{32}$/.test(database) ||
+    !/^bp_test_orm_(identity|catalog|media|inquiries)_[0-9a-f]{32}$/.test(database) ||
     database.length > 63
   )
     throw new Error('Unsafe fixture database name.');

@@ -1,0 +1,36 @@
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  testDir: '.',
+  testMatch: [
+    'frontend.admin-ui.test.ts',
+    'frontend.admin-actions.test.ts',
+    'frontend.admin-pagination.test.ts',
+    'frontend.admin-modal.test.ts',
+    'frontend.product-create.test.ts',
+    'frontend.final-catalog.test.ts',
+    'frontend.category-tree.test.ts',
+    'frontend.deletion.test.ts',
+  ],
+  fullyParallel: false,
+  workers: 1,
+  timeout: 120000,
+  reporter: [['list'], ['json', { outputFile: '../.local/admin-ui-results.json' }]],
+  use: {
+    baseURL: 'http://localhost:8082',
+    browserName: 'chromium',
+    channel: 'msedge',
+    headless: true,
+    actionTimeout: 15000,
+    viewport: { width: 1440, height: 1000 },
+    reducedMotion: 'reduce',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  webServer: {
+    cwd: process.cwd(),
+    command: 'node scripts/storefront-preview.mjs',
+    url: 'http://localhost:8082',
+    reuseExistingServer: false,
+    timeout: 15000,
+  },
+});

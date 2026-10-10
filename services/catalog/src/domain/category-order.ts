@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { Uuid } from '@business-platform/contracts';
 const minimum = -9223372036854775808n,
   maximum = 9223372036854775807n;
 export const maximumReorderSize = 500;

@@ -1,5 +1,5 @@
 import { DeletionDialog } from './deletion';
-import { Plus, FilterX, Save, Search, Trash2 } from '@golden-lift/icons';
+import { Plus, FilterX, Save, Search, Trash2 } from '@business-platform/icons';
 import { useConfirmDiscard } from './context';
 import { useEffect, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
@@ -12,26 +12,27 @@ import {
   managedProductSchema,
   pageSchema,
   productRowSchema,
-} from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
+} from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
 import {
-  GLAlert,
-  GLButton,
-  GLCheckbox,
-  GLHeading,
-  GLInput,
-  GLModal,
-  GLSelect,
-  GLTable,
-  GLPageHeader,
-  GLFormSection,
-  GLActionBar,
-  GLActionMenu,
-  GLFilterToolbar,
-  GLDrawer,
-  GLWorkspace,
-  GLWorkspacePanel,
-} from '@golden-lift/ui';
+  BPAlert,
+  BPButton,
+  BPStatusBadge,
+  BPCheckbox,
+  BPHeading,
+  BPInput,
+  BPModal,
+  BPSelect,
+  BPTable,
+  BPPageHeader,
+  BPFormSection,
+  BPActionBar,
+  BPActionMenu,
+  BPFilterToolbar,
+  BPDrawer,
+  BPWorkspace,
+  BPWorkspacePanel,
+} from '@business-platform/ui';
 import { useStaffApi, useUnsaved } from './context';
 import { useAdminTranslation } from './translations';
 import {
@@ -103,7 +104,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
   });
   return (
     <>
-      <GLPageHeader
+      <BPPageHeader
         title={t('products')}
         description={t('createProductHelp')}
         breadcrumbs={[
@@ -111,26 +112,31 @@ export function Products({ create = false }: { create?: boolean } = {}) {
           { label: t('products'), href: '/admin/products' },
         ]}
         actions={
-          <GLButton onClick={() => setCreating(true)}>
+          <BPButton onClick={() => setCreating(true)}>
             <Plus size={18} aria-hidden="true" />
             {t('createProduct')}
-          </GLButton>
+          </BPButton>
         }
       />
-      <GLFilterToolbar label={t('filters')} fields={params.categoryId ? 5 : 4}>
-        <div className="gl-filter-search">
-          <GLInput
+      <BPFilterToolbar label={t('filters')} fields={params.categoryId ? 5 : 4}>
+        <div className="bp-filter-search">
+          <BPInput
             label={t('search')}
+            type="search"
+            onClear={() => {
+              setText('');
+              pagination.filters({ text: '', cursor: '' });
+            }}
             value={text}
             maxLength={120}
             onChange={(e) => setText(e.target.value)}
           />
-          <GLButton onClick={() => pagination.filters({ text, cursor: '' })}>
+          <BPButton onClick={() => pagination.filters({ text, cursor: '' })}>
             <Search size={18} aria-hidden="true" />
             {t('search')}
-          </GLButton>
+          </BPButton>
         </div>
-        <GLSelect
+        <BPSelect
           label={t('status')}
           value={params.active ?? ''}
           onChange={(active) => pagination.filters({ active, cursor: '' })}
@@ -140,7 +146,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             { value: 'false', label: t('inactive') },
           ]}
         />
-        <GLSelect
+        <BPSelect
           label={t('featured')}
           value={params.featured ?? ''}
           onChange={(featured) => pagination.filters({ featured, cursor: '' })}
@@ -150,7 +156,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             { value: 'false', label: t('inactive') },
           ]}
         />
-        <GLSelect
+        <BPSelect
           label={t('order')}
           value={params.sort ?? 'id'}
           onChange={(sort) => pagination.filters({ sort, cursor: '' })}
@@ -159,18 +165,18 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             { value: 'manual', label: t('order') },
           ]}
         />
-        <GLButton variant="secondary" onClick={() => setCategoryFilter(true)}>
+        <BPButton variant="secondary" onClick={() => setCategoryFilter(true)}>
           {t('category')}
-        </GLButton>
+        </BPButton>
         {params.categoryId && (
-          <GLButton
+          <BPButton
             variant="ghost"
             onClick={() => pagination.filters({ categoryId: '', cursor: '' })}
           >
             {t('all')} — {t('categories')}
-          </GLButton>
+          </BPButton>
         )}
-        <GLButton
+        <BPButton
           variant="ghost"
           onClick={() => {
             setText('');
@@ -186,8 +192,8 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         >
           <FilterX size={18} aria-hidden="true" />
           {t('clear')}
-        </GLButton>
-      </GLFilterToolbar>
+        </BPButton>
+      </BPFilterToolbar>
       <TableState
         pending={rows.isPending}
         error={rows.error}
@@ -196,16 +202,16 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         emptyTitle={t('emptyProducts')}
         emptyDescription={t('createProductHelp')}
         emptyAction={
-          <GLButton onClick={() => setCreating(true)}>
+          <BPButton onClick={() => setCreating(true)}>
             <Plus size={18} aria-hidden="true" />
             {t('createProduct')}
-          </GLButton>
+          </BPButton>
         }
       >
-        <GLTable
-          columns={[t('name'), t('catalog'), t('status'), t('updated'), t('actions')]}
+        <BPTable
+          columns={[t('name'), t('catalog'), t('status'), t('media'), t('updated'), t('actions')]}
           rows={(rows.data?.items ?? []).map((row) => [
-            <div className="gl-table-identity" key="identity">
+            <div className="bp-table-identity" key="identity">
               {row.coverAssetId && <CollectionCover assetId={row.coverAssetId} />}
               <div>
                 <a href={'/admin/products/' + row.id + '?returnTo=' + encodeURIComponent(returnTo)}>
@@ -219,19 +225,20 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             <div key="catalog">
               <a href={'/admin/categories/' + row.categoryId}>{row.categoryName}</a>
             </div>,
-            <div key="status">
-              <span className={row.active ? 'gl-status-dot is-active' : 'gl-status-dot'}>
+            <div key="status" className="bp-product-status">
+              <BPStatusBadge state={row.active ? 'PUBLISHED' : 'DRAFT'}>
                 {row.active ? t('active') : t('inactive')}
-              </span>
+              </BPStatusBadge>
               {row.featured && <small>{t('featured')}</small>}
               <small>
                 {t('order')}: <bdi>{row.sortOrder}</bdi>
               </small>
             </div>,
+            <span key="media">{row.coverAssetId ? t('cover') : '—'}</span>,
             <time key="updated" dateTime={row.updatedAt}>
               {new Date(row.updatedAt).toLocaleDateString(locale)}
             </time>,
-            <GLActionMenu
+            <BPActionMenu
               key="actions"
               label={t('actions') + ' — ' + row.name}
               items={[
@@ -268,7 +275,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
         loading={rows.isFetching}
         placeholder={rows.isPlaceholderData}
       />
-      <GLDrawer
+      <BPDrawer
         open={categoryFilter}
         onClose={() => setCategoryFilter(false)}
         title={t('category')}
@@ -280,7 +287,7 @@ export function Products({ create = false }: { create?: boolean } = {}) {
             setCategoryFilter(false);
           }}
         />
-      </GLDrawer>
+      </BPDrawer>
       <CreateProduct open={creating} onClose={() => setCreating(false)} />
     </>
   );
@@ -297,7 +304,7 @@ const placementImpactSchema = z.object({
 });
 function CollectionCover({ assetId }: { assetId: string }) {
   return (
-    <div className="gl-collection-cover">
+    <div className="bp-collection-cover">
       <MediaPreview asset={{ id: assetId, kind: 'IMAGE' }} />
     </div>
   );
@@ -305,6 +312,10 @@ function CollectionCover({ assetId }: { assetId: string }) {
 export function ProductEditor({ id }: { id: string }) {
   const [deleteMediaId, setDeleteMediaId] = useState<string | null>(null);
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const collectionHref =
+    typeof returnTo === 'string' && /^\/admin\/products(?:\?|$)/.test(returnTo)
+      ? returnTo
+      : '/admin/products';
   const api = useStaffApi(),
     { locale } = useLocale(),
     t = useAdminTranslation(),
@@ -506,10 +517,10 @@ export function ProductEditor({ id }: { id: string }) {
     );
   return (
     <>
-      <GLPageHeader
+      <BPPageHeader
         title={(id ? t('edit') : t('create')) + ' — ' + t('products')}
         breadcrumbs={[
-          { label: t('products'), href: '/admin/products' },
+          { label: t('products'), href: collectionHref },
           {
             label: id ? t('edit') : t('create'),
             href: id ? '/admin/products/' + id : '/admin/products/new',
@@ -534,7 +545,7 @@ export function ProductEditor({ id }: { id: string }) {
           {null}
         </TableState>
       ) : (
-        <GLWorkspace
+        <BPWorkspace
           active={section}
           onChange={setSection}
           label={t('sections')}
@@ -574,13 +585,13 @@ export function ProductEditor({ id }: { id: string }) {
           ]}
           inspector={
             <>
-              <span className="gl-overline">{t('summary')}</span>
+              <span className="bp-overline">{t('summary')}</span>
               {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} profile="card" />}
-              <h2 className="gl-inspector-name">
+              <h2 className="bp-inspector-name">
                 {form.watch('names')[locale] || form.watch('names').ar || t('products')}
               </h2>
-              <bdi className="gl-inspector-model">{model || '—'}</bdi>
-              <dl className="gl-inspector-facts">
+              <bdi className="bp-inspector-model">{model || '—'}</bdi>
+              <dl className="bp-inspector-facts">
                 <div>
                   <dt>{t('category')}</dt>
                   <dd>{category?.name ?? currentCategory.data?.name ?? '—'}</dd>
@@ -609,26 +620,26 @@ export function ProductEditor({ id }: { id: string }) {
                   </div>
                 )}
               </dl>
-              <p className="gl-muted">{t('sectionSaveHelp')}</p>
+              <p className="bp-muted">{t('sectionSaveHelp')}</p>
             </>
           }
         >
           <form
-            className="gl-editor-form"
+            className="bp-editor-form"
             noValidate
             onSubmit={form.handleSubmit(
               (v) => action.mutate(() => basics(v)),
               () => setSection('content'),
             )}
           >
-            <GLWorkspacePanel id="overview">
-              <GLFormSection title={t('identity')} description={t('productIdentityHelp')}>
-                <div className="gl-admin-grid">
+            <BPWorkspacePanel id="overview">
+              <BPFormSection title={t('identity')} description={t('productIdentityHelp')}>
+                <div className="bp-admin-grid">
                   {' '}
-                  <GLButton variant="secondary" onClick={() => setCategoryOpen(true)}>
+                  <BPButton variant="secondary" onClick={() => setCategoryOpen(true)}>
                     {t('selectCategory')}: {category?.name ?? currentCategory.data?.name ?? ''}
-                  </GLButton>
-                  <GLInput
+                  </BPButton>
+                  <BPInput
                     label={t('code')}
                     value={model}
                     maxLength={128}
@@ -637,13 +648,13 @@ export function ProductEditor({ id }: { id: string }) {
                     }}
                   />
                 </div>
-              </GLFormSection>
-            </GLWorkspacePanel>
-            <GLWorkspacePanel id="content">
+              </BPFormSection>
+            </BPWorkspacePanel>
+            <BPWorkspacePanel id="content">
               <TranslationFields form={form} />
-            </GLWorkspacePanel>
-            <GLWorkspacePanel id="specifications">
-              <GLFormSection title={t('specifications')} description={t('specificationHelp')}>
+            </BPWorkspacePanel>
+            <BPWorkspacePanel id="specifications">
+              <BPFormSection title={t('specifications')} description={t('specificationHelp')}>
                 {schema.data && (
                   <DynamicAttributeFields
                     schema={schema.data.form}
@@ -659,20 +670,20 @@ export function ProductEditor({ id }: { id: string }) {
                     }}
                   />
                 )}
-              </GLFormSection>
+              </BPFormSection>
               {schema.data?.form.nonApplicableValues?.some(
                 (field) => values[field.definitionId],
               ) && (
-                <GLFormSection
+                <BPFormSection
                   title={t('nonApplicableValues')}
                   description={t('nonApplicableHelp')}
                 >
                   {schema.data.form.nonApplicableValues
                     .filter((field) => values[field.definitionId])
                     .map((field) => (
-                      <div className="gl-admin-toolbar" key={field.definitionId}>
+                      <div className="bp-admin-toolbar" key={field.definitionId}>
                         <span>{field.label}</span>
-                        <GLButton
+                        <BPButton
                           variant="destructive"
                           onClick={() =>
                             setValues((previous) => {
@@ -684,18 +695,18 @@ export function ProductEditor({ id }: { id: string }) {
                         >
                           <Trash2 size={18} />
                           {t('remove')} — {field.label}
-                        </GLButton>
+                        </BPButton>
                       </div>
                     ))}
-                </GLFormSection>
+                </BPFormSection>
               )}
-            </GLWorkspacePanel>
+            </BPWorkspacePanel>
             {(!id || ['overview', 'content', 'specifications'].includes(section)) && (
-              <GLActionBar>
-                <a href="/admin/products" className="gl-button gl-button-ghost gl-button-md">
+              <BPActionBar>
+                <a href="/admin/products" className="bp-button bp-button-ghost bp-button-md">
                   {t('cancel')}
                 </a>
-                <span className="gl-dirty-status">
+                <span className="bp-dirty-status">
                   {form.formState.isDirty ||
                   identityDirty ||
                   specificationsDirty ||
@@ -703,25 +714,25 @@ export function ProductEditor({ id }: { id: string }) {
                     ? t('dirty')
                     : t('saved')}
                 </span>{' '}
-                <GLButton
+                <BPButton
                   type="submit"
                   loading={action.isPending}
                   disabled={!schema.data || action.isPending}
                 >
                   <Save size={18} aria-hidden="true" />
                   {t('save')}
-                </GLButton>
-              </GLActionBar>
+                </BPButton>
+              </BPActionBar>
             )}
           </form>
           {id && loaded && (
             <>
-              <GLWorkspacePanel id="media">
-                <GLFormSection title={t('media')} description={t('mediaHelp')}>
-                  <div className="gl-cover-editor">
+              <BPWorkspacePanel id="media">
+                <BPFormSection title={t('media')} description={t('mediaHelp')}>
+                  <div className="bp-cover-editor">
                     {cover && <MediaPreview asset={{ id: cover, kind: 'IMAGE' }} />}
                     <div>
-                      <GLButton
+                      <BPButton
                         variant="secondary"
                         onClick={() => {
                           setCoverPicking(true);
@@ -730,12 +741,12 @@ export function ProductEditor({ id }: { id: string }) {
                         }}
                       >
                         {t('cover')}
-                      </GLButton>
-                      {!cover && <GLAlert>{t('coverRequired')}</GLAlert>}
-                      <p className="gl-muted">{t('coverHelp')}</p>
+                      </BPButton>
+                      {!cover && <BPAlert>{t('coverRequired')}</BPAlert>}
+                      <p className="bp-muted">{t('coverHelp')}</p>
                     </div>
                   </div>
-                  <GLButton
+                  <BPButton
                     variant="secondary"
                     onClick={() => {
                       setCoverPicking(false);
@@ -744,11 +755,11 @@ export function ProductEditor({ id }: { id: string }) {
                     }}
                   >
                     {t('select')}
-                  </GLButton>
+                  </BPButton>
                   {(['IMAGE', 'VIDEO', 'PDF'] as const).map((kind) => (
-                    <div key={kind} className="gl-media-group">
-                      <div className="gl-media-group-heading">
-                        <GLHeading level={3} role="heading6">
+                    <div key={kind} className="bp-media-group">
+                      <div className="bp-media-group-heading">
+                        <BPHeading level={3} role="heading6">
                           {t(
                             kind === 'IMAGE'
                               ? 'gallery'
@@ -756,8 +767,8 @@ export function ProductEditor({ id }: { id: string }) {
                                 ? 'videos'
                                 : 'documents',
                           )}
-                        </GLHeading>
-                        <GLButton
+                        </BPHeading>
+                        <BPButton
                           variant="text"
                           onClick={() => {
                             setCoverPicking(false);
@@ -766,15 +777,15 @@ export function ProductEditor({ id }: { id: string }) {
                           }}
                         >
                           {t('addMedia')}
-                        </GLButton>
+                        </BPButton>
                       </div>
-                      <div className={kind === 'PDF' ? 'gl-document-rows' : 'gl-media-tiles'}>
+                      <div className={kind === 'PDF' ? 'bp-document-rows' : 'bp-media-tiles'}>
                         {media
                           .map((item, index) => ({ item, index }))
                           .filter(({ item }) => item.kind === kind)
                           .map(({ item, index }) => (
                             <div
-                              className="gl-admin-toolbar gl-media-tile"
+                              className="bp-admin-toolbar bp-media-tile"
                               key={item.assetId}
                               draggable={kind === 'IMAGE'}
                               onDragStart={() => setDraggedMedia(item.assetId)}
@@ -808,7 +819,7 @@ export function ProductEditor({ id }: { id: string }) {
                                 {(['ar', 'en', 'ckb'] as const).map((language) => (
                                   <div key={language} dir={language === 'en' ? 'ltr' : 'rtl'}>
                                     {(['title', 'altText', 'caption'] as const).map((field) => (
-                                      <GLInput
+                                      <BPInput
                                         key={field}
                                         label={`${t(field === 'title' ? 'mediaTitle' : field)} (${language})`}
                                         value={
@@ -845,7 +856,7 @@ export function ProductEditor({ id }: { id: string }) {
                                   </div>
                                 ))}
                               </details>
-                              <span className="gl-media-caption">
+                              <span className="bp-media-caption">
                                 {item.translations.find((x) => x.locale === locale)?.title ??
                                   t(
                                     item.kind === 'IMAGE'
@@ -858,7 +869,7 @@ export function ProductEditor({ id }: { id: string }) {
                                   <bdi>{item.assetId}</bdi>
                                 </small>
                               </span>
-                              <GLActionMenu
+                              <BPActionMenu
                                 label={t('actions')}
                                 items={[
                                   {
@@ -893,14 +904,14 @@ export function ProductEditor({ id }: { id: string }) {
                       </div>
                     </div>
                   ))}
-                  <GLActionBar>
-                    <span className="gl-dirty-status">
+                  <BPActionBar>
+                    <span className="bp-dirty-status">
                       {JSON.stringify(media) !== JSON.stringify(loaded.media) ||
                       cover !== (loaded.coverAssetId ?? '')
                         ? t('dirty')
                         : t('saved')}
                     </span>
-                    <GLButton
+                    <BPButton
                       loading={action.isPending}
                       onClick={() =>
                         action.mutate(() =>
@@ -925,35 +936,35 @@ export function ProductEditor({ id }: { id: string }) {
                       }
                     >
                       {t('save')} — {t('media')}
-                    </GLButton>
-                  </GLActionBar>
-                </GLFormSection>
-              </GLWorkspacePanel>
-              <GLWorkspacePanel id="visibility">
-                <GLFormSection title={t('publication')}>
-                  <div className="gl-admin-grid">
-                    <GLCheckbox
+                    </BPButton>
+                  </BPActionBar>
+                </BPFormSection>
+              </BPWorkspacePanel>
+              <BPWorkspacePanel id="visibility">
+                <BPFormSection title={t('publication')}>
+                  <div className="bp-admin-grid">
+                    <BPCheckbox
                       label={t('active')}
                       checked={publication.active}
                       onChange={(e) => {
                         setPublication({ ...publication, active: e.target.checked });
                       }}
                     />
-                    <GLCheckbox
+                    <BPCheckbox
                       label={t('featured')}
                       checked={publication.featured}
                       onChange={(e) => {
                         setPublication({ ...publication, featured: e.target.checked });
                       }}
                     />
-                    <GLInput
+                    <BPInput
                       label={t('order')}
                       value={publication.sortOrder}
                       onChange={(e) => {
                         setPublication({ ...publication, sortOrder: e.target.value });
                       }}
                     />
-                    <GLInput
+                    <BPInput
                       label={t('featuredOrder')}
                       value={publication.featuredOrder}
                       onChange={(e) => {
@@ -962,11 +973,11 @@ export function ProductEditor({ id }: { id: string }) {
                     />
                   </div>
 
-                  <GLActionBar>
+                  <BPActionBar>
                     <span>
                       {visibilityDirty ? t('dirty') : t('saved')} ? {t('sectionSaveHelp')}
                     </span>
-                    <GLButton
+                    <BPButton
                       loading={action.isPending}
                       onClick={() =>
                         action.mutate(() =>
@@ -982,13 +993,13 @@ export function ProductEditor({ id }: { id: string }) {
                       }
                     >
                       {t('save')} — {t('publication')}
-                    </GLButton>
-                  </GLActionBar>
-                </GLFormSection>
-              </GLWorkspacePanel>
+                    </BPButton>
+                  </BPActionBar>
+                </BPFormSection>
+              </BPWorkspacePanel>
             </>
           )}
-        </GLWorkspace>
+        </BPWorkspace>
       )}
       {deleteMediaId && (
         <DeletionDialog
@@ -1002,7 +1013,7 @@ export function ProductEditor({ id }: { id: string }) {
           }}
         />
       )}
-      <GLModal open={categoryOpen} onClose={() => setCategoryOpen(false)} title={t('category')}>
+      <BPModal open={categoryOpen} onClose={() => setCategoryOpen(false)} title={t('category')}>
         <CategoryPicker
           leaf
           onSelect={async (selected) => {
@@ -1034,8 +1045,8 @@ export function ProductEditor({ id }: { id: string }) {
             setCategoryOpen(false);
           }}
         />
-      </GLModal>
-      <GLModal
+      </BPModal>
+      <BPModal
         open={!!placementReview}
         title={t('impact')}
         onClose={() => {
@@ -1055,20 +1066,20 @@ export function ProductEditor({ id }: { id: string }) {
               {t('retainedValues')} ({placementReview.impact.retainedValueCount})
             </p>
             {placementReview.impact.blockers.map((blocker) => (
-              <GLAlert key={blocker} tone="error">
+              <BPAlert key={blocker} tone="error">
                 {blocker}
-              </GLAlert>
+              </BPAlert>
             ))}
             <ActionFeedback action={action} />
-            <div className="gl-dialog-actions">
-              <GLButton
+            <div className="bp-dialog-actions">
+              <BPButton
                 variant="secondary"
                 disabled={action.isPending}
                 onClick={() => setPlacementReview(null)}
               >
                 {t('cancel')}
-              </GLButton>
-              <GLButton
+              </BPButton>
+              <BPButton
                 loading={action.isPending}
                 disabled={placementReview.impact.blockers.length > 0}
                 onClick={() =>
@@ -1093,11 +1104,11 @@ export function ProductEditor({ id }: { id: string }) {
               >
                 <Save size={18} />
                 {t('confirm')}
-              </GLButton>
+              </BPButton>
             </div>
           </>
         )}
-      </GLModal>
+      </BPModal>
       <MediaPicker
         allowedKind={!id || coverPicking ? 'IMAGE' : pickKind}
         open={mediaOpen}

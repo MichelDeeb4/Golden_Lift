@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Golden Lift",
-    "slug": "golden-lift-storefront",
-    "scheme": "goldenlift",
+    "name": "Business Platform",
+    "slug": "business-platform",
+    "scheme": "business-platform",
     "platforms": ["web"],
-    "web": { "bundler": "metro", "output": "single", "name": "Golden Lift" },
+    "web": { "bundler": "metro", "output": "single", "name": "Business Platform" },
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true }
   }

@@ -6,6 +6,8 @@ Use Node 24 and the root npm workspace. Install/build using the existing backend
 
 After preparing the local databases, run `npm.cmd start` from the repository root. It starts the default project database, prepares local service secrets, builds the backend and launches all five services plus the website. Open `http://localhost:8081/admin/login`; Ctrl+C stops the application processes. The PostgreSQL server remains available. This local-only launcher supplies matching localhost browser origins by default, respects explicit environment overrides, and never applies database migrations. Backend credentials are removed from the frontend child environment.
 
+After changing backend code or public API contracts, stop and restart `npm.cmd start`. Metro refreshes frontend code, but the service processes load compiled backend modules only at startup. Rebuilding files alone does not update an already running service. For example, the updated public Products client requires the collection `total`; an older running Catalog can still return HTTP 200 without that field, which the client correctly rejects. Restart the application and verify the real `/api/v1/products` response before diagnosing this as a network outage. Never substitute demo data or relax response validation to hide an outdated runtime.
+
 ## Category tree operations
 
 Open `/admin/categories`. Create Root Category always uses a null parent. Expand a chevron to browse children; select a name to inspect it. Add Subcategory captures the selected parent and version. Product-containing categories show a blocking explanation; the owning service also rejects child creation. Root/category names require Arabic, with optional English/Sorani translations and cover. There is no separate category publication checkbox in the current contract.
@@ -79,10 +81,19 @@ npm.cmd run test:storefront
 npm.cmd run test:admin
 ```
 
-Integration/browser tests must point `GL_DATABASE_CONFIG_FILE` to an isolated validation cluster. Browser fixtures create disposable service-owned databases, random credentials and private test files, start actual HTTP applications on Gateway 3000/Media 3003 and remove their own fixtures. Those ports must be free; do not stop unrelated services to make tests run. The browser harness imports the compiled database fixture produced by backend tests and service builds.
+Integration/browser tests must point `BUSINESS_PLATFORM_DATABASE_CONFIG_FILE` to an isolated validation cluster. Browser fixtures create disposable service-owned databases, random credentials and private test files, start actual HTTP applications on Gateway 3000/Media 3003 and remove their own fixtures. Those ports must be free; do not stop unrelated services to make tests run. The browser harness imports the compiled database fixture produced by backend tests and service builds.
 
 On Windows, start the exported preview in a separate terminal before browser tests. The existing preview can be reused, avoiding runner-owned preview shutdown issues. Admin browser tests use localhost; public tests use 127.0.0.1. Test-only security/processing adapters publish image/video/PDF derivatives; video bytes are actual browser-recorded MP4 and raster fixtures are synthetic. These adapters are confined to the harness and do not close production B5 scanner, codec, broker or storage acceptance gates. Stop disposable clusters with process visibility; the cleanup helper rejects a retained PostgreSQL process marker before removing files.
 
 ## Current Product Create regression
 
-Use `npm.cmd run test:admin -- frontend.product-create.test.ts frontend.category-tree.test.ts` with the disposable profile. Historical full Admin and Dynamic Catalog suites still contain retired Product Type workflows and require porting. Run browser suites sequentially or give them separate output directories; visitor composition snapshots require an explicit demo export, while staff/live verification uses API mode. Never present historical counts as current verification.
+Use `npm.cmd run test:admin -- frontend.product-create.test.ts frontend.category-tree.test.ts` with the disposable profile. The older combined Admin milestone has pre-policy assumptions and is outside the current phase runner. Current Catalog integration tests use Category contracts; retained migration compatibility tests are intentional. Run browser suites sequentially or give them separate output directories; visitor composition snapshots require an explicit demo export, while staff/live verification uses API mode. Never present historical counts as current verification.
+
+
+## Current Admin interface verification — 2026-10-10
+
+Use the current phase runner: `npx.cmd playwright test --config tests/frontend.admin-ui.config.ts`. It covers 46 current Category-based Admin scenarios and the reviewed visual suite. Build services/backend test support first. Export web in API mode with child-process EXPO_PUBLIC_API_URL=http://localhost:3400 and EXPO_PUBLIC_MEDIA_ORIGIN=http://localhost:3403. Fixtures own disposable databases and ports 3400/3403/3502/3503; the normal app on 3000–3004/8081 stays running. The runner owns preview 8082, so leave that port free. Run browser suites sequentially.
+
+Set BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT=.local/admin-ui-retained and BUSINESS_PLATFORM_CATEGORY_TREE_CAPTURE_DIR=.local/admin-ui-retained/category-tree to keep current functional captures separate from dated milestone evidence. Snapshot updates require visual review followed by an ordinary comparison run. Re-export without fixture API/Media overrides when finished; normal local read contracts require restarting services after a read model build. No schema migration is required for Unit usage counts or staff update dates.
+
+The older combined frontend.admin.test.ts milestone is outside this phase runner and has unported pre-policy assumptions; do not claim its counts as current acceptance. Current Catalog PostgreSQL regressions use the Category model and retain migration compatibility tests deliberately. See [the current report](../implementation/admin-ui-redesign-completed-work.md).

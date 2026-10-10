@@ -5,17 +5,20 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { openSync } from 'fontkit';
-import { colors, palette, contrastRatio, space } from '@golden-lift/tokens';
+import { colors, palette, contrastRatio, space } from '@business-platform/tokens';
 import {
   ApiError,
   PublicApiClient,
   ApiCatalogDataSource,
   ApiMediaResolver,
   catalogKeys,
+  normalizeCatalogFilterState,
+  parseCatalogFilterState,
+  serializeCatalogFilterState,
   StaffApiClient,
   StaffApiError,
   fieldSchema,
-} from '@golden-lift/api';
+} from '@business-platform/api';
 import { DemoCatalogDataSource, DemoMediaResolver } from '../apps/storefront/features/catalog/demo';
 import { validateDynamicValue } from '../apps/storefront/features/admin/dynamic-values';
 
@@ -102,6 +105,7 @@ test('staff client uses memory CSRF, safe errors, schema parsing and clears expi
             status: 'ACTIVE',
             version: '1',
             createdAt: now,
+            updatedAt: now,
           },
           expiresAt: new Date(Date.now() + 60000).toISOString(),
           csrfToken: csrf,
@@ -203,7 +207,7 @@ test('live collection maps exact filters, cover-first media and permitted PDF ow
     const url = new URL(req.url ?? '/', 'http://fixture');
     assert.equal(url.pathname, '/api/v1/products');
     assert.equal(url.searchParams.get('locale'), 'ckb');
-    assert.equal(url.searchParams.get('category'), categoryId);
+    assert.equal(url.searchParams.get('categoryId'), categoryId);
     assert.deepEqual(JSON.parse(url.searchParams.get('filters')!), [
       { definitionId, kind: 'NUMBER', minimum: '0.000001', maximum: '0.000001' },
     ]);
@@ -238,6 +242,7 @@ test('live collection maps exact filters, cover-first media and permitted PDF ow
         filters: [],
         page: 1,
         pageSize: 12,
+        total: 13,
         hasNextPage: true,
       }),
     );
@@ -253,7 +258,7 @@ test('live collection maps exact filters, cover-first media and permitted PDF ow
       filters: [{ definitionId, kind: 'NUMBER', minimum: '0.000001', maximum: '0.000001' }],
     });
     assert.equal(page.nextCursor, '2');
-    assert.equal(page.total, null);
+    assert.equal(page.total, 13);
     assert.deepEqual(
       page.items[0]!.media.map((m) => m.id),
       [imageId, videoId],
@@ -367,4 +372,51 @@ test('real HTTP adapter maps locale/category cursors, validates payloads and exp
   } finally {
     await new Promise<void>((resolve, reject) => server.close((e) => (e ? reject(e) : resolve())));
   }
+});
+
+test('public URL state preserves precision, false, OR options and pagination with canonical cache identity', () => {
+  const a = randomUUID(),
+    b = randomUUID(),
+    o1 = randomUUID(),
+    o2 = randomUUID(),
+    categoryId = randomUUID();
+  const query = {
+    categoryId,
+    page: 3,
+    text: ' cab ',
+    filters: [
+      { definitionId: b, kind: 'CHOICE' as const, optionIds: [o2, o1] },
+      { definitionId: a, kind: 'BOOLEAN' as const, value: false },
+    ],
+  };
+  const encoded = serializeCatalogFilterState(query),
+    parsed = parseCatalogFilterState(encoded);
+  assert.equal(parsed.invalid, false);
+  assert.deepEqual(parsed.state, normalizeCatalogFilterState(query));
+  assert.deepEqual(
+    catalogKeys.products('api', 'en', query),
+    catalogKeys.products('api', 'en', {
+      ...query,
+      filters: [query.filters[1]!, { definitionId: b, kind: 'CHOICE', optionIds: [o1, o2] }],
+    }),
+  );
+  assert.equal(parseCatalogFilterState({ page: '0' }).invalid, true);
+  assert.equal(parseCatalogFilterState({ filters: '{' }).invalid, true);
+  assert.equal(
+    parseCatalogFilterState({
+      filters: JSON.stringify([
+        { definitionId: a, kind: 'BOOLEAN', value: false },
+        { definitionId: a, kind: 'BOOLEAN', value: true },
+      ]),
+    }).invalid,
+    true,
+  );
+  assert.deepEqual(
+    parseCatalogFilterState({
+      filters: JSON.stringify([
+        { definitionId: a, kind: 'NUMBER', minimum: '99999999999999.999999' },
+      ]),
+    }).state.filters,
+    [{ definitionId: a, kind: 'NUMBER', minimum: '99999999999999.999999' }],
+  );
 });

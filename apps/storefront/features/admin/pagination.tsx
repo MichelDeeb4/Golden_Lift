@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { GLDataPagination } from '@golden-lift/ui';
+import { BPDataPagination } from '@business-platform/ui';
 import { useAdminTranslation } from './translations';
 export interface AdminPageData {
   readonly items: readonly unknown[];
@@ -17,7 +17,7 @@ function state(params: Record<string, unknown>, mode: 'numbered' | 'cursor') {
     const key = params['trailKey'];
     const source =
       typeof key === 'string' && /^[a-f0-9-]{36}$/.test(key)
-        ? sessionStorage.getItem('gl.admin.cursor-trail.' + key)
+        ? sessionStorage.getItem('bp.admin.cursor-trail.' + key)
         : params['trail'];
     const value = JSON.parse(
       typeof source === 'string' && source.length < 2000000 ? source : '[]',
@@ -58,7 +58,7 @@ export function useAdminPagination(mode: 'numbered' | 'cursor', local = false) {
         ? params.trailKey
         : crypto.randomUUID();
     try {
-      sessionStorage.setItem('gl.admin.cursor-trail.' + key, encoded);
+      sessionStorage.setItem('bp.admin.cursor-trail.' + key, encoded);
       return { trail: '', trailKey: key };
     } catch {
       // Storage-restricted browsers retain portable URL navigation where possible.
@@ -135,7 +135,7 @@ export function AdminPagination({
       pagination.normalize(pagination.page - 1);
   }, [data, loading, placeholder, pagination.page]);
   return (
-    <GLDataPagination
+    <BPDataPagination
       currentPage={data?.page ?? pagination.page}
       pageSize={pagination.pageSize}
       totalItems={data?.totalItems}

@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 
 export function requireInternalToken(
   authorization: string | undefined,

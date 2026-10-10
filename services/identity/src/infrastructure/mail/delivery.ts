@@ -26,8 +26,8 @@ export function actionMail(
     to: { address: message.email },
     subject:
       message.purpose === 'INVITATION'
-        ? 'Golden Lift staff invitation'
-        : 'Golden Lift password reset',
+        ? 'Business Platform staff invitation'
+        : 'Business Platform password reset',
     text:
       'Use this single-use link to ' +
       (message.purpose === 'INVITATION'

@@ -1,5 +1,5 @@
-import { ApplicationError, eventEnvelope, uuid, version } from '@golden-lift/contracts';
-import type { EventEnvelope, Role, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError, eventEnvelope, uuid, version } from '@business-platform/contracts';
+import type { EventEnvelope, Role, Uuid, Version } from '@business-platform/contracts';
 import type { StaffAccount } from '../../domain/staff.js';
 import type {
   IdentityRepository,
@@ -28,14 +28,20 @@ export class PrismaIdentityRepository implements IdentityRepository {
     if (!rows.length) return [];
     // Prisma Date values have millisecond precision. Preserve immutable cursor timestamps
     // with a narrow SQL projection, while model reads/writes remain generated Prisma operations.
-    const timestamps = await this.database.$queryRaw<{ id: string; created: string }[]>`
-      SELECT id,to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created
+    const timestamps = await this.database.$queryRaw<
+      { id: string; created: string; updated: string }[]
+    >`
+      SELECT id,to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created,
+        to_char(updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated
       FROM identity.staff_accounts WHERE id IN (${Prisma.join(rows.map((row) => Prisma.sql`${row.id}::uuid`))})`;
-    const created = new Map(timestamps.map((row) => [row.id, row.created]));
+    const projected = new Map(timestamps.map((row) => [row.id, row]));
     return rows.map((row) => {
-      const createdAt = created.get(row.id);
+      const timestamps = projected.get(row.id);
+      const createdAt = timestamps?.created,
+        updatedAt = timestamps?.updated;
       if (
         !createdAt ||
+        !updatedAt ||
         (row.role !== 'ADMIN' && row.role !== 'SUPER_ADMIN') ||
         (row.status !== 'INVITED' && row.status !== 'ACTIVE' && row.status !== 'DISABLED')
       )
@@ -50,6 +56,7 @@ export class PrismaIdentityRepository implements IdentityRepository {
         authVersion: version(row.auth_version.toString()),
         version: version(row.version.toString()),
         createdAt,
+        updatedAt,
       };
     });
   }

@@ -1,5 +1,5 @@
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { EffectiveCategorySchema, Uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { EffectiveCategorySchema, Uuid } from '@business-platform/contracts';
 import type { CategorySchemaReader } from '../../application/ports/category-schema.js';
 import type { RelationshipTarget } from '../../application/ports/catalog-relationships.js';
 import type { Database } from './client.js';

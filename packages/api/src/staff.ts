@@ -11,6 +11,7 @@ export const staffAccountSchema = z.object({
   status: z.enum(['ACTIVE', 'INVITED', 'DISABLED']),
   version,
   createdAt: z.string(),
+  updatedAt: z.string().datetime(),
 });
 export const staffSessionSchema = z.object({
   account: staffAccountSchema,

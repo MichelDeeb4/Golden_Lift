@@ -1,6 +1,6 @@
 import { staffEvent } from '../ports/staff-event.js';
-import { ApplicationError } from '@golden-lift/contracts';
-import type { StaffAccountDto } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { StaffAccountDto } from '@business-platform/contracts';
 import { accountDto, displayName, emailAddress, newPassword } from '../../domain/staff.js';
 import type { IdentityUnitOfWork, PasswordHasher, Ids, Clock } from '../ports/identity.js';
 export class BootstrapSuperAdmin {

@@ -10,8 +10,8 @@ import { connectCatalog, inventoryCatalog } from '../scripts/category-catalog.mj
 import { digest, planCategoryCatalog, verifyReviewedPlan } from '../scripts/category-catalog-plan.mjs';
 
 // Only an explicitly selected task-owned disposable cluster may run these tests.
-const profilePath = process.env.GL_DATABASE_CONFIG_FILE;
-if (!profilePath) throw new Error('Select the disposable GL_DATABASE_CONFIG_FILE profile.');
+const profilePath = process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE;
+if (!profilePath) throw new Error('Select the disposable BUSINESS_PLATFORM_DATABASE_CONFIG_FILE profile.');
 const cfg = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
 if (cfg.adminUser !== 'b5_disposable_admin' || !path.resolve(profilePath).startsWith(path.resolve('.local/b5-validation-')))
   throw new Error('Catalog migration tests require a task-owned disposable profile.');
@@ -25,7 +25,7 @@ fs.writeFileSync(privateProfile, JSON.stringify(profile), { mode: 0o600 });
 function command(operation, mapping) {
   if (mapping) fs.writeFileSync(mappingFile, JSON.stringify(mapping), { mode: 0o600 });
   return spawnSync(process.execPath, ['database/scripts/category-catalog.mjs', operation, '--mapping', mappingFile, '--confirm-database', name, ...(operation === 'retire-binding' ? ['--output', path.join(privateDirectory, 'retirement.json')] : [])],
-    { env: { ...process.env, GL_DATABASE_CONFIG_FILE: privateProfile }, encoding: 'utf8', windowsHide: true });
+    { env: { ...process.env, BUSINESS_PLATFORM_DATABASE_CONFIG_FILE: privateProfile }, encoding: 'utf8', windowsHide: true });
 }
 let admin, client;
 const ids = Object.fromEntries(['category', 'group', 'otherGroup', 'definition', 'type', 'placement', 'assignment', 'product', 'media', 'asset', 'value'].map((key) => [key, randomUUID()]));
@@ -264,8 +264,8 @@ test('category changes retain nonapplicable values but prevent editing or public
 test('Gateway HTTP returns the authoritative deduplicated category form with locale fallback and rejects non-content roles and unsupported input', async () => {
   const { catalogApplication } = await import('../../services/catalog/dist/composition/application.js');
   const { gatewayApplication } = await import('../../services/gateway/dist/composition/application.js');
-  const { httpConfig } = await import('@golden-lift/platform');
-  const { ApplicationError, uuid, version } = await import('@golden-lift/contracts');
+  const { httpConfig } = await import('@business-platform/platform');
+  const { ApplicationError, uuid, version } = await import('@business-platform/contracts');
   // Reader needs only SELECT, not new configuration write privileges.
   await client.query(`GRANT SELECT ON catalog.category_attribute_groups,catalog.attribute_group_attributes,catalog.category_effective_attributes TO ${service.user}`);
   await transaction(async () => {
@@ -289,7 +289,7 @@ test('Gateway HTTP returns the authoritative deduplicated category form with loc
     await gateway.listen(0, '127.0.0.1');
     const url = await gateway.getUrl();
     const base = url + '/api/v1/admin/categories/' + ids.category + '/schema';
-    const response = await fetch(base + '?locale=en', { headers: { cookie: 'gl_staff=fixture-admin' } });
+    const response = await fetch(base + '?locale=en', { headers: { cookie: 'bp_staff=fixture-admin' } });
     assert.equal(response.status, 200, await response.clone().text());
     const schema = await response.json();
     assert.equal(schema.configuration.categoryId, ids.category);
@@ -302,10 +302,10 @@ test('Gateway HTTP returns the authoritative deduplicated category form with loc
     assert.equal(field.resolvedLabelLocale, 'ar');
     assert.equal(schema.configuration.attributes.find((entry) => entry.definition.id === ids.definition).public, false);
     assert.equal('productTypeId' in schema.form, false);
-    assert.equal((await fetch(base, { headers: { cookie: 'gl_staff=fixture-super' } })).status, 403);
+    assert.equal((await fetch(base, { headers: { cookie: 'bp_staff=fixture-super' } })).status, 403);
     assert.equal((await fetch(base)).status, 401);
-    assert.equal((await fetch(base + '?unsupported=true', { headers: { cookie: 'gl_staff=fixture-admin' } })).status, 400);
-    assert.equal((await fetch(url + '/api/v1/admin/categories/' + randomUUID() + '/schema', { headers: { cookie: 'gl_staff=fixture-admin' } })).status, 404);
+    assert.equal((await fetch(base + '?unsupported=true', { headers: { cookie: 'bp_staff=fixture-admin' } })).status, 400);
+    assert.equal((await fetch(url + '/api/v1/admin/categories/' + randomUUID() + '/schema', { headers: { cookie: 'bp_staff=fixture-admin' } })).status, 404);
   } finally {
     if (gateway) await gateway.close();
     await catalog.close();

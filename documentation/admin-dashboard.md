@@ -1,4 +1,4 @@
-# Golden Lift Admin dashboard
+# Business Platform Admin dashboard
 
 Current relationship workflows, 2026-10-08: Category creation accepts ordered Attribute Groups immediately and persists them atomically. Existing leaf groups, Attribute multi-group membership and Group multi-attribute membership are editable through reviewed dialogs. Tables show memberships and actual relationship counts. Product placement previews target schema impact and retains values. See [decision 020](decisions/020-final-category-relationships.md).
 
@@ -19,7 +19,7 @@ The 2026-10-07 functional integration adds API-default visitor collections/searc
 | `/admin/login` | Staff login; role determines the landing page |
 | `/admin` | Admin launchpad, bounded first-page catalog/Media selection and actual Media job count |
 | `/admin/categories`, `/:id` | Recursive navigation, translations, image cover, move, sibling ordering, deletion preview/confirmation |
-| `/admin/products`, `/new`, `/:id` | Collection filters, independent translations, leaf category placement, schema-driven attributes, ordered media, publication and soft deletion |
+| `/admin/products`, `/new`, `/:id` | Collection filters, independent translations, leaf category placement, schema-driven attributes, ordered media, publication and reviewed permanent deletion |
 | `/admin/attributes`, `/:id` | Typed definitions, numeric/text/choice constraints, translated help, options and deprecation |
 | `/admin/attribute-groups`, `/:id` | Shared translated groups |
 | `/admin/units`, `/:code` | Canonical units and translated metadata |
@@ -51,13 +51,13 @@ Collection errors offer Retry, which refetches the current request without reloa
 
 Arabic is required; English and Sorani are independent optional translations. There is no automatic translation. Dynamic forms use the current backend groups, order, requiredness, unit, bounds, precision and choice options. Decimal and bigint values remain strings. Existing deprecated selections remain readable; the backend rejects new deprecated use. Version/schema conflicts preserve local input, require review and never silently retry a write.
 
-Product basics, media and publication have explicit section saves. Attaching media requires ready, registered, allowed assets. An image cover is required for publication, not initial draft creation. Detachment removes a Catalog association without retiring shared bytes. Category-derived schema revisions protect later values and reviewed configuration changes; Product Type changes are retired. Soft deletion retains records and files; restoration is not offered.
+Product basics, media and publication have explicit section saves. Attaching media requires ready, registered, allowed assets. An image cover is required for publication, not initial draft creation. Product/Media removal uses reviewed permanent deletion of owned assets and files; Category/Group membership detachment preserves shared Attribute definitions. Category-derived schema revisions protect later values and reviewed configuration changes; Product Type changes are retired. Soft deletion retains records and files; restoration is not offered.
 
 Uploads check capabilities, initiate, transfer immutable bounded parts, complete and poll processing. Resume retries use the existing server session within the current view, including a committed part whose acknowledgement was lost; navigation/reload does not persist upload capabilities or staff secrets. The reusable picker can upload or choose existing ready images/videos/PDFs. Private previews request fresh B5 capabilities near the viewport and pause refreshes offscreen. Expired grants are replaced before rendering, failed image refreshes are bounded, videos use poster/playback profiles and PDFs use raster preview or authorized original download. Metadata omits storage identities and scanner internals.
 
 ## Localization, accessibility and verification
 
-Arabic, English and Kurdish Sorani use shared fonts and locale direction. Layout uses logical borders/padding, responsive drawer navigation, horizontal table scrolling and page scrolling. Shared controls provide keyboard interaction, labels, focus management and accessible earlier/later reorder buttons. The product collection uses `GLTable`; dialogs, fields, controls, breadcrumbs, toast and feedback reuse the shared UI package.
+Arabic, English and Kurdish Sorani use shared fonts and locale direction. Layout uses logical borders/padding, responsive drawer navigation, horizontal table scrolling and page scrolling. Shared controls provide keyboard interaction, labels, focus management and accessible earlier/later reorder buttons. The product collection uses `BPTable`; dialogs, fields, controls, breadcrumbs, toast and feedback reuse the shared UI package.
 
 The [dated validation report](validation/admin-dashboard-2026-10-06T12-39-33-944Z.json) and [completion report](implementation/admin-dashboard-completed-work.md) record 149 passing tests and local acceptance. B5 real scanner/codec/broker/S3/Linux gates remain separate. Technical-sheet editors, full public collection/search integration, hosted CI/deployment, restoration and unsupported session directories remain outside the implemented Admin contracts.
 
@@ -90,3 +90,12 @@ Rows use one labeled overflow menu with icon actions; configuration and staff di
 Modals/drawers share a red Close X. Dirty closes, Cancel and internal staff navigation use a branded Stay / Leave without saving decision. Browser Back within the mounted staff history is guarded before Expo restores the root. Actual document reload/close retains the browser's unload warning. Toolbar filters use existing server contracts, with compact desktop columns and stacked mobile fields. Accounts show supported counts rather than adding unavailable search/status APIs.
 
 See [decision 019](decisions/019-admin-actions-dialogs-filters.md), [baseline](implementation/admin-actions-dialogs-filters-baseline.md) and [completion report](implementation/admin-actions-dialogs-filters-completed-work.md) for current verification and limitations.
+
+
+## Admin UX refinement — 2026-10-10
+
+The shell groups Catalog (Categories, Products), Specifications (Attribute Groups, Attributes, Units), Media and Account; Super Admin retains only its authorized directory and account links. Shared page headers, compact server filters, status chips, row overflow and existing numbered/keyset pagination apply across collections. Product section editing, Category master/detail navigation, Media upload/inspection and account workflows keep their existing API and domain policies. The Product Editor uses a compact navigation rail, section canvas and responsive summary drawer.
+
+Actual Unit symbols and staff roles are visible. Unit usage counts are supplied by a bounded Catalog page query; staff update dates come from Identity’s exact stored timestamp projection. Media type indicators distinguish Video and PDF. Existing shared dirty guards, reviewed edits, deletion impact, asynchronous cleanup, concurrency conflicts and targeted query invalidation remain authoritative. No normal CRUD flow uses a document reload.
+
+See [the implementation and current verification report](implementation/admin-ui-redesign-completed-work.md). Earlier validation reports are historical.

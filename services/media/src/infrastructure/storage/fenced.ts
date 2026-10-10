@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type { DeletionStorage, StoredObject } from '../../application/ports/storage.js';
 
 /** A session advisory lock spans the external write without putting it inside a retried transaction.

@@ -1,4 +1,4 @@
-import { ApplicationError, uuid, version, mediaEvent } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version, mediaEvent } from '@business-platform/contracts';
 import type {
   MediaEvent,
   MediaContext,
@@ -6,8 +6,8 @@ import type {
   Uuid,
   MediaKind,
   Version,
-} from '@golden-lift/contracts';
-import { retryTransaction, sqlState } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { retryTransaction, sqlState } from '@business-platform/platform';
 import type { CatalogMediaRegistry } from '../../application/ports/media.js';
 import type { PrismaClient, Database } from './client.js';
 

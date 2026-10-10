@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { MediaKind, MediaEvent, Uuid, Version } from '@golden-lift/contracts';
-import { retryTransaction, sqlState } from '@golden-lift/platform';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { MediaKind, MediaEvent, Uuid, Version } from '@business-platform/contracts';
+import { retryTransaction, sqlState } from '@business-platform/platform';
 import type {
   MediaStatistics,
   MediaRepository,

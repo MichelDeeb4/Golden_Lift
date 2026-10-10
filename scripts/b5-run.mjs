@@ -15,7 +15,7 @@ const secret = () => randomBytes(32).toString('base64url'),
   callers = { catalog: secret(), media: secret(), inquiries: secret() };
 const env = {
   ...process.env,
-  GL_DATABASE_CONFIG_FILE: pointer.configFile,
+  BUSINESS_PLATFORM_DATABASE_CONFIG_FILE: pointer.configFile,
   NODE_ENV: 'development',
   IDENTITY_CSRF_SECRET: secret(),
   IDENTITY_SERVICE_CREDENTIALS: JSON.stringify(callers),
@@ -49,7 +49,7 @@ const commands = {
 const command = process.argv[2];
 if (!commands[command]) throw new Error('Unsupported validation command.');
 if (command === 'smoke') {
-  process.env.GL_DATABASE_CONFIG_FILE = pointer.configFile;
+  process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE = pointer.configFile;
   const tools = await import('../database/scripts/db.mjs');
   if (
     tools.sql(

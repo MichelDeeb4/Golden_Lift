@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { ApplicationError } from '@golden-lift/contracts';
-import { retryTransaction } from '@golden-lift/platform';
-import type { Uuid } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import { retryTransaction } from '@business-platform/platform';
+import type { Uuid } from '@business-platform/contracts';
 import type { DeletionStorage, StoredObject } from '../../application/ports/storage.js';
 import type { PrismaClient } from '../prisma/client.js';
 import type { Prisma } from '../prisma/generated/client.js';

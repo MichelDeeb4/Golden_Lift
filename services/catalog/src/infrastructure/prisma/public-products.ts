@@ -1,5 +1,10 @@
-import { ApplicationError, uuid } from '@golden-lift/contracts';
-import type { Locale, PublicProductMedia, PublicProductQuery, Uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
+import type {
+  Locale,
+  PublicProductMedia,
+  PublicProductQuery,
+  Uuid,
+} from '@business-platform/contracts';
 import { Prisma } from './generated/client.js';
 import type { Database } from './client.js';
 
@@ -7,11 +12,11 @@ import type { Database } from './client.js';
 const eligible = Prisma.sql`p.is_active AND EXISTS (
   SELECT 1 FROM catalog.product_media cover JOIN catalog.media_asset_refs a ON a.id=cover.asset_id
   WHERE cover.id=p.cover_media_id AND cover.product_id=p.id AND cover.deleted_at IS NULL
-    AND a.media_kind='IMAGE' AND a.ready_at IS NOT NULL AND a.deleted_at IS NULL AND NOT a.security_blocked)`;
+    AND a.media_kind='IMAGE' AND a.ready_at IS NOT NULL AND a.deleted_at IS NULL AND NOT a.security_blocked AND NOT a.deletion_pending)`;
 const publicField = Prisma.sql`d.deleted_at IS NULL AND d.is_public  AND a.is_public`;
-function scope(input: PublicProductQuery) {
+function scope(categoryIds: readonly Uuid[] | null) {
   return Prisma.sql`${eligible}
-    ${input.categoryId ? Prisma.sql`AND p.category_id=${input.categoryId}::uuid` : Prisma.empty}
+    ${categoryIds === null ? Prisma.empty : categoryIds.length ? Prisma.sql`AND p.category_id IN (${Prisma.join(categoryIds.map((id) => Prisma.sql`${id}::uuid`))})` : Prisma.sql`AND FALSE`}
 `;
 }
 const literalPattern = (value: string) => '%' + value.replace(/[\\%_]/g, '\\$&') + '%';
@@ -41,7 +46,15 @@ export class PrismaPublicProducts {
     };
   }
   async page(input: PublicProductQuery) {
-    const conditions: Prisma.Sql[] = [scope(input)];
+    const categoryIds = input.categoryId
+      ? (
+          await this.tx.$queryRaw<{ id: string }[]>(Prisma.sql`WITH RECURSIVE branch AS(
+      SELECT id FROM catalog.live_categories WHERE id=${input.categoryId}::uuid
+      UNION ALL SELECT c.id FROM catalog.live_categories c JOIN branch b ON c.parent_id=b.id
+    ) SELECT b.id FROM branch b WHERE NOT EXISTS(SELECT 1 FROM catalog.live_categories child WHERE child.parent_id=b.id)`)
+        ).map((row) => uuid(row.id))
+      : null;
+    const conditions: Prisma.Sql[] = [scope(categoryIds)];
     if (input.search) {
       const pattern = literalPattern(input.search);
       conditions.push(Prisma.sql`(EXISTS(SELECT 1 FROM catalog.product_translations t
@@ -55,14 +68,40 @@ export class PrismaPublicProducts {
           WHERE v.product_id=p.id AND v.deleted_at IS NULL AND ${publicField} AND a.is_searchable
             AND t.deleted_at IS NULL AND t.locale IN (${input.locale},'ar') AND t.text_value ILIKE ${pattern}))`);
     }
+    const policies = input.filters.length
+      ? await this.tx.$queryRaw<{ id: string; kind: string }[]>(Prisma.sql`
+      SELECT DISTINCT d.id,d.value_type kind FROM catalog.specification_definitions d
+      JOIN catalog.category_effective_attributes a ON a.definition_id=d.id
+      JOIN catalog.live_categories c ON c.id=a.category_id
+      WHERE d.id IN (${Prisma.join(input.filters.map((f) => Prisma.sql`${f.definitionId}::uuid`))})
+        AND ${publicField} AND d.deprecated_at IS NULL AND d.is_filterable AND a.is_filterable
+        ${categoryIds === null ? Prisma.empty : categoryIds.length ? Prisma.sql`AND a.category_id IN (${Prisma.join(categoryIds.map((id) => Prisma.sql`${id}::uuid`))})` : Prisma.sql`AND FALSE`}`)
+      : [];
+    const choices = input.filters.flatMap((f) =>
+      f.kind === 'CHOICE'
+        ? ('optionIds' in f ? f.optionIds : [f.optionId]).map((id) => ({
+            id,
+            definitionId: f.definitionId,
+          }))
+        : [],
+    );
+    const options = choices.length
+      ? await this.tx.specificationOptions.findMany({
+          where: { id: { in: choices.map((o) => o.id) }, deleted_at: null, deprecated_at: null },
+          select: { id: true, definition_id: true },
+        })
+      : [];
+    if (
+      choices.some(
+        (o) => !options.some((row) => row.id === o.id && row.definition_id === o.definitionId),
+      )
+    )
+      throw new ApplicationError(
+        'VALIDATION_FAILED',
+        'Choice option is unavailable for this Attribute.',
+      );
     for (const filter of input.filters) {
-      const policy = await this.tx.$queryRaw<{ id: string }[]>(Prisma.sql`
-        SELECT d.id FROM catalog.specification_definitions d JOIN catalog.category_effective_attributes a ON a.definition_id=d.id
-        JOIN catalog.categories c ON c.id=a.category_id AND c.deleted_at IS NULL
-        WHERE d.id=${filter.definitionId}::uuid AND d.value_type=${filter.kind} AND ${publicField}
-          AND d.is_filterable AND a.is_filterable
-          ${input.categoryId ? Prisma.sql`AND a.category_id=${input.categoryId}::uuid` : Prisma.empty} LIMIT 1`);
-      if (!policy.length)
+      if (!policies.some((p) => p.id === filter.definitionId && p.kind === filter.kind))
         throw new ApplicationError(
           'VALIDATION_FAILED',
           'Filter is not public and filterable in this scope.',
@@ -83,7 +122,7 @@ export class PrismaPublicProducts {
           break;
         case 'CHOICE':
           value = Prisma.sql`EXISTS(SELECT 1 FROM catalog.product_specification_choices c
-          WHERE c.value_id=v.id AND c.deleted_at IS NULL AND c.option_id=${filter.optionId}::uuid)`;
+          WHERE c.value_id=v.id AND c.deleted_at IS NULL AND c.option_id IN (${Prisma.join(('optionIds' in filter ? filter.optionIds : [filter.optionId]).map((id) => Prisma.sql`${id}::uuid`))}))`;
           break;
       }
       conditions.push(Prisma.sql`EXISTS(SELECT 1 FROM catalog.product_specification_values v
@@ -108,16 +147,23 @@ export class PrismaPublicProducts {
     >(Prisma.sql`SELECT DISTINCT d.id FROM catalog.live_products p
       JOIN catalog.category_effective_attributes a ON a.category_id=p.category_id
       JOIN catalog.specification_definitions d ON d.id=a.definition_id
-      WHERE ${scope(input)} AND ${publicField} AND a.is_filterable AND d.is_filterable
+      WHERE ${scope(categoryIds)} AND ${publicField} AND a.is_filterable AND d.is_filterable
         AND d.deprecated_at IS NULL ORDER BY d.id LIMIT 100`);
+    const [count] = await this.tx.$queryRaw<{ total: string }[]>(
+      Prisma.sql`SELECT count(*)::text total FROM catalog.live_products p WHERE ${Prisma.join(conditions, ' AND ')}`,
+    );
+    const total = Number(count?.total ?? '0');
+    if (!Number.isSafeInteger(total))
+      throw new ApplicationError('INVALID_STATE', 'Public result count exceeds supported bounds.');
     return {
+      total,
       ids: rows.slice(0, input.pageSize).map((r) => uuid(r.id)),
       hasNextPage: rows.length > input.pageSize,
       filterIds: filters.map((r) => uuid(r.id)),
     };
   }
   async context(id: Uuid, language: Locale) {
-    const rows = await this.tx.$queryRaw<{ category_name: string; type_name: string }[]>(Prisma.sql`
+    const rows = await this.tx.$queryRaw<{ category_name: string }[]>(Prisma.sql`
       SELECT COALESCE((SELECT t.name FROM catalog.category_translations t WHERE t.category_id=p.category_id AND t.locale=${language} AND t.deleted_at IS NULL),
         (SELECT t.name FROM catalog.category_translations t WHERE t.category_id=p.category_id AND t.locale='ar' AND t.deleted_at IS NULL)) category_name
       FROM catalog.live_products p WHERE p.id=${id}::uuid AND ${eligible}`);

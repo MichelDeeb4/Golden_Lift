@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
-import { useGLTranslation, useLocale, languageNames, locales } from '@golden-lift/i18n';
-import { Menu, Search } from '@golden-lift/icons';
-import { GLButton, GLIconButton } from './primitives';
-import { GLDrawer } from './overlays';
+import { useBPTranslation, useLocale, languageNames, locales } from '@business-platform/i18n';
+import { Menu, Search } from '@business-platform/icons';
+import { BPButton, BPIconButton } from './primitives';
+import { BPDrawer } from './overlays';
 export interface NavLink {
   readonly label: string;
   readonly href: string;
 }
-export function GLBreadcrumb({ items }: { items: readonly NavLink[] }) {
-  const { t } = useGLTranslation(),
+export function BPBreadcrumb({ items }: { items: readonly NavLink[] }) {
+  const { t } = useBPTranslation(),
     { locale } = useLocale();
   return (
-    <nav aria-label={t('navigation')} className="gl-breadcrumb">
+    <nav aria-label={t('navigation')} className="bp-breadcrumb">
       <ol>
         {items.map((item, i) => (
           <li key={item.href}>
@@ -27,7 +27,7 @@ export function GLBreadcrumb({ items }: { items: readonly NavLink[] }) {
     </nav>
   );
 }
-export function GLTabs({
+export function BPTabs({
   tabs,
   value,
   onChange,
@@ -41,7 +41,7 @@ export function GLTabs({
   return (
     <div
       role="tablist"
-      className="gl-tabs"
+      className="bp-tabs"
       onKeyDown={(e) => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
         e.preventDefault();
@@ -76,7 +76,7 @@ export function GLTabs({
     </div>
   );
 }
-export function GLPagination({
+export function BPPagination({
   page,
   total,
   onChange,
@@ -85,24 +85,24 @@ export function GLPagination({
   total: number;
   onChange: (page: number) => void;
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <nav className="gl-pagination" aria-label={t('navigation')}>
-      <GLButton variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>
+    <nav className="bp-pagination" aria-label={t('navigation')}>
+      <BPButton variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         {t('previous')}
-      </GLButton>
+      </BPButton>
       <span>{t('page', { page, total })}</span>
-      <GLButton variant="secondary" disabled={page >= total} onClick={() => onChange(page + 1)}>
+      <BPButton variant="secondary" disabled={page >= total} onClick={() => onChange(page + 1)}>
         {t('next')}
-      </GLButton>
+      </BPButton>
     </nav>
   );
 }
-export function GLLanguageSwitcher() {
-  const { t } = useGLTranslation(),
+export function BPLanguageSwitcher() {
+  const { t } = useBPTranslation(),
     { locale, setLocale } = useLocale();
   return (
-    <label className="gl-language">
+    <label className="bp-language">
       <span className="sr-only">{t('language')}</span>
       <select value={locale} onChange={(e) => setLocale(e.target.value as typeof locale)}>
         {locales.map((l) => (
@@ -114,7 +114,7 @@ export function GLLanguageSwitcher() {
     </label>
   );
 }
-export function GLHeader({
+export function BPHeader({
   brand,
   links,
   active,
@@ -127,34 +127,34 @@ export function GLHeader({
   onMenu: () => void;
   onSearch: () => void;
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
     <>
-      <header className="gl-header">
-        <div className="gl-header-inner">
+      <header className="bp-header">
+        <div className="bp-header-inner">
           <div className="desktop-brand">{brand}</div>
-          <GLMobileHeader {...{ brand, onMenu, onSearch }} />
-          <nav className="gl-main-nav" aria-label={t('navigation')}>
+          <BPMobileHeader {...{ brand, onMenu, onSearch }} />
+          <nav className="bp-main-nav" aria-label={t('navigation')}>
             {links.map((l) => (
               <a key={l.href} href={l.href} aria-current={active === l.href ? 'page' : undefined}>
                 {l.label}
               </a>
             ))}
           </nav>
-          <div className="gl-header-search">
-            <div className="gl-utility">
-              <GLLanguageSwitcher />
+          <div className="bp-header-search">
+            <div className="bp-utility">
+              <BPLanguageSwitcher />
             </div>
-            <GLIconButton label={t('search')} variant="ghost" onClick={onSearch}>
+            <BPIconButton label={t('search')} variant="ghost" onClick={onSearch}>
               <Search size={20} />
-            </GLIconButton>
+            </BPIconButton>
           </div>
         </div>
       </header>
     </>
   );
 }
-export function GLMobileHeader({
+export function BPMobileHeader({
   brand,
   onMenu,
   onSearch,
@@ -163,20 +163,20 @@ export function GLMobileHeader({
   onMenu: () => void;
   onSearch: () => void;
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <div className="gl-mobile-header">
-      <GLIconButton label={t('menu')} variant="ghost" onClick={onMenu}>
+    <div className="bp-mobile-header">
+      <BPIconButton label={t('menu')} variant="ghost" onClick={onMenu}>
         <Menu size={20} />
-      </GLIconButton>
+      </BPIconButton>
       {brand}
-      <GLIconButton label={t('search')} variant="ghost" onClick={onSearch}>
+      <BPIconButton label={t('search')} variant="ghost" onClick={onSearch}>
         <Search size={20} />
-      </GLIconButton>
+      </BPIconButton>
     </div>
   );
 }
-export function GLMobileNavigationDrawer({
+export function BPMobileNavigationDrawer({
   open,
   onClose,
   links,
@@ -185,23 +185,23 @@ export function GLMobileNavigationDrawer({
   onClose: () => void;
   links: readonly NavLink[];
 }) {
-  const { t } = useGLTranslation();
+  const { t } = useBPTranslation();
   return (
-    <GLDrawer open={open} onClose={onClose} title={t('menu')}>
-      <nav className="gl-drawer-nav">
+    <BPDrawer open={open} onClose={onClose} title={t('menu')}>
+      <nav className="bp-drawer-nav">
         {links.map((l) => (
           <a key={l.href} href={l.href} onClick={onClose}>
             {l.label}
           </a>
         ))}
       </nav>
-      <GLLanguageSwitcher />
-    </GLDrawer>
+      <BPLanguageSwitcher />
+    </BPDrawer>
   );
 }
-export function GLCategoryNavigation({ links }: { links: readonly NavLink[] }) {
+export function BPCategoryNavigation({ links }: { links: readonly NavLink[] }) {
   return (
-    <nav className="gl-category-nav">
+    <nav className="bp-category-nav">
       {links.map((l) => (
         <a key={l.href} href={l.href}>
           {l.label}

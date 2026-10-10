@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type { CatalogReader } from '../../application/ports/catalog-reader.js';
 export class HttpCatalogReader implements CatalogReader {
   constructor(private readonly origin: string) {}

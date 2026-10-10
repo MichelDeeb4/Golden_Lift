@@ -1,6 +1,6 @@
 # Category classification migration
 
-Status: **category authority applied to the normal local Catalog**, 2026-10-07, during the [Product Create fix](../implementation/fix-product-create-disabled.md). Writers were stopped; an owning-database backup restored with matching retained rows, and migration passed on the restored copy before normal application. The ten published demo products, existing staff accounts and Media were preserved. This is local migration evidence, not a hosted release. Use only Catalog owning credentials. `.local/database.json` is the normal profile; `GL_DATABASE_CONFIG_FILE` selects an isolated profile. Credentials, raw inventory and reviewed mappings stay ignored locally.
+Status: **category authority applied to the normal local Catalog**, 2026-10-07, during the [Product Create fix](../implementation/fix-product-create-disabled.md). Writers were stopped; an owning-database backup restored with matching retained rows, and migration passed on the restored copy before normal application. The ten published demo products, existing staff accounts and Media were preserved. This is local migration evidence, not a hosted release. Use only Catalog owning credentials. `.local/database.json` is the normal profile; `BUSINESS_PLATFORM_DATABASE_CONFIG_FILE` selects an isolated profile. Credentials, raw inventory and reviewed mappings stay ignored locally.
 
 Physical product bindings were archived and removed on 2026-10-08 after backup/restore rehearsal and exact parity. See [binding retirement](product-type-migration.md). The staged backfill/cutover commands below apply only before retirement; inventory remains available afterward.
 
@@ -33,10 +33,10 @@ Run the dedicated real-database regression suite on a task-owned disposable clus
 ```powershell
 node scripts/b5-environment.mjs start
 $fixture = Get-Content .local/b5-validation-pointer.json -Raw | ConvertFrom-Json
-$env:GL_DATABASE_CONFIG_FILE = $fixture.configFile
+$env:BUSINESS_PLATFORM_DATABASE_CONFIG_FILE = $fixture.configFile
 npm.cmd run test:catalog-migration
 node scripts/b5-environment.mjs stop
-Remove-Item Env:GL_DATABASE_CONFIG_FILE
+Remove-Item Env:BUSINESS_PLATFORM_DATABASE_CONFIG_FILE
 ```
 
 The suite creates and drops its own Catalog database. It refuses a normal profile. It verifies the actual CLI backfill/validation, ambiguity and stale review rejection, typed-value preservation, deduplication, leaf constraints, global privacy, physical deletion protection, immutable ownership, versioning, concurrent serialization, runtime privileges, draft/publication rules, schema revisions and a real Gateway/Catalog HTTP read. The HTTP fixture supplies explicit test authentication; it does not claim new live Identity or production-provider acceptance.

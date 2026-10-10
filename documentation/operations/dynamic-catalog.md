@@ -86,7 +86,7 @@ Public notes require a public measurement scope and no private source observatio
 
 The installed project Catalog remains v1.1. No real product data, roles, credentials or mailbox were changed. The final v1.2 schema/Prisma manifest was verified using disposable Catalogs. Default `database/manage.ps1 setup/all` remains the legacy v1.1 installer; it does not silently migrate an existing database. Final fresh entry is `database/sql/15_catalog_dynamic.sql`; v1.1 upgrade uses additive `13_dynamic_catalog_expand.sql` followed by `14_dynamic_catalog_cutover.sql` after review/backfill. Applied v1.0/v1.1 migrations remain unchanged.
 
-Use a reviewed backup/restore environment and Catalog owner credentials. Select a staging tools configuration with `GL_DATABASE_CONFIG_FILE`; never overwrite `.local/database.json` or `.local/database.env` to point tests at staging. CLI output JSON stays inside this workspace and may contain private catalog evidence; do not publish inventory/mapping files.
+Use a reviewed backup/restore environment and Catalog owner credentials. Select a staging tools configuration with `BUSINESS_PLATFORM_DATABASE_CONFIG_FILE`; never overwrite `.local/database.json` or `.local/database.env` to point tests at staging. CLI output JSON stays inside this workspace and may contain private catalog evidence; do not publish inventory/mapping files.
 
 ```powershell
 node database/scripts/dynamic-catalog.mjs inventory --output .local/catalog-inventory.json
@@ -115,6 +115,6 @@ Do not run category-based product binaries/validators after the switch or mix ol
 
 ## Local validation
 
-Run the seven established npm checks, plus `node database/scripts/verify-dynamic.mjs`. The dynamic verifier installs disposable final/fresh/upgraded schemas, runs SQL fixtures, concurrency and all cross-service denials, then cleans them up. Integration and Identity process smoke create their own disposable databases. ORM runtime parity must target a final v1.2 Catalog; use the task's disposable final configuration or an authorized migrated staging environment via `GL_DATABASE_CONFIG_FILE`. Running final Prisma parity against the unchanged installed v1.1 Catalog correctly detects a mismatch. The default legacy database verifier remains explicit v1.1.
+Run the seven established npm checks, plus `node database/scripts/verify-dynamic.mjs`. The dynamic verifier installs disposable final/fresh/upgraded schemas, runs SQL fixtures, concurrency and all cross-service denials, then cleans them up. Integration and Identity process smoke create their own disposable databases. ORM runtime parity must target a final v1.2 Catalog; use the task's disposable final configuration or an authorized migrated staging environment via `BUSINESS_PLATFORM_DATABASE_CONFIG_FILE`. Running final Prisma parity against the unchanged installed v1.1 Catalog correctly detects a mismatch. The default legacy database verifier remains explicit v1.1.
 
 No hosted CI, Docker, production load, real storage/mail providers, Media processing, URL revocation, frontend or production migration is established by these local tests. Deployment and real business-data cutover require separate authorization.

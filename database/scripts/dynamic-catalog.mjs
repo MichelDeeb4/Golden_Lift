@@ -346,7 +346,7 @@ export async function backfill(
   });
   await client.connect();
   const owner = cfg.services.catalog.owner;
-  if (!/^golden_lift_catalog_owner$/.test(owner)) fail('Unexpected migration owner role.');
+  if (!/^business_platform_catalog_owner$/.test(owner)) fail('Unexpected migration owner role.');
   const transaction = async (work) => {
     await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
     try {

@@ -1,5 +1,5 @@
 import { Controller, Get, Headers, Inject, Param, Query } from '@nestjs/common';
-import { ApplicationError, record, uuid } from '@golden-lift/contracts';
+import { ApplicationError, record, uuid } from '@business-platform/contracts';
 import type { CatalogReader } from '../../application/ports/catalog-reader.js';
 export const CATALOG_READER = Symbol('CatalogReader');
 function queryStrings(value: unknown): Readonly<Record<string, string>> {

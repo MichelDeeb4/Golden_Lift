@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const web = process.argv.includes('--web');
 let mediaProfile;
 if (web) {
-  if (process.env.NODE_ENV === 'production' || process.env.GL_DATABASE_CONFIG_FILE)
+  if (process.env.NODE_ENV === 'production' || process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE)
     throw new Error('Combined startup is for the default local development profile only.');
   if (!fs.existsSync('.local/database.json'))
     throw new Error(

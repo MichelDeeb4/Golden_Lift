@@ -8,16 +8,16 @@ import {
 import { orm } from '../infrastructure/prisma/client.js';
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { uuid } from '@golden-lift/contracts';
-import type { SessionAuthenticator } from '@golden-lift/contracts';
-import type { HttpConfig } from '@golden-lift/platform';
+import { uuid } from '@business-platform/contracts';
+import type { SessionAuthenticator } from '@business-platform/contracts';
+import type { HttpConfig } from '@business-platform/platform';
 import {
   databaseReady,
   closePersistence,
   httpApplication,
   IdentitySessionClient,
   identityClientConfig,
-} from '@golden-lift/platform';
+} from '@business-platform/platform';
 import { PrismaCategoryRepository } from '../infrastructure/prisma/category-repository.js';
 import { PrismaCategorySchemaReader } from '../infrastructure/prisma/category-schema-reader.js';
 import { ReadCategorySchema } from '../application/use-cases/read-category-schema.js';

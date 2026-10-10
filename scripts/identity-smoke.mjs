@@ -137,10 +137,10 @@ try {
     const entry = scratch.services[name];
     if (!entry) throw new Error('Missing database configuration.');
     if (['identity', 'catalog'].includes(name)) {
-      const database = 'golden_lift_b3p_' + name + '_' + randomUUID().replaceAll('-', '');
+      const database = 'business_platform_b3p_' + name + '_' + randomUUID().replaceAll('-', '');
       if (
         database.length > 63 ||
-        !/^golden_lift_b3p_(identity|catalog)_[0-9a-f]{32}$/.test(database)
+        !/^business_platform_b3p_(identity|catalog)_[0-9a-f]{32}$/.test(database)
       )
         throw new Error('Unsafe scratch identifier.');
       entry.database = database;

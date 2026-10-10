@@ -1,4 +1,4 @@
-# Golden Lift architecture and engineering standards
+# Business Platform architecture and engineering standards
 
 Updated 2026-10-08. The user's standing instruction to follow best practices and suitable design patterns is saved in [AGENTS.md](../AGENTS.md). This guide describes the actual implementation, dependency rules and patterns.
 
@@ -7,7 +7,7 @@ Catalog classification now belongs to leaf Categories and their ordered Attribut
 ## Repository layout
 
 ```text
-Golden_Lift/
+business-platform/
   AGENTS.md                 Standing project rules
   apps/storefront/          Expo Router public web shell and replaceable data composition
   services/

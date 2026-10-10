@@ -123,7 +123,7 @@ test('SMTP TLS requirement rejects a server that cannot negotiate STARTTLS', asy
   }
 });
 test('local mailbox stores links in private message files rather than operational output', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'golden-lift-mail-test-'));
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'business-platform-mail-test-'));
   try {
     await new LocalMailbox({ ...config(25), mode: 'local', directory }).send(message);
     const files = await fs.readdir(directory);

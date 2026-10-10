@@ -1,7 +1,7 @@
 import { DeletionDialog } from './deletion';
 import { RelationshipSelection, RelationshipEditor } from './relationships';
-import { Plus } from '@golden-lift/icons';
-import { FilterX, X, Pencil, Save } from '@golden-lift/icons';
+import { Plus } from '@business-platform/icons';
+import { FilterX, X, Pencil, Save } from '@business-platform/icons';
 import { useConfirmDiscard, useHasUnsavedChanges } from './context';
 import {
   AttributeKind,
@@ -14,22 +14,23 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useForm } from 'react-hook-form';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { z } from 'zod';
-import { namedSchema, pageSchema } from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
+import { namedSchema, pageSchema } from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
 import {
-  GLButton,
-  GLCheckbox,
-  GLHeading,
-  GLInput,
-  GLModal,
-  GLSelect,
-  GLPageHeader,
-  GLFormSection,
-  GLActionBar,
-  GLActionMenu,
-  GLFilterToolbar,
-  GLDrawer,
-} from '@golden-lift/ui';
+  BPButton,
+  BPStatusBadge,
+  BPCheckbox,
+  BPHeading,
+  BPInput,
+  BPModal,
+  BPSelect,
+  BPPageHeader,
+  BPFormSection,
+  BPActionBar,
+  BPActionMenu,
+  BPFilterToolbar,
+  BPDrawer,
+} from '@business-platform/ui';
 import { useStaffApi, useUnsaved, StaffError } from './context';
 import { useAdminTranslation } from './translations';
 import {
@@ -73,9 +74,11 @@ const groupSchema = namedSchema.extend({
   attributeCount: z.string().optional(),
   categoryCount: z.string().optional(),
 });
-const unitSchema = namedSchema
-  .omit({ id: true })
-  .extend({ symbol: z.string(), dimension: z.string() });
+const unitSchema = namedSchema.omit({ id: true }).extend({
+  symbol: z.string(),
+  dimension: z.string(),
+  attributeCount: z.string().regex(/^\d+$/).optional(),
+});
 export function Configuration({
   resource,
   id: initialId,
@@ -280,10 +283,17 @@ export function Configuration({
   };
   return (
     <>
-      <GLPageHeader
+      <BPPageHeader
         title={title}
+        description={t(
+          resource === 'attributes'
+            ? 'specificationHelp'
+            : resource === 'attribute-groups'
+              ? 'groupHelp'
+              : 'unitHelp',
+        )}
         actions={
-          <GLButton
+          <BPButton
             onClick={() => {
               action.reset();
               setCreate(true);
@@ -297,7 +307,7 @@ export function Configuration({
                   ? 'createUnit'
                   : 'createGroup',
             )}
-          </GLButton>
+          </BPButton>
         }
         breadcrumbs={[
           { label: t('dashboard'), href: '/admin' },
@@ -314,15 +324,17 @@ export function Configuration({
       />
       <ActionFeedback action={action} reload={() => void detail.refetch()} />
 
-      <GLFilterToolbar label={t('filters')} fields={resource === 'attributes' ? 3 : 1}>
-        <GLInput
+      <BPFilterToolbar label={t('filters')} fields={resource === 'attributes' ? 3 : 1}>
+        <BPInput
           label={t('search')}
+          type="search"
+          onClear={() => pagination.filters({ q: '' })}
           value={filters.q ?? ''}
           onChange={(event) => pagination.filters({ q: event.target.value })}
         />
         {resource === 'attributes' && (
           <>
-            <GLSelect
+            <BPSelect
               label={t('type')}
               value={filters.kind ?? ''}
               onChange={(kind) => pagination.filters({ kind })}
@@ -334,7 +346,7 @@ export function Configuration({
                 })),
               ]}
             />
-            <GLSelect
+            <BPSelect
               label={t('visibility')}
               value={filters.visibility ?? ''}
               onChange={(visibility) => pagination.filters({ visibility })}
@@ -346,7 +358,7 @@ export function Configuration({
             />
           </>
         )}
-        <GLSelect
+        <BPSelect
           label={t('state')}
           value={filters.state ?? ''}
           onChange={(state) => pagination.filters({ state })}
@@ -356,16 +368,16 @@ export function Configuration({
             { value: 'deprecated', label: t('deprecated') },
           ]}
         />
-        <GLButton
+        <BPButton
           variant="ghost"
           onClick={() => pagination.filters({ q: '', kind: '', visibility: '', state: '' })}
         >
           <FilterX size={18} aria-hidden="true" />
           {t('clear')}
-        </GLButton>
-      </GLFilterToolbar>
-      <div className="gl-configuration-collection">
-        <div className="gl-configuration-table" aria-label={title}>
+        </BPButton>
+      </BPFilterToolbar>
+      <div className="bp-configuration-collection">
+        <div className="bp-configuration-table" aria-label={title}>
           <TableState
             pending={list.isPending}
             error={list.error}
@@ -373,7 +385,7 @@ export function Configuration({
             emptyTitle={filtered ? t('filteredEmpty') : t('empty')}
             onRetry={() => void list.refetch()}
             emptyAction={
-              <GLButton
+              <BPButton
                 variant="secondary"
                 onClick={() =>
                   filtered
@@ -390,7 +402,7 @@ export function Configuration({
                           ? 'createUnit'
                           : 'createGroup',
                     )}
-              </GLButton>
+              </BPButton>
             }
           >
             <table>
@@ -398,6 +410,12 @@ export function Configuration({
                 <tr>
                   <th>{t('name')}</th>
                   <th>{t('code')}</th>
+                  {resource === 'units' && (
+                    <>
+                      <th>{t('symbol')}</th>
+                      <th>{t('attributesUsing')}</th>
+                    </>
+                  )}
                   {resource === 'attributes' && (
                     <>
                       <th>{t('type')}</th>
@@ -435,7 +453,17 @@ export function Configuration({
                           ?.name ?? row.code}
                       </a>
                     </td>
-                    <td>{row.code}</td>
+                    <td>
+                      <bdi>{row.code}</bdi>
+                    </td>
+                    {resource === 'units' && 'symbol' in row && (
+                      <td>
+                        <bdi>{row.symbol}</bdi>
+                      </td>
+                    )}
+                    {resource === 'units' && (
+                      <td>{'attributeCount' in row ? (row.attributeCount ?? '—') : '—'}</td>
+                    )}
                     {resource === 'attributes' && 'kind' in row && (
                       <>
                         <td>{row.kind}</td>
@@ -457,9 +485,13 @@ export function Configuration({
                         <td>{'categoryCount' in row ? row.categoryCount : '0'}</td>
                       </>
                     )}
-                    <td>{row.deprecated ? t('deprecated') : t('active')}</td>
                     <td>
-                      <GLActionMenu
+                      <BPStatusBadge state={row.deprecated ? 'DEPRECATED' : 'ACTIVE'}>
+                        {row.deprecated ? t('deprecated') : t('active')}
+                      </BPStatusBadge>
+                    </td>
+                    <td>
+                      <BPActionMenu
                         label={t('actions') + ' — ' + row.code}
                         items={[
                           {
@@ -533,18 +565,18 @@ export function Configuration({
               {detail.error && (
                 <StaffError error={detail.error} reload={() => void detail.refetch()} />
               )}
-              <GLFormSection title={t('identity')}>
-                <div className="gl-admin-grid">
-                  <GLInput label={t('code')} value={detail.data.code} disabled />
+              <BPFormSection title={t('identity')}>
+                <div className="bp-admin-grid">
+                  <BPInput label={t('code')} value={detail.data.code} disabled />
                   {resource === 'attributes' && typeField}
                 </div>
-              </GLFormSection>
+              </BPFormSection>
               <TranslationFields form={form} labelsOnly={resource === 'units'} />
               {resource !== 'units' && <RelationshipEditor resource={resource} id={id} />}
               {resource === 'units' && 'symbol' in detail.data && (
                 <>
-                  <GLInput label={t('symbol')} value={detail.data.symbol} disabled />
-                  <GLInput label={t('dimension')} value={detail.data.dimension} disabled />
+                  <BPInput label={t('symbol')} value={detail.data.symbol} disabled />
+                  <BPInput label={t('dimension')} value={detail.data.dimension} disabled />
                 </>
               )}
               {resource === 'attributes' && (
@@ -552,7 +584,7 @@ export function Configuration({
                   {constraintsFields}
                   {visibilityFields}
                   {'options' in detail.data && detail.data.kind === 'CHOICE' && (
-                    <GLFormSection title={t('option')}>
+                    <BPFormSection title={t('option')}>
                       {detail.data.options.map((option) => (
                         <p key={option.id}>
                           {option.translations.find((row) => row.locale === locale)?.name ??
@@ -560,11 +592,11 @@ export function Configuration({
                         </p>
                       ))}
                       <AddChoiceOption key={id} definitionId={id!} options={detail.data.options} />
-                    </GLFormSection>
+                    </BPFormSection>
                   )}
                 </>
               )}
-              <GLActionBar>
+              <BPActionBar>
                 <ReviewedChange
                   onPending={setEditPending}
                   path={`/admin/${resource}/${id}`}
@@ -623,8 +655,8 @@ export function Configuration({
                     }
                   }}
                 />
-              </GLActionBar>
-              <GLButton
+              </BPActionBar>
+              <BPButton
                 variant="secondary"
                 disabled={editPending}
                 onClick={async () => {
@@ -634,7 +666,7 @@ export function Configuration({
               >
                 <X size={18} aria-hidden="true" />
                 {t('cancel')}
-              </GLButton>
+              </BPButton>
             </FocusedEditor>
           </>
         )}
@@ -703,7 +735,7 @@ export function Configuration({
             />
           </>
         )}
-        <GLDrawer
+        <BPDrawer
           open={inspecting && Boolean(id)}
           title={detail.data?.code ?? title}
           onClose={async () => {
@@ -712,13 +744,13 @@ export function Configuration({
         >
           {id && detail.data && (
             <>
-              <GLHeading level={2} role="heading4">
+              <BPHeading level={2} role="heading4">
                 {(
                   detail.data.translations.find((row) => row.locale === locale) ??
                   detail.data.translations[0]
                 )?.name ?? detail.data.code}
-              </GLHeading>
-              <GLButton
+              </BPHeading>
+              <BPButton
                 variant="secondary"
                 onClick={() => {
                   setEditPrecondition({
@@ -730,15 +762,15 @@ export function Configuration({
               >
                 <Pencil size={18} aria-hidden="true" />
                 {t('edit')}
-              </GLButton>
+              </BPButton>
 
               {resource === 'attributes' &&
                 'options' in detail.data &&
                 detail.data.kind === 'CHOICE' && (
                   <section>
-                    <GLHeading level={2} role="heading5">
+                    <BPHeading level={2} role="heading5">
                       {t('option')}
-                    </GLHeading>
+                    </BPHeading>
                     {detail.data.options.map((option) => (
                       <div key={option.id}>
                         <OptionEditor option={option} />
@@ -765,7 +797,7 @@ export function Configuration({
                     <AddChoiceOption key={id} definitionId={id!} options={detail.data.options} />
                   </section>
                 )}
-              <GLFormSection title={t('state')}>
+              <BPFormSection title={t('state')}>
                 {' '}
                 {resource === 'attributes' && (
                   <ReviewedChange
@@ -778,10 +810,10 @@ export function Configuration({
                     label={t('deprecated')}
                   />
                 )}
-              </GLFormSection>
+              </BPFormSection>
             </>
           )}
-        </GLDrawer>
+        </BPDrawer>
       </div>
     </>
   );
@@ -941,14 +973,14 @@ function ConfigurationCreate({
             );
           })}
         >
-          <GLInput
+          <BPInput
             label={t('code')}
             value={code}
             required
             onChange={(e) => setCode(e.target.value)}
           />
           {resource === 'attributes' && (
-            <GLFormSection title={t('type')}>{typeField}</GLFormSection>
+            <BPFormSection title={t('type')}>{typeField}</BPFormSection>
           )}
           <TranslationFields form={form} labelsOnly={resource === 'units'} />
           {resource !== 'units' && (
@@ -968,12 +1000,12 @@ function ConfigurationCreate({
           )}
           {resource === 'units' && (
             <>
-              <GLInput
+              <BPInput
                 label={t('symbol')}
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
               />
-              <GLInput
+              <BPInput
                 label={t('dimension')}
                 value={dimension}
                 onChange={(e) => setDimension(e.target.value)}
@@ -981,12 +1013,12 @@ function ConfigurationCreate({
             </>
           )}
           <ActionFeedback action={action} />
-          <GLActionBar>
-            <GLButton type="submit" loading={action.isPending}>
+          <BPActionBar>
+            <BPButton type="submit" loading={action.isPending}>
               <Save size={18} aria-hidden="true" />
               {t('save')}
-            </GLButton>
-            <GLButton
+            </BPButton>
+            <BPButton
               variant="secondary"
               disabled={action.isPending}
               onClick={async () => {
@@ -995,8 +1027,8 @@ function ConfigurationCreate({
             >
               <X size={18} aria-hidden="true" />
               {t('cancel')}
-            </GLButton>
-          </GLActionBar>
+            </BPButton>
+          </BPActionBar>
         </form>
       </FocusedEditor>
     </>

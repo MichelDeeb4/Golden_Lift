@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import { retryTransaction, sqlState } from '@golden-lift/platform';
+import { ApplicationError } from '@business-platform/contracts';
+import { retryTransaction, sqlState } from '@business-platform/platform';
 import type { IdentityRepository, IdentityUnitOfWork } from '../../application/ports/identity.js';
 import type { PrismaClient } from './client.js';
 import { PrismaIdentityRepository } from './repository.js';

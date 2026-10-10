@@ -14,7 +14,7 @@ import { usePathname } from 'expo-router';
 import { StaffActionTokenProvider } from '../features/admin/action-token';
 import { StaffProvider } from '../features/admin/context';
 import { CategoryTreeStateProvider } from '../features/admin/category-tree-state';
-import '@golden-lift/ui/styles.css';
+import '@business-platform/ui/styles.css';
 import '../features/layout/storefront.css';
 import '../features/admin/styles.css';
 import '../features/admin/workspace.css';
@@ -32,8 +32,8 @@ export default function Layout() {
   });
   if (!loaded && !error)
     return (
-      <div className="gl-bootstrap" role="status" aria-label="جارٍ التحميل">
-        GOLDEN LIFT
+      <div className="bp-bootstrap" role="status" aria-label="جارٍ التحميل">
+        BUSINESS PLATFORM
       </div>
     );
   return (

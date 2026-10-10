@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import { categoryPageSchema, categorySchema } from '@golden-lift/api';
-import { useLocale } from '@golden-lift/i18n';
-import { GLButton, GLAlert } from '@golden-lift/ui';
+import { categoryPageSchema, categorySchema } from '@business-platform/api';
+import { useLocale } from '@business-platform/i18n';
+import { BPButton, BPAlert } from '@business-platform/ui';
 import { useStaffApi } from './context';
 import { useAdminTranslation } from './translations';
 import { TableState } from './common';
@@ -35,7 +35,7 @@ function BranchCategoryPicker({
   });
   return (
     <>
-      <GLButton
+      <BPButton
         variant="secondary"
         onClick={() => {
           setParent(null);
@@ -44,9 +44,9 @@ function BranchCategoryPicker({
         }}
       >
         {t('root')}
-      </GLButton>
+      </BPButton>
       {trail.map((entry, index) => (
-        <GLButton
+        <BPButton
           key={entry.id}
           variant="text"
           onClick={() => {
@@ -56,12 +56,12 @@ function BranchCategoryPicker({
           }}
         >
           {entry.name}
-        </GLButton>
+        </BPButton>
       ))}
       {!leaf && (
-        <GLButton onClick={() => onSelect(null)}>
+        <BPButton onClick={() => onSelect(null)}>
           {t('select')} — {t('root')}
-        </GLButton>
+        </BPButton>
       )}
       <TableState pending={rows.isPending} error={rows.error} empty={!rows.data?.items.length}>
         <table>
@@ -75,7 +75,7 @@ function BranchCategoryPicker({
             {rows.data?.items.map((c) => (
               <tr key={c.id}>
                 <td>
-                  <GLButton
+                  <BPButton
                     variant="text"
                     onClick={() => {
                       setParent(c.id);
@@ -84,15 +84,15 @@ function BranchCategoryPicker({
                     }}
                   >
                     {c.name} ({c.activeChildCount})
-                  </GLButton>
+                  </BPButton>
                 </td>
                 <td>
-                  <GLButton
+                  <BPButton
                     disabled={leaf ? !c.canAddProducts : !c.canAddChildren}
                     onClick={() => onSelect(c)}
                   >
                     {t('select')}
-                  </GLButton>
+                  </BPButton>
                 </td>
               </tr>
             ))}
@@ -100,7 +100,7 @@ function BranchCategoryPicker({
         </table>
       </TableState>
       {rows.data?.nextCursor && (
-        <GLButton onClick={() => setCursor(rows.data!.nextCursor!)}>{t('next')}</GLButton>
+        <BPButton onClick={() => setCursor(rows.data!.nextCursor!)}>{t('next')}</BPButton>
       )}
     </>
   );
@@ -120,7 +120,7 @@ export function CategoryPicker({
   return (
     <>
       <p>{t('chooseLeafCategory')}</p>
-      {warning && <GLAlert tone="warning">{t('leafCategoryOnly')}</GLAlert>}
+      {warning && <BPAlert tone="warning">{t('leafCategoryOnly')}</BPAlert>}
       <CategoryTree
         expanded={expanded}
         onExpanded={setExpanded}

@@ -52,10 +52,10 @@ const layers = {
   composition: ['domain', 'application', 'infrastructure', 'presentation', 'composition'],
 };
 const publicPackages = new Map([
-  ['@golden-lift/contracts', path.resolve('packages/contracts/src')],
-  ['@golden-lift/platform', path.resolve('packages/platform/src')],
+  ['@business-platform/contracts', path.resolve('packages/contracts/src')],
+  ['@business-platform/platform', path.resolve('packages/platform/src')],
   ...['tokens', 'ui', 'icons', 'i18n', 'api', 'catalog-ui'].map((name) => [
-    '@golden-lift/' + name,
+    '@business-platform/' + name,
     path.resolve('packages', name, 'src'),
   ]),
 ]);
@@ -86,9 +86,9 @@ for (const file of files) {
     )
       targets.push(target);
     if (
-      spec.startsWith('@golden-lift/') &&
+      spec.startsWith('@business-platform/') &&
       !publicPackages.has(spec) &&
-      spec !== '@golden-lift/ui/styles.css'
+      spec !== '@business-platform/ui/styles.css'
     )
       failures.push(
         file +
@@ -100,8 +100,8 @@ for (const file of files) {
         own = path.resolve('services', service, 'src'),
         allowed = layers[layer];
       if (
-        spec.startsWith('@golden-lift/') &&
-        !['@golden-lift/contracts', '@golden-lift/platform'].includes(spec)
+        spec.startsWith('@business-platform/') &&
+        !['@business-platform/contracts', '@business-platform/platform'].includes(spec)
       )
         failures.push(file + ': backend cannot import frontend packages');
       if (target && (spec.startsWith('.') || inside(serviceRoot, target)) && !inside(own, target))
@@ -116,7 +116,7 @@ for (const file of files) {
       if (
         ['domain', 'application'].includes(layer) &&
         !spec.startsWith('.') &&
-        spec !== '@golden-lift/contracts'
+        spec !== '@business-platform/contracts'
       )
         failures.push(file + ': business layer cannot import ' + spec);
     }
@@ -135,7 +135,7 @@ for (const file of files) {
     );
     if (inside(storefront, absolute) && target && inside(serviceRoot, target))
       failures.push(file + ': frontend cannot import a service implementation');
-    if ((inside(storefront, absolute) || frontendPackage) && spec === '@golden-lift/platform')
+    if ((inside(storefront, absolute) || frontendPackage) && spec === '@business-platform/platform')
       failures.push(file + ': frontend cannot import backend platform adapters');
     if (frontendPackage && target && inside(storefront, target))
       failures.push(file + ': shared frontend package cannot import the storefront');

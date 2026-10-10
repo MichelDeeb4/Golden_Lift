@@ -1,4 +1,4 @@
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
   AttributeValue,
   CatalogTranslation,
@@ -6,7 +6,7 @@ import type {
   ProductDto,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type {
   ProductCreate,
   ProductRepository,

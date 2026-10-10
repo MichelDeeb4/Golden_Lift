@@ -1,6 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { Controller, Get, Inject, Req } from '@nestjs/common';
-import { staffRequest } from '@golden-lift/platform';
+import { staffRequest } from '@business-platform/platform';
 import type { CheckStaffAccess } from '../../application/use-cases/check-staff-access.js';
 export const STAFF_ACCESS = Symbol('StaffAccess');
 @Controller('api/v1/admin/media')

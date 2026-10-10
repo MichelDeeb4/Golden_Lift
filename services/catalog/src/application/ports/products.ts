@@ -9,7 +9,7 @@ import type {
   PublicProductMedia,
   Locale,
   ProductNavigation,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface ProductCreate {
   readonly categoryId: Uuid;
   readonly modelCode: string | null;
@@ -25,6 +25,7 @@ export interface ProductRepository {
   publicNavigation(id: Uuid, language: Locale): Promise<ProductNavigation>;
   publicPage(input: PublicProductQuery): Promise<{
     readonly ids: readonly Uuid[];
+    readonly total: number;
     readonly hasNextPage: boolean;
     readonly filterIds: readonly Uuid[];
   }>;

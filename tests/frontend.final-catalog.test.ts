@@ -1,10 +1,15 @@
 ﻿import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { adminBrowserFixture } from '../scripts/admin-browser-fixture.mjs';
+const captureDirectory = process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT
+  ? process.env.BUSINESS_PLATFORM_ADMIN_CAPTURE_ROOT + '/final-catalog'
+  : 'documentation/assets/final-catalog-admin-visitor';
 let fixture: Awaited<ReturnType<typeof adminBrowserFixture>>;
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => {
-  fixture = await adminBrowserFixture();
+  fixture = await adminBrowserFixture({
+    ports: { gateway: 3400, media: 3403, catalogEvents: 3502, mediaEvents: 3503 },
+  });
 });
 test.afterAll(async () => {
   await fixture?.dispose();
@@ -12,7 +17,7 @@ test.afterAll(async () => {
 const translations = (name: string) =>
   ['ar', 'en', 'ckb'].map((locale) => ({ locale, name, description: null }));
 async function login(page: Page, superAdmin = false) {
-  await page.addInitScript(() => localStorage.setItem('gl.locale', 'en'));
+  await page.addInitScript(() => localStorage.setItem('bp.locale', 'en'));
   await page.goto('/admin/login');
   await page
     .locator('input[type=email]')
@@ -23,9 +28,9 @@ async function login(page: Page, superAdmin = false) {
 }
 async function raw(page: Page, path: string, data?: unknown, method = data ? 'POST' : 'GET') {
   const { csrfToken } = await (
-    await page.request.get('http://localhost:3000/api/v1/auth/session')
+    await page.request.get(fixture.gatewayOrigin + '/api/v1/auth/session')
   ).json();
-  return page.request.fetch('http://localhost:3000/api/v1' + path, {
+  return page.request.fetch(fixture.gatewayOrigin + '/api/v1' + path, {
     method,
     headers: { origin: 'http://localhost:8082', 'x-csrf-token': csrfToken },
     ...(data ? { data } : {}),
@@ -135,7 +140,7 @@ test('atomic leaf groups → unique category fields → real product values; cre
   // Reorder during creation, before the category exists.
   await modal.getByRole('button', { name: 'Previous — Final Dimensions', exact: true }).click();
   await page.screenshot({
-    path: 'documentation/assets/final-catalog-admin-visitor/leaf-create-groups.png',
+    path: captureDirectory + '/leaf-create-groups.png',
   });
   const marker = await page.evaluate(() => {
     (window as unknown as { finalMarker: string }).finalMarker = crypto.randomUUID();
@@ -200,7 +205,7 @@ test('atomic leaf groups → unique category fields → real product values; cre
     saved.values.find((v: { definitionId: string }) => v.definitionId === width.id).value.number,
   ).toBe('1400.000001');
   await page.screenshot({
-    path: 'documentation/assets/final-catalog-admin-visitor/product-values.png',
+    path: captureDirectory + '/product-values.png',
   });
   expect(dialogs).toEqual([]);
 });
@@ -415,10 +420,7 @@ test('real visitor gallery distinguishes two images and video with category brea
   test.setTimeout(120000);
   page.setDefaultTimeout(15000);
   await login(page);
-  await fixture.seedImages(1);
-  const imageRows = await request(page, '/admin/media/assets?kind=IMAGE&status=READY&limit=100');
-  const second = imageRows.items.find((asset: { id: string }) => asset.id !== fixture.assetId);
-  expect(second).toBeTruthy();
+  const sideAssetId = await fixture.newReadyImage();
   const video = Buffer.from(
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -479,14 +481,15 @@ test('real visitor gallery distinguishes two images and video with category brea
       categoryId: category.id,
       translations: translations('Gallery product ' + i),
     });
+    const coverAssetId = await fixture.newReadyImage();
     const media = (
       i === 1
         ? [
-            { assetId: fixture.assetId, kind: 'IMAGE', title: 'Front image' },
-            { assetId: second.id, kind: 'IMAGE', title: 'Side image' },
+            { assetId: coverAssetId, kind: 'IMAGE', title: 'Front image' },
+            { assetId: sideAssetId, kind: 'IMAGE', title: 'Side image' },
             { assetId: movie.id, kind: 'VIDEO', title: 'Movement video' },
           ]
-        : [{ assetId: fixture.assetId, kind: 'IMAGE', title: 'Front image' }]
+        : [{ assetId: coverAssetId, kind: 'IMAGE', title: 'Front image' }]
     ).map((m) => ({
       id: crypto.randomUUID(),
       assetId: m.assetId,
@@ -500,7 +503,7 @@ test('real visitor gallery distinguishes two images and video with category brea
     }));
     const saved = await request(page, '/admin/products/' + p.id + '/media', {
       expectedVersion: p.version,
-      coverAssetId: fixture.assetId,
+      coverAssetId,
       media,
     });
     products.push(
@@ -514,7 +517,9 @@ test('real visitor gallery distinguishes two images and video with category brea
     );
   }
   const detail = await (
-    await page.request.get('http://localhost:3000/api/v1/products/' + products[1].id + '?locale=en')
+    await page.request.get(
+      fixture.gatewayOrigin + '/api/v1/products/' + products[1].id + '?locale=en',
+    )
   ).json();
   expect(detail.navigation.breadcrumbs.map((c: { id: string }) => c.id)).toEqual([
     root.id,
@@ -529,36 +534,36 @@ test('real visitor gallery distinguishes two images and video with category brea
   ] as const) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/products/' + products[1].id);
-    await page.locator('header .gl-language select').selectOption(locale);
+    await page.locator('header .bp-language select').selectOption(locale);
     await expect(page.locator('html')).toHaveAttribute('lang', locale);
     await expect(page.locator('html')).toHaveAttribute('dir', locale === 'en' ? 'ltr' : 'rtl');
-    await expect(page.locator('.gl-gallery-thumbnails button')).toHaveCount(3);
-    await expect(page.locator('.gl-video-thumbnail-badge')).toHaveText(
+    await expect(page.locator('.bp-gallery-thumbnails button')).toHaveCount(3);
+    await expect(page.locator('.bp-video-thumbnail-badge')).toHaveText(
       { en: 'VIDEO', ar: 'فيديو', ckb: 'ڤیدیۆ' }[locale],
     );
-    await page.locator('.gl-gallery-thumbnails button').last().click();
+    await page.locator('.bp-gallery-thumbnails button').last().click();
     await expect
-      .poll(() => page.locator('.gl-gallery video').evaluate((v: HTMLVideoElement) => v.videoWidth))
+      .poll(() => page.locator('.bp-gallery video').evaluate((v: HTMLVideoElement) => v.videoWidth))
       .toBe(80);
-    await page.locator('.gl-gallery video').evaluate((v: HTMLVideoElement) => v.play());
+    await page.locator('.bp-gallery video').evaluate((v: HTMLVideoElement) => v.play());
     await expect
       .poll(() =>
-        page.locator('.gl-gallery video').evaluate((v: HTMLVideoElement) => v.currentTime),
+        page.locator('.bp-gallery video').evaluate((v: HTMLVideoElement) => v.currentTime),
       )
       .toBeGreaterThan(0);
-    await page.locator('.gl-gallery-thumbnails button').first().click();
+    await page.locator('.bp-gallery-thumbnails button').first().click();
     await expect
       .poll(() =>
-        page.locator('.gl-gallery-main img').evaluate((img: HTMLImageElement) => img.naturalWidth),
+        page.locator('.bp-gallery-main img').evaluate((img: HTMLImageElement) => img.naturalWidth),
       )
       .toBeGreaterThan(0);
     for (const id of [root.id, category.id])
       await expect(page.locator('a[href="/categories/' + id + '"]').first()).toBeVisible();
     await expect(
-      page.locator('.gl-product-neighbors a[href="/products/' + products[0].id + '"]').first(),
+      page.locator('.bp-product-neighbors a[href="/products/' + products[0].id + '"]').first(),
     ).toBeVisible();
     await expect(
-      page.locator('.gl-product-neighbors a[href="/products/' + products[2].id + '"]').first(),
+      page.locator('.bp-product-neighbors a[href="/products/' + products[2].id + '"]').first(),
     ).toBeVisible();
     expect(
       await page.evaluate(
@@ -566,14 +571,16 @@ test('real visitor gallery distinguishes two images and video with category brea
       ),
     ).toBe(true);
     await page.screenshot({
-      path: 'documentation/assets/final-catalog-admin-visitor/gallery-' + locale + '.png',
+      path: captureDirectory + '/gallery-' + locale + '.png',
       animations: 'disabled',
     });
   }
-  await page.locator('.gl-product-neighbors a[href="/products/' + products[2].id + '"]').click();
+  await page.locator('.bp-product-neighbors a[href="/products/' + products[2].id + '"]').click();
   await expect(page).toHaveURL(new RegExp(products[2].id));
   const last = await (
-    await page.request.get('http://localhost:3000/api/v1/products/' + products[2].id + '?locale=en')
+    await page.request.get(
+      fixture.gatewayOrigin + '/api/v1/products/' + products[2].id + '?locale=en',
+    )
   ).json();
   expect(last.navigation.next).toBeNull();
 });

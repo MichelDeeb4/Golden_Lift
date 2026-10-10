@@ -2,12 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, record, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, record, uuid, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   SessionAuthenticator,
   StaffRequest,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { ConfigurationError } from './config.js';
 export type IdentityCaller = 'catalog' | 'media' | 'inquiries';
 export interface IdentitySecurityConfig {
@@ -88,7 +88,7 @@ export function identityClientConfig(
   };
 }
 export function staffCookieName(production = process.env['NODE_ENV'] === 'production'): string {
-  return production ? '__Host-gl_staff' : 'gl_staff';
+  return production ? '__Host-bp_staff' : 'bp_staff';
 }
 export function staffRequest(request: IncomingMessage, mutation: boolean): StaffRequest {
   const cookies = (request.headers.cookie ?? '')

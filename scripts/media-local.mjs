@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-if (process.env.NODE_ENV === 'production' || process.env.GL_DATABASE_CONFIG_FILE)
+if (process.env.NODE_ENV === 'production' || process.env.BUSINESS_PLATFORM_DATABASE_CONFIG_FILE)
   throw new Error('Native local setup is for the normal development profile only.');
 const toolFile = path.resolve('.local/tools/commands.json');
 if (!fs.existsSync(toolFile)) throw new Error('Run npm run media:tools first.');

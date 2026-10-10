@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { MediaKind } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { MediaKind } from '@business-platform/contracts';
 
 export interface MediaPolicy {
   readonly maxBytes: Readonly<Record<MediaKind, number>>;

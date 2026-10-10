@@ -3,7 +3,7 @@ import type {
   AttributeGroupDto,
   UnitDto,
   AttributeKind,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface ConfigurationCollectionQuery {
   readonly resource: 'definitions' | 'groups' | 'units';
   readonly page: number;

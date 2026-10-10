@@ -1,5 +1,5 @@
-import { ApplicationError } from '@golden-lift/contracts';
-import type { DeletionEvent } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
+import type { DeletionEvent } from '@business-platform/contracts';
 import type { MediaDeletionStore, MediaDeletionFiles } from '../ports/deletion.js';
 export class CompleteMediaDeletion {
   constructor(

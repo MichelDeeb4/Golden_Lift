@@ -1,4 +1,4 @@
-# Golden Lift deletion policy
+# Business Platform deletion policy
 
 Approved target policy, 2026-10-08. This policy supersedes blanket soft deletion for the entities below. See the implementation report for actual rollout status.
 

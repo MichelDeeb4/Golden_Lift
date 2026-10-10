@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   MediaAction,
   MediaContext,
@@ -6,7 +6,7 @@ import type {
   MediaKind,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { CatalogMediaRegistry } from '../ports/media.js';
 export class MediaCoordination {
   constructor(private readonly registry: CatalogMediaRegistry) {}

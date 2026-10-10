@@ -1,11 +1,13 @@
-# Golden Lift: Completed Work and Project Status
+# Business Platform: Completed Work and Project Status
+
+2026-10-10 Admin refinement: the shared button label omission is corrected, shell/collection/workspace styles are consolidated, all major staff screens use consistent controls/density, and owning read contracts supply real Unit usage and exact staff update metadata. Local acceptance passed 46 Admin and three public browser scenarios, 24 Admin plus seven public visual comparisons, 85 PostgreSQL/HTTP regressions and 51 unit tests. See [current implementation and verification](implementation/admin-ui-redesign-completed-work.md); earlier milestone reports remain historical.
 
 2026-10-08 final catalog phase: atomic leaf/group and inverse group/attribute creation, reviewed relationship edits, deduplicated specification metadata, reviewed product category placement and contextual visitor gallery/navigation are implemented. Runtime Product Type removal and physical binding retirement have passed local backup/rehearsal parity. Verification is recorded in the [final phase report](implementation/final-catalog-admin-visitor-completed-work.md); earlier milestone counts remain historical.
 
 The 2026-10-07 [Product Create fix](implementation/fix-product-create-disabled.md) removes Product Type, Media and specification prerequisites from initial creation. Leaf category plus Arabic name creates an inactive PostgreSQL draft and opens the category-derived editor through SPA navigation. The normal Catalog cutover was applied after full backup/restore parity and restored-copy rehearsal. The final phase replaces runtime Type-specific regression workflows with category relationships. Current evidence belongs to the dated fix report.
 
 
-Updated: 2026-10-08. Earlier dated milestone evidence below remains historical.
+Updated: 2026-10-10. Earlier dated milestone evidence below remains historical.
 
 The [Admin action/dialog/filter phase](implementation/admin-actions-dialogs-filters-completed-work.md) standardizes icon overflow menus, semantic actions, red Close controls, branded unsaved decisions and responsive filters. Configuration details use explicit overlays; staff account editing preserves version conflicts through the existing Identity API. Current local acceptance passed 79 distinct tests and seven unchanged visitor visual comparisons, plus build/types/format/architecture/Prisma checks. The normal project is running; earlier pagination work and historical reports remain separate.
 
@@ -85,7 +87,7 @@ The services follow Clean Architecture:
 Domain and application code remain independent of NestJS, Prisma, PostgreSQL drivers, SMTP and environment/filesystem access. Cross-service dependencies use contracts and APIs rather than another service's implementation or database.
 
 ```text
-Golden_Lift/
+business-platform/
   AGENTS.md
   services/
     identity/
@@ -127,10 +129,10 @@ Architecture checks reject reversed layers, cross-service implementation imports
 
 | Database              | Tables, including local ops tables |
 | --------------------- | ---------------------------------: |
-| golden_lift_identity  |                                  5 |
-| golden_lift_catalog   |                                 43 |
-| golden_lift_media     |                                  6 |
-| golden_lift_inquiries |                                  5 |
+| business_platform_identity  |                                  5 |
+| business_platform_catalog   |                                 43 |
+| business_platform_media     |                                  6 |
+| business_platform_inquiries |                                  5 |
 | **Total**             |                             **59** |
 
 The total comprises 50 business/support tables, eight messaging tables and one private Catalog write gate. The recorded schema contains **577 columns and 64 database-local foreign keys**.
@@ -291,3 +293,10 @@ The [backend implementation plan](backend-implementation-plan.md) records the wi
 ## Permanent deletion implementation (2026-10-08)
 
 The new Product, Media, Attribute, Group, Unit and Category impact/DELETE paths implement permanent owned-data cleanup with existing B5 coordination, explicit blocking and Group reachability. Current real PostgreSQL/filesystem regressions and three signed local HTTP/browser workflows pass, including mobile English/Arabic/Kurdish dialogs; production RabbitMQ/S3 acceptance is unverified. The normal database/storage rollout completed all 28 owner copies across six shared assets with backups and source files retained. SQL 27/28/29 are installed and the local profile passes 71-model/714-column/76-FK Prisma parity. Retained-reference compatibility and obsolete-path contraction remain pending. See [completed implementation scope](implementation/deletion-completed-work.md), [policy](architecture/deletion-policy.md) and [recovery](operations/deletion-recovery.md). Earlier retention/soft-delete milestone reports above remain dated historical evidence.
+
+
+## Public catalog filter and presentation correction — 2026-10-10
+
+Catalog now resolves active descendant leaves for parent Category browsing and shares that scope across typed result predicates, filter eligibility and facets. CHOICE supports stable-ID OR selection, numeric filters remain precise, boolean false is preserved, and collection totals align with twelve-item pagination. Shared URL state drives history, requests and TanStack cache keys. Public pages use ratio-controlled shared grids, contextual Category hero, dynamic rail/drawer, active chips and localized Group specifications. No normal data/schema migration is needed. See [architecture](architecture/public-catalog-filtering.md), [baseline](implementation/public-filter-root-cause-baseline.md) and [current work](implementation/public-filter-and-ui-completed-work.md). Dated validation records real persistence/browser acceptance and separately identifies production/hosted checks outside this scope.
+
+Current local acceptance: **PASS**. The [2026-10-10 validation](validation/public-catalog-2026-10-10T08-13-50-170Z.json) records 67 Catalog PostgreSQL/HTTP checks, the final 15-test typed fixture run, three real-API browser workflows, five retained public browser checks and fourteen reviewed deterministic visual baselines. Production providers, load, hosted CI and deployment are not represented by this local result.

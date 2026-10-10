@@ -1,4 +1,4 @@
-import type { Uuid } from '@golden-lift/contracts';
+import type { Uuid } from '@business-platform/contracts';
 import type { MediaDeletionFiles } from '../../application/ports/deletion.js';
 import type { FencedStorage } from './fenced.js';
 export class OwnedMediaDeletionFiles implements MediaDeletionFiles {

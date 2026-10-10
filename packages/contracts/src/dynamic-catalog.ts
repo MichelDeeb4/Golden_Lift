@@ -17,6 +17,8 @@ export interface AttributeGroupDto extends NamedConfiguration {
   readonly categoryCount?: string;
 }
 export interface UnitDto {
+  /** Live Attribute definitions referencing this Unit; supplied on collection pages. */
+  readonly attributeCount?: string;
   readonly code: string;
   readonly symbol: string;
   readonly dimension: string;
@@ -168,6 +170,7 @@ export interface PublicProductDto {
     readonly definitionId: Uuid;
     readonly label: string;
     readonly unitSymbol: string | null;
+    readonly group?: { readonly id: Uuid; readonly label: string };
     readonly value: PublicAttributeValue;
   }[];
 }
@@ -191,7 +194,8 @@ export type PublicProductFilter =
     }
   | { readonly definitionId: Uuid; readonly kind: 'BOOLEAN'; readonly value: boolean }
   | { readonly definitionId: Uuid; readonly kind: 'TEXT'; readonly value: string }
-  | { readonly definitionId: Uuid; readonly kind: 'CHOICE'; readonly optionId: Uuid };
+  | { readonly definitionId: Uuid; readonly kind: 'CHOICE'; readonly optionId: Uuid }
+  | { readonly definitionId: Uuid; readonly kind: 'CHOICE'; readonly optionIds: readonly Uuid[] };
 export interface PublicFilterDefinition {
   readonly id: Uuid;
   readonly label: string;
@@ -211,6 +215,7 @@ export interface PublicProductQuery {
   readonly filters: readonly PublicProductFilter[];
 }
 export interface PublicProductPage {
+  readonly total: number;
   readonly items: readonly PublicProductDto[];
   readonly page: number;
   readonly pageSize: number;

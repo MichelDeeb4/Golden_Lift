@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   DeleteCommand,
   SessionAuthenticator,
-} from '@golden-lift/contracts';
-import { requireInternalToken, staffRequest } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { requireInternalToken, staffRequest } from '@business-platform/platform';
 import type * as Cases from '../../application/use-cases/delete-catalog-entities.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';
 import { MEDIA_INTERNAL_TOKEN } from './media-controller.js';

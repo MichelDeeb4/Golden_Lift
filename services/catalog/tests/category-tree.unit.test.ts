@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { ApplicationError, uuid, version, revisionPrecondition } from '@golden-lift/contracts';
+import {
+  ApplicationError,
+  uuid,
+  version,
+  revisionPrecondition,
+} from '@business-platform/contracts';
 import {
   maximumReorderSize,
   orderedMembership,

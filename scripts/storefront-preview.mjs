@@ -55,6 +55,6 @@ const server = http.createServer((req, res) => {
   }
 });
 server.listen(port, '127.0.0.1', () =>
-  console.log(`Golden Lift exported preview: http://127.0.0.1:${port}`),
+  console.log(`Business Platform exported preview: http://127.0.0.1:${port}`),
 );
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => server.close());

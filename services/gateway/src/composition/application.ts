@@ -1,6 +1,6 @@
-import { httpApplication } from '@golden-lift/platform';
-import type { HttpConfig } from '@golden-lift/platform';
-import type { BusinessService } from '@golden-lift/contracts';
+import { httpApplication } from '@business-platform/platform';
+import type { HttpConfig } from '@business-platform/platform';
+import type { BusinessService } from '@business-platform/contracts';
 import { HttpCatalogReader } from '../infrastructure/http/catalog-reader.js';
 import {
   CatalogController,

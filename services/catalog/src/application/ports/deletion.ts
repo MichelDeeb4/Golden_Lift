@@ -7,7 +7,7 @@ import type {
   DirectMediaDeletionRequest,
   EventEnvelope,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 
 export interface CatalogDeletionRepository {
   append(event: EventEnvelope): Promise<void>;

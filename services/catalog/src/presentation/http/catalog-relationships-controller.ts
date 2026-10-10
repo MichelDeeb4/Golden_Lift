@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Req } from '@nestjs/common';
 import type { IncomingMessage } from 'node:http';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { SessionAuthenticator } from '@golden-lift/contracts';
-import { staffRequest } from '@golden-lift/platform';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { SessionAuthenticator } from '@business-platform/contracts';
+import { staffRequest } from '@business-platform/platform';
 import type { ManageCatalogRelationships } from '../../application/use-cases/manage-catalog-relationships.js';
 import type { RelationshipTarget } from '../../application/ports/catalog-relationships.js';
 import { STAFF_AUTHENTICATOR } from './admin-categories-controller.js';

@@ -2,11 +2,11 @@ import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TamaguiProvider } from 'tamagui';
-import { config, GLTokenStyles } from '@golden-lift/ui';
-import { LocaleProvider } from '@golden-lift/i18n';
-import { ApiCatalogDataSource, ApiMediaResolver, PublicApiClient } from '@golden-lift/api';
-import type { CatalogDataSource, MediaResolver } from '@golden-lift/api';
-import { MediaProvider } from '@golden-lift/catalog-ui';
+import { config, BPTokenStyles } from '@business-platform/ui';
+import { LocaleProvider } from '@business-platform/i18n';
+import { ApiCatalogDataSource, ApiMediaResolver, PublicApiClient } from '@business-platform/api';
+import type { CatalogDataSource, MediaResolver } from '@business-platform/api';
+import { MediaProvider } from '@business-platform/catalog-ui';
 import { DemoCatalogDataSource, DemoMediaResolver } from '../features/catalog/demo';
 import { frontendConfiguration } from '../configuration';
 const sourceMode = frontendConfiguration.dataMode;
@@ -35,7 +35,7 @@ export function StorefrontProvider({ children }: { children: ReactNode }) {
   return (
     <LocaleProvider>
       <TamaguiProvider config={config} defaultTheme="light">
-        <GLTokenStyles />
+        <BPTokenStyles />
         <QueryClientProvider client={query}>
           <Context.Provider value={data}>
             <InvalidationContext.Provider

@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { ApplicationError, uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid } from '@business-platform/contracts';
 import type {
   DeleteCommand,
   DeletionEvent,
   DeletionOperation,
   DirectMediaDeletionRequest,
   Uuid,
-} from '@golden-lift/contracts';
-import { retryTransaction } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { retryTransaction } from '@business-platform/platform';
 import type { MediaDeletionStore } from '../../application/ports/deletion.js';
 import type { DirectMediaDeletionStore } from '../../application/use-cases/delete-media.js';
 import type { PrismaClient, Database } from './client.js';

@@ -136,6 +136,20 @@ export const layout = {
   mobile: { columns: 4, gutter: 16, padding: 16 },
   breakpoints: { tablet: 768, desktop: 1100 },
 } as const;
+export const controls = {
+  heightSM: 32,
+  heightMD: 40,
+  heightLG: 44,
+  iconSM: 16,
+  iconMD: 18,
+  iconLG: 20,
+  iconTarget: 40,
+  tableHeader: 44,
+  tableRow: 52,
+  sidebarWidth: 240,
+  commandBar: 68,
+  commandBarMobile: 112,
+} as const;
 export const typography = {
   displayXL: { size: 72, line: 1.08, weight: 600 },
   displayLG: { size: 56, line: 1.12, weight: 600 },

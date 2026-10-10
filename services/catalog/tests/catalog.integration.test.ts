@@ -6,8 +6,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { after, before, test } from 'node:test';
 import pg from 'pg';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import { databasePool, httpConfig } from '@golden-lift/platform';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import { databasePool, httpConfig } from '@business-platform/platform';
 import { CreateCategory } from '../src/application/use-cases/create-category.js';
 import { EditCategory } from '../src/application/use-cases/edit-category.js';
 import { PrismaCatalogUnitOfWork } from '../src/infrastructure/prisma/unit-of-work.js';
@@ -38,8 +38,8 @@ const original = tools.config(),
   scratch = structuredClone(original),
   service = scratch.services['catalog'];
 if (!service) throw new Error('Missing Catalog config.');
-const database = 'golden_lift_b12_test_' + randomUUID().replaceAll('-', '');
-if (!/^golden_lift_b12_test_[0-9a-f]{32}$/.test(database))
+const database = 'business_platform_b12_test_' + randomUUID().replaceAll('-', '');
+if (!/^business_platform_b12_test_[0-9a-f]{32}$/.test(database))
   throw new Error('Unsafe test database identifier.');
 service.database = database;
 const connectionString =

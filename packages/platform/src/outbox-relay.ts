@@ -1,6 +1,6 @@
 import { setTimeout as pause } from 'node:timers/promises';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import { RabbitMediaTransport } from './rabbitmq.js';
 import { createServer } from 'node:http';
 export interface RelayEvent {

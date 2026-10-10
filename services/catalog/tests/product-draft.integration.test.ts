@@ -2,14 +2,14 @@
 import { randomUUID } from 'node:crypto';
 import { before, after, test } from 'node:test';
 import pg from 'pg';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   ProductDto,
   CategorySchemaResponse,
   Uuid,
-} from '@golden-lift/contracts';
-import { httpConfig } from '@golden-lift/platform';
+} from '@business-platform/contracts';
+import { httpConfig } from '@business-platform/platform';
 import { databaseFixture } from '../../../packages/platform/tests/support/database-fixture.js';
 import { catalogApplication } from '../src/composition/application.js';
 import { gatewayApplication } from '../../gateway/src/composition/application.js';

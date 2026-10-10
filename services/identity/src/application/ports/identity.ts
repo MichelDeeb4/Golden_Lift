@@ -5,7 +5,7 @@ import type {
   StaffSessionDto,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { StaffAccount } from '../../domain/staff.js';
 export type TokenPurpose = 'INVITATION' | 'PASSWORD_RESET';
 export type DeliveryStatus = 'SENT' | 'FAILED';

@@ -1,4 +1,4 @@
-import type { Uuid } from '@golden-lift/contracts';
+import type { Uuid } from '@business-platform/contracts';
 import type {
   AttributeDefinitionRepository,
   DefinitionDraft,

@@ -5,7 +5,7 @@ import type {
   MediaEvent,
   MediaContext,
   MediaAction,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { UploadInput, MediaPolicy } from '../../domain/media-policy.js';
 export type { MediaPolicy } from '../../domain/media-policy.js';
 import type { StoredObject } from './storage.js';

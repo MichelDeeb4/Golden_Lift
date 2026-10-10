@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { DeletionImpact, Uuid } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { DeletionImpact, Uuid } from '@business-platform/contracts';
 import { databaseFixture } from '../../../packages/platform/tests/support/database-fixture.js';
 import { orm } from '../src/infrastructure/prisma/client.js';
 import type { PrismaClient } from '../src/infrastructure/prisma/client.js';

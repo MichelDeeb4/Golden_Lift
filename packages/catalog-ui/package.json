@@ -1,5 +1,5 @@
 {
-  "name": "@golden-lift/catalog-ui",
+  "name": "@business-platform/catalog-ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,10 +7,10 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
-    "@golden-lift/ui": "0.1.0",
-    "@golden-lift/api": "0.1.0",
-    "@golden-lift/i18n": "0.1.0",
-    "@golden-lift/icons": "0.1.0"
+    "@business-platform/ui": "0.1.0",
+    "@business-platform/api": "0.1.0",
+    "@business-platform/i18n": "0.1.0",
+    "@business-platform/icons": "0.1.0"
   },
   "peerDependencies": {
     "react": "19.2.3"

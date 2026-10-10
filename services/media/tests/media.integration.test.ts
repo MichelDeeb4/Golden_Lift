@@ -4,8 +4,8 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { MediaEvent } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { MediaEvent } from '@business-platform/contracts';
 import { databaseFixture } from '../../../packages/platform/tests/support/database-fixture.js';
 import { orm } from '../src/infrastructure/prisma/client.js';
 import { orm as catalogOrm } from '../../catalog/src/infrastructure/prisma/client.js';
@@ -18,7 +18,7 @@ import { AuthorizeDelivery } from '../src/application/use-cases/delivery.js';
 import { mediaConfig } from '../src/infrastructure/config.js';
 import { mediaClock, mediaIds } from '../src/composition/dependencies.js';
 import { mediaApplication } from '../src/composition/application.js';
-import { httpConfig } from '@golden-lift/platform';
+import { httpConfig } from '@business-platform/platform';
 let fixture: Awaited<ReturnType<typeof databaseFixture>>,
   catalogFixture: Awaited<ReturnType<typeof databaseFixture>>,
   db: ReturnType<typeof orm>,
@@ -329,14 +329,14 @@ test('real HTTP transport authenticates staff, denies Super Admin and rejects up
     settings.origin = base;
     assert.equal((await fetch(base + '/api/v1/admin/media/assets')).status, 401);
     assert.equal(
-      (await fetch(base + '/api/v1/admin/media/assets', { headers: { cookie: 'gl_staff=super' } }))
+      (await fetch(base + '/api/v1/admin/media/assets', { headers: { cookie: 'bp_staff=super' } }))
         .status,
       403,
     );
     assert.equal(
       (
         await fetch(base + '/api/v1/admin/media/capabilities', {
-          headers: { cookie: 'gl_staff=admin' },
+          headers: { cookie: 'bp_staff=admin' },
         })
       ).status,
       200,
@@ -346,7 +346,7 @@ test('real HTTP transport authenticates staff, denies Super Admin and rejects up
         await fetch(base + '/api/v1/admin/media/uploads', {
           method: 'POST',
           headers: {
-            cookie: 'gl_staff=admin',
+            cookie: 'bp_staff=admin',
             'content-type': 'application/json',
             origin: 'http://127.0.0.1:8082',
           },
@@ -356,7 +356,7 @@ test('real HTTP transport authenticates staff, denies Super Admin and rejects up
       503,
     );
     const content = base + `/api/v1/admin/media/assets/${row.assetId}/variants/thumbnail/content`,
-      headers = { cookie: 'gl_staff=admin' };
+      headers = { cookie: 'bp_staff=admin' };
     assert.equal((await fetch(content)).status, 401);
     const ranged = await fetch(content, { headers: { ...headers, range: 'bytes=0-3' } });
     assert.equal(ranged.status, 206);

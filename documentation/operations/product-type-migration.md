@@ -7,10 +7,10 @@ For an existing pre-cutover database, stop writers, make an owning-database back
 After category authority is active and the category-only application is ready, retire the physical binding:
 
 ```powershell
-npm run db:category -- retire-binding --confirm-database golden_lift_catalog --output .local/retirement-evidence.json
+npm run db:category -- retire-binding --confirm-database business_platform_catalog --output .local/retirement-evidence.json
 ```
 
-Use the actual database name from the selected private configuration. `GL_DATABASE_CONFIG_FILE` selects a disposable/rehearsal profile. The command requires the exact database name and a workspace `.local` evidence destination. It uses the Catalog owning role, a serializable transaction and the owning write gate. It validates category integrity, archives bindings including soft-deleted products, applies SQL 26, and compares exact product/value/Media/relationship hashes plus binding/archive parity before commit. Failure rolls back all DDL and data. No cross-service database is touched.
+Use the actual database name from the selected private configuration. `BUSINESS_PLATFORM_DATABASE_CONFIG_FILE` selects a disposable/rehearsal profile. The command requires the exact database name and a workspace `.local` evidence destination. It uses the Catalog owning role, a serializable transaction and the owning write gate. It validates category integrity, archives bindings including soft-deleted products, applies SQL 26, and compares exact product/value/Media/relationship hashes plus binding/archive parity before commit. Failure rolls back all DDL and data. No cross-service database is touched.
 
 SQL 26 drops `products.product_type_id` with RESTRICT. It retains immutable owner-only legacy tables and `retired_product_bindings`; runtime grants exclude them. The dependent `live_products` view retains an always-NULL compatibility column, with no persistence dependency or application use. Prisma models, service contracts, schema resolution, Gateway routes and OpenAPI have no Product Type workflow. Historical SQL and migration tests intentionally retain legacy fixtures to prove conversion and retention.
 

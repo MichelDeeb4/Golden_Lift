@@ -6,7 +6,7 @@ import type {
   Locale,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { CategoryCursor } from './category-query.js';
 export interface Sibling {
   readonly id: Uuid;

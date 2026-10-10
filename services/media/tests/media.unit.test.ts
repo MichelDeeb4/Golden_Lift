@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, symlink, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 sharp.cache(false);
-import { ApplicationError, mediaEvent, uuid } from '@golden-lift/contracts';
+import { ApplicationError, mediaEvent, uuid } from '@business-platform/contracts';
 import { validateUpload, singleRange } from '../src/domain/media-policy.js';
 import { mediaConfig } from '../src/infrastructure/config.js';
 import { FilesystemStorage } from '../src/infrastructure/storage/filesystem.js';

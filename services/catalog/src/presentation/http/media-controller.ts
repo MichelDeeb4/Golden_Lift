@@ -1,8 +1,8 @@
 import type { IncomingMessage } from 'node:http';
 import { Body, Controller, Get, Inject, Param, Post, Query, Req } from '@nestjs/common';
-import { ApplicationError, record, uuid, version } from '@golden-lift/contracts';
-import type { MediaKind, MediaContext, MediaAction } from '@golden-lift/contracts';
-import { requireInternalToken } from '@golden-lift/platform';
+import { ApplicationError, record, uuid, version } from '@business-platform/contracts';
+import type { MediaKind, MediaContext, MediaAction } from '@business-platform/contracts';
+import { requireInternalToken } from '@business-platform/platform';
 import type { MediaCoordination } from '../../application/use-cases/media-coordination.js';
 export const MEDIA_REGISTRY = Symbol('MediaRegistry'),
   MEDIA_INTERNAL_TOKEN = Symbol('MediaInternalToken');

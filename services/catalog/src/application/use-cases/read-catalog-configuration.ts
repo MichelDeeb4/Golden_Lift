@@ -1,5 +1,5 @@
-import type { AuthenticatedActor, Locale, Uuid } from '@golden-lift/contracts';
-import { ApplicationError } from '@golden-lift/contracts';
+import type { AuthenticatedActor, Locale, Uuid } from '@business-platform/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { categoryFormSchema, translated } from '../../domain/effective-schema.js';
 import type { CatalogUnitOfWork } from '../ports/catalog.js';

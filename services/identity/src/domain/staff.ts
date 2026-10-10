@@ -1,4 +1,4 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   Role,
@@ -6,7 +6,7 @@ import type {
   StaffStatus,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 export interface StaffAccount {
   readonly id: Uuid;
   readonly email: string;
@@ -17,6 +17,7 @@ export interface StaffAccount {
   readonly authVersion: Version;
   readonly version: Version;
   readonly createdAt: string;
+  readonly updatedAt: string;
 }
 export function accountDto(account: StaffAccount): StaffAccountDto {
   return {
@@ -27,6 +28,7 @@ export function accountDto(account: StaffAccount): StaffAccountDto {
     status: account.status,
     version: account.version,
     createdAt: account.createdAt,
+    updatedAt: account.updatedAt,
   };
 }
 export function emailAddress(value: unknown): string {

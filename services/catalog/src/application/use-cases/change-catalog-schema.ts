@@ -1,10 +1,10 @@
-import { ApplicationError, version } from '@golden-lift/contracts';
+import { ApplicationError, version } from '@business-platform/contracts';
 import type {
   AttributeDefinitionDto,
   AuthenticatedActor,
   SchemaChangeImpact,
   Uuid,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import { exactQuantity, validateValues } from '../../domain/attribute-values.js';
 import type {

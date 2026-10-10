@@ -1,11 +1,11 @@
-import { ApplicationError } from '@golden-lift/contracts';
+import { ApplicationError } from '@business-platform/contracts';
 import type {
   AuthenticatedActor,
   ReorderCategoriesInput,
   CategoryOrderResult,
   Uuid,
   Version,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import { requireContentAdmin } from '../../domain/category.js';
 import {
   maximumReorderSize,

@@ -1,4 +1,4 @@
-import { locales, uuid, version } from '@golden-lift/contracts';
+import { locales, uuid, version } from '@business-platform/contracts';
 import type {
   AttributeDefinitionDto,
   AttributeGroupDto,
@@ -6,7 +6,7 @@ import type {
   CatalogTranslation,
   Locale,
   UnitDto,
-} from '@golden-lift/contracts';
+} from '@business-platform/contracts';
 import type { Prisma } from './generated/client.js';
 export const translationsWhere = { deleted_at: null } as const;
 export const optionInclude = {

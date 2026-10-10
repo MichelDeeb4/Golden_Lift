@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { fieldSchema, attributeValueSchema } from '@golden-lift/api';
+import type { fieldSchema, attributeValueSchema } from '@business-platform/api';
 type AttributeField = z.infer<typeof fieldSchema>;
 type AttributeValue = z.infer<typeof attributeValueSchema>;
 function quantity(value: string) {

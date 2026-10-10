@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import type { IdentitySecurityConfig } from '@golden-lift/platform';
+import type { IdentitySecurityConfig } from '@business-platform/platform';
 export class ServiceCredentials {
   constructor(private readonly config: IdentitySecurityConfig) {}
   verify(caller: unknown, authorization: unknown): boolean {

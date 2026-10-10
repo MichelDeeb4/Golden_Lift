@@ -1,4 +1,4 @@
-import type { CatalogTranslation } from '@golden-lift/contracts';
+import type { CatalogTranslation } from '@business-platform/contracts';
 import type { UnitDraft, UnitRepository } from '../../application/ports/product-schema.js';
 import type { Database } from './client.js';
 import { unitDto, unitInclude } from './configuration-mapping.js';

@@ -1,5 +1,5 @@
-import { ApplicationError, uuid, version } from '@golden-lift/contracts';
-import type { CategoryDto, Locale, Uuid, Version } from '@golden-lift/contracts';
+import { ApplicationError, uuid, version } from '@business-platform/contracts';
+import type { CategoryDto, Locale, Uuid, Version } from '@business-platform/contracts';
 import type { CategoryList, CategoryRepository } from '../../application/ports/catalog.js';
 import type { Translation } from '../../domain/category.js';
 import type { Database } from './client.js';

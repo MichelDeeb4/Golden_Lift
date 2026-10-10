@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:golden-lift:catalog-configuration-event:v1",
+  "$id": "urn:business-platform:catalog-configuration-event:v1",
   "allOf": [
     {
-      "$ref": "urn:golden-lift:event-envelope:v1"
+      "$ref": "urn:business-platform:event-envelope:v1"
     },
     {
       "type": "object",

@@ -1,0 +1,148 @@
+{
+  "checkedAt": "2026-10-10T08:13:50.170Z",
+  "scope": "Public Catalog filtering and visitor presentation",
+  "result": "PASS",
+  "rootCauses": [
+    "Exact Category equality and exact filter-policy scope excluded descendant leaf Products.",
+    "CHOICE did not represent multiple options with OR semantics.",
+    "Missing totals and four-item paging conflicted with twelve-item collection requests.",
+    "Fixed editorial spans, mobile image heights and generic detail grids conflicted with controlled responsive card proportions.",
+    "Filter display order followed generated UUIDs instead of localized labels."
+  ],
+  "dataSafety": {
+    "schemaMigration": false,
+    "businessDataMigration": false,
+    "normalProfile": "Read-only ORM parity verification.",
+    "mutationFixtures": "Disposable PostgreSQL service databases, real owned Media files and staff sessions; teardown completed."
+  },
+  "verification": {
+    "serviceBuild": {
+      "result": "PASS",
+      "command": "node scripts/build.mjs"
+    },
+    "backendTypes": {
+      "result": "PASS",
+      "command": "node node_modules/typescript/bin/tsc -p tsconfig.check.json --noEmit"
+    },
+    "frontendTypes": {
+      "result": "PASS",
+      "command": "node node_modules/typescript/bin/tsc -p apps/storefront/tsconfig.json --noEmit"
+    },
+    "format": {
+      "result": "PASS",
+      "command": "Prettier --check across established source/config patterns"
+    },
+    "architecture": {
+      "result": "PASS",
+      "sourceFiles": 245,
+      "enforcementProbes": 14
+    },
+    "prismaValidation": {
+      "result": "PASS",
+      "services": ["identity", "catalog", "media", "inquiries"]
+    },
+    "installedPrismaSqlParity": {
+      "result": "PASS",
+      "models": 71,
+      "columns": 714,
+      "foreignKeys": 76,
+      "constraintsIndexesTriggers": true
+    },
+    "backendUnit": {
+      "result": "PASS",
+      "tests": 41
+    },
+    "frontendUnit": {
+      "result": "PASS",
+      "tests": 10,
+      "command": "node node_modules/tsx/dist/cli.mjs --test tests/frontend.unit.test.ts"
+    },
+    "catalogPostgreSqlAndHttp": {
+      "result": "PASS",
+      "tests": 67
+    },
+    "finalDynamicCatalogPostgreSql": {
+      "result": "PASS",
+      "tests": 15,
+      "command": "node --test .local/test-build/services/catalog/tests/dynamic-catalog.integration.test.js",
+      "includesGlobalGoldFixture": true
+    },
+    "realApiBrowser": {
+      "result": "PASS",
+      "command": "node node_modules/@playwright/test/cli.js test --config tests/frontend.public-catalog.config.ts",
+      "stats": {
+        "startTime": "2026-10-10T08:12:06.397Z",
+        "duration": 51023.241,
+        "expected": 3,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "retainedPublicBrowser": {
+      "result": "PASS",
+      "command": "node node_modules/@playwright/test/cli.js test --config tests/frontend.playwright.config.ts",
+      "stats": {
+        "startTime": "2026-10-10T08:10:45.195Z",
+        "duration": 29505.98,
+        "expected": 5,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "normalApiWebExport": {
+      "result": "PASS",
+      "command": "Expo export --platform web --clear",
+      "mode": "api",
+      "fixtureOriginsRemoved": true
+    }
+  },
+  "filterAcceptance": {
+    "rootA": ["P1", "P2", "P3"],
+    "leafA1": ["P1", "P2"],
+    "globalGold": ["P1", "P3"],
+    "rootGold": ["P1", "P3"],
+    "rootWidthMinimum1500": ["P3"],
+    "leafA1GoldWidthMinimum1200": [],
+    "choice": "Stable option IDs, OR inside an Attribute and AND across Attributes.",
+    "typedValues": "Exact decimal strings/numeric SQL, boolean false, intentionally public/filterable TEXT.",
+    "state": "Shared normalized URL/API/TanStack state; refresh/back/forward; changes reset page; paging preserves filters.",
+    "realIntegration": "Staff publication, Attribute update and reviewed Category move change anonymous visitor results.",
+    "errors": "Injected dependency failure renders retryable API error without demo/zero-result fallback."
+  },
+  "presentation": {
+    "viewports": [1440, 1280, 1024, 768, 390, 360],
+    "locales": ["en", "ar", "ckb"],
+    "category": "Clear H1, breadcrumbs, description, contextual split hero and child/Products continuation.",
+    "home": "Six Category fixtures, three/two/one columns, shared four-selected-Product grid.",
+    "cards": "Stable full-width 4:3 media frames, bounded card variants and two useful public specifications.",
+    "listing": "Hierarchical Category controls, dynamic filters, active chips, count, rail/drawer and server pagination.",
+    "detail": "Unified gallery, deduplicated localized Group specifications, full-width mobile documents and shared related Product grid.",
+    "accessibility": "One H1 on tested content routes, labeled controls/live result status; keyboard select, modal focus trap/Escape/restore, gallery/tabs and reduced-motion coverage; existing focus/contrast/font tokens retained.",
+    "visualRegression": {
+      "result": "PASS",
+      "reviewed": true,
+      "baselineUpdateDuringFinalReplays": false,
+      "baselines": 14,
+      "paths": [
+        "tests/frontend.public-catalog.test.ts-snapshots",
+        "tests/frontend.browser.test.ts-snapshots"
+      ]
+    }
+  },
+  "performance": {
+    "serverFiltering": true,
+    "frontendDescendantResolution": false,
+    "perOptionHttpRequests": false,
+    "cardMediaProfile": "card; demo image references preserve their explicit fixture URL.",
+    "lazyCardImages": true,
+    "stableMediaFrames": true,
+    "remaining": "Existing bounded per-Product effective schema/projection queries; production load not benchmarked."
+  },
+  "knownLimitations": [
+    "No production provider, hosted CI or deployment acceptance claimed.",
+    "No production throughput or formal accessibility audit claimed.",
+    "Strict legacy category and singleton optionId aliases remain intentionally supported by the same endpoint."
+  ]
+}
