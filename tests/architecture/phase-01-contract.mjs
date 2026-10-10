@@ -168,3 +168,20 @@ export function validateReceipts(matrix, receipts, release, root = process.cwd()
     }
   return errors;
 }
+
+export function phaseOrderErrors(phases) {
+  const errors = [];
+  if (phases.length !== 12 || new Set(phases.map((p) => p.phase)).size !== 12)
+    errors.push('Twelve unique phases required');
+  for (let i = 0; i < phases.length; i++) {
+    const p = phases[i];
+    if (
+      p.phase !== i + 1 ||
+      !['PASS', 'IN PROGRESS', 'BLOCKED', 'FAIL', 'NOT STARTED'].includes(p.status)
+    )
+      errors.push('Invalid phase state');
+    if (i > 0 && p.status !== 'NOT STARTED' && phases[i - 1].status !== 'PASS')
+      errors.push('Predecessor gate unpassed: ' + p.phase);
+  }
+  return errors;
+}

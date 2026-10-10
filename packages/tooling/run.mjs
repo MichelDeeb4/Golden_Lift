@@ -4,6 +4,7 @@ export const buildOrder = [
   'packages/shared-kernel',
   'packages/contracts',
   'packages/ui',
+  'infrastructure/database',
   'infrastructure/security',
   'infrastructure/observability',
   'infrastructure/deployment',
@@ -15,6 +16,7 @@ const web = ['apps/erp-web', 'apps/platform-admin'];
 export const formatFiles = [
   'package.json',
   'package-lock.json',
+  'prisma.config.ts',
   'tsconfig.target.json',
   'packages/*/tsconfig.target.json',
   'packages/shared-kernel/**/*.{ts,json}',
@@ -24,7 +26,10 @@ export const formatFiles = [
   'packages/ui/src/foundation.{tsx,css}',
   'packages/tooling/*.{mjs,json}',
   'infrastructure/{security,observability,deployment}/**/*.{ts,mjs,json,yml}',
-  'infrastructure/database/*.{mjs,md}',
+  'infrastructure/database/**/*.{ts,mjs,md,json}',
+  '!infrastructure/database/.generated/**',
+  'docs/implementation/phases/phase-03*.{md,json}',
+  'docs/specifications/phase-03*.{md,json}',
   'docs/operations/phase-02-development.md',
   'docs/specifications/openapi/*.json',
   'apps/{erp-api,platform-api,worker}/**/*.{ts,json}',
@@ -46,6 +51,12 @@ const node = (args, cwd = process.cwd()) =>
   });
 const action = process.argv[2];
 if (action === 'build' || action === 'typecheck') {
+  node([
+    'node_modules/prisma/build/index.js',
+    'generate',
+    '--schema',
+    'infrastructure/database/prisma/schema.prisma',
+  ]);
   for (const dir of buildOrder)
     node([
       'node_modules/typescript/bin/tsc',

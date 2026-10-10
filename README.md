@@ -1,8 +1,8 @@
 # Business Platform
 
-Active engineering implementation: five target applications under apps/erp-api, apps/platform-api, apps/worker, apps/erp-web and apps/platform-admin. The ERP core will be a modular monolith with a separately deployable SaaS control plane. Hybrid pooled/dedicated tenant storage and multi-company authorization remain mandatory and are not yet implemented.
+Active engineering implementation: five target applications under apps/erp-api, apps/platform-api, apps/worker, apps/erp-web and apps/platform-admin. The ERP core will be a modular monolith with a separately deployable SaaS control plane. The Phase 03 hybrid PostgreSQL storage foundation now has real local implementation/proofs; trusted tenant routing, OIDC and multi-company authorization remain later, unaccepted foundation work.
 
-[Plan](plan.md) and accepted ADRs 030–035 govern the target. Phase 01 is owner approved; [Phase 02 evidence](docs/implementation/phases/phase-02.md) records the current gate.
+[Plan](plan.md) and accepted ADRs 030–035 govern the target. Phase 01 is owner approved; [Phase 02 evidence](docs/implementation/phases/phase-02.md) records its verified hosted PASS; [implementation status](docs/implementation/STATUS.md) and [Phase 03 evidence](docs/implementation/phases/phase-03.md) track the current gate.
 
 Run npm ci --ignore-scripts --no-audit --no-fund, npm run build and npm start. See [local operation and validation](docs/operations/phase-02-development.md). Root workspaces and CI use the target graph. Legacy services and storefront are preserved as reference outside target builds; old commands below apply only to that historical implementation.
 

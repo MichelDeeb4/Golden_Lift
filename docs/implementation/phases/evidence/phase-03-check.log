@@ -1,0 +1,184 @@
+
+> business-platform@0.2.0 check
+> npm run build && npm run typecheck && npm run lint && npm test && npm run test:integration && npm run test:browser
+
+
+> business-platform@0.2.0 build
+> node packages/tooling/run.mjs build
+
+
+✔ Generated Prisma Client (v7.10.0) to .\infrastructure\database\.generated\client in 266ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.4.0 (webpack)
+✓ Running next.config.mjs took 17ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1843ms
+  Running TypeScript ...
+  Finished TypeScript in 1181ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 696ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /api/health
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+▲ Next.js 16.4.0 (webpack)
+✓ Running next.config.mjs took 27ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1403ms
+  Running TypeScript ...
+  Finished TypeScript in 1195ms ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (0/4) ...
+  Generating static pages using 5 workers (1/4) 
+  Generating static pages using 5 workers (2/4) 
+  Generating static pages using 5 workers (3/4) 
+✓ Generating static pages using 5 workers (4/4) in 699ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /api/health
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> business-platform@0.2.0 typecheck
+> node packages/tooling/run.mjs typecheck
+
+
+✔ Generated Prisma Client (v7.10.0) to .\infrastructure\database\.generated\client in 67ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+> business-platform@0.2.0 lint
+> node packages/tooling/run.mjs lint
+
+Checking formatting...
+All matched files use Prettier code style!
+Target architecture boundaries PASS: 24 authored files; legacy workspaces excluded.
+
+> business-platform@0.2.0 test
+> node --test tests/architecture/target-boundaries.test.mjs tests/architecture/phase-01-specification.test.mjs tests/engineering/*.test.mjs
+
+✔ All plan phases have traceable scenarios in pooled and dedicated modes (3.0383ms)
+✔ Removing dedicated coverage cannot pass (0.6495ms)
+✔ Omitted tenant isolation requirement cannot pass (0.3613ms)
+✔ Invalid company multiplicity and orphaned tests cannot pass (0.3904ms)
+✔ Owner approval closes Phase 01 while a missing approval still blocks (0.612ms)
+✔ A forged approval cannot waive open decisions or dependent numeric thresholds (0.2753ms)
+✔ Capacity formula includes workers, control, operations and headroom (0.3001ms)
+✔ Empty/mock/old evidence cannot certify target runtime (0.385ms)
+✔ Required documents and referenced requirement files exist (1.6964ms)
+✔ Owner-approved bounded deferrals admit Phase 02 but block their dependent phases (0.2662ms)
+✔ Actual target dependency graph excludes legacy implementations (54.7595ms)
+✔ Reject domain framework (0.2793ms)
+✔ Reject application ORM (0.1899ms)
+✔ Reject inline private import (0.4537ms)
+✔ Reject domain reversed layer (0.2157ms)
+✔ Reject cross-owner relative (0.1769ms)
+✔ Reject re-export escape (0.1751ms)
+✔ Reject legacy alias (0.1642ms)
+✔ Reject dynamic import (0.2241ms)
+✔ Reject require escape (0.2074ms)
+✔ Reject explicit any (0.1382ms)
+✔ Reject cycle (0.1459ms)
+✔ Alias resolution cannot hide an infrastructure dependency (0.1942ms)
+✔ Domain may use its own domain value (0.1781ms)
+✔ A dependency named contracts does not exempt a framework from domain rules (0.1321ms)
+✔ Environment rejects malformed ports, hosts and secret-bearing telemetry URLs (1.8646ms)
+✔ Identifiers validate independently without equating tenants and companies (1.3032ms)
+✔ Migration lineage detects edited history, future state and invalid sequences (7.2434ms)
+✔ Phase exit rejects unexecuted claims, missing criteria and tampered logs (29.1494ms)
+✔ Phase 03 rejects missing owner deadlines, fake/missing receipts and wrong CI commit (22.5366ms)
+✔ Patched Prisma config merger preserves the actual PostgreSQL generator configuration (43.4833ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 498.9861
+
+> business-platform@0.2.0 test:integration
+> node --test --test-concurrency=1 tests/end-to-end/foundation-http.test.mjs tests/end-to-end/launcher.test.mjs
+
+{"timestamp":"2026-10-10T16:48:11.220Z","service":"erp-api","event":"http.completed","correlationId":"30511618-1ce6-4051-958e-7901eafbe383","status":200}
+{"timestamp":"2026-10-10T16:48:11.226Z","service":"erp-api","event":"http.completed","correlationId":"ab8311f5-6068-4aab-a75d-b7324e9e84dc","status":200}
+{"timestamp":"2026-10-10T16:48:11.231Z","service":"erp-api","event":"http.completed","correlationId":"b1b4c79c-b835-4fbe-b8f9-85db5072ad48","status":400}
+{"timestamp":"2026-10-10T16:48:11.233Z","service":"erp-api","event":"http.completed","correlationId":"b38a3cd8-7336-40da-b2e1-40ac8fb0407f","status":404}
+{"timestamp":"2026-10-10T16:48:11.234Z","service":"erp-api","event":"http.completed","correlationId":"11111111-1111-4111-8111-111111111111","status":200}
+{"timestamp":"2026-10-10T16:48:11.236Z","service":"erp-api","event":"http.completed","correlationId":"1d5d02ee-1174-40f5-a805-ddac04ffebf2","status":200}
+✔ erp-api real HTTP validation, readiness and OpenAPI (2005.6676ms)
+{"timestamp":"2026-10-10T16:48:11.249Z","service":"platform-api","event":"http.completed","correlationId":"b013df13-40e0-4ad0-85ad-28abf3b6df53","status":200}
+{"timestamp":"2026-10-10T16:48:11.251Z","service":"platform-api","event":"http.completed","correlationId":"48fe0baa-fdc9-48da-b5c7-d271156060b6","status":200}
+{"timestamp":"2026-10-10T16:48:11.252Z","service":"platform-api","event":"http.completed","correlationId":"061bdff5-1410-4393-99f5-3798657e89ac","status":400}
+{"timestamp":"2026-10-10T16:48:11.253Z","service":"platform-api","event":"http.completed","correlationId":"bc7d7d52-17eb-4141-933c-1aa0e77c7ec5","status":404}
+{"timestamp":"2026-10-10T16:48:11.255Z","service":"platform-api","event":"http.completed","correlationId":"11111111-1111-4111-8111-111111111111","status":200}
+{"timestamp":"2026-10-10T16:48:11.255Z","service":"platform-api","event":"http.completed","correlationId":"d3521de0-5170-4fab-bd46-b9d32e38296d","status":200}
+✔ platform-api real HTTP validation, readiness and OpenAPI (17.9009ms)
+{"timestamp":"2026-10-10T16:48:11.264Z","service":"worker","event":"http.completed","correlationId":"e58bf60e-ce89-4da3-b5c9-74662255a020","status":200}
+{"timestamp":"2026-10-10T16:48:11.265Z","service":"worker","event":"http.completed","correlationId":"e378cc78-23d4-4078-b66e-6cf677d0b92d","status":200}
+{"timestamp":"2026-10-10T16:48:11.266Z","service":"worker","event":"http.completed","correlationId":"8b8ebd54-64aa-40d6-b7ab-5ae7c7fd3955","status":400}
+{"timestamp":"2026-10-10T16:48:11.267Z","service":"worker","event":"http.completed","correlationId":"a3efa3c7-fa2c-4aa7-98d4-a94b7a173604","status":404}
+{"timestamp":"2026-10-10T16:48:11.267Z","service":"worker","event":"http.completed","correlationId":"11111111-1111-4111-8111-111111111111","status":200}
+{"timestamp":"2026-10-10T16:48:11.268Z","service":"worker","event":"http.completed","correlationId":"3e55d3fd-35eb-43b1-98b3-3a35199f4ebb","status":200}
+✔ worker real HTTP validation, readiness and OpenAPI (12.8666ms)
+{"timestamp":"2026-10-10T16:48:11.316Z","service":"erp-api","event":"http.completed","correlationId":"6bbfec2f-fef0-4ae0-912e-633e20a89b09","status":200}
+✔ OpenTelemetry exports real HTTP request spans to a running collector (63.4459ms)
+✔ Every compiled target process starts independently and rejects invalid config (5862.8038ms)
+✔ Engineering launcher starts and stops all five actual processes (5084.4467ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24314.7959
+
+> business-platform@0.2.0 test:browser
+> playwright test --config tests/end-to-end/playwright.config.mjs
+
+
+Running 2 tests using 1 worker
+
+  ok 1 tests\end-to-end\foundation.browser.spec.mjs:6:3 › ERP workspace actual browser shell, form, RTL, navigation and not-found (622ms)
+  ok 2 tests\end-to-end\foundation.browser.spec.mjs:6:3 › Platform administration actual browser shell, form, RTL, navigation and not-found (484ms)
+
+  2 passed (3.2s)
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from infrastructure\database\prisma\schema.prisma.
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from infrastructure\database\prisma\schema.prisma.
+[WebServer] (node:12960) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:10880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+(node:19808) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

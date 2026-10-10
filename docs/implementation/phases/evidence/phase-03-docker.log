@@ -1,0 +1,268 @@
+
+> business-platform@0.2.0 test:docker
+> node packages/tooling/docker-check.mjs
+
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.71kB done
+#1 DONE 0.0s
+
+#2 [platform-api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 345B done
+#2 DONE 0.0s
+
+#3 [worker internal] load metadata for docker.io/library/node:24.21.0-bookworm-slim
+#3 ...
+
+#4 [auth] library/node:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [worker internal] load metadata for docker.io/library/node:24.21.0-bookworm-slim
+#3 DONE 3.9s
+
+#5 [erp-api internal] load .dockerignore
+#5 transferring context: 233B done
+#5 DONE 0.0s
+
+#6 [worker 1/4] FROM docker.io/library/node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+#6 resolve docker.io/library/node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 0.0s done
+#6 DONE 0.0s
+
+#7 [worker internal] load build context
+#7 transferring context: 518.67kB 0.1s done
+#7 transferring context: 518.67kB 0.1s done
+#7 DONE 0.1s
+
+#8 [erp-web 2/4] WORKDIR /workspace
+#8 CACHED
+
+#9 [erp-web 3/4] COPY . .
+#9 DONE 0.9s
+
+#10 [platform-api 4/4] RUN npm ci --ignore-scripts --no-audit --no-fund && npm run build
+#10 151.6 
+#10 151.6 added 377 packages in 3m
+#10 151.6 npm notice
+#10 151.6 npm notice New major version of npm available! 11.19.0 -> 12.2.0
+#10 151.6 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#10 151.6 npm notice To update run: npm install -g npm@12.2.0
+#10 151.6 npm notice
+#10 151.7 
+#10 151.7 > business-platform@0.2.0 build
+#10 151.7 > node packages/tooling/run.mjs build
+#10 151.7 
+#10 152.3 Loaded Prisma config from prisma.config.ts.
+#10 152.3 
+#10 152.4 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#10 152.4 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#10 152.4 prisma:warn Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to "openssl-1.1.x".
+#10 152.4 Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.
+#10 161.7 Prisma schema loaded from infrastructure/database/prisma/schema.prisma.
+#10 161.8 
+#10 161.8 ✔ Generated Prisma Client (v7.10.0) to ./infrastructure/database/.generated/client in 71ms
+#10 161.8 
+#10 161.8 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#10 161.8 
+#10 161.8 
+#10 168.6 ▲ Next.js 16.4.0 (webpack)
+#10 168.7 ✓ Running next.config.mjs took 10ms
+#10 168.7 
+#10 168.7   Creating an optimized production build ...
+#10 173.8 ✓ Compiled successfully in 3.6s
+#10 173.8   Running TypeScript ...
+#10 174.8   Finished TypeScript in 1013ms ...
+#10 174.8   Collecting page data using 5 workers ...
+#10 175.3   Generating static pages using 5 workers (0/4) ...
+#10 175.7   Generating static pages using 5 workers (1/4) 
+#10 175.7   Generating static pages using 5 workers (2/4) 
+#10 175.7   Generating static pages using 5 workers (3/4) 
+#10 175.7 ✓ Generating static pages using 5 workers (4/4) in 432ms
+#10 175.9   Finalizing page optimization ...
+#10 175.9   Collecting build traces ...
+#10 189.5 
+#10 189.5 Route (app)
+#10 189.5 ┌ ○ /
+#10 189.5 ├ ○ /_not-found
+#10 189.5 └ ƒ /api/health
+#10 189.5 
+#10 189.5 
+#10 189.5 ○  (Static)   prerendered as static content
+#10 189.5 ƒ  (Dynamic)  server-rendered on demand
+#10 189.5 
+#10 189.8 ▲ Next.js 16.4.0 (webpack)
+#10 189.8 ✓ Running next.config.mjs took 10ms
+#10 189.8 
+#10 189.8   Creating an optimized production build ...
+#10 194.6 ✓ Compiled successfully in 3.3s
+#10 194.6   Running TypeScript ...
+#10 195.6   Finished TypeScript in 977ms ...
+#10 195.6   Collecting page data using 5 workers ...
+#10 196.0   Generating static pages using 5 workers (0/4) ...
+#10 196.5   Generating static pages using 5 workers (1/4) 
+#10 196.5   Generating static pages using 5 workers (2/4) 
+#10 196.5   Generating static pages using 5 workers (3/4) 
+#10 196.5 ✓ Generating static pages using 5 workers (4/4) in 444ms
+#10 196.7   Finalizing page optimization ...
+#10 196.7   Collecting build traces ...
+#10 210.7 
+#10 210.7 Route (app)
+#10 210.7 ┌ ○ /
+#10 210.7 ├ ○ /_not-found
+#10 210.7 └ ƒ /api/health
+#10 210.7 
+#10 210.7 
+#10 210.7 ○  (Static)   prerendered as static content
+#10 210.7 ƒ  (Dynamic)  server-rendered on demand
+#10 210.7 
+#10 DONE 211.6s
+
+#11 [platform-admin] exporting to image
+#11 exporting layers
+#11 ...
+
+#12 [worker] exporting to image
+#12 ...
+
+#13 [erp-api] exporting to image
+#13 ...
+
+#14 [erp-web] exporting to image
+#14 ...
+
+#15 [platform-api] exporting to image
+#15 ...
+
+#12 [worker] exporting to image
+#12 exporting layers 34.3s done
+#12 exporting manifest sha256:f59fb773c13c0c17aa8d59192fd9c8b29442e35fc5a1e82e845b8b6bbe33c399 0.1s done
+#12 exporting config sha256:50264dcb703c4fc23d74bd9490344d5c4ffc1116ac1142d32980854f2ce327b8
+#12 exporting config sha256:50264dcb703c4fc23d74bd9490344d5c4ffc1116ac1142d32980854f2ce327b8 0.2s done
+#12 exporting attestation manifest sha256:60d06fed95f5a51a394bd71923359061d8b9402ee388627c9927618fa84628e6
+#12 exporting attestation manifest sha256:60d06fed95f5a51a394bd71923359061d8b9402ee388627c9927618fa84628e6 0.2s done
+#12 exporting manifest list sha256:89fb74ded0627e843d446b4a1d478d9ecad525225b9c590e7d81115068669cd7
+#12 exporting manifest list sha256:89fb74ded0627e843d446b4a1d478d9ecad525225b9c590e7d81115068669cd7 0.1s done
+#12 naming to docker.io/library/business-platform-target-foundation-worker:latest 0.0s done
+#12 unpacking to docker.io/library/business-platform-target-foundation-worker:latest
+#12 ...
+
+#13 [erp-api] exporting to image
+#13 exporting layers 34.3s done
+#13 exporting manifest sha256:c241dd1e359c4f17815b755d2a4fa171dd0be6ab346fdfcd4a76937acc2338ae 0.2s done
+#13 exporting config sha256:2e725d238ee0f103df5d5acb41b10166494a7528059450ae5604805c218b04f3 0.2s done
+#13 exporting attestation manifest sha256:51e805f576f9b03569147a3ba4aa6a7ee2be417ef2ea80eaff7401dc31fc2b9b 0.2s done
+#13 exporting manifest list sha256:78483ed28c6ddf775a62d9ea1b0817409be70988eb9e4077aceae8dfe6e22491 0.1s done
+#13 naming to docker.io/library/business-platform-target-foundation-erp-api:latest 0.0s done
+#13 unpacking to docker.io/library/business-platform-target-foundation-erp-api:latest
+#13 ...
+
+#15 [platform-api] exporting to image
+#15 exporting layers 34.3s done
+#15 exporting manifest sha256:a97b70962b966ee9c7e9ddc0a3cead4b4a9e7f096399767b1875b3fff8fa8e84 0.1s done
+#15 exporting config sha256:2c8af16bfaa13897f5d1afba95483fa065660a809a673ad5065abacb0fe254c1 0.2s done
+#15 exporting attestation manifest sha256:c8e94d3deb9e4a441d0c5fcf9b7e0bca37b62caad4e239c9e3beac3da4d069ac 0.2s done
+#15 exporting manifest list sha256:27c02bdfc7309c45233c767c0a4a0e05200b07afa2a01fe73974577febd0abfd 0.1s done
+#15 naming to docker.io/library/business-platform-target-foundation-platform-api:latest 0.0s done
+#15 unpacking to docker.io/library/business-platform-target-foundation-platform-api:latest
+#15 ...
+
+#14 [erp-web] exporting to image
+#14 exporting layers 34.3s done
+#14 exporting manifest sha256:9fa2bae25fcec56f944817c2cd84d6e87f2a367e72cdfd99ff02314d4e43e4b7 0.2s done
+#14 exporting config sha256:a7a84f8bf2a9f3677bfa2b978af353740ac4bfb455b23661796d911fd4f8577d 0.2s done
+#14 exporting attestation manifest sha256:ed07260da983ce18fc5795ed5d6e077c736d3fbe2fa39023854765039774a1f3 0.2s done
+#14 exporting manifest list sha256:6a14883c81b72eaa001a9782e8e27e463fde618bd4005a31c2389121ffefa187 0.1s done
+#14 naming to docker.io/library/business-platform-target-foundation-erp-web:latest 0.1s done
+#14 unpacking to docker.io/library/business-platform-target-foundation-erp-web:latest
+#14 ...
+
+#11 [platform-admin] exporting to image
+#11 exporting layers 34.3s done
+#11 exporting manifest sha256:8d62fc5a4e1879c823109fd6826859ec6ea6a73f2da97d56c49dac85556e98f1 0.2s done
+#11 exporting config sha256:fa3f429a997eb946433c64479b4bf95dbf0a321f0b5f20f3fed1dc392726d7ed 0.2s done
+#11 exporting attestation manifest sha256:c9a8fa8a94e22063a9d88baa73b54a848f3a84bdca8d4704c8ff9b64227253d5 0.2s done
+#11 exporting manifest list sha256:a4763e09687b0d0f9b82f9b081b1b1f69fc10a4a6e2ac7609dba27de1dfb8df8 0.1s done
+#11 naming to docker.io/library/business-platform-target-foundation-platform-admin:latest 0.0s done
+#11 unpacking to docker.io/library/business-platform-target-foundation-platform-admin:latest
+#11 unpacking to docker.io/library/business-platform-target-foundation-platform-admin:latest 56.9s done
+#11 ...
+
+#14 [erp-web] exporting to image
+#14 unpacking to docker.io/library/business-platform-target-foundation-erp-web:latest 57.0s done
+#14 DONE 92.8s
+
+#13 [erp-api] exporting to image
+#13 unpacking to docker.io/library/business-platform-target-foundation-erp-api:latest 57.6s done
+#13 DONE 92.8s
+
+#15 [platform-api] exporting to image
+#15 unpacking to docker.io/library/business-platform-target-foundation-platform-api:latest 57.6s done
+#15 DONE 92.8s
+
+#11 [platform-admin] exporting to image
+#11 DONE 92.8s
+
+#12 [worker] exporting to image
+#12 unpacking to docker.io/library/business-platform-target-foundation-worker:latest 59.2s done
+#12 DONE 94.5s
+
+#16 [platform-api] resolving provenance for metadata file
+#16 ...
+
+#17 [platform-admin] resolving provenance for metadata file
+#17 DONE 0.4s
+
+#18 [erp-api] resolving provenance for metadata file
+#18 DONE 0.0s
+
+#19 [erp-web] resolving provenance for metadata file
+#19 DONE 0.3s
+
+#16 [platform-api] resolving provenance for metadata file
+#16 DONE 0.4s
+
+#20 [worker] resolving provenance for metadata file
+#20 DONE 0.1s
+PASS: actual Docker target infrastructure and five runtime endpoints.
+ Image business-platform-target-foundation-platform-api Building 
+ Image business-platform-target-foundation-worker Building 
+ Image business-platform-target-foundation-erp-web Building 
+ Image business-platform-target-foundation-platform-admin Building 
+ Image business-platform-target-foundation-erp-api Building 
+ Image business-platform-target-foundation-erp-api Built 
+ Image business-platform-target-foundation-erp-web Built 
+ Image business-platform-target-foundation-platform-admin Built 
+ Image business-platform-target-foundation-platform-api Built 
+ Image business-platform-target-foundation-worker Built 
+ Network business-platform-target-foundation_default Creating 
+ Network business-platform-target-foundation_default Creating 
+ Network business-platform-target-foundation_default Created 
+ Network business-platform-target-foundation_default Created 
+ Container business-platform-target-foundation-worker-1 Creating 
+ Container business-platform-target-foundation-erp-web-1 Creating 
+ Container business-platform-target-foundation-platform-api-1 Creating 
+ Container business-platform-target-foundation-platform-admin-1 Creating 
+ Container business-platform-target-foundation-erp-api-1 Creating 
+ Container business-platform-target-foundation-erp-api-1 Created 
+ Container business-platform-target-foundation-worker-1 Created 
+ Container business-platform-target-foundation-platform-api-1 Created 
+ Container business-platform-target-foundation-platform-admin-1 Created 
+ Container business-platform-target-foundation-erp-web-1 Created 
+ Container business-platform-target-foundation-platform-api-1 Starting 
+ Container business-platform-target-foundation-erp-api-1 Starting 
+ Container business-platform-target-foundation-platform-admin-1 Starting 
+ Container business-platform-target-foundation-erp-web-1 Starting 
+ Container business-platform-target-foundation-worker-1 Starting 
+ Container business-platform-target-foundation-platform-api-1 Started 
+ Container business-platform-target-foundation-erp-api-1 Started 
+ Container business-platform-target-foundation-platform-admin-1 Started 
+ Container business-platform-target-foundation-erp-web-1 Started 
+ Container business-platform-target-foundation-worker-1 Started 
+ Container business-platform-target-foundation-platform-api-1 Waiting 
+ Container business-platform-target-foundation-worker-1 Waiting 
+ Container business-platform-target-foundation-erp-web-1 Waiting 
+ Container business-platform-target-foundation-platform-admin-1 Waiting 
+ Container business-platform-target-foundation-erp-api-1 Waiting 
+ Container business-platform-target-foundation-platform-api-1 Healthy 
+ Container business-platform-target-foundation-platform-admin-1 Healthy 
+ Container business-platform-target-foundation-erp-api-1 Healthy 
+ Container business-platform-target-foundation-erp-web-1 Healthy 
+ Container business-platform-target-foundation-worker-1 Healthy 

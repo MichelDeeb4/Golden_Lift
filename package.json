@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Multi-tenant, multi-company ERP platform",
   "engines": {
-    "node": "\u003e=24.21.0 \u003c25"
+    "node": ">=24.21.0 <25"
   },
   "workspaces": [
     "apps/erp-api",
@@ -19,7 +19,8 @@
     "packages/tooling",
     "infrastructure/security",
     "infrastructure/observability",
-    "infrastructure/deployment"
+    "infrastructure/deployment",
+    "infrastructure/database"
   ],
   "scripts": {
     "build": "node packages/tooling/run.mjs build",
@@ -28,14 +29,15 @@
     "test": "node --test tests/architecture/target-boundaries.test.mjs tests/architecture/phase-01-specification.test.mjs tests/engineering/*.test.mjs",
     "test:integration": "node --test --test-concurrency=1 tests/end-to-end/foundation-http.test.mjs tests/end-to-end/launcher.test.mjs",
     "test:browser": "playwright test --config tests/end-to-end/playwright.config.mjs",
-    "test:database": "node --test tests/database-migrations/fixture-lifecycle.test.mjs",
+    "test:database": "node --test --test-concurrency=1 tests/database-migrations/*.test.mjs",
     "test:docker": "node packages/tooling/docker-check.mjs",
-    "check": "npm run build \u0026\u0026 npm run typecheck \u0026\u0026 npm run lint \u0026\u0026 npm test \u0026\u0026 npm run test:integration \u0026\u0026 npm run test:browser",
+    "check": "npm run build && npm run typecheck && npm run lint && npm test && npm run test:integration && npm run test:browser",
     "start": "node packages/tooling/start.mjs",
     "api:generate": "node packages/tooling/openapi.mjs",
     "phase:gate": "node tests/architecture/verify-phase-01.mjs gate",
     "format": "node packages/tooling/run.mjs format",
-    "security:scan": "npm audit --omit=dev --audit-level=high"
+    "security:scan": "npm audit --omit=dev --audit-level=high",
+    "db:generate": "prisma generate --schema infrastructure/database/prisma/schema.prisma"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
@@ -45,5 +47,9 @@
     "@types/react-dom": "19.3.0",
     "prettier": "3.9.9",
     "typescript": "6.0.3"
+  },
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "mysql2": "3.24.5"
   }
 }

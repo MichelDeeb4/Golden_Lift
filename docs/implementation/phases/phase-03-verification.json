@@ -1,0 +1,579 @@
+{
+  "phase": 3,
+  "status": "BLOCKED",
+  "sourceCommit": null,
+  "baselineCommit": "0973610e5fc3c75dda1540c08ed33eaa6998d3bf",
+  "branch": "implementation/phase-03-hybrid-database",
+  "workingTree": "Uncommitted source at local verification; source manifest identifies tested content",
+  "architectureRevision": "target-specification-2026-10-10-v1",
+  "checkedAt": "2026-10-10T16:55:48.101Z",
+  "sourceManifestNormalization": "UTF8 LF",
+  "sourceManifest": [
+    {
+      "path": "infrastructure/database/migrations/control/0001_registry.sql",
+      "sha256": "c84e7f353c82d92425e7571c4d680c7d6349b955443abd7407d99f88bf94e0cb"
+    },
+    {
+      "path": "infrastructure/database/migrations/erp/0001_tenant_identity.sql",
+      "sha256": "5760155df7f6a5e3498fa63758b3a48d40e12aaf6bd540621908468e7eca80fe"
+    },
+    {
+      "path": "infrastructure/database/migrations/erp/0002_company_lookup.sql",
+      "sha256": "e0516d47611dabd05c533eb63c678ce027533e8a61cf680055b11b8d249a2851"
+    },
+    {
+      "path": "infrastructure/database/package.json",
+      "sha256": "f0d26b6e10022b7bfd41856a784614f27ce96e03cb68c34de1e30741f11da416"
+    },
+    {
+      "path": "infrastructure/database/prisma/schema.prisma",
+      "sha256": "f58a9ae1cfeebd90313644bf3592ced68838a1b79116a900cb196a216ae9a709"
+    },
+    {
+      "path": "infrastructure/database/src/fleet.ts",
+      "sha256": "a5c1f54e704e2f24c2dcc4095b492d4cd4683a0a2876774f43bc7fbaebd0be52"
+    },
+    {
+      "path": "infrastructure/database/src/index.ts",
+      "sha256": "8a16f368fdd871e08280329dd2b87b1c88e21bb1d963db6aa0ac09c70bd1879e"
+    },
+    {
+      "path": "infrastructure/database/src/migrations.ts",
+      "sha256": "03b23fb8f4e86e34b2feeb434e4b9a3238701f2908b003c6c11aeb9902e71b3e"
+    },
+    {
+      "path": "infrastructure/database/src/provisioning.ts",
+      "sha256": "1ad58e74c3d04b95f8e4a6a43b5fa1460d77b543fa0275367ad1e3572d9f87c0"
+    },
+    {
+      "path": "infrastructure/database/src/tenant-connections.ts",
+      "sha256": "7223a422174a8131d18a6172fe4424fee25ebe258b3c09a0abd246f296a1a5eb"
+    },
+    {
+      "path": "infrastructure/database/tsconfig.target.json",
+      "sha256": "f818b7be660fc006a5c7f3ed4c1519a45983a231d1f2d17118b173ef43325198"
+    },
+    {
+      "path": "packages/tooling/phase-03-gate.mjs",
+      "sha256": "d4fa6cfda18fca44f3849f55264212d3def6e3fb572dfc9088398563cea69c01"
+    },
+    {
+      "path": "prisma.config.ts",
+      "sha256": "dba58e48b4712c47b33394c48438c64fa172cc3f35700089e4146aa4d36a662f"
+    },
+    {
+      "path": "tests/database-migrations/hybrid-foundation.test.mjs",
+      "sha256": "67cfd9ef88bc7339ac8df1edd4274204690d9ab417a551272a85798d99160cfc"
+    },
+    {
+      "path": "tests/engineering/phase-03-gate.test.mjs",
+      "sha256": "72f274815db6fb20292083b2ffb01664e97c2b03c83111f735246539388d1aa5"
+    },
+    {
+      "path": "tests/engineering/prisma-config.test.mjs",
+      "sha256": "ecf2e0ed8126a87ec47e14a868791c407d52079dbfce179b128bc86086a0b351"
+    },
+    {
+      "path": "infrastructure/database/README.md",
+      "sha256": "d0e63defc824046f0b27806f2a7dab7410e8cbe375e3fa1c104ad49d192fb364"
+    },
+    {
+      "path": "infrastructure/database/fixtures.mjs",
+      "sha256": "b7aa1d4493d7b05d7dbf3cc95cdc07c825682fda26b13e07fe677cdca6d8e059"
+    },
+    {
+      "path": "infrastructure/database/migration-manifest.mjs",
+      "sha256": "581d4e3fae3e96de79c08b1030db33ca13ec730623d7b594c0a6904058cda901"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "189daa5bf00435eb87df18c8e11be3d35a361e52bd4a3367c012cda3ac3af149"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9ff0ec499642e39df92b7935674f2713a7ff0096f4c3363bd79c7503b307f098"
+    },
+    {
+      "path": "packages/tooling/boundaries.mjs",
+      "sha256": "01dbc2e799682e960a4f7b2f85e87979452e4990ab8c1fa67fcac7c3138f70d1"
+    },
+    {
+      "path": "packages/tooling/container-start.mjs",
+      "sha256": "4877f06d276c68bad9f471994dd765f22cf4cf701a817585f780b8aaed43fa27"
+    },
+    {
+      "path": "packages/tooling/docker-check.mjs",
+      "sha256": "13ae9647e1ccc844d713cce27b93235502cd95b7f2986e1b79b592019d1c8089"
+    },
+    {
+      "path": "packages/tooling/openapi.mjs",
+      "sha256": "83276b1728dda71fd93fe5c667396470d20529258cda85785b8786f226fd964a"
+    },
+    {
+      "path": "packages/tooling/package.json",
+      "sha256": "27543a67d9b8b04c01f3501c35bd77352f72a5e6fe50f86afe8cfde00d161bca"
+    },
+    {
+      "path": "packages/tooling/phase-02-gate.mjs",
+      "sha256": "8683c4dfd5e8a49442f241fa9402fc35e04a85e80adb78633b9a79988b3cd744"
+    },
+    {
+      "path": "packages/tooling/run.mjs",
+      "sha256": "3a9df2195e0678c252c9e79e5b07b8373053b3e60bf0f65384f03a7d3b3f07e7"
+    },
+    {
+      "path": "packages/tooling/start.mjs",
+      "sha256": "8d288269666a1337731e935d8e6b6ef48185aec63d7c80c5785d65844b979596"
+    },
+    {
+      "path": "packages/tooling/web-start.mjs",
+      "sha256": "7017aabbb7a7140f12edbf98d955721875acb341181334dc400711bef663eac2"
+    },
+    {
+      "path": "tests/architecture/phase-01-contract.mjs",
+      "sha256": "8144f47f1fa798bfd562ad56aa0d0f0d70caab14393f4d8911bd402adb939e0a"
+    },
+    {
+      "path": "tests/architecture/phase-01-specification.test.mjs",
+      "sha256": "82b003e33f4133a73435343e9566446b66c9ff0bfefb0a4e454527d4e1a9e19b"
+    },
+    {
+      "path": "tests/architecture/target-boundaries.test.mjs",
+      "sha256": "7fcb6ce2a2b46521f1d80136a793b610b5036ab6574cf9fcc7f4342832a7d6b3"
+    },
+    {
+      "path": "tests/architecture/verify-phase-01.mjs",
+      "sha256": "33592e4d0757da1be1bbd108bf15de956cc1c6c5313b2ef7ef6abd0a4abdb1ce"
+    },
+    {
+      "path": "tests/database-migrations/fixture-lifecycle.test.mjs",
+      "sha256": "35abd5c12b0ab57dff881912baf8fe05606973eb5fa2ef91e6234861267ae833"
+    },
+    {
+      "path": "tests/end-to-end/foundation-http.test.mjs",
+      "sha256": "ad358934fcfdcf95cde97b00b7ca276de80033d0e29e1e91345f748667f97a8e"
+    },
+    {
+      "path": "tests/end-to-end/foundation.browser.spec.mjs",
+      "sha256": "b88152259535c03d6b0bdc0558ec67ff79bd7c1551aa2b5879082331aeae22e9"
+    },
+    {
+      "path": "tests/end-to-end/launcher.test.mjs",
+      "sha256": "628050578cf3cad512bbd08a1fe17c79c91ab8411a4bc7205e84abb0904dadc1"
+    },
+    {
+      "path": "tests/end-to-end/playwright.config.mjs",
+      "sha256": "ca770977d67bf8200d63b6da0e415cfd0e7f5f614a884f72c4c95d1efacc9bd7"
+    },
+    {
+      "path": "tests/engineering/config.test.mjs",
+      "sha256": "11500244b1fdb05eabe464a7592a58157b94412ad4480b097f599b84122b3711"
+    },
+    {
+      "path": "tests/engineering/migration-manifest.test.mjs",
+      "sha256": "ae2f2d0c5706d50d5a15a51df5af8e007ee0b807c78febbdee774d24f93ab523"
+    },
+    {
+      "path": "tests/engineering/phase-02-gate.test.mjs",
+      "sha256": "09f75dcd1c134f73c8ec252d60c14720d7706f787498e8a25325d34e7a64f160"
+    },
+    {
+      "path": "tests/frontend.admin-actions.test.ts",
+      "sha256": "a7f0722291edc8150793aa0ab729551a08d4afe686963982c2576db5ae362b55"
+    },
+    {
+      "path": "tests/frontend.admin-modal.test.ts",
+      "sha256": "194a9fa6e190e52636b2ba3d0262e42e173bb10f1f2fc0098861810b95fd7f14"
+    },
+    {
+      "path": "tests/frontend.admin-pagination.test.ts",
+      "sha256": "9cb465a36562f4afe49f6631de1e2b3fb4990dd267fb58c64c9efe25214f8040"
+    },
+    {
+      "path": "tests/frontend.admin-ui.config.ts",
+      "sha256": "2adce6fcef3e394050b8b78e00c6af43d104cd5e3529504a8c1749ed54aa4d18"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts",
+      "sha256": "03faa98f75a2978e7e54a129c39c91c508ee3494152e97afb4a2406f424f9898"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/admin-accounts-win32.png",
+      "sha256": "4ba219c77b797b9dce3ec8f6284a39e51c5c035eaf515a3031eaf5441df8efde"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/attributes-ar-mobile-win32.png",
+      "sha256": "92da3538cd850b20162f33d3daedb13a328cddab70aa41c5a83a8a93caaf7959"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/attributes-ckb-mobile-win32.png",
+      "sha256": "15017171bcddcffe09db8818ae655a7dc788fe3bc58c9bb2adebefacd669f40d"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/attributes-win32.png",
+      "sha256": "560fb95b0a38c5061f93322158ee17c52130e5f759776a34a83f070004ba2bf4"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/categories-ar-win32.png",
+      "sha256": "a1634be916bafe59de4aaf03ba655df5dadbf35bbe599551fbc722967e04e021"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/categories-ckb-win32.png",
+      "sha256": "8dc16b4c4a42b44a10cb178c3fa2b89780811263c10f665f20a9b9dd0b536aaf"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/categories-win32.png",
+      "sha256": "bdbb390393d31383cfe22f24f7747cda9380c807c3c4206028dc6a2a48adc5fa"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/create-modal-win32.png",
+      "sha256": "e758db0afc697bfb6d36ad2d410e05aeffc5c6b3cd4fedb01884adb832fdd688"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/delete-dialog-win32.png",
+      "sha256": "abf27d8a2cf83138a6ca240120743d8bf658ea59c342092b7cd9f1a49ea9f05b"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/edit-modal-win32.png",
+      "sha256": "9c79eda5af04b65f29c436a71ae5f6d2d90eda52c5ba08d242054221aa35a9b5"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/editor-ar-mobile-win32.png",
+      "sha256": "59b419f94876a39f67ce11f61ded4b927bdf8b6ef6c8c3c095460adcb001f8f7"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/editor-ckb-mobile-win32.png",
+      "sha256": "6965cb77008cef9cf955a0ab1eb08c9c4d18adbe0131582f31bc999e8d9da9f7"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/empty-mobile-win32.png",
+      "sha256": "4425458adfc8723c7717b55c09cd6394df579b0184a95c9d3bc0626275e8aaea"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/error-mobile-win32.png",
+      "sha256": "2c69a6d0129904a4a6c45628df4d32d86b1bb26bdc773384569c3e9ee2053836"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/groups-win32.png",
+      "sha256": "bcafe2019fe6c139879b994edf3de99b3c7c449b5c04e1eb36e48431ea654a33"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/landing-win32.png",
+      "sha256": "5a1153e3324573f7961d48f3b6e080201408ffdcf7366368fc0644f7cb8476a5"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/loading-mobile-win32.png",
+      "sha256": "8d168ca40b1a885a409fc216c6fc3f888cdee5f048820fbde5d0be30548665d4"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/media-win32.png",
+      "sha256": "aa36c62f88677b1f45e0e71278259ee5eead67856ab93043bedc0c37d1fe83ab"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/mobile-navigation-win32.png",
+      "sha256": "34c25d62cb16eec4c69d9bc7ec7a95e3293da66214fbcd8328c84dea592b7411"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/product-editor-win32.png",
+      "sha256": "b9f2387770aa7032873b136b6ace08af956e68a1103537ddef3238f7b8e84a93"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/product-specifications-win32.png",
+      "sha256": "e0e8c755c07607dfc6c8ac6ff2f1d12665fd0bdb9309fa8bd3210360368afbb4"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/products-win32.png",
+      "sha256": "6550cb38d972be8585ab104e06adcef0d9eb83ecf1ba00bd215e21dad95e3c6a"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/units-win32.png",
+      "sha256": "2882bfd01debe11064e0b241fc7265769e70eab6dc59cfe449ccf28ba5f6d87b"
+    },
+    {
+      "path": "tests/frontend.admin-ui.test.ts-snapshots/unsaved-dialog-win32.png",
+      "sha256": "7af37084bad797676b415471c80db2dcdf5c48f3b7bd7e4d65efe36e1f263b73"
+    },
+    {
+      "path": "tests/frontend.admin.config.ts",
+      "sha256": "4c411f127d825b60610f8f76b13d5a8782e76ae0c48943deaac34108b2cf040c"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts",
+      "sha256": "8ed6f70c2e0a29a885f61ff9a1025f06278ad102ea8c0663283cd38efc42d3e7"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-asset-inspector-win32.png",
+      "sha256": "3de4f525ef31693b0cecc1753eb8edb39146b643f03102a860c34d9b5f2cd092"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-attribute-editor-win32.png",
+      "sha256": "7c9c2fd9d68f6f17cdbfe6883594fa598283f41f0a83fceb4895b46b8beb3663"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-category-editor-win32.png",
+      "sha256": "b39355f000018b1e136a967d4d63230232671b7d8e82f3b659a3d58e7bbdfbe6"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-dashboard-win32.png",
+      "sha256": "d9c1dcb1d0870d21908990f2e7ab7cc7a88b786bd13f513b0fb05350cee5d47c"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-media-library-win32.png",
+      "sha256": "c31c94fa7e926dce609fec89278558f63c600375858f304a3ab92e4bffe44dae"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ar-win32.png",
+      "sha256": "c663305389155f8ead71195121b6f2ca0021864376b81581cfd2022a967a6bea"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-ckb-win32.png",
+      "sha256": "9d270acad30d762818ceadddafa498d07c0a9edce9f0c978c333eefb8eeb6082"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-mobile-win32.png",
+      "sha256": "b5e1177b45be3927036e882ff580f43c62d0ceb9164935278b75c627989c77ce"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-tablet-win32.png",
+      "sha256": "5e5c59f99d531af4e83e9afab053784405ae473e2c422d19f0d9884f22cda007"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-editor-win32.png",
+      "sha256": "60d327f22fd6a2a67c7ae8246eaa19c947daf9f189c228a37e5f9422f8ee14b0"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-list-win32.png",
+      "sha256": "e887a7521d44bb4ef2e47240d387912f27aa37c68cb4a059ca0f3dad461de845"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-media-win32.png",
+      "sha256": "98756ca8601c1e3005c80867a5caf5eb59d3c8353407d21e05572addd0f57329"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-overview-win32.png",
+      "sha256": "415a76024307efaf2fd7c8137aa59e244eafcb671edb5c855d69630e76cde17a"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-product-summary-mobile-win32.png",
+      "sha256": "d3006e80fc5d56bf6b3d726cae2cf4f92df7438e3dc379cca292e4fdbcd479f4"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/admin-upload-drawer-win32.png",
+      "sha256": "0f6072d5ae357f130b6942b7f3d28220638ae65e9a42b0fb7a43d66ecaf6468c"
+    },
+    {
+      "path": "tests/frontend.admin.test.ts-snapshots/super-admin-staff-win32.png",
+      "sha256": "77b5a769c2da44151ad076e64d0dd86f38cf262771a09c57892b54cd163c5674"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts",
+      "sha256": "07cc4f0d549ddfd3aac930a91f0e0f92602da79e6026a04848c8d44364a39354"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/category-ar-desktop-win32.png",
+      "sha256": "007d99fc7fec4c6149dbd9dc4f6dcfe6e473cafe2e4fdb55214e8b34173e46ec"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-ar-mobile-win32.png",
+      "sha256": "5d85aadb9f96ef73f8c42e055dd71809d4578fb811d6bfdd9c7903d643720d89"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/home-en-desktop-win32.png",
+      "sha256": "2c4c69dbc25a50cc67ba3bb3196010b51173f7d303afba8087bae21a75e62271"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/listing-en-desktop-win32.png",
+      "sha256": "922f8f4b8163db860257711a386647c46464443264754052e2b02fe7ef9fbfa6"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ar-mobile-win32.png",
+      "sha256": "d9261ed58ebc18a87853e260944b7cfcc4b0b2baf468dd0885a561fb65d8965a"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-ckb-tablet-win32.png",
+      "sha256": "bcce5ec11cef696e50f8818310fe05b03bf05a27f23969a1d9c864cbf42ee483"
+    },
+    {
+      "path": "tests/frontend.browser.test.ts-snapshots/product-en-desktop-win32.png",
+      "sha256": "12b934961b26605498bfff470967bce5417d23542e68f059db820747f277bfc8"
+    },
+    {
+      "path": "tests/frontend.category-tree.test.ts",
+      "sha256": "fe0dfe4d4091bb96bff5553bf572a06ca02ad4181a9ea3102604e2f2a208fcf0"
+    },
+    {
+      "path": "tests/frontend.deletion.test.ts",
+      "sha256": "72d3488339b207783d04e013f243d7381289b3f0956c4abd9c719d8a5b6ec3dd"
+    },
+    {
+      "path": "tests/frontend.final-catalog.test.ts",
+      "sha256": "0e3dff9e9f993d8f453b8e8a9f5c4c0f5322cc5947f2097f99ce4f4945ed4626"
+    },
+    {
+      "path": "tests/frontend.playwright.config.ts",
+      "sha256": "959074352aa2ec46fb558febbf07e506636e4ab2c6d65307ea9fa3616ec782e2"
+    },
+    {
+      "path": "tests/frontend.product-create.test.ts",
+      "sha256": "5fd6833bd019f7743f1f3dc4a89afa0dd077f4789c2bb9b6d63bdf1838f60bc0"
+    },
+    {
+      "path": "tests/frontend.public-catalog.config.ts",
+      "sha256": "91f329294042060ff99f6e561b2178a900b4db5810fecc3d2ec8a8341bf51e8f"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts",
+      "sha256": "bb18248f70b25312bc0e4ccbd52917b6740993fc17151e15d265bde463fb226b"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/home-1024-win32.png",
+      "sha256": "c1cbf1ab59082ee3d0a08f35f9c41276934918dac0b5d95d8e75e1a1dad48a16"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/home-1440-win32.png",
+      "sha256": "840a1c8b98bafa56c9dac0685113f4f52d9a8effdefb132255b529d3117838f8"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/home-390-win32.png",
+      "sha256": "b3a849ee39f9229a9a9c6673e1164e28d9cb6c5ffb5e22fe5b6b17f6f480b194"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/products-1440-win32.png",
+      "sha256": "3eca3e8d71f0452bf0e9318fa5924139ceabb7d93482a084bf3e995b8d54643e"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/products-390-win32.png",
+      "sha256": "0ea718e92b5b85bbda3f5adc884f818acce8ea8319c1622ee3c91327f2e257b6"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/products-ar-mobile-win32.png",
+      "sha256": "d4005e83552e8cdc5ca98cb2e620a71616328b42139c31619e3eb80d431c161f"
+    },
+    {
+      "path": "tests/frontend.public-catalog.test.ts-snapshots/products-ckb-mobile-win32.png",
+      "sha256": "f4bd87da28def0a7c57fa234d30c870fc20a0cce46fd809b0fde6be50ce95f7b"
+    },
+    {
+      "path": "tests/frontend.unit.test.ts",
+      "sha256": "4fc1ddb3ac2401fd8c390430c05fd91fff32d860804874d3c39fa6fabcda01bc"
+    },
+    {
+      "path": "tests/tenant-isolation/hybrid-rls.acceptance.mjs",
+      "sha256": "5605c515a6df85d9adee85fa299741320a7f448a79ef2cf06f7ca15a21bf27db"
+    }
+  ],
+  "commands": [
+    {
+      "id": "CHECK",
+      "command": "npm.cmd run check",
+      "location": ".local/phase-03/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T16:46:42.771Z",
+      "checkedAt": "2026-10-10T16:48:26.679Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-check.log",
+        "sha256": "d074e69114a42e24012d28e9e40e35c6f481b7dda70701a7c70a948aef8481b2"
+      }
+    },
+    {
+      "id": "DATABASE",
+      "command": "npm.cmd run build --workspace @business-platform/database && npm.cmd run test:database",
+      "location": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T16:48:26.680Z",
+      "checkedAt": "2026-10-10T16:48:49.696Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-database.log",
+        "sha256": "5240b4bd1b17d5d9bf1f461d3b56bb4231d8f35c6c22378e9e926ac03d834773"
+      }
+    },
+    {
+      "id": "SECURITY",
+      "command": "npm.cmd run security:scan",
+      "location": ".local/phase-03/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T16:48:49.697Z",
+      "checkedAt": "2026-10-10T16:48:52.500Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-security.log",
+        "sha256": "61f4d5c8d5ee4627f829f2c632c5747e63273fbcebbf8dd0d8c185dfba1f78f6"
+      }
+    },
+    {
+      "id": "DOCKER",
+      "command": "npm.cmd run test:docker",
+      "location": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T16:48:52.500Z",
+      "checkedAt": "2026-10-10T16:54:18.814Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-docker.log",
+        "sha256": "9da5226538fb0245f7be2a24cc928465e51e3ae8caa9c92b16740727868508a5"
+      }
+    },
+    {
+      "id": "CLEANUP",
+      "command": "docker compose -f infrastructure/deployment/compose.yml down",
+      "location": ".",
+      "status": "PASS",
+      "exitCode": 0,
+      "startedAt": "2026-10-10T16:54:18.815Z",
+      "checkedAt": "2026-10-10T16:54:20.479Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-cleanup.log",
+        "sha256": "8c45d1b4d9e9a38f05cd21e3e5e372f6ac434ff8ddd2a12e0ba84531b370db0a"
+      }
+    },
+    {
+      "id": "INSTALL",
+      "command": "npm.cmd ci --offline --ignore-scripts --no-audit --no-fund",
+      "location": ".local/phase-03/fresh",
+      "status": "PASS",
+      "exitCode": 0,
+      "checkedAt": "2026-10-10T16:46:19.696Z",
+      "artifact": {
+        "path": "docs/implementation/phases/evidence/phase-03-install.log",
+        "sha256": "fa0343453005ed366ba1b9e84a60c6d4c01378cfcfcf15519f392f2e23d337d7"
+      }
+    },
+    {
+      "id": "CI",
+      "command": "GitHub Actions foundation workflow for new branch (not yet executed)",
+      "status": "BLOCKED",
+      "exitCode": null,
+      "checkedAt": "2026-10-10T16:55:47.834Z"
+    }
+  ],
+  "tests": {
+    "unitArchitecture": 31,
+    "httpProcess": 6,
+    "browser": 2,
+    "channel": "msedge",
+    "database": 18,
+    "skips": 0
+  },
+  "syntheticLimits": {
+    "erpReservedConnections": 4,
+    "maxPools": 2,
+    "perPool": 2,
+    "maxProfiles": 8,
+    "maxWaiters": 2,
+    "acquireMs": 350,
+    "transactionMs": 1200,
+    "observedPhysicalMaximum": 3,
+    "productionApproved": false,
+    "controlAndAdministration": "Separate bounded test pools, each max 2; four is not a server-wide production budget"
+  },
+  "unverified": [
+    "Hosted CI for new exact source commit",
+    "OWNER-SCALE Phase 03 capacity/connection approval including maxDatabaseConnections",
+    "OWNER-HOSTING Phase 03 production hosting/failure-domain approval"
+  ],
+  "phase04": "NOT STARTED",
+  "legacyDataUntouched": true,
+  "containersCleaned": true
+}

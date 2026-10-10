@@ -1,0 +1,43 @@
+
+> @business-platform/database@0.3.0 build
+> prisma generate --schema prisma/schema.prisma && tsc -p tsconfig.target.json
+
+
+✔ Generated Prisma Client (v7.10.0) to .\.generated\client in 63ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+> business-platform@0.2.0 test:database
+> node --test --test-concurrency=1 tests/database-migrations/*.test.mjs
+
+✔ Fresh fixture 1: actual disposable PostgreSQL lifecycle, transaction rollback and repeatable SQL (8004.7862ms)
+✔ Fresh fixture 2: actual disposable PostgreSQL lifecycle, transaction rollback and repeatable SQL (4177.0243ms)
+▶ Hybrid PostgreSQL foundation: real provision/migration/Prisma/role/concurrency proof
+  ✔ DB-001 repeated and concurrent pooled/dedicated provisioning; distinct physical control DB (737.3883ms)
+  ✔ DB-001 same canonical schema/keys/policies/owner and version in both modes (189.8978ms)
+  ✔ DB-002/003 checksum drift, atomic DDL failure, locked parallel migration and retry (273.0366ms)
+  ✔ DB-003 migration fleet exposes one failed database, preserves others, and retries safely (156.6919ms)
+  ✔ TEN-005 foreign key rejects an orphan even with privileged RLS bypass (1.8437ms)
+  ✔ DB-004 disconnected idle runtime session is observed and safely reconnected (234.4252ms)
+  ✔ ISO-CONTEXT generated Prisma writes and raw operations share one PID/context (52.6587ms)
+  ✔ TEN-002/003/005 tenant read/write/FK and dedicated wrong-context denial (32.5737ms)
+  ✔ ISO-ROLES restricted migration login can migrate but runtime cannot assume it (28.5437ms)
+  ✔ ISO-ROLES actual nonowner logins cannot bypass RLS, DDL, owner roles or cross-database CONNECT (68.9181ms)
+  ✔ ISO-CONTEXT rollback, escaped tx, timeout and parallel pool reuse never retain tenant (1242.12ms)
+  ✔ DB-004 pooled A/B and dedicated C execute concurrently within one shared budget (31.6843ms)
+  ✔ DB-004 budget, queue backpressure, cancellation, eviction and credential rotation (582.1846ms)
+  ✔ DB-004 concurrent new-database churn cannot exceed reservations (48.8467ms)
+MEASURED synthetic ERP physical connections maximum: 3; reserved budget 4; administrative pools separate, each max 2. No production NFR implied.
+  ✔ ISO-CONTEXT bounded serialization retry establishes new local context (39.5561ms)
+✔ Hybrid PostgreSQL foundation: real provision/migration/Prisma/role/concurrency proof (7667.6384ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20434.0886
+Prisma schema loaded from prisma\schema.prisma.

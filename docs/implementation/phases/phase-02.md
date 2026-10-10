@@ -1,8 +1,8 @@
 # Phase 02 — Greenfield engineering foundation
 
-Date: 2026-10-10. Architecture revision: target-specification-2026-10-10-v1. Source commit: 54778083efea968eeedf162cab0541f84b4dbb41. Owner authorization: explicit user message approving ADRs 030–035 and bounded deferrals, and directing Phase 02 implementation.
+Date: 2026-10-10. Architecture revision: target-specification-2026-10-10-v1. Original baseline: 54778083efea968eeedf162cab0541f84b4dbb41. Certified foundation source: 0973610e5fc3c75dda1540c08ed33eaa6998d3bf. Owner authorization: explicit user message approving ADRs 030–035 and bounded deferrals, and directing Phase 02 implementation.
 
-**Phase 02 gate: BLOCKED.** Implemented engineering work, fresh-install checks, real Docker/container execution and disposable PostgreSQL lifecycle tests pass. Hosted GitHub Actions evidence for this uncommitted source remains unavailable. These criteria are mandatory and have not been waived. **Phase 03: NOT STARTED.** No target tenant database, RLS/routing, OIDC, organization or ERP business implementation was begun.
+**Phase 02 gate: PASS.** Implemented engineering work, fresh-install checks, real Docker/container execution and disposable PostgreSQL lifecycle tests pass. Hosted run 38065009923 for commit 0973610e5fc3c75dda1540c08ed33eaa6998d3bf is verified successful. All thirteen criteria pass. **Phase 03: IN PROGRESS under the subsequent local-development directive.** Within Phase 02, no target tenant database, RLS/routing, OIDC, organization or ERP business implementation was begun.
 
 ## Scope, contracts and ownership
 
@@ -56,7 +56,7 @@ Initial local build attempts exposed UTF8 BOMs introduced by file creation; thos
 
 The clean copy was synchronized with final target source after initial installation and rebuilt/rechecked; dependency manifests/lockfile did not change during that verification. Source manifests and full logs distinguish the initial and final runs. Both Next.js shells and all three NestJS processes were started; the launcher test verifies all five readiness endpoints and that shutdown closes them. There are no skipped Node tests substituted as successful runtime evidence.
 
-## Accepted decisions, limits and next action
+## Initial-session accepted decisions, limits and next action (historical)
 
 Approved architecture revision and ADRs are unchanged. Hybrid pooled plus dedicated tenant databases, one canonical ERP schema, one modular transactional ERP implementation, a separate control database, and distinct legal-company ownership remain mandatory. No alternative architecture or compatibility adapter was introduced. Unknown product, financial, capacity, hosting and compliance values remain null; approved deadline guards block dependent work.
 
@@ -64,9 +64,9 @@ Resume **Phase 02 hosted acceptance** with an authorized GitHub connection: publ
 
 Only after every Phase 02 criterion passes may Phase 03 begin, and it additionally requires approved connection/capacity budgets and hosting/region/budget/failure-domain decisions. Other bounded deferrals retain their documented deadlines. No new architecture approval is requested. Legacy data import/disposition, production resources and destructive operations still require separate authorization.
 
-## Continuation verification — 2026-10-10
+## Continuation verification — 2026-10-10 (historical, superseded by hosted reconciliation)
 
-**Current gate: BLOCKED solely on hosted CI evidence. Phase 03: NOT STARTED.** Twelve of thirteen engineering criteria have passing command receipts. Architecture and approved deferral deadlines are unchanged. No commit, push, legacy service startup, valuable data deletion or production resource modification occurred.
+**Gate at that continuation: BLOCKED solely on hosted CI evidence. Phase 03 was NOT STARTED.** Twelve of thirteen engineering criteria have passing command receipts. Architecture and approved deferral deadlines are unchanged. No commit, push, legacy service startup, valuable data deletion or production resource modification occurred.
 
 Docker Desktop 4.94.0 / Docker Engine 29.8.2 became available with the desktop-linux context. Tests used actual Linux containers and PostgreSQL 18.6; no unavailable test was counted as PASS.
 
@@ -91,3 +91,9 @@ This continuation changed only the two fixture/test source files above, this rep
 **Exact next action:** connect an authorized GitHub integration, publish the reviewed source to a verification branch, execute the existing foundation workflow, and inspect the exact commit's hosted job results/artifacts. Fix any hosted-only failures and rerun affected/full acceptance before recording Phase 02 PASS. Local results do not substitute for hosted CI.
 
 Automatic approval review rejected a proposed Git credential-store token read before execution because that secret use was not explicitly authorized. No credential was extracted or used. A GitHub connection was suggested as the safer alternative; no connection or owner authorization is inferred.
+
+## Hosted reconciliation — 2026-10-10
+
+Verified [GitHub Actions run 38065009923](https://github.com/MichelDeeb4/business-platform/actions/runs/38065009923) through the public GitHub REST API, without credential access. The run and foundation job completed success for exact source commit 0973610e5fc3c75dda1540c08ed33eaa6998d3bf. All sixteen reported steps succeeded, including clean install, Chromium installation, full check, OpenAPI generation/diff, disposable PostgreSQL, Docker, security scan and cleanup. Public run/job receipts are preserved in evidence/phase-02-hosted-ci.json. Earlier BLOCKED statements above are historical.
+
+All thirteen criteria now reference this source-bound hosted receipt so the gate is reproducible without ignored local logs. node packages/tooling/phase-02-gate.mjs must pass before Phase 03 implementation. The complete execution directive authorizes independent local Phase 03 work with synthetic limits; existing OWNER-SCALE/OWNER-HOSTING deadlines and null production values still block Phase 03 acceptance. No architecture approval or production deployment is inferred.

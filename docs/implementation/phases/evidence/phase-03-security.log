@@ -1,0 +1,5 @@
+
+> business-platform@0.2.0 security:scan
+> npm audit --omit=dev --audit-level=high
+
+found 0 vulnerabilities

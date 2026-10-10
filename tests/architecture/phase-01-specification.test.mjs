@@ -5,6 +5,7 @@ import {
   readJson,
   validateSpecification,
   approvalErrors,
+  phaseOrderErrors,
   connectionBudget,
   validateReceipts,
 } from './phase-01-contract.mjs';
@@ -38,7 +39,11 @@ test('Owner approval closes Phase 01 while a missing approval still blocks', () 
   pending.ownerApproval = null;
   assert.ok(approvalErrors(pending).length > 0);
   assert.equal(decisions.phaseStatus[0].status, 'PASS');
-  assert.ok(decisions.phaseStatus.slice(2).every((p) => p.status === 'NOT STARTED'));
+  assert.deepEqual(phaseOrderErrors(decisions.phaseStatus), []);
+  const invalid = structuredClone(decisions.phaseStatus);
+  invalid[2].status = 'BLOCKED';
+  invalid[3].status = 'IN PROGRESS';
+  assert.ok(phaseOrderErrors(invalid).some((e) => e.includes('Predecessor')));
 });
 test('A forged approval cannot waive open decisions or dependent numeric thresholds', () => {
   const altered = structuredClone(decisions);

@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../.generated/client"
+}
+datasource db {
+  provider = "postgresql"
+}
+model TenantInstallation {
+  tenantId String @id @map("tenant_id") @db.Uuid
+  generation BigInt @default(1)
+  active Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  companies CompanyIdentity[]
+  @@map("tenant_installation")
+}
+model CompanyIdentity {
+  tenantId String @map("tenant_id") @db.Uuid
+  id String @db.Uuid
+  code String
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant TenantInstallation @relation(fields:[tenantId],references:[tenantId])
+  @@id([tenantId,id])
+  @@unique([tenantId,code])
+  @@map("company_identity")
+}

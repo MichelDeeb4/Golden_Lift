@@ -150,13 +150,13 @@
     },
     {
       "phase": 2,
-      "status": "BLOCKED",
-      "reason": "Authorized; implementation begins after recoverable snapshot"
+      "status": "PASS",
+      "reason": "Verified hosted run 38065009923 for exact source 0973610; all 13 criteria pass"
     },
     {
       "phase": 3,
-      "status": "NOT STARTED",
-      "reason": "Previous gate has not passed"
+      "status": "BLOCKED",
+      "reason": "Local implementation/tests pass; hosted exact-source CI pending and due OWNER-SCALE/OWNER-HOSTING values remain null"
     },
     {
       "phase": 4,

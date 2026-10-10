@@ -13,3 +13,5 @@ apps/native
 database/source-package
 test-results
 playwright-report
+
+**/.generated

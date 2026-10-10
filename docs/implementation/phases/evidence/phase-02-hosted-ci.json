@@ -1,0 +1,154 @@
+{
+  "sourceCommit": "0973610e5fc3c75dda1540c08ed33eaa6998d3bf",
+  "verifiedAt": "2026-10-10T16:13:25.671Z",
+  "retrieval": "Unauthenticated GitHub REST API; no credentials accessed",
+  "run": {
+    "id": 38065009923,
+    "url": "https://github.com/MichelDeeb4/business-platform/actions/runs/38065009923",
+    "repository": "MichelDeeb4/business-platform",
+    "headSha": "0973610e5fc3c75dda1540c08ed33eaa6998d3bf",
+    "status": "completed",
+    "conclusion": "success",
+    "workflow": ".github/workflows/backend.yml",
+    "startedAt": "2026-10-10T15:47:09Z",
+    "completedAt": "2026-10-10T15:50:05Z"
+  },
+  "jobs": [
+    {
+      "id": 114250771626,
+      "name": "foundation",
+      "conclusion": "success",
+      "runner": "GitHub Actions 1000000008",
+      "steps": [
+        {
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:13Z",
+          "completedAt": "2026-10-10T15:47:14Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "number": 2,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:14Z",
+          "completedAt": "2026-10-10T15:47:16Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "number": 3,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:16Z",
+          "completedAt": "2026-10-10T15:47:16Z"
+        },
+        {
+          "name": "Run npm ci --ignore-scripts --no-audit --no-fund",
+          "number": 4,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:16Z",
+          "completedAt": "2026-10-10T15:47:26Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "number": 5,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:26Z",
+          "completedAt": "2026-10-10T15:47:49Z"
+        },
+        {
+          "name": "Run npm run check",
+          "number": 6,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:47:49Z",
+          "completedAt": "2026-10-10T15:48:44Z"
+        },
+        {
+          "name": "Run npm run api:generate",
+          "number": 7,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:48:44Z",
+          "completedAt": "2026-10-10T15:48:44Z"
+        },
+        {
+          "name": "Run git diff --exit-code -- docs/specifications/openapi",
+          "number": 8,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:48:44Z",
+          "completedAt": "2026-10-10T15:48:44Z"
+        },
+        {
+          "name": "Run npm run test:database",
+          "number": 9,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:48:44Z",
+          "completedAt": "2026-10-10T15:48:55Z"
+        },
+        {
+          "name": "Run npm run test:docker",
+          "number": 10,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:48:55Z",
+          "completedAt": "2026-10-10T15:49:59Z"
+        },
+        {
+          "name": "Run npm run security:scan",
+          "number": 11,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:49:59Z",
+          "completedAt": "2026-10-10T15:50:00Z"
+        },
+        {
+          "name": "Stop test-owned engineering containers",
+          "number": 12,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:50:00Z",
+          "completedAt": "2026-10-10T15:50:00Z"
+        },
+        {
+          "name": "Preserve test evidence",
+          "number": 13,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:50:00Z",
+          "completedAt": "2026-10-10T15:50:00Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "number": 25,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:50:00Z",
+          "completedAt": "2026-10-10T15:50:02Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "number": 26,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:50:02Z",
+          "completedAt": "2026-10-10T15:50:02Z"
+        },
+        {
+          "name": "Complete job",
+          "number": 27,
+          "status": "completed",
+          "conclusion": "success",
+          "startedAt": "2026-10-10T15:50:02Z",
+          "completedAt": "2026-10-10T15:50:02Z"
+        }
+      ]
+    }
+  ]
+}

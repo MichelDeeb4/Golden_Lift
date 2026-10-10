@@ -19,3 +19,6 @@ playwright-report/
 services/*/src/infrastructure/prisma/generated/
 
 .next/
+
+# Regenerated target database client
+infrastructure/database/.generated/
